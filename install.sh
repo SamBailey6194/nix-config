@@ -28,11 +28,13 @@ backup_if_exists ~/.editorconfig
 backup_if_exists ~/.prettierrc
 backup_if_exists ~/.eslintrc.json
 backup_if_exists ~/.markdownlint.json
+backup_if_exists ~/.config/zed/debug.json
 
 # Symlink Zed config
 echo "→ Zed config"
 ln -sf "$ZEDCONFIG/config/zed/settings.json" ~/.config/zed/settings.json
 ln -sf "$ZEDCONFIG/config/zed/keymap.json" ~/.config/zed/keymap.json
+ln -sf "$ZEDCONFIG/config/zed/debug.json" ~/.config/zed/debug.json
 
 # Symlink Git config
 echo "→ Git config"

@@ -1,4 +1,7 @@
 {
+  "debugger": {
+    "dock": "bottom"
+  },
   "theme": "One Dark",
   "ui_font_size": 16,
   "buffer_font_family": "JetBrains Mono",
@@ -61,10 +64,10 @@
   },
 
   "chat_panel": {
-    "button": false
+    "button": "never"
   },
 
-  "assistant": {
+  "agent": {
     "button": true,
     "dock": "right",
     "default_width": 480

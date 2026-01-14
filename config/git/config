@@ -4,7 +4,7 @@
 [core]
     editor = zed --wait
     autocrlf = input
-    hooksPath = ~/.config/git/hooks
+	hooksPath = /home/sam-dev/.config/git/hooks
 
 [init]
     defaultBranch = main

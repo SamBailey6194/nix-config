@@ -63,13 +63,13 @@
   {
     "context": "ProjectPanel",
     "bindings": {
-      "a": "project_panel::NewFile",
-      "shift-a": "project_panel::NewDirectory",
-      "r": "project_panel::Rename",
-      "d": "project_panel::Delete",
-      "x": "project_panel::Cut",
-      "c": "project_panel::Copy",
-      "p": "project_panel::Paste"
+      "ctrl+a": "project_panel::NewFile",
+      "ctrl+shift-a": "project_panel::NewDirectory",
+      "ctrl+r": "project_panel::Rename",
+      "ctrl+d": "project_panel::Delete",
+      "ctrl+x": "project_panel::Cut",
+      "ctrl+c": "project_panel::Copy",
+      "ctrl+p": "project_panel::Paste"
     }
   }
 ]
