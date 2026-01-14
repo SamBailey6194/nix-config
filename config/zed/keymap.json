@@ -1,0 +1,75 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-p": "file_finder::Toggle",
+      "ctrl-shift-p": "command_palette::Toggle",
+      "ctrl-`": "terminal_panel::ToggleFocus",
+      "ctrl-shift-`": "workspace::NewTerminal",
+      "ctrl-shift-e": "project_panel::ToggleFocus",
+      "ctrl-shift-g": "git_panel::ToggleFocus",
+      "ctrl-shift-m": "diagnostics::Deploy",
+      "ctrl-shift-o": "outline_panel::ToggleFocus",
+      "ctrl-\\": "pane::SplitRight",
+      "ctrl-shift-\\": "pane::SplitDown",
+      "ctrl-w": "pane::CloseActiveItem",
+      "ctrl-shift-w": "workspace::CloseWindow",
+      "ctrl-tab": "pane::ActivateNextItem",
+      "ctrl-shift-tab": "pane::ActivatePrevItem",
+      "alt-1": "pane::ActivateItem1",
+      "alt-2": "pane::ActivateItem2",
+      "alt-3": "pane::ActivateItem3",
+      "alt-4": "pane::ActivateItem4",
+      "alt-5": "pane::ActivateItem5",
+      "alt-6": "pane::ActivateItem6",
+      "alt-7": "pane::ActivateItem7",
+      "alt-8": "pane::ActivateItem8",
+      "alt-9": "pane::ActivateItem9",
+      "ctrl-k ctrl-s": "zed::OpenKeymap",
+      "ctrl-,": "zed::OpenSettings"
+    }
+  },
+  {
+    "context": "Editor",
+    "bindings": {
+      "ctrl-d": "editor::SelectNext",
+      "ctrl-shift-d": "editor::DuplicateLine",
+      "ctrl-shift-k": "editor::DeleteLine",
+      "alt-up": "editor::MoveLineUp",
+      "alt-down": "editor::MoveLineDown",
+      "ctrl-shift-up": "editor::AddSelectionAbove",
+      "ctrl-shift-down": "editor::AddSelectionBelow",
+      "ctrl-/": "editor::ToggleComments",
+      "ctrl-shift-/": "editor::ToggleBlockComment",
+      "ctrl-l": "editor::SelectLine",
+      "ctrl-shift-l": "editor::SplitSelectionIntoLines",
+      "f12": "editor::GoToDefinition",
+      "shift-f12": "editor::FindAllReferences",
+      "f2": "editor::Rename",
+      "ctrl-.": "editor::ToggleCodeActions",
+      "ctrl-space": "editor::ShowCompletions",
+      "ctrl-shift-space": "editor::ShowSignatureHelp"
+    }
+  },
+  {
+    "context": "Terminal",
+    "bindings": {
+      "ctrl-shift-c": "terminal::Copy",
+      "ctrl-shift-v": "terminal::Paste",
+      "ctrl-shift-n": "workspace::NewTerminal",
+      "ctrl-shift-w": "pane::CloseActiveItem"
+    }
+  },
+  {
+    "context": "ProjectPanel",
+    "bindings": {
+      "a": "project_panel::NewFile",
+      "shift-a": "project_panel::NewDirectory",
+      "r": "project_panel::Rename",
+      "d": "project_panel::Delete",
+      "x": "project_panel::Cut",
+      "c": "project_panel::Copy",
+      "p": "project_panel::Paste"
+    }
+  }
+]

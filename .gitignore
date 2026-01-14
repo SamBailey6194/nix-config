@@ -1,0 +1,8 @@
+# Editor temp files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files from install.sh
+*.bak

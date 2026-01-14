@@ -1,0 +1,63 @@
+#!/bin/bash
+
+echo "=== Pre-zedconfig Verification ==="
+echo ""
+
+echo "=== System Tools ==="
+which git >/dev/null && echo "✓ git" || echo "✗ git"
+which curl >/dev/null && echo "✓ curl" || echo "✗ curl"
+which entr >/dev/null && echo "✓ entr" || echo "✗ entr"
+which rg >/dev/null && echo "✓ ripgrep" || echo "✗ ripgrep"
+which fdfind >/dev/null && echo "✓ fd-find" || echo "✗ fd-find"
+which bat >/dev/null && echo "✓ bat" || echo "✗ bat"
+which jq >/dev/null && echo "✓ jq" || echo "✗ jq"
+which zsh >/dev/null && echo "✓ zsh" || echo "✗ zsh"
+echo ""
+
+echo "=== Editors ==="
+which zed >/dev/null && echo "✓ zed" || echo "✗ zed"
+echo ""
+
+echo "=== Node/npm ==="
+which node >/dev/null && echo "✓ node $(node --version)" || echo "✗ node"
+which npm >/dev/null && echo "✓ npm $(npm --version)" || echo "✗ npm"
+echo ""
+
+echo "=== npm Global Packages ==="
+which prettier >/dev/null && echo "✓ prettier" || echo "✗ prettier"
+which eslint >/dev/null && echo "✓ eslint" || echo "✗ eslint"
+which tsc >/dev/null && echo "✓ typescript" || echo "✗ typescript"
+which markdownlint-cli2 >/dev/null 2>&1 && echo "✓ markdownlint-cli2" || echo "✗ markdownlint-cli2"
+which markdown-toc >/dev/null && echo "✓ markdown-toc" || echo "✗ markdown-toc"
+which onchange >/dev/null && echo "✓ onchange" || echo "✗ onchange"
+echo ""
+
+echo "=== Python Tools ==="
+which python3 >/dev/null && echo "✓ python3 $(python3 --version)" || echo "✗ python3"
+which ruff >/dev/null && echo "✓ ruff" || echo "✗ ruff"
+which pyright >/dev/null && echo "✓ pyright" || echo "✗ pyright"
+which pip-audit >/dev/null && echo "✓ pip-audit" || echo "✗ pip-audit"
+echo ""
+
+echo "=== Rust Tools ==="
+which rustc >/dev/null && echo "✓ rustc $(rustc --version | cut -d' ' -f2)" || echo "✗ rustc"
+which cargo >/dev/null && echo "✓ cargo" || echo "✗ cargo"
+which just >/dev/null && echo "✓ just" || echo "✗ just"
+which rust-analyzer >/dev/null 2>&1 && echo "✓ rust-analyzer" || echo "✗ rust-analyzer"
+cargo audit --version >/dev/null 2>&1 && echo "✓ cargo-audit" || echo "✗ cargo-audit"
+echo ""
+
+echo "=== SSH Keys ==="
+[ -f ~/.ssh/id_ed25519_personal ] && echo "✓ personal key" || echo "✗ personal key"
+[ -f ~/.ssh/id_ed25519_syntek ] && echo "✓ syntek key" || echo "✗ syntek key"
+[ -f ~/.ssh/id_ed25519_mg ] && echo "✓ missional-gen key" || echo "✗ missional-gen key"
+[ -f ~/.ssh/config ] && echo "✓ ssh config" || echo "✗ ssh config"
+echo ""
+
+echo "=== Directories ==="
+[ -d ~/Repos/personal ] && echo "✓ ~/Repos/personal" || echo "✗ ~/Repos/personal"
+[ -d ~/Repos/syntek ] && echo "✓ ~/Repos/syntek" || echo "✗ ~/Repos/syntek"
+[ -d ~/Repos/missional-gen ] && echo "✓ ~/Repos/missional-gen" || echo "✗ ~/Repos/missional-gen"
+echo ""
+
+echo "=== Verification Complete ==="

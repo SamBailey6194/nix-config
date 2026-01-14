@@ -1,0 +1,6 @@
+[user]
+    name = syntek-studio
+    email = sam.bailey@syntekstudio.com
+
+[url "git@github-syntek:"]
+    insteadOf = git@github.com:

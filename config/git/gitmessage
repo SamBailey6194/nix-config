@@ -1,0 +1,20 @@
+
+# Title: Summary, imperative, start upper case, don't end with a period
+# No more than 50 chars. #### 50 chars is here:  #
+
+# Body: Explain *what* and *why* (not *how*).
+# Wrap at 72 chars. ################################## 72 chars is here: #
+
+# Files changed:
+#
+
+# Still to do:
+#
+
+# Types: feat, fix, docs, style, refactor, test, chore
+# Example: feat: add user authentication
+
+# Breaking changes: Start body with "BREAKING CHANGE:"
+
+# At the end: Include Co-authored-by for all contributors.
+# Co-authored-by: name <user@example.com>

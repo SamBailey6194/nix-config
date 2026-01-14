@@ -1,0 +1,68 @@
+#!/bin/sh
+set -e
+
+# Get staged files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$STAGED" ] && exit 0
+
+restage() {
+    echo "$STAGED" | grep -E "$1" | xargs -r git add 2>/dev/null || true
+}
+
+# Markdown
+if echo "$STAGED" | grep -qE '\.md$'; then
+    echo "→ Markdown"
+    for file in $(echo "$STAGED" | grep -E '\.md$'); do
+        if grep -q "<!-- toc -->" "$file" 2>/dev/null; then
+            npx markdown-toc -i "$file" 2>/dev/null || true
+        fi
+    done
+    echo "$STAGED" | grep -E '\.md$' | xargs -r npx prettier --write 2>/dev/null || true
+    echo "$STAGED" | grep -E '\.md$' | xargs -r npx markdownlint-cli2 2>/dev/null || true
+    restage '\.md$'
+fi
+
+# Python
+if echo "$STAGED" | grep -qE '\.py$'; then
+    echo "→ Python"
+    echo "$STAGED" | grep -E '\.py$' | xargs -r ruff format 2>/dev/null || true
+    echo "$STAGED" | grep -E '\.py$' | xargs -r ruff check --fix 2>/dev/null || true
+    restage '\.py$'
+fi
+
+# JavaScript/TypeScript
+if echo "$STAGED" | grep -qE '\.(js|jsx|ts|tsx)$'; then
+    echo "→ JS/TS"
+    echo "$STAGED" | grep -E '\.(js|jsx|ts|tsx)$' | xargs -r npx prettier --write 2>/dev/null || true
+    echo "$STAGED" | grep -E '\.(js|jsx|ts|tsx)$' | xargs -r npx eslint --fix 2>/dev/null || true
+    restage '\.(js|jsx|ts|tsx)$'
+fi
+
+# JSON
+if echo "$STAGED" | grep -qE '\.json$'; then
+    echo "→ JSON"
+    echo "$STAGED" | grep -E '\.json$' | xargs -r npx prettier --write 2>/dev/null || true
+    restage '\.json$'
+fi
+
+# Rust (project-level checks if Cargo.toml staged or rust files changed)
+if echo "$STAGED" | grep -qE '\.rs$'; then
+    echo "→ Rust"
+    cargo fmt -- --check 2>/dev/null || true
+    cargo clippy -- -D warnings 2>/dev/null || true
+fi
+
+# PHP
+if echo "$STAGED" | grep -qE '\.php$'; then
+    echo "→ PHP"
+    echo "$STAGED" | grep -E '\.php$' | xargs -r php-cs-fixer fix 2>/dev/null || true
+    restage '\.php$'
+fi
+
+# Django check (if manage.py is in the project)
+if [ -f "manage.py" ] && echo "$STAGED" | grep -qE '\.py$'; then
+    echo "→ Django"
+    python manage.py check 2>/dev/null || true
+fi
+
+exit 0
