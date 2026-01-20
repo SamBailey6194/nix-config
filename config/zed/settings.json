@@ -2,10 +2,10 @@
   "debugger": {
     "dock": "bottom"
   },
-  "theme": "One Dark",
+  "theme": "Ayu Dark",
   "ui_font_size": 16,
-  "buffer_font_family": "JetBrains Mono",
-  "buffer_font_size": 14,
+  "buffer_font_family": "Ubuntu Mono",
+  "buffer_font_size": 16.0,
   "format_on_save": "on",
   "tab_size": 2,
   "show_whitespaces": "selection",
@@ -15,8 +15,8 @@
   "terminal": {
     "shell": { "program": "/usr/bin/zsh" },
     "max_scroll_history_lines": 100000,
-    "font_size": 13,
-    "font_family": "JetBrains Mono"
+    "font_size": 14.0,
+    "font_family": "Ubuntu Mono"
   },
 
   "file_scan_exclusions": [
@@ -63,10 +63,6 @@
     "button": false
   },
 
-  "chat_panel": {
-    "button": "never"
-  },
-
   "agent": {
     "button": true,
     "dock": "right",
@@ -88,6 +84,12 @@
     "Python": {
       "tab_size": 4,
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "show_edit_predictions": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": {
         "external": {
           "command": "ruff",
@@ -102,7 +104,12 @@
     },
     "TypeScript": {
       "format_on_save": "on",
+      "colorize_brackets": true,
       "formatter": "prettier",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "code_actions_on_format": {
         "source.fixAll.eslint": true,
         "source.organizeImports": true
@@ -110,6 +117,11 @@
     },
     "TSX": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier",
       "code_actions_on_format": {
         "source.fixAll.eslint": true,
@@ -118,13 +130,11 @@
     },
     "JavaScript": {
       "format_on_save": "on",
-      "formatter": "prettier",
-      "code_actions_on_format": {
-        "source.fixAll.eslint": true
-      }
-    },
-    "JSX": {
-      "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier",
       "code_actions_on_format": {
         "source.fixAll.eslint": true
@@ -132,72 +142,126 @@
     },
     "Markdown": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "JSON": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "JSONC": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "HTML": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "CSS": {
       "format_on_save": "on",
-      "formatter": "prettier"
-    },
-    "SCSS": {
-      "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "YAML": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "TOML": {
-      "format_on_save": "on"
+      "format_on_save": "on",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
     },
     "Rust": {
       "tab_size": 4,
-      "format_on_save": "on"
-    },
-    "PHP": {
       "format_on_save": "on",
-      "formatter": {
-        "external": {
-          "command": "php-cs-fixer",
-          "arguments": ["fix", "--using-cache=no", "-"]
-        }
-      },
-      "language_servers": ["intelephense"]
-    },
-    "Blade": {
-      "format_on_save": "on",
-      "formatter": "prettier"
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
     },
     "GraphQL": {
       "format_on_save": "on",
+      "colorize_brackets": true,
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
       "formatter": "prettier"
     },
     "SQL": {
-      "format_on_save": "on"
+      "format_on_save": "on",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
     },
     "Dockerfile": {
-      "format_on_save": "on"
+      "format_on_save": "on",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
+    },
+    "PHP": {
+      "format_on_save": "on",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
+    },
+    "Markdown-Inline": {
+      "format_on_save": "on",
+      "auto_indent": true,
+      "auto_indent_on_paste": true,
+      "show_completions_on_input": true,
+      "ensure_final_newline_on_save": true,
+      "colorize_brackets": true
     }
   },
 
   "lsp": {
-    "pyright": {
+    "basedpyright": {
       "settings": {
-        "python.analysis": {
-          "typeCheckingMode": "basic",
-          "diagnosticMode": "workspace",
-          "autoSearchPaths": true
+        "basedpyright.analysis": {
+          "diagnosticsMode": "workspace",
+          "inlayHints": {
+            "callArguments": false
+          }
         }
       }
     },
@@ -211,7 +275,7 @@
     },
     "rust-analyzer": {
       "initialization_options": {
-        "checkOnSave": {
+        "check": {
           "command": "clippy"
         },
         "diagnostics": {
@@ -223,12 +287,13 @@
       }
     },
     "tailwindcss-language-server": {
-      "initialization_options": {
-        "userLanguages": {
-          "typescriptreact": "javascript",
-          "javascriptreact": "javascript",
-          "html": "html",
-          "php": "html"
+      "settings": {
+        "tailwindCSS": {
+          "emmetCompletions": true,
+          "classAttributes": ["class", "className", "ngClass"],
+          "experimental": {
+            "classRegex": ["tw`([^`]*)`", "tw=\"([^\"]*)\""]
+          }
         }
       }
     },
@@ -252,6 +317,10 @@
   },
 
   "file_types": {
-    "Blade": ["*.blade.php"]
+    "Blade": ["blade.php"]
+  },
+
+  "indent_guides": {
+    "enabled": true
   }
 }

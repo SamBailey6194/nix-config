@@ -15,16 +15,7 @@
       "ctrl-w": "pane::CloseActiveItem",
       "ctrl-shift-w": "workspace::CloseWindow",
       "ctrl-tab": "pane::ActivateNextItem",
-      "ctrl-shift-tab": "pane::ActivatePrevItem",
-      "alt-1": "pane::ActivateItem1",
-      "alt-2": "pane::ActivateItem2",
-      "alt-3": "pane::ActivateItem3",
-      "alt-4": "pane::ActivateItem4",
-      "alt-5": "pane::ActivateItem5",
-      "alt-6": "pane::ActivateItem6",
-      "alt-7": "pane::ActivateItem7",
-      "alt-8": "pane::ActivateItem8",
-      "alt-9": "pane::ActivateItem9",
+      "ctrl-shift-tab": "pane::ActivatePreviousItem",
       "ctrl-k ctrl-s": "zed::OpenKeymap",
       "ctrl-,": "zed::OpenSettings"
     }
@@ -33,14 +24,12 @@
     "context": "Editor",
     "bindings": {
       "ctrl-d": "editor::SelectNext",
-      "ctrl-shift-d": "editor::DuplicateLine",
       "ctrl-shift-k": "editor::DeleteLine",
       "alt-up": "editor::MoveLineUp",
       "alt-down": "editor::MoveLineDown",
       "ctrl-shift-up": "editor::AddSelectionAbove",
       "ctrl-shift-down": "editor::AddSelectionBelow",
       "ctrl-/": "editor::ToggleComments",
-      "ctrl-shift-/": "editor::ToggleBlockComment",
       "ctrl-l": "editor::SelectLine",
       "ctrl-shift-l": "editor::SplitSelectionIntoLines",
       "f12": "editor::GoToDefinition",
@@ -61,15 +50,15 @@
     }
   },
   {
-    "context": "ProjectPanel",
+    "context": "ProjectPanel && not_editing",
     "bindings": {
-      "ctrl+a": "project_panel::NewFile",
-      "ctrl+shift-a": "project_panel::NewDirectory",
-      "ctrl+r": "project_panel::Rename",
-      "ctrl+d": "project_panel::Delete",
-      "ctrl+x": "project_panel::Cut",
-      "ctrl+c": "project_panel::Copy",
-      "ctrl+p": "project_panel::Paste"
+      "a": "project_panel::NewFile",
+      "shift-a": "project_panel::NewDirectory",
+      "r": "project_panel::Rename",
+      "d": "project_panel::Delete",
+      "x": "project_panel::Cut",
+      "c": "project_panel::Copy",
+      "p": "project_panel::Paste"
     }
   }
 ]
