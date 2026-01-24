@@ -10,6 +10,12 @@
     ../../modules/core/common.nix
     ../../modules/core/nix-settings.nix
 
+    # Secrets management
+    ../../modules/core/secrets-laptop.nix
+
+    # SSH configuration (per-device keys)
+    ../../modules/core/ssh-config.nix
+
     # Hardware-specific
     ../../modules/hardware/amd-laptop.nix
 

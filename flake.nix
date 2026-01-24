@@ -85,13 +85,53 @@
       };
     };
 
-    # Development Shell (optional, for testing before installation)
+    # Development Shell (for secret management and Rust development)
     devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
       buildInputs = with nixpkgs.legacyPackages.x86_64-linux; [
+        # Core tools
         git
         vim
+
+        # Agenix for secrets management
         agenix.packages.x86_64-linux.default
+
+        # Rust toolchain for building secrets-verify and agenix-helper
+        cargo
+        rustc
+        rust-analyzer
+        clippy
+        rustfmt
+
+        # Additional dependencies for Rust tools
+        pkg-config
+        openssl
       ];
+
+      # Auto-build Rust tools when entering dev shell
+      shellHook = ''
+        echo "🦀 NixOS Config Dev Shell"
+        echo ""
+
+        if [ -d rust ]; then
+          echo "Building Rust tools (secrets-verify, agenix-helper)..."
+          cd rust
+          cargo build --release 2>&1 | grep -E "(Compiling|Finished|error)" || true
+          cd ..
+          echo ""
+
+          # Add Rust tools to PATH
+          export PATH="$PWD/rust/target/release:$PATH"
+          echo "✅ Rust tools available: secrets-verify, agenix-helper"
+          echo ""
+        fi
+
+        echo "Available commands:"
+        echo "  agenix -e <secret>     - Edit an encrypted secret"
+        echo "  agenix -r              - Rekey all secrets"
+        echo "  secrets-verify         - Verify deployed secrets"
+        echo "  agenix-helper          - Helper CLI for secrets management"
+        echo ""
+      '';
     };
   };
 }
