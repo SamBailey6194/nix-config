@@ -7,6 +7,7 @@
   imports = [
     ./modules/git.nix       # Git multi-account configuration
     ./modules/editor.nix    # Zed editor settings
+    ./modules/neovim.nix    # Neovim configuration
     ./modules/shell.nix     # Zsh + Oh My Zsh configuration
     ./modules/hyprland.nix  # Hyprland Wayland compositor
   ];

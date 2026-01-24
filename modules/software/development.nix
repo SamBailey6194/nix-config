@@ -6,8 +6,9 @@
 
   environment.systemPackages = with pkgs; [
     # IDEs and Editors
-    vscode              # Visual Studio Code
-    # zed is managed via home-manager
+    # vscode              # Visual Studio Code (managed via home-manager)
+    # zed                 # Managed via home-manager (see home/modules/editor.nix)
+    # neovim              # Managed via home-manager (see home/modules/neovim.nix)
 
     # Version Control
     git
@@ -48,13 +49,18 @@
     # rustfmt
     # clippy
 
-    # Language servers (for non-Zed editors)
-    # Most are handled by Zed, but useful for other editors
-    nodePackages.typescript-language-server
-    nodePackages.vscode-langservers-extracted
-    pyright
-    rust-analyzer
-    nil                 # Nix language server
+    # Language servers (shared by Zed, Neovim, and other editors)
+    nodePackages.typescript-language-server  # TypeScript/JavaScript
+    nodePackages.vscode-langservers-extracted  # HTML, CSS, JSON, ESLint
+    pyright                                    # Python type checking
+    rust-analyzer                              # Rust
+    nil                                        # Nix language server
+    lua-language-server                        # Lua (for Neovim config)
+
+    # Linters and formatters (shared by all editors)
+    ruff                                       # Python linter + formatter (fast!)
+    nodePackages.prettier                      # JS/TS/JSON/YAML/Markdown formatter
+    nodePackages.eslint                        # JavaScript/TypeScript linter
   ];
 
   # Docker configuration

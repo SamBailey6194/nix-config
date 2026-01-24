@@ -68,8 +68,9 @@ nix-config/
 │   ├── framework.nix
 │   └── devtower.nix
 │
-├── config/                 # Existing dotfiles (Phase 4: integrate with home-manager)
+├── config/                 # Dotfiles (Phase 4: integrated with home-manager)
 │   ├── git/, zed/
+│   └── hypr/                  # Modular Hyprland configs (base + per-device)
 │
 ├── linters/                # Shared linter configs
 └── justfile                # Task runner

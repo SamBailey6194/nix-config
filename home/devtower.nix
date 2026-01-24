@@ -20,6 +20,16 @@
     # (DaVinci Resolve Studio and Go XLR Utility are in system packages)
   ];
 
+  # Shell aliases for AMD GPU applications
+  programs.zsh.shellAliases = {
+    # DaVinci Resolve Studio with AMD GPU (Rusticl) support
+    # Must run under XWayland (not native Wayland) due to qtwayland version mismatch
+    resolve = "ROC_ENABLE_PRE_VEGA=1 RUSTICL_ENABLE=amdgpu,amdgpu-pro,radv,radeon,radeonsi DRI_PRIME=1 QT_QPA_PLATFORM=xcb davinci-resolve-studio";
+
+    # Shorter alias
+    dvr = "ROC_ENABLE_PRE_VEGA=1 RUSTICL_ENABLE=amdgpu,amdgpu-pro,radv,radeon,radeonsi DRI_PRIME=1 QT_QPA_PLATFORM=xcb davinci-resolve-studio";
+  };
+
   # DevTower-specific Hyprland settings
   wayland.windowManager.hyprland.settings = {
     # Multi-monitor setup (when you have multiple monitors)
