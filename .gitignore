@@ -6,3 +6,11 @@
 
 # Backup files from install.sh
 *.bak
+
+# Nix build results
+result
+result-*
+
+# Secrets (Phase 2+)
+secrets/*.age
+!secrets/secrets.nix
