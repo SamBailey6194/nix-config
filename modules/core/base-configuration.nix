@@ -4,6 +4,14 @@
   # Base configuration shared across ALL devices
   # Device-specific settings go in hosts/{device}/configuration.nix
 
+  imports = [
+    ../software/browsers.nix       # LibreWolf, Firefox, Chrome
+    ../software/communication.nix  # Discord, Teams, Zoom, Slack, Obsidian
+    ../software/media.nix          # VLC, Spotify, image viewers
+    ../software/development.nix    # VS Code, Docker, language tools
+    ../software/office.nix         # LibreOffice
+  ];
+
   # Boot Loader (can be overridden per-device)
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -16,8 +24,9 @@
   i18n.defaultLocale = "en_GB.UTF-8";
 
   # Base system packages (common to all devices)
+  # Note: Most software is now in modules/software/*.nix
   environment.systemPackages = with pkgs; [
-    # Core utilities
+    # Core utilities only
     vim
     wget
     git
@@ -26,12 +35,7 @@
     btop
     fastfetch
 
-    # Browsers
-    librewolf      # Personal - hardened security
-    firefox        # Dev testing
-    google-chrome  # Claude Chrome extension
-
-    # Audio tools
+    # Audio tools (Wayland/PipeWire specific)
     qpwgraph       # PipeWire graph manager
     pavucontrol    # Volume control
   ];
