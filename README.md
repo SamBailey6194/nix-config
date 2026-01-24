@@ -1,351 +1,394 @@
-# Zedconfig
+# NixOS Full Configuration
 
-Portable Zed IDE and development environment configuration for multi-device
-deployment. One-command installation sets up SSH keys, installs all development
-tools, and symlinks configs to their expected locations.
+## Final Project Tree
 
-**Supports:** Native Linux, WSL (Windows Subsystem for Linux), macOS
-
-## Quick Start
-
-### New Device (Complete Setup)
-
-```bash
-# 1. Download and run SSH setup
-curl -fsSL https://raw.githubusercontent.com/SamBailey6194/zedconfig/main/ssh-setup.sh -o ssh-setup.sh
-chmod +x ssh-setup.sh
-./ssh-setup.sh
-
-# 2. Add the displayed public keys to your GitHub accounts
-#    → Log in to each GitHub account
-#    → Go to Settings > SSH and GPG keys > New SSH key
-#    → Paste the corresponding public key
-
-# 3. Test SSH connections
-ssh -T git@github-personal
-ssh -T git@github-syntek
-ssh -T git@github-missionalgen
-
-# 4. Clone and run the setup wizard
-git clone git@github-personal:SamBailey6194/zedconfig.git ~/Repos/personal/zedconfig
-cd ~/Repos/personal/zedconfig
-chmod +x *.sh
-./setup.sh
-```
-
-### Existing Device (Already Have SSH Keys)
-
-```bash
-git clone git@github-personal:SamBailey6194/zedconfig.git ~/Repos/personal/zedconfig
-cd ~/Repos/personal/zedconfig
-chmod +x *.sh
-./setup.sh  # Guided wizard, or run individual scripts below:
-
-# Individual scripts:
-# ./install.sh --deps  # Install tools
-# ./install.sh         # Symlink configs
-# ./verify-setup.sh    # Check everything
-```
-
-## Project Structure
-
-```
-zedconfig/
-├── setup.sh                # Guided setup wizard (runs everything)
-├── ssh-setup.sh            # SSH key generation for multi-account GitHub
-├── install.sh              # Tool installation (--deps) and config symlinks
-├── verify-setup.sh         # Verification script
+nix-config/
+│
+├── flake.nix
+├── flake.lock
+├── justfile
+├── README.md
+│
+├── hosts/
+│ │
+│ │ # ─── PHYSICAL DEVICES ───
+│ ├── framework/
+│ │ ├── configuration.nix
+│ │ └── hardware-configuration.nix
+│ │
+│ ├── devtower/
+│ │ ├── configuration.nix
+│ │ └── hardware-configuration.nix
+│ │
+│ │ # ─── LOCAL VMS ───
+│ ├── vm-desktop/
+│ │ └── configuration.nix
+│ │
+│ ├── vm-server/
+│ │ └── configuration.nix
+│ │
+│ │ # ─── CLOUD (Phase 8+) ───
+│ ├── cloud-staging/
+│ │ └── configuration.nix
+│ │
+│ │ # ─── HOMELAB (Phase 12) ───
+│ ├── nas/
+│ │ ├── configuration.nix
+│ │ └── hardware-configuration.nix
+│ │
+│ ├── server/
+│ │ ├── configuration.nix
+│ │ └── hardware-configuration.nix
+│ │
+│ └── router/
+│ ├── configuration.nix
+│ └── hardware-configuration.nix
+│
+├── modules/
+│ │
+│ ├── core/
+│ │ ├── common.nix
+│ │ ├── users.nix
+│ │ └── nix-settings.nix
+│ │
+│ ├── desktop/
+│ │ ├── hyprland/
+│ │ │ ├── default.nix
+│ │ │ ├── framework.nix
+│ │ │ └── devtower.nix
+│ │ ├── openrgb.nix
+│ │ └── audio.nix
+│ │
+│ ├── server/
+│ │ ├── nginx.nix
+│ │ ├── gunicorn.nix
+│ │ ├── cloudflared.nix
+│ │ ├── openbao.nix
+│ │ └── vaultwarden.nix
+│ │
+│ ├── networking/
+│ │ ├── wireguard/
+│ │ │ ├── default.nix
+│ │ │ ├── hub.nix
+│ │ │ └── client.nix
+│ │ ├── tailscale.nix
+│ │ ├── mullvad.nix
+│ │ └── firewall.nix
+│ │
+│ └── security/
+│ ├── secrets.nix
+│ └── rust-wrapper.nix
+│
+├── home/
+│ ├── default.nix
+│ ├── shell.nix
+│ ├── editor.nix
+│ ├── git.nix
+│ └── hyprland.nix
+│
 ├── config/
-│   ├── git/
-│   │   ├── config                  # Main gitconfig with conditional includes
-│   │   ├── config-personal         # Personal GitHub account
-│   │   ├── config-syntek           # Syntek GitHub account
-│   │   ├── config-missional-gen    # Missional Gen GitHub account
-│   │   ├── gitmessage              # Commit message template
-│   │   └── hooks/
-│   │       └── pre-commit          # Global pre-commit hook
-│   └── zed/
-│       ├── settings.json   # Editor settings
-│       ├── keymap.json     # Key bindings
-│       └── debug.json      # Debug configurations
-├── linters/
-│   ├── .editorconfig       # Universal editor config
-│   ├── .eslintrc.json      # ESLint (legacy config)
-│   ├── eslint.config.js    # ESLint (flat config)
-│   ├── .markdownlint.json  # Markdown linting
-│   ├── .prettierrc         # Prettier formatting
-│   ├── pyrightconfig.json  # Python type checking
-│   └── ruff.toml           # Python linting/formatting
-└── justfile                # Task runner commands
-```
+│ │
+│ ├── git/
+│ │ ├── config
+│ │ ├── config-personal
+│ │ ├── config-syntek
+│ │ ├── config-missional-gen
+│ │ ├── gitmessage
+│ │ └── hooks/
+│ │ └── pre-commit
+│ │
+│ ├── zsh/
+│ │ ├── .zshrc
+│ │ ├── .zshenv
+│ │ └── aliases.zsh
+│ │
+│ ├── nvim/
+│ │ ├── init.lua
+│ │ └── lua/
+│ │ ├── options.lua
+│ │ ├── keymaps.lua
+│ │ ├── autocmds.lua
+│ │ └── plugins/
+│ │ ├── init.lua
+│ │ ├── lsp.lua
+│ │ ├── treesitter.lua
+│ │ ├── telescope.lua
+│ │ ├── cmp.lua
+│ │ └── ui.lua
+│ │
+│ ├── zed/
+│ │ ├── settings.json
+│ │ ├── keymap.json
+│ │ └── debug.json
+│ │
+│ ├── hypr/
+│ │ ├── hyprland.base.conf
+│ │ ├── hyprland.framework.conf
+│ │ └── hyprland.devtower.conf
+│ │
+│ ├── waybar/
+│ │ ├── config.jsonc
+│ │ └── style.css
+│ │
+│ ├── wofi/
+│ │ ├── config
+│ │ └── style.css
+│ │
+│ ├── dunst/
+│ │ └── dunstrc
+│ │
+│ ├── kitty/
+│ │ └── kitty.conf
+│ │
+│ └── starship/
+│ └── starship.toml
+│
+├── secrets/
+│ ├── secrets.nix
+│ │
+│ │ # ─── DEVICE KEYS ───
+│ ├── wireguard-framework.age
+│ ├── wireguard-devtower.age
+│ ├── wireguard-server.age
+│ ├── wireguard-nas.age
+│ ├── wireguard-router.age
+│ │
+│ │ # ─── GITHUB SSH ───
+│ ├── github-personal-ssh.age
+│ ├── github-personal-ssh-passphrase.age
+│ ├── github-syntek-ssh.age
+│ ├── github-syntek-ssh-passphrase.age
+│ ├── github-missionalgen-ssh.age
+│ ├── github-missionalgen-ssh-passphrase.age
+│ │
+│ │ # ─── SERVICES ───
+│ ├── cloudflare-tunnel.age
+│ ├── cloudflare-api-token.age
+│ ├── nginx-basic-auth.age
+│ │
+│ │ # ─── OPENBAO BOOTSTRAP (Phase 9+) ───
+│ ├── vault-token-framework.age
+│ ├── vault-token-devtower.age
+│ └── vault-token-server.age
+│
+├── packages/
+│ │
+│ └── secret-wrapper/
+│ ├── Cargo.toml
+│ ├── Cargo.lock
+│ └── src/
+│ ├── main.rs
+│ │
+│ ├── cli/
+│ │ ├── mod.rs
+│ │ ├── provision.rs
+│ │ ├── get.rs
+│ │ ├── set.rs
+│ │ ├── rotate.rs
+│ │ ├── encrypt.rs
+│ │ ├── decrypt.rs
+│ │ ├── ssh.rs
+│ │ └── api.rs
+│ │
+│ ├── crypto/
+│ │ ├── mod.rs
+│ │ ├── engine.rs
+│ │ ├── django.rs
+│ │ ├── totp.rs
+│ │ ├── ip.rs
+│ │ ├── tokens.rs
+│ │ └── zeroize.rs
+│ │
+│ ├── vault/
+│ │ ├── mod.rs
+│ │ ├── client.rs
+│ │ └── paths.rs
+│ │
+│ ├── api_clients/
+│ │ ├── mod.rs
+│ │ ├── cloudflare.rs
+│ │ ├── github.rs
+│ │ └── traits.rs
+│ │
+│ ├── rotation/
+│ │ ├── mod.rs
+│ │ ├── scheduler.rs
+│ │ ├── tls.rs
+│ │ ├── tokens.rs
+│ │ ├── totp_keys.rs
+│ │ └── ip_keys.rs
+│ │
+│ ├── server/
+│ │ ├── mod.rs
+│ │ └── socket.rs
+│ │
+│ └── config/
+│ ├── mod.rs
+│ └── rotation_policy.rs
+│
+├── scripts/
+│ ├── install.sh
+│ ├── bootstrap-secrets.sh
+│ └── generate-hardware-config.sh
+│
+├── docs/
+│ ├── SETUP.md
+│ ├── SECRETS.md
+│ ├── WORKFLOW.md
+│ └── TROUBLESHOOTING.md
+│
+└── linters/
+├── .editorconfig
+├── .eslintrc.json
+├── eslint.config.js
+├── .markdownlint.json
+├── .prettierrc
+├── pyrightconfig.json
+└── ruff.toml
 
-## Scripts
+## Phase 1: Foundation
 
-| Script                | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `./setup.sh`          | **Guided wizard** - walks through entire setup with prompts |
-| `./ssh-setup.sh`      | Generate SSH keys and config for multi-account GitHub       |
-| `./install.sh --deps` | Install all development tools and dependencies              |
-| `./install.sh`        | Symlink configuration files to system locations             |
-| `./verify-setup.sh`   | Check all tools and configs are properly set up             |
+Goal: Get NixOS + Hyprland running on one device (framework or devtower)
 
-## What Gets Installed
+- Set up nix-config repo structure
+- Create flake.nix with basic inputs (nixpkgs, home-manager, agenix, hyprland)
+- Write core modules (common.nix, users.nix)
+- Write base Hyprland module
+- Create first host configuration
+- Boot NixOS installer, partition, install
+- Clone repo and rebuild with your config
+- Get Hyprland working with basic keybinds
 
-### `./install.sh --deps`
+Secrets: None yet — just get it booting
 
-| Category    | Tools                                                             |
-| ----------- | ----------------------------------------------------------------- |
-| **System**  | git, curl, zsh, jq, ripgrep, fd-find, bat, entr                   |
-| **Shell**   | Oh My Zsh                                                         |
-| **Node.js** | nvm, Node.js LTS, prettier, eslint, typescript, markdownlint-cli2 |
-| **Python**  | pipx, ruff, basedpyright, pip-audit                               |
-| **Rust**    | rustup, cargo, clippy, rustfmt, rust-analyzer, just, cargo-audit  |
-| **GitHub**  | GitHub CLI (gh)                                                   |
-| **PHP**     | php-cs-fixer (if composer is installed)                           |
+## Phase 2: Secrets with agenix
 
-### `./install.sh` (Symlinks)
+Goal: Manage SSH keys and sensitive config securely
 
-| Source                        | Target                                 |
-| ----------------------------- | -------------------------------------- |
-| `config/zed/settings.json`    | `~/.config/zed/settings.json`          |
-| `config/zed/keymap.json`      | `~/.config/zed/keymap.json`            |
-| `config/zed/debug.json`       | `~/.config/zed/debug.json`             |
-| `config/git/config`           | `~/.gitconfig`                         |
-| `config/git/config-*`         | `~/.gitconfig-*`                       |
-| `config/git/gitmessage`       | `~/.gitmessage`                        |
-| `config/git/hooks/pre-commit` | `~/.config/git/hooks/pre-commit`       |
-| `linters/.editorconfig`       | `~/.editorconfig`                      |
-| `linters/.eslintrc.json`      | `~/.eslintrc.json`                     |
-| `linters/eslint.config.js`    | `~/eslint.config.js`                   |
-| `linters/.markdownlint.json`  | `~/.markdownlint.json`                 |
-| `linters/.prettierrc`         | `~/.prettierrc`                        |
-| `linters/ruff.toml`           | `~/.config/ruff/ruff.toml`             |
-| `linters/pyrightconfig.json`  | `~/.config/pyright/pyrightconfig.json` |
-| `justfile`                    | `~/justfile`                           |
+- Set up secrets/secrets.nix with machine host keys
+- Create encrypted secrets for GitHub SSH keys (personal, syntek, missionalgen)
+- Create encrypted Wireguard keys
+- Wire secrets into host configs via age.secrets
+- Test that secrets decrypt at boot and land in correct paths
 
-## Multi-Account Git Setup
+Secrets: GitHub SSH keys, Wireguard keys (all via agenix)
 
-Directory-based conditional includes automatically switch GitHub accounts:
+## Phase 3: Second Device
 
-| Directory                | GitHub Account   | SSH Host              |
-| ------------------------ | ---------------- | --------------------- |
-| `~/Repos/personal/`      | SamBailey6194    | `github-personal`     |
-| `~/Repos/syntek/`        | syntek-studio    | `github-syntek`       |
-| `~/Repos/missional-gen/` | sam-missionalgen | `github-missionalgen` |
+Goal: Framework and devtower both running from same config
 
-### Clone Examples
+- Add second host configuration
+- Split Hyprland config into base + device-specific (framework.nix, devtower.nix)
+- Add device-specific modules (laptop power management, PC OpenRGB)
+- Add second device's host key to secrets.nix
+- Rekey secrets so both devices can decrypt shared secrets
+- Install NixOS on second device
+- Verify both machines rebuild from same repo
 
-```bash
-# Personal repos
-git clone git@github-personal:SamBailey6194/myrepo.git ~/Repos/personal/myrepo
+Secrets: Same as Phase 2, now decryptable by both devices
 
-# Syntek repos
-git clone git@github-syntek:syntek-studio/project.git ~/Repos/syntek/project
+## Phase 4: Home Manager + Dotfiles
 
-# Missional Gen repos
-git clone git@github-missionalgen:sam-missionalgen/app.git ~/Repos/missional-gen/app
-```
+Goal: Manage user environment declaratively
 
-### Verify Git Account
+- Set up Home Manager integration in flake
+- Create home modules (shell, editor, hyprland user config)
+- Move config files into config/ directory (git, zsh, nvim, zed, hypr)
+- Wire Home Manager to symlink configs into place
+- Move Hyprland configs to config/hypr/ with base + per-device files
 
-```bash
-cd ~/Repos/personal/any-repo && git config user.email
-# → samabailey6194@gmail.com
+Secrets: Unchanged
 
-cd ~/Repos/syntek/any-repo && git config user.email
-# → sam.bailey@syntekstudio.com
+## Phase 5: Local VM Testing
 
-cd ~/Repos/missional-gen/any-repo && git config user.email
-# → sam@missionalgen.co.uk
-```
+Goal: Test config changes before deploying to real hardware
 
-## WSL (Windows Subsystem for Linux)
+- Add vm-desktop configuration with QEMU virtualisation
+- Add vm-server configuration for testing server modules
+- Create just commands for building and running VMs
+- Establish workflow: change → test in VM → deploy to hardware
 
-This config works identically on native Linux and WSL. When running on Windows:
+Secrets: VMs don't need real secrets — use dummy values or skip
 
-1. **Install WSL:**
+## Phase 6: Wireguard Network
 
-   ```powershell
-   wsl --install
-   ```
+Goal: Connect your devices over VPN
 
-2. **Run setup inside WSL:**
+- Write Wireguard module (hub and client variants)
+- Decide topology (which device is hub — probably devtower or router later)
+- Generate keypairs for each device, store in agenix
+- Configure peers in Wireguard module
+- Test connectivity between devices over VPN
 
-   ```bash
-   # All commands run in Ubuntu/WSL terminal
-   ./setup.sh
-   ```
+Secrets: Wireguard private keys for each device
 
-3. **Configure Zed (on Windows) to use WSL terminal:**
-   ```json
-   "terminal": {
-     "shell": {
-       "program": "wsl.exe",
-       "args": ["-d", "Ubuntu"]
-     }
-   }
-   ```
+## Phase 7: Server Modules (Prep for Hetzner)
 
-### File Access in WSL
+Goal: Build server infrastructure locally so it's ready when you get Hetzner
 
-| From          | Access                         |
-| ------------- | ------------------------------ |
-| WSL → Windows | `/mnt/c/Users/YourName/`       |
-| Windows → WSL | `\\wsl$\Ubuntu\home\username\` |
+- Write nginx module
+- Write Cloudflare Tunnel module (cloudflared)
+- Write gunicorn + uvicorn module
+- Test in vm-server locally
+- Expose test services through Cloudflare Tunnel (if you have a domain ready)
 
-## Language Support
+Secrets: Cloudflare tunnel credentials, nginx basic auth (all agenix)
 
-| Language              | LSP                         | Formatter    | Linter       |
-| --------------------- | --------------------------- | ------------ | ------------ |
-| Python                | basedpyright                | ruff         | ruff         |
-| TypeScript/JavaScript | typescript-language-server  | prettier     | eslint       |
-| Rust                  | rust-analyzer               | rustfmt      | clippy       |
-| PHP                   | intelephense                | php-cs-fixer | -            |
-| Markdown              | -                           | prettier     | markdownlint |
-| JSON/YAML/HTML/CSS    | -                           | prettier     | -            |
-| GraphQL               | graphql-language-service    | prettier     | -            |
-| Tailwind CSS          | tailwindcss-language-server | -            | -            |
+## Phase 8: Hetzner Staging Environment
 
-## Debug Configurations
+Goal: Deploy server config to cloud for staging
 
-Pre-configured debug tasks in `debug.json`:
+- Provision Hetzner VM
+- Add cloud-staging host configuration
+- Deploy NixOS to Hetzner (nixos-infect or manual install)
+- Point Cloudflare Tunnel to staging server
+- Test full stack: nginx → gunicorn → app
 
-| Language    | Configurations                                              |
-| ----------- | ----------------------------------------------------------- |
-| **Python**  | Active File, Module, Django Runserver, Django Shell, Pytest |
-| **Node.js** | Active File, npm dev/start, Next.js, Vite, Jest             |
-| **Rust**    | Debug Binary, Release, Tests, Current Test                  |
-| **PHP**     | Active File, Xdebug, Laravel Artisan, PHPUnit               |
+Secrets: Same agenix secrets, staging VM added to secrets.nix
 
-## Key Bindings
+## Phase 9: OpenBao Setup
 
-### Workspace
+Goal: Migrate from agenix-only to OpenBao for runtime secrets
 
-| Key              | Action               |
-| ---------------- | -------------------- |
-| `Ctrl+P`         | File finder          |
-| `Ctrl+Shift+P`   | Command palette      |
-| `Ctrl+,`         | Open settings        |
-| `Ctrl+Shift+E`   | Toggle file explorer |
-| `Ctrl+Shift+G`   | Toggle git panel     |
-| `Ctrl+Shift+O`   | Toggle outline panel |
-| `Ctrl+Shift+M`   | Toggle diagnostics   |
-| `Ctrl+`` `       | Toggle terminal      |
-| `Ctrl+Shift+`` ` | New terminal         |
-| `Ctrl+\`         | Split pane right     |
-| `Ctrl+Shift+\`   | Split pane down      |
-| `Ctrl+W`         | Close tab            |
-| `Ctrl+Tab`       | Next tab             |
-| `Ctrl+Shift+Tab` | Previous tab         |
+- Deploy OpenBao on Hetzner server
+- Initialise and unseal OpenBao
+- Create secret structure (devices, services, keys)
+- Migrate secrets from agenix to OpenBao (keep agenix for bootstrap token only)
+- Write basic Rust wrapper (provision command)
+- Test: device boots → agenix decrypts OpenBao token → Rust fetches remaining secrets
 
-### Editor
+Secrets: Bootstrap token in agenix, everything else in OpenBao
 
-| Key                  | Action                 |
-| -------------------- | ---------------------- |
-| `Ctrl+D`             | Select next occurrence |
-| `Ctrl+Shift+L`       | Select all occurrences |
-| `Ctrl+L`             | Select line            |
-| `Ctrl+/`             | Toggle comment         |
-| `Ctrl+Shift+K`       | Delete line            |
-| `Alt+Up/Down`        | Move line up/down      |
-| `Ctrl+Shift+Up/Down` | Add cursor above/below |
-| `F12`                | Go to definition       |
-| `Shift+F12`          | Find all references    |
-| `F2`                 | Rename symbol          |
-| `Ctrl+.`             | Code actions           |
-| `Ctrl+Space`         | Show completions       |
+## Phase 10: Rust Wrapper Expansion
 
-### Project Panel
+Goal: Full secrets management via Rust
 
-| Key       | Action        |
-| --------- | ------------- |
-| `a`       | New file      |
-| `Shift+A` | New directory |
-| `r`       | Rename        |
-| `d`       | Delete        |
-| `x`       | Cut           |
-| `c`       | Copy          |
-| `p`       | Paste         |
+- Add CLI commands (get, set, list, ssh)
+- Add encryption modules (Django-compatible, TOTP, IP)
+- Add API clients (Cloudflare, GitHub)
+- Add rotation scheduler (TLS, signing keys)
+- Integrate with NixOS (systemd service, provision before other services start)
+- Add Unix socket server for other services to query secrets
 
-## Just Commands
+Secrets: All managed via OpenBao, accessed via Rust wrapper
 
-```bash
-just lint       # Run all linters
-just format     # Run all formatters
-just audit      # Full security audit (npm, pip, cargo)
-just watch-md   # Watch and lint markdown files
-just watch-py   # Watch and lint Python files
-just watch-ts   # Watch and lint TypeScript files
-```
+## Phase 11: Production Workflow
 
-## Zed Layout
+Goal: Proper CI/CD pipeline
 
-```
-┌──────────┬─────────────────────────┬──────────────┐
-│ Files    │                         │              │
-│ (280px)  │      Main Editor        │    Agent     │
-├──────────┤    (multiple tabs)      │   (480px)    │
-│ Git      │                         │              │
-│ Panel    │                         │              │
-├──────────┤                         │              │
-│ Outline  │                         │              │
-├──────────┴─────────────────────────┴──────────────┤
-│              Terminal (zsh)                       │
-│           (100,000 line scrollback)               │
-└───────────────────────────────────────────────────┘
-```
+- Establish branch strategy (feature → dev → staging → main)
+- Add GitHub Actions for building and testing configs
+- Staging deploys automatically on merge to staging branch
+- Production (main) requires manual approval or tag
+- Devices pull from main: nixos-rebuild switch --flake github:user/nix-config#hostname
 
-## Troubleshooting
+## Phase 12: Additional Infrastructure
 
-### SSH Connection Fails
+Goal: Expand to full homelab
 
-```bash
-# Test connection
-ssh -T git@github-personal
-
-# Check SSH agent
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519_personal
-
-# Verify config
-cat ~/.ssh/config
-```
-
-### Wrong Git Account
-
-```bash
-# Check which account is active
-git config user.email
-
-# Ensure you're in the right directory
-# ~/Repos/personal/ → personal account
-# ~/Repos/syntek/ → syntek account
-```
-
-### Zed Not Finding Tools
-
-```bash
-# Verify tools are installed
-./verify-setup.sh
-
-# Restart Zed after installing dependencies
-# Tools should be in PATH
-which ruff prettier eslint
-```
-
-### WSL: Zed Can't Access Files
-
-Make sure you're working in the WSL filesystem (`/home/user/`), not the Windows
-filesystem (`/mnt/c/`). Performance is much better in the native WSL filesystem.
-
-## Updating
-
-```bash
-cd ~/Repos/personal/zedconfig
-git pull
-./install.sh  # Re-symlink if needed
-```
-
-## License
-
-MIT
+- Add NAS configuration
+- Add router configuration (if running NixOS on router)
+- Add Raspberry Pi configuration (if applicable)
+- Integrate Tailscale or expand Wireguard mesh
+- Add Mullvad exit node on server
+- Add Vaultwarden for password management
