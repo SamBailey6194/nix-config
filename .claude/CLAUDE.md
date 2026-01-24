@@ -27,41 +27,55 @@ Personal NixOS configuration with Hyprland, dotfiles, and Rust security wrapper 
 
 ## Architecture
 
+**Modular Design**: Shared base configuration + device-specific additions
+
 ```
 nix-config/
-├── flake.nix               # Flake inputs and outputs
-├── flake.lock              # Locked dependencies (generated)
+├── flake.nix               # Flake inputs: nixpkgs, home-manager, affinity-nix
+├── flake.lock              # Locked dependencies
 │
-├── hosts/                  # Per-device NixOS configurations
-│   └── laptop-intel/       # Current Intel i5-10210U laptop
-│       ├── configuration.nix
-│       └── hardware-configuration.nix
+├── hosts/                  # Per-device configs (minimal - just imports modules)
+│   ├── laptop-intel/       # Intel i5-10210U, 32GB, Intel UHD Graphics
+│   ├── framework/          # AMD Ryzen + Radeon, 64GB (future)
+│   └── devtower/           # AMD CPU + GPU, 64GB, Go XLR (future)
 │
-├── modules/                # Reusable NixOS modules
+├── modules/                # Reusable modules (composable)
 │   ├── core/
-│   │   ├── common.nix      # System-wide common config
-│   │   ├── users.nix       # User account definitions
-│   │   └── nix-settings.nix # Nix daemon settings
-│   └── desktop/
-│       └── hyprland/       # Hyprland Wayland compositor
-│           └── default.nix
+│   │   ├── base-configuration.nix  # Shared settings for ALL devices
+│   │   ├── common.nix              # Base packages
+│   │   └── nix-settings.nix        # Nix daemon settings
+│   │
+│   ├── hardware/           # Hardware-specific modules
+│   │   ├── intel-laptop.nix   # Intel CPU + integrated GPU
+│   │   ├── amd-laptop.nix     # AMD CPU + dedicated GPU
+│   │   ├── amd-desktop.nix    # AMD desktop (full performance)
+│   │   └── go-xlr.nix         # Go XLR audio interface (devtower only)
+│   │
+│   ├── software/           # Software suites
+│   │   └── creative.nix       # DaVinci Resolve Studio
+│   │
+│   ├── desktop/
+│   │   └── hyprland/          # Hyprland Wayland compositor
+│   │
+│   └── users/              # Device-specific user accounts
+│       ├── laptop.nix         # sam-laptop
+│       ├── framework.nix      # sam-framework
+│       └── devtower.nix       # sam-desktop
 │
-├── home/                   # Home Manager user environment
-│   └── default.nix         # User packages and dotfiles
+├── home/                   # Home Manager (user environment)
+│   ├── common.nix             # Shared dotfiles, packages, programs
+│   ├── laptop.nix             # Device-specific additions
+│   ├── framework.nix
+│   └── devtower.nix
 │
-├── config/                 # Existing dotfiles (Phase 4: will integrate with home-manager)
-│   ├── git/                # Multi-account git setup
-│   │   ├── config, config-personal, config-syntek, config-missional-gen
-│   │   └── hooks/pre-commit
-│   └── zed/
-│       ├── settings.json, keymap.json
+├── config/                 # Existing dotfiles (Phase 4: integrate with home-manager)
+│   ├── git/, zed/
 │
 ├── linters/                # Shared linter configs
-│   └── .editorconfig, .eslintrc.json, .markdownlint.json, etc.
-│
-├── install.sh              # Legacy: symlinks dotfiles (pre-NixOS)
 └── justfile                # Task runner
 ```
+
+See `ARCHITECTURE.md` for detailed explanation of the modular design.
 
 ## Commands
 
@@ -97,14 +111,16 @@ Verify with: `git config user.email` in each directory.
 
 ## Current Hosts
 
-| Host | Device | CPU | GPU | Status |
-|------|--------|-----|-----|--------|
-| `laptop-intel` | Intel i5-10210U laptop | i5-10210U | Intel UHD CML GT2 | Phase 1 - Ready for install |
-| `framework` | Framework AMD laptop | AMD Ryzen | AMD Radeon | Future - Phase 3 |
-| `devtower` | AMD desktop tower | AMD | AMD Radeon | Future - Phase 3 |
-| `nas` | NAS server | TBD | TBD | Future - Phase 12 |
-| `cloud-staging` | Hetzner cloud VM | TBD | TBD | Future - Phase 8 |
-| `router` | DIY router | TBD | TBD | Future - Phase 12 |
+| Host | User | Device | CPU | GPU | RAM | Software | Status |
+|------|------|--------|-----|-----|-----|----------|--------|
+| `laptop-intel` | sam-laptop | Intel laptop | i5-10210U | Intel UHD | 32GB | Affinity Apps | ✅ Ready for install |
+| `framework` | sam-framework | Framework AMD | AMD Ryzen | AMD Radeon | 64GB | Affinity + DaVinci | ✅ Configured (future) |
+| `devtower` | sam-desktop | AMD desktop | AMD | AMD Radeon | 64GB | Affinity + DaVinci + Go XLR | ✅ Configured (future) |
+| `nas` | TBD | NAS server | TBD | TBD | TBD | - | Future - Phase 12 |
+| `cloud-staging` | TBD | Hetzner VM | TBD | TBD | TBD | Server stack | Future - Phase 8 |
+| `router` | TBD | DIY router | TBD | TBD | TBD | Wireguard, firewall | Future - Phase 12 |
+
+**Note**: Each device has a separate user account with separate password and home directory.
 
 ## Installation
 

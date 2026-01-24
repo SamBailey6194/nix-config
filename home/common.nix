@@ -1,14 +1,16 @@
 { config, pkgs, ... }:
 
 {
-  # Home Manager configuration for user: sam-dev
-  # This is Phase 1 - basic setup
-  # Full dotfiles integration happens in Phase 4
+  # Shared Home Manager configuration for ALL users/devices
+  # Device-specific additions go in home/{laptop,framework,devtower}.nix
 
   # Home Manager state version
   home.stateVersion = "24.11";
 
-  # Basic user packages
+  # Fonts
+  fonts.fontconfig.enable = true;
+
+  # Shared packages across all devices
   home.packages = with pkgs; [
     # Development tools
     vscode
@@ -26,20 +28,52 @@
     # Productivity
     obsidian
     discord
+
+    # Fonts
+    ubuntu_font_family  # Ubuntu Mono for Zed
+
+    # Claude Code CLI
+    # Note: Claude Code plugins should be configured in ~/.config/claude/
+    # after installation. Nix manages the CLI, but plugins are user-specific.
+    # Your custom plugins (syntek-dev-suite, syntek-rust-security, syntek-infra)
+    # should be symlinked or configured post-installation.
   ];
 
-  # Git configuration (basic - will be enhanced in Phase 4)
+  # Git configuration
   programs.git = {
     enable = true;
     userName = "Sam Bailey";
-    userEmail = "sambailey6194@gmail.com"; # Personal account
+    userEmail = "sambailey6194@gmail.com";
     extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = false;
     };
   };
 
-  # Zsh (basic - will be enhanced in Phase 4)
+  # Zed editor
+  programs.zed-editor = {
+    enable = true;
+    extensions = [
+      "nix"
+      "rust"
+      "python"
+      "toml"
+      "markdown"
+    ];
+    userSettings = {
+      buffer_font_family = "Ubuntu Mono";
+      buffer_font_size = 14;
+      theme = {
+        mode = "system";
+        light = "One Light";
+        dark = "One Dark";
+      };
+      # Your existing Zed config from config/zed/settings.json
+      # will be integrated in Phase 4
+    };
+  };
+
+  # Zsh
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -53,7 +87,7 @@
     enableZshIntegration = true;
   };
 
-  # Kitty terminal (basic - will use config file in Phase 4)
+  # Kitty terminal
   programs.kitty = {
     enable = true;
     theme = "Tokyo Night";
@@ -63,18 +97,13 @@
     };
   };
 
-  # Hyprland configuration (basic keybinds)
-  # Full config will be in config/hypr/ in Phase 4
+  # Hyprland - base configuration
   wayland.windowManager.hyprland = {
     enable = true;
     settings = {
-      # Modifier key
       "$mod" = "SUPER";
-
-      # Monitor setup (auto-detect)
       monitor = ",preferred,auto,1";
 
-      # Basic keybinds
       bind = [
         # Apps
         "$mod, RETURN, exec, kitty"
@@ -116,13 +145,11 @@
         "$mod, M, fullscreen"
       ];
 
-      # Mouse bindings
       bindm = [
         "$mod, mouse:272, movewindow"
         "$mod, mouse:273, resizewindow"
       ];
 
-      # Startup apps
       exec-once = [
         "waybar"
         "hyprpaper"
