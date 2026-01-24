@@ -53,14 +53,6 @@
       # Claude Code with custom TMPDIR
       claude = "TMPDIR=/home/sam-dev/.claude/tmp claude";
       code = "TMPDIR=/home/sam-dev/.claude/tmp code";
-
-      # Convenience aliases for apt (Ubuntu-specific, not needed on NixOS)
-      # These are kept for backwards compatibility but won't work on NixOS
-      apt-update = "apt update";
-      apt-upgrade = "apt upgrade";
-      apt-install = "apt install";
-      apt-remove = "apt remove";
-      apt-search = "apt search";
     };
 
     # Session variables
@@ -87,38 +79,6 @@
       "$ANDROID_HOME/platform-tools"
     ];
   };
-
-  # Custom apt wrapper function (Ubuntu-specific)
-  # This won't be needed on NixOS, but kept for reference
-  # On NixOS, you use nixos-rebuild and home-manager instead
-  home.file.".zsh_functions/apt_wrapper".text = ''
-    # Custom apt wrapper to handle Python version switching
-    # Note: This is Ubuntu-specific and not needed on NixOS
-    apt() {
-        # Store the current Python alternative
-        local current_python=$(readlink -f /usr/bin/python3)
-
-        echo "🔄 Current Python: $current_python"
-        echo "🔧 Switching to Python 3.12 for apt..."
-
-        # Switch to Python 3.12 for apt commands
-        sudo update-alternatives --set python3 /usr/bin/python3.12 > /dev/null 2>&1
-
-        echo "✅ Running: sudo apt $@"
-        echo ""
-
-        # Run the apt command with all arguments
-        command sudo apt "$@"
-
-        echo ""
-        echo "🔄 Switching back to $current_python..."
-
-        # Switch back to the previous Python version
-        sudo update-alternatives --set python3 "$current_python" > /dev/null 2>&1
-
-        echo "✅ Done! Python restored."
-    }
-  '';
 
   # Source custom functions
   programs.zsh.initExtra = lib.mkAfter ''
