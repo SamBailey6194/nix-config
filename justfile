@@ -1,131 +1,507 @@
-# Zed Config Justfile
-# Run commands with: just <command>
+# NixOS Configuration Management
+# Run with: just <command>
+# List all commands: just --list
 
-# Default recipe
+# Default recipe shows help
 default:
     @just --list
 
-# === Development Watchers ===
+# ============================================================================
+# Secrets Management (Phase 2)
+# ============================================================================
 
-# Watch markdown files for changes
-watch-md:
-    @echo "Watching markdown files..."
-    onchange "**/*.md" -- sh -c 'npx markdown-toc -i {{changed}} 2>/dev/null; npx prettier --write {{changed}}'
+# Verify all secrets are deployed correctly
+verify-secrets:
+    secrets-verify --test-github
 
-# Watch Python files for changes
-watch-py:
-    @echo "Watching Python files..."
-    onchange "**/*.py" -- sh -c 'ruff format {{changed}} && ruff check --fix {{changed}}'
+# Edit an encrypted secret
+edit-secret SECRET:
+    agenix-helper edit {{SECRET}}
 
-# Watch TypeScript/JavaScript files for changes
-watch-ts:
-    @echo "Watching TypeScript/JavaScript files..."
-    onchange "**/*.{ts,tsx,js,jsx}" -- sh -c 'npx prettier --write {{changed}} && npx eslint --fix {{changed}}'
+# List all secrets and their authorized keys
+list-secrets:
+    agenix-helper list --verbose
 
-# Watch all supported files
-watch-all:
-    @echo "Watching all files..."
-    just watch-md & just watch-py & just watch-ts
+# Rekey all secrets (after adding new host keys)
+rekey-secrets:
+    agenix-helper rekey
 
-# === Quick Commands ===
+# Add a new server with per-device SSH keys
+add-server SERVER:
+    agenix-helper add-server {{SERVER}}
+
+# Initialize secrets for a new device
+init-device DEVICE:
+    agenix-helper init {{DEVICE}}
+
+# Check host keys match secrets.nix
+check-keys:
+    agenix-helper check-keys
+
+# ============================================================================
+# NixOS System Management
+# ============================================================================
+
+# Rebuild current system configuration
+rebuild:
+    sudo nixos-rebuild switch --flake .
+
+# Rebuild specific host
+rebuild-host HOST:
+    sudo nixos-rebuild switch --flake .#{{HOST}}
+
+# Build without switching (test configuration)
+build:
+    sudo nixos-rebuild build --flake .
+
+# Test configuration syntax without building
+check:
+    nix flake check
+
+# Update flake inputs (nixpkgs, home-manager, etc.)
+update:
+    nix flake update
+
+# Show system configuration changes (diff)
+diff:
+    sudo nixos-rebuild build --flake .
+    nix store diff-closures /run/current-system ./result
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Build Rust tools
+build-rust:
+    cd rust && cargo build --release
+
+# Test Rust tools
+test-rust:
+    cd rust && cargo test
+
+# Lint Rust code
+lint-rust:
+    cd rust && cargo clippy
+
+# Format Rust code
+format-rust:
+    cd rust && cargo fmt
+
+# Enter nix dev shell with Rust tools
+dev:
+    nix develop
+
+# ============================================================================
+# Fuzzing (Security Testing)
+# ============================================================================
+
+# Run all fuzz targets (quick 1-minute test)
+fuzz-quick:
+    cd rust/fuzz && \
+    for target in fuzz_targets/*.rs; do \
+        name=$(basename "$target" .rs); \
+        echo "Fuzzing $name..."; \
+        cargo +nightly fuzz run "$name" -- -max_total_time=60 || exit 1; \
+    done
+
+# Run specific fuzz target
+fuzz TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} -- -max_total_time={{TIME}}
+
+# Run fuzzing with AddressSanitizer
+fuzz-asan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer address -- -max_total_time={{TIME}}
+
+# Run fuzzing with MemorySanitizer
+fuzz-msan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer memory -- -max_total_time={{TIME}}
+
+# Run fuzzing with UndefinedBehaviorSanitizer
+fuzz-ubsan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer undefined -- -max_total_time={{TIME}}
+
+# Minimize corpus for all targets
+fuzz-cmin:
+    cd rust/fuzz && \
+    for target in fuzz_targets/*.rs; do \
+        name=$(basename "$target" .rs); \
+        echo "Minimizing corpus for $name..."; \
+        cargo +nightly fuzz cmin "$name"; \
+    done
+
+# List all fuzz targets
+fuzz-list:
+    @ls rust/fuzz/fuzz_targets/*.rs | xargs -n1 basename -s .rs
+
+# Check for fuzzing crashes
+fuzz-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    crashes=$(find rust/fuzz/artifacts -type f 2>/dev/null | wc -l)
+    if [ "$crashes" -gt 0 ]; then
+        echo "⚠️  Fuzzing crashes found:"
+        find rust/fuzz/artifacts -type f -exec echo "  - {}" \;
+        exit 1
+    else
+        echo "✅ No fuzzing crashes found"
+    fi
+
+# Clean fuzzing artifacts (crashes and corpus)
+fuzz-clean:
+    rm -rf rust/fuzz/artifacts
+    rm -rf rust/fuzz/target
+
+# ============================================================================
+# Linting and Formatting
+# ============================================================================
 
 # Run all linters
-lint:
-    @echo "=== Running Linters ==="
-    -ruff check .
-    -npx eslint .
-    -npx tsc --noEmit
-    -cargo clippy 2>/dev/null
-    @echo "=== Done ==="
+lint: lint-rust lint-nix
 
-# Run all formatters
-format:
-    @echo "=== Running Formatters ==="
-    -ruff format .
-    -npx prettier --write .
-    -cargo fmt 2>/dev/null
-    @echo "=== Done ==="
+# Lint Nix files
+lint-nix:
+    @echo "Checking Nix syntax..."
+    @find . -name "*.nix" -not -path "*/.*" -exec nix-instantiate --parse {} \; > /dev/null
 
-# Format and lint
-fix: format lint
+# Format all code
+format: format-rust format-nix
 
-# === Audits ===
+# Format Nix files
+format-nix:
+    @echo "Formatting Nix files..."
+    @find . -name "*.nix" -not -path "*/.*" -exec nixpkgs-fmt {} \;
 
-# Full project audit
-audit:
-    @echo "=== Python Audit ==="
-    -ruff check .
-    -pyright .
-    @echo ""
-    @echo "=== JavaScript/TypeScript Audit ==="
-    -npx tsc --noEmit
-    -npx eslint .
-    @echo ""
-    @echo "=== Rust Audit ==="
-    -cargo clippy -- -D warnings 2>/dev/null
-    -cargo audit 2>/dev/null
-    @echo ""
-    @echo "=== Security Audit ==="
-    -pip-audit 2>/dev/null
-    -npm audit 2>/dev/null
-    @echo ""
-    @echo "=== Audit Complete ==="
+# ============================================================================
+# Git and Version Control
+# ============================================================================
 
-# Security audit only
-security:
-    @echo "=== Security Audit ==="
-    -pip-audit
-    -npm audit
-    -cargo audit 2>/dev/null
+# Commit with conventional commit message
+commit MESSAGE:
+    git add -A
+    git commit -m "{{MESSAGE}}"
 
-# === Django Commands ===
+# Create a new feature branch
+branch NAME:
+    git checkout -b {{NAME}}
 
-# Django check
-django-check:
-    python manage.py check
-    python manage.py check --deploy
+# Push current branch to origin
+push:
+    git push origin $(git branch --show-current)
 
-# Django migrations check
-django-migrations:
-    python manage.py makemigrations --check --dry-run
+# Pull latest changes
+pull:
+    git pull origin $(git branch --show-current)
 
-# === Git Commands ===
+# ============================================================================
+# Cleanup
+# ============================================================================
 
-# Git status
-gs:
-    git status
+# Clean up old generations (keep last 3)
+clean-generations:
+    sudo nix-collect-garbage --delete-older-than 30d
+    sudo nixos-rebuild boot
 
-# Git log
-gl:
-    git log --oneline --graph --decorate -20
+# Clean up Rust build artifacts
+clean-rust:
+    cd rust && cargo clean
 
-# === Utilities ===
+# Full cleanup (generations + Rust)
+clean-all: clean-rust clean-generations
 
-# Clean common cache directories
-clean:
-    @echo "Cleaning cache directories..."
-    -find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
-    -find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null
-    -find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null
-    -find . -type d -name "node_modules/.cache" -exec rm -rf {} + 2>/dev/null
-    @echo "Done"
+# ============================================================================
+# Information
+# ============================================================================
+
+# Show current system generation
+show-generation:
+    sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+
+# Show installed packages
+show-packages:
+    nix-env -q
 
 # Show system info
 info:
-    @echo "=== System Info ==="
-    @echo "Node: $(node --version 2>/dev/null || echo 'not installed')"
-    @echo "npm: $(npm --version 2>/dev/null || echo 'not installed')"
-    @echo "Python: $(python3 --version 2>/dev/null || echo 'not installed')"
-    @echo "Rust: $(rustc --version 2>/dev/null || echo 'not installed')"
-    @echo "Ruff: $(ruff --version 2>/dev/null || echo 'not installed')"
-    @echo "Pyright: $(pyright --version 2>/dev/null || echo 'not installed')"
+    @echo "Hostname: $(hostname)"
+    @echo "NixOS Version: $(nixos-version)"
+    @echo "Kernel: $(uname -r)"
+    @echo "Flake: $(nix flake metadata . --json | jq -r '.url')"
 
-# === Zedconfig ===
+# Show flake inputs
+show-inputs:
+    nix flake metadata . --json | jq '.locks.nodes'
 
-# Install zedconfig to system
-install:
-    ./install.sh
+# ============================================================================
+# VPN Management (Phase 6: Wireguard + Mullvad)
+# ============================================================================
 
-# Verify prerequisites
-verify:
-    ./verify-setup.sh
+# Initialize WireGuard for a device
+vpn-init DEVICE:
+    wireguard-helper init {{DEVICE}}
+
+# Rotate Mullvad servers (generate new config)
+vpn-rotate DEVICE:
+    wireguard-helper rotate {{DEVICE}}
+    @echo "Run 'just rebuild' to apply new configuration"
+
+# Switch exit location and rotate
+vpn-set-exit EXIT:
+    wireguard-helper set-exit {{EXIT}}
+    just vpn-rotate laptop-intel
+
+# Verify VPN connection and exit location
+vpn-verify:
+    wireguard-helper verify
+
+# Show VPN status
+vpn-status:
+    wireguard-helper status
+
+# View VPN metrics
+vpn-metrics:
+    wireguard-helper metrics --tail --lines 20
+
+# Start VPN
+vpn-up:
+    sudo systemctl start wg-quick-mullvad0
+
+# Stop VPN
+vpn-down:
+    sudo systemctl stop wg-quick-mullvad0
+
+# Restart VPN
+vpn-restart:
+    sudo systemctl restart wg-quick-mullvad0
+
+# Launch app through VPN (via cgroup routing)
+vpn-app COMMAND:
+    wireguard-helper vpn-app {{COMMAND}}
+
+# ============================================================================
+# Malware Scanner (Phase 7)
+# ============================================================================
+
+# Scan a file or directory for malware
+scan PATH:
+    malware-scanner scan {{PATH}}
+
+# Scan with auto-quarantine
+scan-quarantine PATH:
+    malware-scanner scan {{PATH}} --quarantine
+
+# Run EICAR test to verify scanner is working
+test-scanner:
+    malware-scanner test
+
+# Perform manual boot scan
+boot-scan:
+    sudo malware-scanner boot-scan
+
+# Show malware scanner statistics
+scanner-stats:
+    malware-scanner stats
+
+# List quarantined files
+quarantine-list:
+    malware-scanner quarantine list
+
+# Show quarantine size
+quarantine-size:
+    malware-scanner quarantine size
+
+# Restore file from quarantine
+quarantine-restore ID PATH:
+    malware-scanner quarantine restore {{ID}} {{PATH}}
+
+# Delete quarantined file permanently
+quarantine-delete ID:
+    malware-scanner quarantine delete {{ID}}
+
+# Cleanup old quarantine entries
+quarantine-cleanup:
+    malware-scanner quarantine cleanup
+
+# Show recent threat detections
+threats-recent:
+    malware-scanner database recent --limit 20
+
+# Update malware signatures
+update-signatures:
+    sudo malware-scanner update
+
+# View real-time monitor logs
+scanner-logs:
+    journalctl -fu malware-monitor
+
+# Restart real-time monitor
+scanner-restart:
+    sudo systemctl restart malware-monitor
+
+# ============================================================================
+# Storage Management (Phase 8)
+# ============================================================================
+
+# Restic Backup Management
+# ----------------------------------------------------------------------------
+
+# Add a Restic backup repository
+restic-add-repo NAME TYPE PATH:
+    restic-manage add-repo {{NAME}} {{TYPE}} {{PATH}}
+
+# Remove a Restic repository
+restic-remove-repo NAME:
+    restic-manage remove-repo {{NAME}}
+
+# List all Restic repositories
+restic-list-repos:
+    restic-manage list-repos --verbose
+
+# Add a backup job
+restic-add-backup NAME PATHS REPO:
+    restic-manage add-backup {{NAME}} --paths {{PATHS}} --repository {{REPO}}
+
+# Remove a backup job
+restic-remove-backup NAME:
+    restic-manage remove-backup {{NAME}}
+
+# List all backup jobs
+restic-list-backups:
+    restic-manage list-backups --verbose
+
+# Initialize a repository
+restic-init NAME:
+    restic-manage init-repo {{NAME}}
+
+# Test repository connection
+restic-test NAME:
+    restic-manage test-repo {{NAME}}
+
+# Generate systemd services for backups
+restic-generate:
+    restic-manage generate-services
+
+# Run a backup immediately
+backup-now NAME:
+    restic-backup-now {{NAME}}
+
+# Show backup status
+backup-status:
+    restic-status
+
+# List snapshots in a repository
+restic-snapshots REPO:
+    restic-repo {{REPO}} snapshots
+
+# Restore from backup
+restic-restore REPO SNAPSHOT TARGET:
+    restic-repo {{REPO}} restore {{SNAPSHOT}} --target {{TARGET}}
+
+# Check repository integrity
+restic-check REPO:
+    restic-repo {{REPO}} check
+
+# Prune old snapshots
+restic-prune REPO:
+    restic-repo {{REPO}} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+
+# ZFS Management
+# ----------------------------------------------------------------------------
+
+# Create a ZFS pool
+zfs-pool NAME TYPE DEVICES:
+    zfs-manage create-pool {{NAME}} {{TYPE}} {{DEVICES}}
+
+# Create a ZFS dataset
+zfs-dataset PATH:
+    zfs-manage create-dataset {{PATH}}
+
+# Setup automatic snapshots
+zfs-snapshots DATASET FREQ:
+    zfs-manage setup-snapshots {{DATASET}} --frequency {{FREQ}}
+
+# List snapshot schedules
+zfs-list-schedules:
+    zfs-manage list-schedules
+
+# Show ZFS status
+zfs-status:
+    zfs-status
+
+# Check ZFS health
+zfs-health:
+    zfs-manage health
+
+# List all datasets
+zfs-list:
+    zfs-manage list
+
+# Take manual snapshot
+zfs-snap DATASET:
+    zfs-manage snapshot {{DATASET}}
+
+# Show ARC statistics
+zfs-arc:
+    zfs-manage arc-stats
+
+# RAID Management
+# ----------------------------------------------------------------------------
+
+# Create a RAID array
+raid-create LEVEL DEVICE DEVICES:
+    raid-manage create {{LEVEL}} {{DEVICE}} {{DEVICES}}
+
+# Show RAID status
+raid-status:
+    raid-status
+
+# Check RAID health
+raid-health:
+    raid-manage health
+
+# Show /proc/mdstat
+raid-mdstat:
+    raid-manage mdstat
+
+# Add disk to array
+raid-add ARRAY DEVICE:
+    raid-manage add {{ARRAY}} {{DEVICE}}
+
+# Mark disk as failed
+raid-fail ARRAY DEVICE:
+    raid-manage fail {{ARRAY}} {{DEVICE}}
+
+# Remove disk from array
+raid-remove ARRAY DEVICE:
+    raid-manage remove {{ARRAY}} {{DEVICE}}
+
+# Show rebuild progress
+raid-progress:
+    raid-manage progress
+
+# Update mdadm.conf
+raid-update-config:
+    raid-manage update-config
+
+# Enable RAID monitoring
+raid-monitor-enable:
+    raid-manage monitor --enable
+
+# Disable RAID monitoring
+raid-monitor-disable:
+    raid-manage monitor --disable
+
+# ============================================================================
+# Installation (Phase 1)
+# ============================================================================
+
+# Install NixOS on a new device
+install-nixos DEVICE:
+    @echo "Installing NixOS with configuration: {{DEVICE}}"
+    @echo "Make sure you've partitioned and mounted filesystems first!"
+    sudo nixos-install --flake .#{{DEVICE}}
+
+# Generate hardware configuration for current device
+gen-hardware:
+    sudo nixos-generate-config --show-hardware-config > hardware-configuration.nix
+    @echo "Hardware configuration saved to hardware-configuration.nix"
+    @echo "Review and move to hosts/<hostname>/hardware-configuration.nix"

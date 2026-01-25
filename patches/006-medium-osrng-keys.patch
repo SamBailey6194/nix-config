@@ -1,0 +1,30 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:05 +0000
+Subject: [PATCH 6/11] security: Use OsRng for key generation (MEDIUM)
+
+Replace thread_rng() with OsRng for cryptographic key generation to
+explicitly use OS entropy source.
+
+Severity: MEDIUM
+Impact: Improves cryptographic key quality
+---
+ rust/malware-scanner/src/quarantine/storage.rs | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/rust/malware-scanner/src/quarantine/storage.rs b/rust/malware-scanner/src/quarantine/storage.rs
+index 1234567..abcdefg 100644
+--- a/rust/malware-scanner/src/quarantine/storage.rs
++++ b/rust/malware-scanner/src/quarantine/storage.rs
+@@ -214,8 +214,10 @@ impl QuarantineStorage {
+     /// Generate encryption key
+     fn generate_encryption_key() -> Result<[u8; 32]> {
++        use rand::rngs::OsRng;
+         use rand::RngCore;
++
+         let mut key = [0u8; 32];
+-        rand::thread_rng().fill_bytes(&mut key);
++        OsRng.fill_bytes(&mut key);  // Explicitly use OS entropy
+         Ok(key)
+     }
+--
+2.45.0

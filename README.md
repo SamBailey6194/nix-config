@@ -1,351 +1,440 @@
-# Zedconfig
+# NixOS Configuration
 
-Portable Zed IDE and development environment configuration for multi-device
-deployment. One-command installation sets up SSH keys, installs all development
-tools, and symlinks configs to their expected locations.
+Personal NixOS configuration with Hyprland, dotfiles, and Rust security tooling for multi-device deployment.
 
-**Supports:** Native Linux, WSL (Windows Subsystem for Linux), macOS
+**Current Focus:** Single device (laptop-intel) with full secrets management, VPN, malware protection, and storage systems.
+
+## Quick Links
+
+- **Getting Started:** [Installation Guide](INSTALL.md) | [Quick Start](QUICK-START.md)
+- **Architecture:** [System Architecture](ARCHITECTURE.md)
+- **Secrets:** [Secrets Setup](PHASE-2-SECRETS-SETUP.md) | [Per-Device Model](secrets/PER-DEVICE-SECRETS.md)
+- **VPN:** [VPN Quick Start](QUICK-START-VPN.md) | [Full VPN Guide](PHASE-6-WIREGUARD-MULLVAD.md)
+- **Storage:** [Storage Quick Start](STORAGE-QUICKSTART.md) | [Storage Guide](docs/STORAGE-MANAGEMENT.md)
+- **Security:** [Malware Scanner Quick Start](MALWARE-SCANNER-QUICKSTART.md) | [Full Scanner Guide](MALWARE-SCANNER.md)
+
+## Current Status
+
+### Implemented (Laptop-Intel Ready)
+
+| Feature | Status | Documentation |
+|---------|--------|---------------|
+| **Base System** | ✅ Complete | [Phase 1](PHASE-1-COMPLETE.md) |
+| **Secrets Management** | ✅ Complete | [Phase 2 Setup](PHASE-2-SECRETS-SETUP.md), [Implementation](PHASE-2-IMPLEMENTATION-SUMMARY.md) |
+| **Hyprland Desktop** | ✅ Complete | [Phase 4](PHASE-4-COMPLETE.md), [Hyprland Configs](HYPRLAND-CONFIGS-SUMMARY.md) |
+| **Wireguard VPN** | ✅ Complete | [Phase 6](PHASE-6-WIREGUARD-MULLVAD.md), [Quick Start](QUICK-START-VPN.md) |
+| **Malware Scanner** | ✅ Complete | [Phase 7](PHASE-7-MALWARE-SCANNER-SUMMARY.md), [Quick Start](MALWARE-SCANNER-QUICKSTART.md) |
+| **Storage Management** | ✅ Complete | [Phase 8](PHASE-8-STORAGE-SUMMARY.md), [Quick Start](STORAGE-QUICKSTART.md) |
+| **Rust Tooling** | ✅ Complete | [Rust Tools Overview](rust/README.md) |
+
+All features ready for testing after NixOS installation on laptop-intel.
+
+### Current Device
+
+| Host | User | Hardware | Status |
+|------|------|----------|--------|
+| laptop-intel | sam-laptop | Intel i5-10210U, 32GB RAM, Intel UHD Graphics | ✅ Ready for install |
+
+### Future Devices (Not Yet Configured)
+
+- **framework** - AMD Ryzen, 64GB RAM, AMD Radeon (Phase 3)
+- **devtower** - AMD desktop, 64GB RAM, AMD Radeon + Go XLR (Phase 3)
+
+## Features
+
+### Security
+- **Per-device secrets** with agenix encryption
+- **Zero-trust model** - Each device has unique SSH keys for GitHub
+- **Malware scanner** with real-time protection and ClamAV integration
+- **VPN kill switch** - Blocks traffic if VPN drops
+- **Multi-hop routing** - 5+ hop chains through Mullvad
+
+### Networking
+- **Mullvad VPN** with automatic rotation and split tunneling
+- **Per-app VPN routing** via cgroups
+- **LAN bypass** for local network access
+- **Production server bypass** for audit trail
+
+### Storage
+- **Restic backups** - Runtime-configurable encrypted backups
+- **ZFS support** - Advanced filesystem with snapshots
+- **RAID management** - Linux software RAID with monitoring
+- **No Nix editing** - Configure via CLI and JSON files
+
+### Desktop
+- **Hyprland** Wayland compositor with modular configs
+- **Per-device customization** - Base config + device-specific overlays
+- **Multi-account Git** - Directory-based account switching
+- **Development tools** - Python, TypeScript, Rust, PHP, GraphQL
+
+### Development
+- **Rust workspace** with 6 CLI tools
+- **Just commands** for automation
+- **Fuzzing infrastructure** for security testing
+- **Linting and formatting** for all languages
 
 ## Quick Start
 
-### New Device (Complete Setup)
+### Prerequisites
+
+1. Download NixOS ISO from [nixos.org](https://nixos.org/download.html)
+2. Create bootable USB: `dd if=nixos.iso of=/dev/sdX bs=4M status=progress`
+3. Boot from USB
+
+### Installation (10 Steps)
+
+See [INSTALL.md](INSTALL.md) for detailed step-by-step instructions.
+
+**TL;DR:**
+1. Partition disk (EFI + root + swap)
+2. Format and mount filesystems
+3. Generate hardware config
+4. Clone this repo
+5. Install with flake: `nixos-install --flake .#laptop-intel`
+6. Set root password and reboot
+7. Log in and rebuild: `sudo nixos-rebuild switch --flake .#laptop-intel`
+
+### Post-Installation
+
+After NixOS is running:
+
+1. **Setup secrets:** Follow [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md)
+2. **Setup VPN:** Follow [QUICK-START-VPN.md](QUICK-START-VPN.md)
+3. **Setup storage:** Follow [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md)
+4. **Verify installation:** [QUICK-START.md](QUICK-START.md)
+
+## Documentation Index
+
+### Getting Started
+- [INSTALL.md](INSTALL.md) - Full installation guide
+- [QUICK-START.md](QUICK-START.md) - Post-install verification
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
+
+### Secrets Management
+- [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md) - Step-by-step secrets setup
+- [secrets/PER-DEVICE-SECRETS.md](secrets/PER-DEVICE-SECRETS.md) - Zero-trust secrets model
+- [secrets/README.md](secrets/README.md) - Quick reference
+- [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md) - What was implemented
+
+### VPN
+- [QUICK-START-VPN.md](QUICK-START-VPN.md) - 5-minute VPN setup
+- [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md) - Complete VPN guide
+- [rust/wireguard-helper/README.md](rust/wireguard-helper/README.md) - VPN CLI tool
+
+### Storage
+- [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md) - Quick start guide
+- [docs/STORAGE-MANAGEMENT.md](docs/STORAGE-MANAGEMENT.md) - Complete storage guide
+
+### Security
+- [MALWARE-SCANNER-QUICKSTART.md](MALWARE-SCANNER-QUICKSTART.md) - Quick start guide
+- [MALWARE-SCANNER.md](MALWARE-SCANNER.md) - Complete malware scanner guide
+- [PHASE-7-MALWARE-SCANNER-SUMMARY.md](PHASE-7-MALWARE-SCANNER-SUMMARY.md) - Implementation summary
+
+### Desktop Environment
+- [HYPRLAND-CONFIGS-SUMMARY.md](HYPRLAND-CONFIGS-SUMMARY.md) - Hyprland configuration
+- [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md) - Home Manager integration
+- [NEOVIM-SETUP.md](NEOVIM-SETUP.md) - Neovim configuration
+
+### Development
+- [rust/README.md](rust/README.md) - Rust tooling overview
+- [rust/secrets-verify/README.md](rust/secrets-verify/README.md) - Secrets verification tool
+- [rust/agenix-helper/README.md](rust/agenix-helper/README.md) - Agenix helper CLI
+- [rust/wireguard-helper/README.md](rust/wireguard-helper/README.md) - Wireguard CLI
+- [rust/malware-scanner/README.md](rust/malware-scanner/README.md) - Malware scanner
+- [rust/fuzz/README.md](rust/fuzz/README.md) - Fuzzing infrastructure
+- [rust/fuzz/FUZZING-GUIDE.md](rust/fuzz/FUZZING-GUIDE.md) - Fuzzing guide
+
+### Additional Topics
+- [DAVINCI-RESOLVE-AMD.md](DAVINCI-RESOLVE-AMD.md) - DaVinci Resolve setup for AMD GPUs
+- [FUZZING-INFRASTRUCTURE-SUMMARY.md](FUZZING-INFRASTRUCTURE-SUMMARY.md) - Fuzzing infrastructure
+- [modules/software/README.md](modules/software/README.md) - Software modules
+
+### Phase Summaries
+- [PHASE-1-COMPLETE.md](PHASE-1-COMPLETE.md) - Base system
+- [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md) - Secrets
+- [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md) - Home Manager
+- [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md) - VPN
+- [PHASE-7-MALWARE-SCANNER-SUMMARY.md](PHASE-7-MALWARE-SCANNER-SUMMARY.md) - Security
+- [PHASE-8-STORAGE-SUMMARY.md](PHASE-8-STORAGE-SUMMARY.md) - Storage
+- [IMPLEMENTATION-COMPLETE.md](IMPLEMENTATION-COMPLETE.md) - Overall summary
+
+## Architecture
+
+This configuration uses a **modular design** with shared base configuration and device-specific additions.
+
+```
+nix-config/
+├── flake.nix               # Entry point - defines hosts and dev shell
+├── justfile                # Task automation commands
+│
+├── hosts/                  # Per-device configs (minimal imports)
+│   └── laptop-intel/       # Intel i5-10210U, 32GB, Intel UHD
+│
+├── modules/                # Reusable modules
+│   ├── core/               # Shared base configuration
+│   ├── hardware/           # Hardware-specific (Intel/AMD, laptop/desktop)
+│   ├── desktop/hyprland/   # Hyprland compositor
+│   ├── network/            # VPN, firewall, routing
+│   ├── security/           # Malware scanner
+│   ├── storage/            # Restic, ZFS, RAID
+│   ├── software/           # Software suites (creative, etc.)
+│   └── users/              # Device-specific user accounts
+│
+├── home/                   # Home Manager (user environment)
+│   ├── common.nix          # Shared dotfiles and packages
+│   └── laptop.nix          # Device-specific additions
+│
+├── config/                 # Dotfiles
+│   ├── git/                # Multi-account Git configs
+│   ├── hypr/               # Modular Hyprland configs
+│   ├── zed/                # Zed editor
+│   └── ...                 # Other dotfiles
+│
+├── secrets/                # Agenix encrypted secrets
+│   ├── secrets.nix         # Secret definitions
+│   └── *.age               # Encrypted files (safe to commit)
+│
+└── rust/                   # Rust CLI tools
+    ├── secrets-verify/     # Verify secrets deployed
+    ├── agenix-helper/      # Manage agenix secrets
+    ├── wireguard-helper/   # VPN management
+    ├── malware-scanner/    # Malware detection
+    └── storage-manager/    # Storage CLI tools
+```
+
+**Key Principles:**
+- **DRY** - Shared config defined once in base modules
+- **Composability** - Each host imports only needed modules
+- **Separation** - Hardware, software, users kept separate
+- **Per-device isolation** - Each device has unique secrets and user
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed explanation.
+
+## Commands
+
+All commands available via `just`. Run `just --list` to see all commands.
+
+### System Management
+```bash
+just rebuild                  # Rebuild current system
+just rebuild-host <host>      # Rebuild specific host
+just check                    # Test configuration syntax
+just update                   # Update flake inputs
+just diff                     # Show configuration changes
+```
+
+### Secrets Management
+```bash
+just verify-secrets           # Verify all secrets deployed
+just edit-secret <name>       # Edit an encrypted secret
+just list-secrets             # List all secrets
+just rekey-secrets            # Rekey after adding hosts
+```
+
+### VPN Management
+```bash
+just vpn-up                   # Start VPN
+just vpn-down                 # Stop VPN
+just vpn-status               # Show VPN status
+just vpn-verify               # Verify VPN connection
+just vpn-set-exit uk          # Switch exit location (uk/us/eu)
+just vpn-rotate laptop-intel  # Generate new 5-hop config
+just vpn-app firefox          # Launch app through VPN
+```
+
+### Storage Management
+```bash
+just backup-now <name>        # Run backup immediately
+just restic-snapshots <repo>  # List snapshots
+just zfs-status               # ZFS pool status
+just raid-status              # RAID array status
+```
+
+### Security
+```bash
+just malware-scan <path>      # Scan for malware
+just malware-status           # Show scanner status
+```
+
+### Development
+```bash
+just dev                      # Enter nix dev shell with Rust tools
+just build-rust               # Build Rust tools
+just test-rust                # Test Rust tools
+just lint                     # Run all linters
+just format                   # Format all code
+```
+
+## Rust Tools
+
+All Rust tools are automatically available in `nix develop`:
 
 ```bash
-# 1. Download and run SSH setup
-curl -fsSL https://raw.githubusercontent.com/SamBailey6194/zedconfig/main/ssh-setup.sh -o ssh-setup.sh
-chmod +x ssh-setup.sh
-./ssh-setup.sh
-
-# 2. Add the displayed public keys to your GitHub accounts
-#    → Log in to each GitHub account
-#    → Go to Settings > SSH and GPG keys > New SSH key
-#    → Paste the corresponding public key
-
-# 3. Test SSH connections
-ssh -T git@github-personal
-ssh -T git@github-syntek
-ssh -T git@github-missionalgen
-
-# 4. Clone and run the setup wizard
-git clone git@github-personal:SamBailey6194/zedconfig.git ~/Repos/personal/zedconfig
-cd ~/Repos/personal/zedconfig
-chmod +x *.sh
-./setup.sh
+secrets-verify                # Verify secrets deployed correctly
+agenix-helper edit <secret>   # Edit encrypted secret
+wireguard-helper rotate       # Rotate VPN servers
+malware-scanner scan <path>   # Scan for malware
+restic-manage add-repo        # Add backup repository
+zfs-manage create-pool        # Create ZFS pool
+raid-manage create            # Create RAID array
 ```
 
-### Existing Device (Already Have SSH Keys)
+See [rust/README.md](rust/README.md) for complete documentation.
 
-```bash
-git clone git@github-personal:SamBailey6194/zedconfig.git ~/Repos/personal/zedconfig
-cd ~/Repos/personal/zedconfig
-chmod +x *.sh
-./setup.sh  # Guided wizard, or run individual scripts below:
-
-# Individual scripts:
-# ./install.sh --deps  # Install tools
-# ./install.sh         # Symlink configs
-# ./verify-setup.sh    # Check everything
-```
-
-## Project Structure
-
-```
-zedconfig/
-├── setup.sh                # Guided setup wizard (runs everything)
-├── ssh-setup.sh            # SSH key generation for multi-account GitHub
-├── install.sh              # Tool installation (--deps) and config symlinks
-├── verify-setup.sh         # Verification script
-├── config/
-│   ├── git/
-│   │   ├── config                  # Main gitconfig with conditional includes
-│   │   ├── config-personal         # Personal GitHub account
-│   │   ├── config-syntek           # Syntek GitHub account
-│   │   ├── config-missional-gen    # Missional Gen GitHub account
-│   │   ├── gitmessage              # Commit message template
-│   │   └── hooks/
-│   │       └── pre-commit          # Global pre-commit hook
-│   └── zed/
-│       ├── settings.json   # Editor settings
-│       ├── keymap.json     # Key bindings
-│       └── debug.json      # Debug configurations
-├── linters/
-│   ├── .editorconfig       # Universal editor config
-│   ├── .eslintrc.json      # ESLint (legacy config)
-│   ├── eslint.config.js    # ESLint (flat config)
-│   ├── .markdownlint.json  # Markdown linting
-│   ├── .prettierrc         # Prettier formatting
-│   ├── pyrightconfig.json  # Python type checking
-│   └── ruff.toml           # Python linting/formatting
-└── justfile                # Task runner commands
-```
-
-## Scripts
-
-| Script                | Purpose                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| `./setup.sh`          | **Guided wizard** - walks through entire setup with prompts |
-| `./ssh-setup.sh`      | Generate SSH keys and config for multi-account GitHub       |
-| `./install.sh --deps` | Install all development tools and dependencies              |
-| `./install.sh`        | Symlink configuration files to system locations             |
-| `./verify-setup.sh`   | Check all tools and configs are properly set up             |
-
-## What Gets Installed
-
-### `./install.sh --deps`
-
-| Category    | Tools                                                             |
-| ----------- | ----------------------------------------------------------------- |
-| **System**  | git, curl, zsh, jq, ripgrep, fd-find, bat, entr                   |
-| **Shell**   | Oh My Zsh                                                         |
-| **Node.js** | nvm, Node.js LTS, prettier, eslint, typescript, markdownlint-cli2 |
-| **Python**  | pipx, ruff, basedpyright, pip-audit                               |
-| **Rust**    | rustup, cargo, clippy, rustfmt, rust-analyzer, just, cargo-audit  |
-| **GitHub**  | GitHub CLI (gh)                                                   |
-| **PHP**     | php-cs-fixer (if composer is installed)                           |
-
-### `./install.sh` (Symlinks)
-
-| Source                        | Target                                 |
-| ----------------------------- | -------------------------------------- |
-| `config/zed/settings.json`    | `~/.config/zed/settings.json`          |
-| `config/zed/keymap.json`      | `~/.config/zed/keymap.json`            |
-| `config/zed/debug.json`       | `~/.config/zed/debug.json`             |
-| `config/git/config`           | `~/.gitconfig`                         |
-| `config/git/config-*`         | `~/.gitconfig-*`                       |
-| `config/git/gitmessage`       | `~/.gitmessage`                        |
-| `config/git/hooks/pre-commit` | `~/.config/git/hooks/pre-commit`       |
-| `linters/.editorconfig`       | `~/.editorconfig`                      |
-| `linters/.eslintrc.json`      | `~/.eslintrc.json`                     |
-| `linters/eslint.config.js`    | `~/eslint.config.js`                   |
-| `linters/.markdownlint.json`  | `~/.markdownlint.json`                 |
-| `linters/.prettierrc`         | `~/.prettierrc`                        |
-| `linters/ruff.toml`           | `~/.config/ruff/ruff.toml`             |
-| `linters/pyrightconfig.json`  | `~/.config/pyright/pyrightconfig.json` |
-| `justfile`                    | `~/justfile`                           |
-
-## Multi-Account Git Setup
+## Multi-Account Git
 
 Directory-based conditional includes automatically switch GitHub accounts:
 
-| Directory                | GitHub Account   | SSH Host              |
-| ------------------------ | ---------------- | --------------------- |
-| `~/Repos/personal/`      | SamBailey6194    | `github-personal`     |
-| `~/Repos/syntek/`        | syntek-studio    | `github-syntek`       |
-| `~/Repos/missional-gen/` | sam-missionalgen | `github-missionalgen` |
+| Directory | Account | SSH Host |
+|-----------|---------|----------|
+| `~/Repos/personal/` | SamBailey6194 | github-personal |
+| `~/Repos/syntek/` | syntek-studio | github-syntek |
+| `~/Repos/missional-gen/` | sam-missionalgen | github-missionalgen |
 
-### Clone Examples
+Verify with: `git config user.email` in each directory.
 
-```bash
-# Personal repos
-git clone git@github-personal:SamBailey6194/myrepo.git ~/Repos/personal/myrepo
+## Development Stack Support
 
-# Syntek repos
-git clone git@github-syntek:syntek-studio/project.git ~/Repos/syntek/project
+- **Python:** Ruff, Pyright, python-lsp-server, Django stubs
+- **TypeScript/JavaScript:** Prettier, ESLint, tsc
+- **Rust:** rustfmt, Clippy, rust-analyzer
+- **PHP:** php-cs-fixer, Intelephense
+- **Markdown:** Prettier, markdownlint, markdown-toc
+- **GraphQL, Tailwind CSS:** Language servers included
 
-# Missional Gen repos
-git clone git@github-missionalgen:sam-missionalgen/app.git ~/Repos/missional-gen/app
-```
+## Completed Phases
 
-### Verify Git Account
+### Phase 1: Base System ✅
+- NixOS with Hyprland running on laptop-intel
+- Flake-based configuration
+- Core modules (common.nix, nix-settings.nix)
+- Base Hyprland desktop module
 
-```bash
-cd ~/Repos/personal/any-repo && git config user.email
-# → samabailey6194@gmail.com
+**Documentation:** [PHASE-1-COMPLETE.md](PHASE-1-COMPLETE.md)
 
-cd ~/Repos/syntek/any-repo && git config user.email
-# → sam.bailey@syntekstudio.com
+### Phase 2: Secrets Management ✅
+- Per-device secrets with agenix
+- Zero-trust model (unique keys per device)
+- Rust tooling (secrets-verify, agenix-helper)
+- Auto-generated SSH config per device
+- Two-tier security (GitHub vs Servers)
 
-cd ~/Repos/missional-gen/any-repo && git config user.email
-# → sam@missionalgen.co.uk
-```
+**Documentation:** [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md), [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md)
 
-## WSL (Windows Subsystem for Linux)
+### Phase 4: Home Manager ✅
+- User environment management
+- Dotfiles integration
+- Git, Zsh, Starship, Kitty, Zed
+- Modular Hyprland configs (base + device-specific)
 
-This config works identically on native Linux and WSL. When running on Windows:
+**Documentation:** [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md), [HYPRLAND-CONFIGS-SUMMARY.md](HYPRLAND-CONFIGS-SUMMARY.md)
 
-1. **Install WSL:**
+### Phase 6: Wireguard VPN (Partial) ✅
+- Mullvad VPN with multi-hop routing (5+ hops)
+- Split tunneling (LAN bypass)
+- Kill switch (prevent IP leaks)
+- Automatic rotation (weekly)
+- Per-app VPN routing via cgroups
+- Rust CLI tool (wireguard-helper)
 
-   ```powershell
-   wsl --install
-   ```
+**Documentation:** [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md), [QUICK-START-VPN.md](QUICK-START-VPN.md)
 
-2. **Run setup inside WSL:**
+**Note:** Full Wireguard mesh network between devices pending Phase 3 (multi-device).
 
-   ```bash
-   # All commands run in Ubuntu/WSL terminal
-   ./setup.sh
-   ```
+### Phase 7: Malware Scanner ✅
+- Real-time malware protection
+- ClamAV integration with custom signatures
+- Quarantine system
+- Automatic updates
+- Rust CLI tool
 
-3. **Configure Zed (on Windows) to use WSL terminal:**
-   ```json
-   "terminal": {
-     "shell": {
-       "program": "wsl.exe",
-       "args": ["-d", "Ubuntu"]
-     }
-   }
-   ```
+**Documentation:** [MALWARE-SCANNER.md](MALWARE-SCANNER.md), [MALWARE-SCANNER-QUICKSTART.md](MALWARE-SCANNER-QUICKSTART.md)
 
-### File Access in WSL
+### Phase 8: Storage Management ✅
+- Runtime-configurable Restic backups
+- ZFS pool and dataset management
+- RAID management with monitoring
+- No Nix editing after initial setup
+- Rust CLI tools
 
-| From          | Access                         |
-| ------------- | ------------------------------ |
-| WSL → Windows | `/mnt/c/Users/YourName/`       |
-| Windows → WSL | `\\wsl$\Ubuntu\home\username\` |
+**Documentation:** [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md), [docs/STORAGE-MANAGEMENT.md](docs/STORAGE-MANAGEMENT.md)
 
-## Language Support
+### Phase 10: Rust Tooling (Partial) ✅
+- secrets-verify - Secrets verification
+- agenix-helper - Agenix management
+- wireguard-helper - VPN management
+- malware-scanner - Malware detection
+- storage-manager - Storage tools (restic-manage, zfs-manage, raid-manage)
+- Fuzzing infrastructure
 
-| Language              | LSP                         | Formatter    | Linter       |
-| --------------------- | --------------------------- | ------------ | ------------ |
-| Python                | basedpyright                | ruff         | ruff         |
-| TypeScript/JavaScript | typescript-language-server  | prettier     | eslint       |
-| Rust                  | rust-analyzer               | rustfmt      | clippy       |
-| PHP                   | intelephense                | php-cs-fixer | -            |
-| Markdown              | -                           | prettier     | markdownlint |
-| JSON/YAML/HTML/CSS    | -                           | prettier     | -            |
-| GraphQL               | graphql-language-service    | prettier     | -            |
-| Tailwind CSS          | tailwindcss-language-server | -            | -            |
+**Documentation:** [rust/README.md](rust/README.md)
 
-## Debug Configurations
+**Note:** Full secrets wrapper with OpenBao integration pending Phase 9.
 
-Pre-configured debug tasks in `debug.json`:
+## Future Phases (Not Yet Implemented)
 
-| Language    | Configurations                                              |
-| ----------- | ----------------------------------------------------------- |
-| **Python**  | Active File, Module, Django Runserver, Django Shell, Pytest |
-| **Node.js** | Active File, npm dev/start, Next.js, Vite, Jest             |
-| **Rust**    | Debug Binary, Release, Tests, Current Test                  |
-| **PHP**     | Active File, Xdebug, Laravel Artisan, PHPUnit               |
+### Phase 3: Multi-Device
+- Add framework (AMD laptop) configuration
+- Add devtower (AMD desktop) configuration
+- Device-specific modules (hardware, software)
+- Shared secrets between devices
+- Test multi-device deployment
 
-## Key Bindings
+### Phase 5: Local VM Testing
+- VM configurations for testing
+- QEMU virtualization
+- Test workflow before hardware deployment
 
-### Workspace
+### Phase 6: Wireguard Network (Complete)
+- Full Wireguard mesh between all devices
+- Hub topology (one device as central hub)
+- Peer-to-peer connectivity
 
-| Key              | Action               |
-| ---------------- | -------------------- |
-| `Ctrl+P`         | File finder          |
-| `Ctrl+Shift+P`   | Command palette      |
-| `Ctrl+,`         | Open settings        |
-| `Ctrl+Shift+E`   | Toggle file explorer |
-| `Ctrl+Shift+G`   | Toggle git panel     |
-| `Ctrl+Shift+O`   | Toggle outline panel |
-| `Ctrl+Shift+M`   | Toggle diagnostics   |
-| `Ctrl+`` `       | Toggle terminal      |
-| `Ctrl+Shift+`` ` | New terminal         |
-| `Ctrl+\`         | Split pane right     |
-| `Ctrl+Shift+\`   | Split pane down      |
-| `Ctrl+W`         | Close tab            |
-| `Ctrl+Tab`       | Next tab             |
-| `Ctrl+Shift+Tab` | Previous tab         |
+### Phase 7: Server Modules
+- nginx module
+- Cloudflare Tunnel (cloudflared)
+- gunicorn + uvicorn
+- Test server stack locally
 
-### Editor
+### Phase 8: Hetzner Staging
+- Cloud server deployment
+- Production-ready server config
+- Cloudflare integration
+- Full stack testing
 
-| Key                  | Action                 |
-| -------------------- | ---------------------- |
-| `Ctrl+D`             | Select next occurrence |
-| `Ctrl+Shift+L`       | Select all occurrences |
-| `Ctrl+L`             | Select line            |
-| `Ctrl+/`             | Toggle comment         |
-| `Ctrl+Shift+K`       | Delete line            |
-| `Alt+Up/Down`        | Move line up/down      |
-| `Ctrl+Shift+Up/Down` | Add cursor above/below |
-| `F12`                | Go to definition       |
-| `Shift+F12`          | Find all references    |
-| `F2`                 | Rename symbol          |
-| `Ctrl+.`             | Code actions           |
-| `Ctrl+Space`         | Show completions       |
+### Phase 9: OpenBao Setup
+- OpenBao deployment on Hetzner
+- Migrate from agenix to OpenBao for runtime secrets
+- Keep agenix for bootstrap token only
+- Rust wrapper integration
 
-### Project Panel
+### Phase 10: Rust Wrapper (Complete)
+- Full secrets management via Rust
+- Django-compatible encryption
+- TOTP and IP-based encryption
+- API clients (Cloudflare, GitHub)
+- Rotation scheduler
+- Unix socket server
 
-| Key       | Action        |
-| --------- | ------------- |
-| `a`       | New file      |
-| `Shift+A` | New directory |
-| `r`       | Rename        |
-| `d`       | Delete        |
-| `x`       | Cut           |
-| `c`       | Copy          |
-| `p`       | Paste         |
+### Phase 11: Production Workflow
+- CI/CD pipeline with GitHub Actions
+- Branch strategy (feature → dev → staging → main)
+- Automatic staging deploys
+- Manual production approval
 
-## Just Commands
+### Phase 12: Additional Infrastructure (Partial)
+- NAS configuration
+- Router configuration (NixOS on router)
+- Raspberry Pi configuration
+- Full Tailscale or Wireguard mesh
+- Vaultwarden password management
 
-```bash
-just lint       # Run all linters
-just format     # Run all formatters
-just audit      # Full security audit (npm, pip, cargo)
-just watch-md   # Watch and lint markdown files
-just watch-py   # Watch and lint Python files
-just watch-ts   # Watch and lint TypeScript files
-```
+## Support
 
-## Zed Layout
-
-```
-┌──────────┬─────────────────────────┬──────────────┐
-│ Files    │                         │              │
-│ (280px)  │      Main Editor        │    Agent     │
-├──────────┤    (multiple tabs)      │   (480px)    │
-│ Git      │                         │              │
-│ Panel    │                         │              │
-├──────────┤                         │              │
-│ Outline  │                         │              │
-├──────────┴─────────────────────────┴──────────────┤
-│              Terminal (zsh)                       │
-│           (100,000 line scrollback)               │
-└───────────────────────────────────────────────────┘
-```
-
-## Troubleshooting
-
-### SSH Connection Fails
-
-```bash
-# Test connection
-ssh -T git@github-personal
-
-# Check SSH agent
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519_personal
-
-# Verify config
-cat ~/.ssh/config
-```
-
-### Wrong Git Account
-
-```bash
-# Check which account is active
-git config user.email
-
-# Ensure you're in the right directory
-# ~/Repos/personal/ → personal account
-# ~/Repos/syntek/ → syntek account
-```
-
-### Zed Not Finding Tools
-
-```bash
-# Verify tools are installed
-./verify-setup.sh
-
-# Restart Zed after installing dependencies
-# Tools should be in PATH
-which ruff prettier eslint
-```
-
-### WSL: Zed Can't Access Files
-
-Make sure you're working in the WSL filesystem (`/home/user/`), not the Windows
-filesystem (`/mnt/c/`). Performance is much better in the native WSL filesystem.
-
-## Updating
-
-```bash
-cd ~/Repos/personal/zedconfig
-git pull
-./install.sh  # Re-symlink if needed
-```
+- **Issues:** File issues in this repository
+- **Documentation:** See links above for detailed guides
+- **Commands:** Run `just --list` for all available commands
 
 ## License
 
-MIT
+Personal configuration - use at your own risk.

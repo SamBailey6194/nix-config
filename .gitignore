@@ -6,3 +6,19 @@
 
 # Backup files from install.sh
 *.bak
+
+# Nix build results
+result
+result-*
+
+# Secrets (Phase 2+)
+secrets/*.age
+!secrets/secrets.nix
+
+# Rust build artifacts
+rust/target/
+target/
+
+# Fuzzing artifacts
+rust/fuzz/target/
+rust/fuzz/artifacts/

@@ -1,0 +1,57 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:02 +0000
+Subject: [PATCH 3/11] security: Fix passphrase exposure in process list (HIGH)
+
+Use stdin pipe instead of -N command-line argument to prevent
+passphrase from appearing in 'ps aux' output.
+
+Severity: HIGH
+Impact: Prevents credential leakage via process listings
+---
+ rust/agenix-helper/src/commands/add_server.rs | 23 ++++++++++++++++++----
+ 1 file changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/rust/agenix-helper/src/commands/add_server.rs b/rust/agenix-helper/src/commands/add_server.rs
+index 1234567..abcdefg 100644
+--- a/rust/agenix-helper/src/commands/add_server.rs
++++ b/rust/agenix-helper/src/commands/add_server.rs
+@@ -37,17 +37,32 @@ pub fn run(server_name: &str, devices: &[String], repo_root: &Path) -> Result<
+         // Generate SSH key WITH passphrase
+         let passphrase = generate_random_passphrase()?;
+
+-        // Create key with passphrase
++        // SECURITY: Use stdin to pass passphrase instead of command-line args
++        // to prevent exposure in process listings (ps aux)
++        use std::io::Write;
++        use std::process::Stdio;
++
+         let status = Command::new("ssh-keygen")
+             .args([
+                 "-t",
+                 "ed25519",
+                 "-C",
+                 &format!("{}@{}", device, server_name),
+                 "-f",
+                 temp_key.to_str().unwrap(),
+-                "-N",
+-                &passphrase,
+             ])
++            .stdin(Stdio::piped())
++            .spawn()
++            .context("Failed to spawn ssh-keygen")?;
++
++        // Write passphrase to stdin (ssh-keygen will prompt twice)
++        if let Some(mut stdin) = child.stdin.take() {
++            writeln!(stdin, "{}", passphrase)
++                .context("Failed to write passphrase to ssh-keygen stdin")?;
++            writeln!(stdin, "{}", passphrase)
++                .context("Failed to write passphrase confirmation to ssh-keygen stdin")?;
++        }
++
++        let status = child.wait().context("Failed to wait for ssh-keygen")?;
++
++        if !status.success() {
+             .status()
+             .context("Failed to generate SSH key")?;
+--
+2.45.0
