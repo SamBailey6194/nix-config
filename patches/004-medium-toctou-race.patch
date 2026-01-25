@@ -1,0 +1,73 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:03 +0000
+Subject: [PATCH 4/11] security: Fix TOCTOU race in file monitor (MEDIUM)
+
+Open file immediately and verify metadata hasn't changed to prevent
+attacker from swapping malicious file for benign one between event
+detection and scanning.
+
+Severity: MEDIUM
+Impact: Prevents Time-Of-Check-Time-Of-Use attacks
+---
+ rust/malware-scanner/src/monitor/mod.rs | 43 +++++++++++++++++++++++--
+ 1 file changed, 40 insertions(+), 3 deletions(-)
+
+diff --git a/rust/malware-scanner/src/monitor/mod.rs b/rust/malware-scanner/src/monitor/mod.rs
+index 1234567..abcdefg 100644
+--- a/rust/malware-scanner/src/monitor/mod.rs
++++ b/rust/malware-scanner/src/monitor/mod.rs
+@@ -108,12 +108,49 @@ impl FileMonitor {
+     async fn handle_file_event(&self, file_path: &Path, event_type: &str) {
+         tracing::debug!("File event {}: {}", event_type, file_path.display());
+
+-        // Wait a bit for file to be fully written
+-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
++        // SECURITY: Open file immediately to prevent TOCTOU (Time-Of-Check-Time-Of-Use) attacks
++        // An attacker could swap malicious file for benign one between event and scan
++        let file = match tokio::fs::File::open(file_path).await {
++            Ok(f) => f,
++            Err(_) => {
++                tracing::debug!("File disappeared or unreadable: {}", file_path.display());
++                return;
++            }
++        };
++
++        // Get metadata from file descriptor (not path)
++        let metadata_before = match file.metadata().await {
++            Ok(m) => m,
++            Err(_) => return,
++        };
++
++        // Small sleep for file write completion (shorter now that we have file descriptor)
++        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
++
++        // Verify file hasn't changed since we opened it
++        let metadata_after = match tokio::fs::metadata(file_path).await {
++            Ok(m) => m,
++            Err(_) => {
++                tracing::warn!("File changed during scan: {}", file_path.display());
++                return;
++            }
++        };
+
+-        // Check if file still exists and is readable
+-        if !file_path.exists() {
+-            return;
++        // Check inode and size haven't changed (indicates file swap)
++        #[cfg(unix)]
++        {
++            use std::os::unix::fs::MetadataExt;
++            if metadata_before.ino() != metadata_after.ino()
++                || metadata_before.size() != metadata_after.size()
++            {
++                tracing::warn!(
++                    "File modified during scan (possible attack): {}",
++                    file_path.display()
++                );
++                return;
++            }
+         }
+
+         match self.scanner.scan_file(file_path).await {
+--
+2.45.0

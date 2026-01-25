@@ -1,0 +1,25 @@
+[package]
+name = "agenix-helper"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "agenix_helper"
+path = "src/lib.rs"
+
+[[bin]]
+name = "agenix-helper"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+colored = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+which = { workspace = true }
+walkdir = { workspace = true }
+rand = { workspace = true }
+base64 = "0.21"
+tempfile = "3.8"

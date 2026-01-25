@@ -1,0 +1,27 @@
+[package]
+name = "wireguard-helper"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sam Bailey <sam@syntek.studio>"]
+description = "Mullvad WireGuard VPN management tool with multi-hop routing and automatic rotation"
+
+[lib]
+name = "wireguard_helper"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wireguard-helper"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true, features = ["derive"] }
+anyhow = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+tempfile = "3.8"
+
+# System interaction
+nix = { version = "0.27", features = ["process", "user"] }

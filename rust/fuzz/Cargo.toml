@@ -1,0 +1,60 @@
+[package]
+name = "nix-config-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[[bin]]
+name = "fuzz_secret_name_validation"
+path = "fuzz_targets/fuzz_secret_name_validation.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_wireguard_validation"
+path = "fuzz_targets/fuzz_wireguard_validation.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_mullvad_relay_parsing"
+path = "fuzz_targets/fuzz_mullvad_relay_parsing.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_wireguard_config_generation"
+path = "fuzz_targets/fuzz_wireguard_config_generation.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_malware_heuristics"
+path = "fuzz_targets/fuzz_malware_heuristics.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_path_validation"
+path = "fuzz_targets/fuzz_path_validation.rs"
+test = false
+doc = false
+
+[dependencies]
+# Workspace projects
+agenix-helper = { path = "../agenix-helper" }
+wireguard-helper = { path = "../wireguard-helper" }
+malware-scanner = { path = "../malware-scanner" }
+secrets-verify = { path = "../secrets-verify" }
+
+# Fuzzing runtime
+libfuzzer-sys = "0.4"
+
+# Common dependencies for parsing
+serde_json = "1.0"
+
+# Tokio for async malware scanner
+tokio = { version = "1.36", features = ["rt"] }
