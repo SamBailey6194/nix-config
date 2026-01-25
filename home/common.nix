@@ -69,7 +69,7 @@
     discord
 
     # Fonts
-    ubuntu_font_family         # Ubuntu Mono for Zed
+    ubuntu_classic         # Ubuntu Mono for Zed
     jetbrains-mono             # JetBrains Mono
     nerdfonts                  # Nerd Fonts for icons
 
