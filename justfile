@@ -92,6 +92,66 @@ dev:
     nix develop
 
 # ============================================================================
+# Fuzzing (Security Testing)
+# ============================================================================
+
+# Run all fuzz targets (quick 1-minute test)
+fuzz-quick:
+    cd rust/fuzz && \
+    for target in fuzz_targets/*.rs; do \
+        name=$(basename "$target" .rs); \
+        echo "Fuzzing $name..."; \
+        cargo +nightly fuzz run "$name" -- -max_total_time=60 || exit 1; \
+    done
+
+# Run specific fuzz target
+fuzz TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} -- -max_total_time={{TIME}}
+
+# Run fuzzing with AddressSanitizer
+fuzz-asan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer address -- -max_total_time={{TIME}}
+
+# Run fuzzing with MemorySanitizer
+fuzz-msan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer memory -- -max_total_time={{TIME}}
+
+# Run fuzzing with UndefinedBehaviorSanitizer
+fuzz-ubsan TARGET TIME="300":
+    cd rust/fuzz && cargo +nightly fuzz run {{TARGET}} --sanitizer undefined -- -max_total_time={{TIME}}
+
+# Minimize corpus for all targets
+fuzz-cmin:
+    cd rust/fuzz && \
+    for target in fuzz_targets/*.rs; do \
+        name=$(basename "$target" .rs); \
+        echo "Minimizing corpus for $name..."; \
+        cargo +nightly fuzz cmin "$name"; \
+    done
+
+# List all fuzz targets
+fuzz-list:
+    @ls rust/fuzz/fuzz_targets/*.rs | xargs -n1 basename -s .rs
+
+# Check for fuzzing crashes
+fuzz-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    crashes=$(find rust/fuzz/artifacts -type f 2>/dev/null | wc -l)
+    if [ "$crashes" -gt 0 ]; then
+        echo "⚠️  Fuzzing crashes found:"
+        find rust/fuzz/artifacts -type f -exec echo "  - {}" \;
+        exit 1
+    else
+        echo "✅ No fuzzing crashes found"
+    fi
+
+# Clean fuzzing artifacts (crashes and corpus)
+fuzz-clean:
+    rm -rf rust/fuzz/artifacts
+    rm -rf rust/fuzz/target
+
+# ============================================================================
 # Linting and Formatting
 # ============================================================================
 
@@ -170,6 +230,112 @@ info:
 # Show flake inputs
 show-inputs:
     nix flake metadata . --json | jq '.locks.nodes'
+
+# ============================================================================
+# VPN Management (Phase 6: Wireguard + Mullvad)
+# ============================================================================
+
+# Initialize WireGuard for a device
+vpn-init DEVICE:
+    wireguard-helper init {{DEVICE}}
+
+# Rotate Mullvad servers (generate new config)
+vpn-rotate DEVICE:
+    wireguard-helper rotate {{DEVICE}}
+    @echo "Run 'just rebuild' to apply new configuration"
+
+# Switch exit location and rotate
+vpn-set-exit EXIT:
+    wireguard-helper set-exit {{EXIT}}
+    just vpn-rotate laptop-intel
+
+# Verify VPN connection and exit location
+vpn-verify:
+    wireguard-helper verify
+
+# Show VPN status
+vpn-status:
+    wireguard-helper status
+
+# View VPN metrics
+vpn-metrics:
+    wireguard-helper metrics --tail --lines 20
+
+# Start VPN
+vpn-up:
+    sudo systemctl start wg-quick-mullvad0
+
+# Stop VPN
+vpn-down:
+    sudo systemctl stop wg-quick-mullvad0
+
+# Restart VPN
+vpn-restart:
+    sudo systemctl restart wg-quick-mullvad0
+
+# Launch app through VPN (via cgroup routing)
+vpn-app COMMAND:
+    wireguard-helper vpn-app {{COMMAND}}
+
+# ============================================================================
+# Malware Scanner (Phase 7)
+# ============================================================================
+
+# Scan a file or directory for malware
+scan PATH:
+    malware-scanner scan {{PATH}}
+
+# Scan with auto-quarantine
+scan-quarantine PATH:
+    malware-scanner scan {{PATH}} --quarantine
+
+# Run EICAR test to verify scanner is working
+test-scanner:
+    malware-scanner test
+
+# Perform manual boot scan
+boot-scan:
+    sudo malware-scanner boot-scan
+
+# Show malware scanner statistics
+scanner-stats:
+    malware-scanner stats
+
+# List quarantined files
+quarantine-list:
+    malware-scanner quarantine list
+
+# Show quarantine size
+quarantine-size:
+    malware-scanner quarantine size
+
+# Restore file from quarantine
+quarantine-restore ID PATH:
+    malware-scanner quarantine restore {{ID}} {{PATH}}
+
+# Delete quarantined file permanently
+quarantine-delete ID:
+    malware-scanner quarantine delete {{ID}}
+
+# Cleanup old quarantine entries
+quarantine-cleanup:
+    malware-scanner quarantine cleanup
+
+# Show recent threat detections
+threats-recent:
+    malware-scanner database recent --limit 20
+
+# Update malware signatures
+update-signatures:
+    sudo malware-scanner update
+
+# View real-time monitor logs
+scanner-logs:
+    journalctl -fu malware-monitor
+
+# Restart real-time monitor
+scanner-restart:
+    sudo systemctl restart malware-monitor
 
 # ============================================================================
 # Installation (Phase 1)
