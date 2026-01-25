@@ -1,0 +1,14 @@
+/home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/deps/serde-d5e0de5aa43645a4.d: /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/build/serde-6f3f8d7ef0b174ee/out/private.rs
+
+/home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/deps/libserde-d5e0de5aa43645a4.rlib: /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/build/serde-6f3f8d7ef0b174ee/out/private.rs
+
+/home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/deps/libserde-d5e0de5aa43645a4.rmeta: /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/build/serde-6f3f8d7ef0b174ee/out/private.rs
+
+/home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/home/sam-dev/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/build/serde-6f3f8d7ef0b174ee/out/private.rs:
+
+# env-dep:OUT_DIR=/home/sam-dev/Repos/personal/nix-config/rust/fuzz/target/release/build/serde-6f3f8d7ef0b174ee/out
