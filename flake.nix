@@ -51,6 +51,17 @@
         ];
       };
 
+      # Minimal installation configuration for laptop-intel
+      # Use this during nixos-install to avoid tmpfs space issues
+      # After successful boot, rebuild with laptop-intel target
+      laptop-intel-minimal = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/laptop-intel/configuration-minimal.nix
+        ];
+      };
+
       # Future Framework Laptop (AMD Ryzen + Radeon, 64GB RAM)
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
