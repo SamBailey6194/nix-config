@@ -38,9 +38,15 @@ pub fn run() -> Result<()> {
         if let Ok(data) = serde_json::from_str::<serde_json::Value>(&response) {
             println!("\nExit Information:");
             println!("  IP: {}", data["ip"].as_str().unwrap_or("unknown"));
-            println!("  Country: {}", data["country"].as_str().unwrap_or("unknown"));
+            println!(
+                "  Country: {}",
+                data["country"].as_str().unwrap_or("unknown")
+            );
             println!("  City: {}", data["city"].as_str().unwrap_or("unknown"));
-            println!("  Mullvad Exit: {}", data["mullvad_exit_ip"].as_bool().unwrap_or(false));
+            println!(
+                "  Mullvad Exit: {}",
+                data["mullvad_exit_ip"].as_bool().unwrap_or(false)
+            );
         }
     }
 

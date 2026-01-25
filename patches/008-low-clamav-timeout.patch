@@ -1,0 +1,37 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:07 +0000
+Subject: [PATCH 8/11] security: Add ClamAV socket timeouts (LOW)
+
+Add 30-second timeout to ClamAV socket operations to prevent indefinite
+hangs if daemon becomes unresponsive.
+
+Severity: LOW
+Impact: Prevents scanner from hanging indefinitely
+---
+ rust/malware-scanner/src/scanner/clamav.rs | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/rust/malware-scanner/src/scanner/clamav.rs b/rust/malware-scanner/src/scanner/clamav.rs
+index 1234567..abcdefg 100644
+--- a/rust/malware-scanner/src/scanner/clamav.rs
++++ b/rust/malware-scanner/src/scanner/clamav.rs
+@@ -24,8 +24,14 @@ impl ClamAvClient {
+
+     /// Scan buffer using INSTREAM command
+     pub async fn scan_buffer(&self, content: &[u8]) -> Result<Option<String>> {
+-        let mut stream = UnixStream::connect(&self.socket_path)
++        use tokio::time::{timeout, Duration};
++
++        let stream = timeout(
++            Duration::from_secs(30),
++            UnixStream::connect(&self.socket_path)
++        )
+             .await
++            .context("ClamAV socket connection timed out")??;
++
++        let mut stream = stream;
+             .context("Failed to connect to ClamAV socket")?;
+
+         // Send INSTREAM command
+--
+2.45.0

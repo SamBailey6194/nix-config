@@ -5,8 +5,8 @@ use std::path::Path;
 /// Create a directory with secure permissions (0700 - owner only)
 #[cfg(unix)]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    use std::os::unix::fs::DirBuilderExt;
     use std::fs::DirBuilder;
+    use std::os::unix::fs::DirBuilderExt;
 
     DirBuilder::new()
         .recursive(true)
@@ -18,8 +18,7 @@ fn create_secure_dir(path: &Path) -> Result<()> {
 
 #[cfg(not(unix))]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    fs::create_dir_all(path)
-        .context("Failed to create directory")?;
+    fs::create_dir_all(path).context("Failed to create directory")?;
     Ok(())
 }
 
@@ -43,11 +42,13 @@ pub fn run(location: &str) -> Result<()> {
     create_secure_dir(&config_dir)?;
 
     let config_path = config_dir.join("exit-location.txt");
-    fs::write(&config_path, location)
-        .context("Failed to write exit location config")?;
+    fs::write(&config_path, location).context("Failed to write exit location config")?;
 
     println!("✅ Exit location updated to: {}", location);
-    println!("\n🎯 The next server rotation will use {} exit nodes", location);
+    println!(
+        "\n🎯 The next server rotation will use {} exit nodes",
+        location
+    );
     println!("   Run 'just vpn-rotate' to apply immediately");
 
     Ok(())

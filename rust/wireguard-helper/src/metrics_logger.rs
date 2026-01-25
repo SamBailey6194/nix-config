@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
+use chrono::Utc;
 use std::fs::OpenOptions;
 use std::io::Write;
-use chrono::Utc;
 
 pub struct MetricsLogger {
     log_file: String,
@@ -52,8 +52,7 @@ impl MetricsLogger {
             return Ok(Vec::new());
         }
 
-        let contents = fs::read_to_string(&self.log_file)
-            .context("Failed to read metrics log")?;
+        let contents = fs::read_to_string(&self.log_file).context("Failed to read metrics log")?;
 
         let all_lines: Vec<String> = contents.lines().map(|s| s.to_string()).collect();
 

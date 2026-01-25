@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use std::process::Command;
 use serde::Deserialize;
+use std::process::Command;
 
 #[derive(Debug, Deserialize)]
 struct MullvadCheckResponse {
@@ -34,8 +34,8 @@ pub fn run() -> Result<()> {
         .context("Failed to check Mullvad status")?;
 
     let response_text = String::from_utf8_lossy(&output.stdout);
-    let response: MullvadCheckResponse = serde_json::from_str(&response_text)
-        .context("Failed to parse Mullvad API response")?;
+    let response: MullvadCheckResponse =
+        serde_json::from_str(&response_text).context("Failed to parse Mullvad API response")?;
 
     if !response.mullvad_exit_ip {
         println!("⚠️  Warning: Not using Mullvad exit IP");

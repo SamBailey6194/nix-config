@@ -1,0 +1,43 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:06 +0000
+Subject: [PATCH 7/11] security: Sanitize notification bodies (MEDIUM)
+
+Escape file paths in desktop notifications to prevent injection attacks
+via malicious filenames.
+
+Severity: MEDIUM
+Impact: Prevents notification injection
+---
+ rust/malware-scanner/src/monitor/mod.rs | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/rust/malware-scanner/src/monitor/mod.rs b/rust/malware-scanner/src/monitor/mod.rs
+index 1234567..abcdefg 100644
+--- a/rust/malware-scanner/src/monitor/mod.rs
++++ b/rust/malware-scanner/src/monitor/mod.rs
+@@ -106,6 +106,16 @@ impl FileMonitor {
+         }
+     }
+
++    /// SECURITY: Sanitize strings for desktop notifications to prevent injection
++    fn sanitize_for_notification(s: &str) -> String {
++        s.chars()
++            .filter(|c| !c.is_control() || *c == ' ')
++            .take(100)  // Limit length
++            .collect()
++    }
++
+     async fn handle_file_event(&self, file_path: &Path, event_type: &str) {
+         tracing::debug!("File event {}: {}", event_type, file_path.display());
+
+@@ -171,7 +181,7 @@ impl FileMonitor {
+
+                     let body = format!(
+                         "File: {}\nSeverity: {}\nConfidence: {:.0}%",
+-                        result.file_path.display(),
++                        Self::sanitize_for_notification(&result.file_path.display().to_string()),
+                         result.severity,
+                         result.confidence * 100.0
+                     );
+--
+2.45.0

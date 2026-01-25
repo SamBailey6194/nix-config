@@ -102,19 +102,21 @@ enum Commands {
 }
 
 fn run_command(program: &str, args: &[&str]) -> Result<bool> {
-    let status = Command::new(program)
-        .args(args)
-        .status()
-        .context(format!("Failed to run: {} {}", program, args.join(" ")))?;
+    let status = Command::new(program).args(args).status().context(format!(
+        "Failed to run: {} {}",
+        program,
+        args.join(" ")
+    ))?;
 
     Ok(status.success())
 }
 
 fn run_command_output(program: &str, args: &[&str]) -> Result<String> {
-    let output = Command::new(program)
-        .args(args)
-        .output()
-        .context(format!("Failed to run: {} {}", program, args.join(" ")))?;
+    let output = Command::new(program).args(args).output().context(format!(
+        "Failed to run: {} {}",
+        program,
+        args.join(" ")
+    ))?;
 
     if !output.status.success() {
         anyhow::bail!("Command failed: {} {}", program, args.join(" "));
@@ -135,8 +137,10 @@ fn create_pool(name: String, vdev_type: String, devices: Vec<String>) -> Result<
     println!();
 
     // Confirm
-    print!("{}  This will destroy all data on these devices. Continue? (yes/no): ",
-        "⚠️".yellow());
+    print!(
+        "{}  This will destroy all data on these devices. Continue? (yes/no): ",
+        "⚠️".yellow()
+    );
     std::io::Write::flush(&mut std::io::stdout())?;
 
     let mut input = String::new();
@@ -168,12 +172,18 @@ fn create_pool(name: String, vdev_type: String, devices: Vec<String>) -> Result<
     Ok(())
 }
 
-fn create_dataset(path: String, mountpoint: Option<String>, compression: Option<String>) -> Result<()> {
+fn create_dataset(
+    path: String,
+    mountpoint: Option<String>,
+    compression: Option<String>,
+) -> Result<()> {
     println!("{} Creating dataset: {}", "→".blue(), path.bold());
 
     // Pre-allocate strings to ensure they live long enough
     let mount_opt = mountpoint.as_ref().map(|mp| format!("mountpoint={}", mp));
-    let comp_opt = compression.as_ref().map(|comp| format!("compression={}", comp));
+    let comp_opt = compression
+        .as_ref()
+        .map(|comp| format!("compression={}", comp));
 
     let mut args = vec!["create"];
 
@@ -222,7 +232,10 @@ fn setup_snapshots(dataset: String, frequency: String, retention: u32) -> Result
 
     // Check if schedule already exists
     let schedule_line = format!("{}:{}:{}", dataset, frequency, retention);
-    if schedules.lines().any(|line| line.starts_with(&format!("{}:", dataset))) {
+    if schedules
+        .lines()
+        .any(|line| line.starts_with(&format!("{}:", dataset)))
+    {
         println!("{} Updating existing snapshot schedule", "→".yellow());
 
         // Remove old schedule for this dataset
@@ -256,7 +269,10 @@ fn setup_snapshots(dataset: String, frequency: String, retention: u32) -> Result
     println!("  Frequency: {}", frequency.yellow());
     println!("  Retention: {} snapshots", retention);
     println!();
-    println!("{} Snapshots will be created automatically based on the schedule", "→".blue());
+    println!(
+        "{} Snapshots will be created automatically based on the schedule",
+        "→".blue()
+    );
 
     Ok(())
 }
@@ -285,9 +301,18 @@ fn remove_snapshots(dataset: String, frequency: Option<String>) -> Result<()> {
     fs::write(SCHEDULE_FILE, new_schedules.join("\n") + "\n")?;
 
     if let Some(freq) = frequency {
-        println!("{} Removed {} snapshots for {}", "✓".green(), freq, dataset.bold());
+        println!(
+            "{} Removed {} snapshots for {}",
+            "✓".green(),
+            freq,
+            dataset.bold()
+        );
     } else {
-        println!("{} Removed all snapshot schedules for {}", "✓".green(), dataset.bold());
+        println!(
+            "{} Removed all snapshot schedules for {}",
+            "✓".green(),
+            dataset.bold()
+        );
     }
 
     Ok(())
@@ -317,11 +342,13 @@ fn list_schedules() -> Result<()> {
 
         let parts: Vec<_> = line.split(':').collect();
         if parts.len() == 3 {
-            println!("  {} {} ({}, keep {})",
+            println!(
+                "  {} {} ({}, keep {})",
                 "•".blue(),
                 parts[0].bold(),
                 parts[1].yellow(),
-                parts[2].cyan());
+                parts[2].cyan()
+            );
         }
     }
 
@@ -412,14 +439,22 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::CreatePool { name, vdev_type, devices } =>
-            create_pool(name, vdev_type, devices),
-        Commands::CreateDataset { path, mountpoint, compression } =>
-            create_dataset(path, mountpoint, compression),
-        Commands::SetupSnapshots { dataset, frequency, retention } =>
-            setup_snapshots(dataset, frequency, retention),
-        Commands::RemoveSnapshots { dataset, frequency } =>
-            remove_snapshots(dataset, frequency),
+        Commands::CreatePool {
+            name,
+            vdev_type,
+            devices,
+        } => create_pool(name, vdev_type, devices),
+        Commands::CreateDataset {
+            path,
+            mountpoint,
+            compression,
+        } => create_dataset(path, mountpoint, compression),
+        Commands::SetupSnapshots {
+            dataset,
+            frequency,
+            retention,
+        } => setup_snapshots(dataset, frequency, retention),
+        Commands::RemoveSnapshots { dataset, frequency } => remove_snapshots(dataset, frequency),
         Commands::ListSchedules => list_schedules(),
         Commands::Status { pool } => status(pool),
         Commands::List { snapshots } => list(snapshots),

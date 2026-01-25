@@ -1,11 +1,8 @@
-use anyhow::Result;
 use crate::mullvad_api::Relay;
+use anyhow::Result;
 
 /// Generate WireGuard config for multi-hop chain
-pub fn generate_config(
-    private_key: &str,
-    hops: &[Relay],
-) -> Result<String> {
+pub fn generate_config(private_key: &str, hops: &[Relay]) -> Result<String> {
     if hops.is_empty() {
         anyhow::bail!("Cannot generate config with zero hops");
     }
@@ -28,10 +25,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = {}:{}
 PersistentKeepalive = 25
 "#,
-        private_key,
-        exit_relay.public_key,
-        exit_relay.ipv4_addr_in,
-        exit_relay.multihop_port
+        private_key, exit_relay.public_key, exit_relay.ipv4_addr_in, exit_relay.multihop_port
     );
 
     Ok(config)
@@ -39,13 +33,11 @@ PersistentKeepalive = 25
 
 /// Generate WireGuard keypair
 pub fn generate_keypair() -> Result<(String, String)> {
-    use std::process::{Command, Stdio};
     use std::io::Write;
+    use std::process::{Command, Stdio};
 
     // Generate private key
-    let output = Command::new("wg")
-        .args(["genkey"])
-        .output()?;
+    let output = Command::new("wg").args(["genkey"]).output()?;
 
     let private_key = String::from_utf8(output.stdout)?.trim().to_string();
 

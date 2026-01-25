@@ -15,7 +15,10 @@ pub fn get_secrets_dir() -> Result<PathBuf> {
         if path.exists() {
             return Ok(path);
         }
-        eprintln!("Warning: NIX_CONFIG_SECRETS_DIR is set but directory doesn't exist: {}", path.display());
+        eprintln!(
+            "Warning: NIX_CONFIG_SECRETS_DIR is set but directory doesn't exist: {}",
+            path.display()
+        );
     }
 
     // Find repo root from current directory

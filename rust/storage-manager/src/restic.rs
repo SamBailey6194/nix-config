@@ -132,9 +132,7 @@ fn get_hostname() -> Result<String> {
         .output()
         .context("Failed to get hostname")?;
 
-    Ok(String::from_utf8(output.stdout)?
-        .trim()
-        .to_string())
+    Ok(String::from_utf8(output.stdout)?.trim().to_string())
 }
 
 fn get_config_path() -> Result<PathBuf> {
@@ -143,8 +141,10 @@ fn get_config_path() -> Result<PathBuf> {
 
     // Ensure directory exists
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
-            .context(format!("Failed to create config directory: {:?}", config_dir))?;
+        fs::create_dir_all(&config_dir).context(format!(
+            "Failed to create config directory: {:?}",
+            config_dir
+        ))?;
     }
 
     Ok(config_dir.join(CONFIG_FILE))
@@ -160,23 +160,23 @@ fn load_config() -> Result<Config> {
         return Ok(config);
     }
 
-    let contents = fs::read_to_string(&config_path)
-        .context("Failed to read config file")?;
+    let contents = fs::read_to_string(&config_path).context("Failed to read config file")?;
 
-    serde_json::from_str(&contents)
-        .context("Failed to parse config file")
+    serde_json::from_str(&contents).context("Failed to parse config file")
 }
 
 fn save_config(config: &Config) -> Result<()> {
     let config_path = get_config_path()?;
 
-    let contents = serde_json::to_string_pretty(config)
-        .context("Failed to serialize config")?;
+    let contents = serde_json::to_string_pretty(config).context("Failed to serialize config")?;
 
-    fs::write(&config_path, contents)
-        .context("Failed to write config file")?;
+    fs::write(&config_path, contents).context("Failed to write config file")?;
 
-    println!("{} Configuration saved to: {}", "✓".green(), config_path.display());
+    println!(
+        "{} Configuration saved to: {}",
+        "✓".green(),
+        config_path.display()
+    );
 
     Ok(())
 }
@@ -198,8 +198,13 @@ fn add_repo(name: String, repo_type: String, path: String) -> Result<()> {
 
     save_config(&config)?;
 
-    println!("{} Added repository: {} ({} -> {})",
-        "✓".green(), name.bold(), repo_type, path);
+    println!(
+        "{} Added repository: {} ({} -> {})",
+        "✓".green(),
+        name.bold(),
+        repo_type,
+        path
+    );
 
     Ok(())
 }
@@ -248,7 +253,12 @@ fn list_repos(verbose: bool) -> Result<()> {
     println!();
 
     for (name, repo) in &config.repositories {
-        println!("  {} {} ({})", "•".blue(), name.bold(), repo.repo_type.cyan());
+        println!(
+            "  {} {} ({})",
+            "•".blue(),
+            name.bold(),
+            repo.repo_type.cyan()
+        );
         if verbose {
             println!("    Path: {}", repo.path);
         }
@@ -257,7 +267,13 @@ fn list_repos(verbose: bool) -> Result<()> {
     Ok(())
 }
 
-fn add_backup(name: String, paths: String, repository: String, schedule: String, retention: String) -> Result<()> {
+fn add_backup(
+    name: String,
+    paths: String,
+    repository: String,
+    schedule: String,
+    retention: String,
+) -> Result<()> {
     let mut config = load_config()?;
 
     if config.backups.contains_key(&name) {
@@ -265,7 +281,10 @@ fn add_backup(name: String, paths: String, repository: String, schedule: String,
     }
 
     if !config.repositories.contains_key(&repository) {
-        anyhow::bail!("Repository '{}' not found. Add it first with add-repo", repository);
+        anyhow::bail!(
+            "Repository '{}' not found. Add it first with add-repo",
+            repository
+        );
     }
 
     let paths_vec: Vec<String> = paths.split(',').map(|s| s.trim().to_string()).collect();
@@ -287,8 +306,10 @@ fn add_backup(name: String, paths: String, repository: String, schedule: String,
     println!("  Paths: {}", paths_vec.join(", "));
     println!("  Repository: {}", repository);
     println!("  Schedule: {}", schedule);
-    println!("\n{} Run 'restic-manage generate-services' to create systemd services",
-        "→".blue());
+    println!(
+        "\n{} Run 'restic-manage generate-services' to create systemd services",
+        "→".blue()
+    );
 
     Ok(())
 }
@@ -304,8 +325,11 @@ fn remove_backup(name: String) -> Result<()> {
     save_config(&config)?;
 
     println!("{} Removed backup: {}", "✓".green(), name.bold());
-    println!("\n{} Remember to remove systemd service: sudo systemctl disable restic-backup@{}.timer",
-        "→".yellow(), name);
+    println!(
+        "\n{} Remember to remove systemd service: sudo systemctl disable restic-backup@{}.timer",
+        "→".yellow(),
+        name
+    );
 
     Ok(())
 }
@@ -315,7 +339,9 @@ fn list_backups(verbose: bool) -> Result<()> {
 
     if config.backups.is_empty() {
         println!("{}", "No backups configured".yellow());
-        println!("\nAdd one with: restic-manage add-backup <name> --paths <paths> --repository <repo>");
+        println!(
+            "\nAdd one with: restic-manage add-backup <name> --paths <paths> --repository <repo>"
+        );
         return Ok(());
     }
 
@@ -323,11 +349,13 @@ fn list_backups(verbose: bool) -> Result<()> {
     println!();
 
     for (name, backup) in &config.backups {
-        println!("  {} {} -> {} ({})",
+        println!(
+            "  {} {} -> {} ({})",
             "•".blue(),
             name.bold(),
             backup.repository.cyan(),
-            backup.schedule.yellow());
+            backup.schedule.yellow()
+        );
 
         if verbose {
             println!("    Paths: {}", backup.paths.join(", "));
@@ -359,7 +387,9 @@ fn generate_services(_force: bool) -> Result<()> {
         // Service files are generated by the NixOS module
         // This command just validates the configuration
 
-        let repo = config.repositories.get(&backup.repository)
+        let repo = config
+            .repositories
+            .get(&backup.repository)
             .context(format!("Repository '{}' not found", backup.repository))?;
 
         println!("    Repository: {} ({})", repo.path, repo.repo_type);
@@ -382,7 +412,9 @@ fn init_repo(name: String) -> Result<()> {
     let config = load_config()?;
     let hostname = get_hostname()?;
 
-    let repo = config.repositories.get(&name)
+    let repo = config
+        .repositories
+        .get(&name)
         .context(format!("Repository '{}' not found", name))?;
 
     println!("{} Initializing repository: {}", "→".blue(), name.bold());
@@ -423,7 +455,9 @@ fn test_repo(name: String) -> Result<()> {
     let config = load_config()?;
     let hostname = get_hostname()?;
 
-    let repo = config.repositories.get(&name)
+    let repo = config
+        .repositories
+        .get(&name)
         .context(format!("Repository '{}' not found", name))?;
 
     println!("{} Testing repository: {}", "→".blue(), name.bold());
@@ -463,11 +497,20 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::AddRepo { name, repo_type, path } => add_repo(name, repo_type, path),
+        Commands::AddRepo {
+            name,
+            repo_type,
+            path,
+        } => add_repo(name, repo_type, path),
         Commands::RemoveRepo { name } => remove_repo(name),
         Commands::ListRepos { verbose } => list_repos(verbose),
-        Commands::AddBackup { name, paths, repository, schedule, retention } =>
-            add_backup(name, paths, repository, schedule, retention),
+        Commands::AddBackup {
+            name,
+            paths,
+            repository,
+            schedule,
+            retention,
+        } => add_backup(name, paths, repository, schedule, retention),
         Commands::RemoveBackup { name } => remove_backup(name),
         Commands::ListBackups { verbose } => list_backups(verbose),
         Commands::InitRepo { name } => init_repo(name),

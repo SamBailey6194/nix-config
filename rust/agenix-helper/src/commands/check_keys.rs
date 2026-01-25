@@ -1,8 +1,44 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use colored::*;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+
+/// SECURITY: Validate hostname to prevent path traversal and injection attacks
+fn validate_hostname(hostname: &str) -> Result<String> {
+    // Reject empty or overly long hostnames
+    if hostname.is_empty() {
+        anyhow::bail!("Hostname is empty");
+    }
+
+    if hostname.len() > 253 {
+        anyhow::bail!("Hostname too long (max 253 characters)");
+    }
+
+    // Only allow alphanumeric, hyphens, and dots (RFC 1123)
+    if !hostname
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '.')
+    {
+        anyhow::bail!("Hostname contains invalid characters (only alphanumeric, '-', '.' allowed)");
+    }
+
+    // Reject path traversal attempts
+    if hostname.contains("..") || hostname.contains('/') || hostname.contains('\\') {
+        anyhow::bail!("Hostname contains path traversal characters");
+    }
+
+    // Reject hostnames that start or end with hyphen or dot
+    if hostname.starts_with('-')
+        || hostname.ends_with('-')
+        || hostname.starts_with('.')
+        || hostname.ends_with('.')
+    {
+        anyhow::bail!("Hostname has invalid format (cannot start/end with '-' or '.')");
+    }
+
+    Ok(hostname.to_string())
+}
 
 pub fn run(_repo_root: &Path) -> Result<()> {
     println!("{}", "🔍 Checking Host Keys".bold().cyan());
@@ -10,9 +46,12 @@ pub fn run(_repo_root: &Path) -> Result<()> {
 
     // Check if we're on a NixOS system
     let hostname_output = Command::new("hostname").output()?;
-    let hostname = String::from_utf8_lossy(&hostname_output.stdout)
+    let raw_hostname = String::from_utf8_lossy(&hostname_output.stdout)
         .trim()
         .to_string();
+
+    // SECURITY: Validate hostname before using it
+    let hostname = validate_hostname(&raw_hostname).context("Invalid hostname detected")?;
 
     crate::print_info(&format!("Current hostname: {}", hostname));
 

@@ -98,19 +98,21 @@ enum Commands {
 }
 
 fn run_command(program: &str, args: &[&str]) -> Result<bool> {
-    let status = Command::new(program)
-        .args(args)
-        .status()
-        .context(format!("Failed to run: {} {}", program, args.join(" ")))?;
+    let status = Command::new(program).args(args).status().context(format!(
+        "Failed to run: {} {}",
+        program,
+        args.join(" ")
+    ))?;
 
     Ok(status.success())
 }
 
 fn run_command_output(program: &str, args: &[&str]) -> Result<String> {
-    let output = Command::new(program)
-        .args(args)
-        .output()
-        .context(format!("Failed to run: {} {}", program, args.join(" ")))?;
+    let output = Command::new(program).args(args).output().context(format!(
+        "Failed to run: {} {}",
+        program,
+        args.join(" ")
+    ))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -138,8 +140,10 @@ fn create(level: String, device: String, devices: Vec<String>) -> Result<()> {
     println!();
 
     // Confirm
-    print!("{}  This will DESTROY all data on these devices. Continue? (yes/no): ",
-        "⚠️".yellow());
+    print!(
+        "{}  This will DESTROY all data on these devices. Continue? (yes/no): ",
+        "⚠️".yellow()
+    );
     std::io::Write::flush(&mut std::io::stdout())?;
 
     let mut input = String::new();
@@ -176,7 +180,10 @@ fn create(level: String, device: String, devices: Vec<String>) -> Result<()> {
         run_command("mdadm", &["--detail", &device])?;
 
         println!();
-        println!("{} Monitor build progress with: raid-manage progress", "→".blue());
+        println!(
+            "{} Monitor build progress with: raid-manage progress",
+            "→".blue()
+        );
     } else {
         anyhow::bail!("Failed to create array");
     }
@@ -213,8 +220,7 @@ fn status(device: Option<String>) -> Result<()> {
         run_command("mdadm", &["--detail", &dev])?;
     } else {
         // Show all arrays
-        let mdstat = fs::read_to_string("/proc/mdstat")
-            .context("Failed to read /proc/mdstat")?;
+        let mdstat = fs::read_to_string("/proc/mdstat").context("Failed to read /proc/mdstat")?;
 
         let arrays: Vec<_> = mdstat
             .lines()
@@ -240,8 +246,7 @@ fn status(device: Option<String>) -> Result<()> {
 }
 
 fn mdstat() -> Result<()> {
-    let content = fs::read_to_string("/proc/mdstat")
-        .context("Failed to read /proc/mdstat")?;
+    let content = fs::read_to_string("/proc/mdstat").context("Failed to read /proc/mdstat")?;
 
     println!("{}", content);
     Ok(())
@@ -252,7 +257,10 @@ fn add(array: String, device: String) -> Result<()> {
 
     if run_command("mdadm", &["--manage", &array, "--add", &device])? {
         println!("{} Device added successfully", "✓".green());
-        println!("{} Monitor rebuild progress with: raid-manage progress", "→".blue());
+        println!(
+            "{} Monitor rebuild progress with: raid-manage progress",
+            "→".blue()
+        );
     } else {
         anyhow::bail!("Failed to add device");
     }
@@ -261,7 +269,12 @@ fn add(array: String, device: String) -> Result<()> {
 }
 
 fn fail(array: String, device: String) -> Result<()> {
-    println!("{} Marking {} as failed in {}", "→".blue(), device.bold(), array);
+    println!(
+        "{} Marking {} as failed in {}",
+        "→".blue(),
+        device.bold(),
+        array
+    );
 
     if run_command("mdadm", &["--manage", &array, "--fail", &device])? {
         println!("{} Device marked as failed", "✓".green());
@@ -296,8 +309,7 @@ fn progress() -> Result<()> {
         // Clear screen
         print!("\x1B[2J\x1B[1;1H");
 
-        let content = fs::read_to_string("/proc/mdstat")
-            .context("Failed to read /proc/mdstat")?;
+        let content = fs::read_to_string("/proc/mdstat").context("Failed to read /proc/mdstat")?;
 
         println!("{}", content);
 
@@ -310,8 +322,7 @@ fn health() -> Result<()> {
     println!("{}", "RAID Array Health:".bold());
     println!();
 
-    let mdstat = fs::read_to_string("/proc/mdstat")
-        .context("Failed to read /proc/mdstat")?;
+    let mdstat = fs::read_to_string("/proc/mdstat").context("Failed to read /proc/mdstat")?;
 
     let arrays: Vec<_> = mdstat
         .lines()
@@ -376,8 +387,7 @@ fn update_config() -> Result<()> {
     }
     new_content.push_str(&output);
 
-    fs::write(MDADM_CONF, new_content)
-        .context("Failed to write mdadm.conf")?;
+    fs::write(MDADM_CONF, new_content).context("Failed to write mdadm.conf")?;
 
     println!("{} Updated {}", "✓".green(), MDADM_CONF);
 
@@ -405,8 +415,11 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Create { level, device, devices } =>
-            create(level, device, devices),
+        Commands::Create {
+            level,
+            device,
+            devices,
+        } => create(level, device, devices),
         Commands::Stop { device } => stop(device),
         Commands::Assemble { device } => assemble(device),
         Commands::Status { device } => status(device),

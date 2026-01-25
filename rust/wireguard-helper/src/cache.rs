@@ -19,8 +19,8 @@ pub struct Cache<T> {
 /// Create a directory with secure permissions (0700 - owner only)
 #[cfg(unix)]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    use std::os::unix::fs::DirBuilderExt;
     use std::fs::DirBuilder;
+    use std::os::unix::fs::DirBuilderExt;
 
     DirBuilder::new()
         .recursive(true)
@@ -32,8 +32,7 @@ fn create_secure_dir(path: &Path) -> Result<()> {
 
 #[cfg(not(unix))]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    fs::create_dir_all(path)
-        .context("Failed to create directory")?;
+    fs::create_dir_all(path).context("Failed to create directory")?;
     Ok(())
 }
 
@@ -50,16 +49,11 @@ where
 
         if path_buf.is_absolute() {
             // For absolute paths, ensure they're in allowed directories
-            let allowed_prefixes = [
-                "/tmp/wireguard-helper",
-                "/var/cache/wireguard-helper",
-            ];
+            let allowed_prefixes = ["/tmp/wireguard-helper", "/var/cache/wireguard-helper"];
 
             // Also check XDG cache home if available
-            let mut allowed_dirs: Vec<PathBuf> = allowed_prefixes
-                .iter()
-                .map(PathBuf::from)
-                .collect();
+            let mut allowed_dirs: Vec<PathBuf> =
+                allowed_prefixes.iter().map(PathBuf::from).collect();
 
             if let Ok(home) = std::env::var("HOME") {
                 allowed_dirs.push(PathBuf::from(home).join(".cache/wireguard-helper"));
@@ -71,10 +65,12 @@ where
 
             // Check if path starts with any allowed directory
             let is_allowed = allowed_dirs.iter().any(|allowed| {
-                path_buf.starts_with(allowed) ||
-                path_buf.canonicalize().ok()
-                    .map(|p| p.starts_with(allowed))
-                    .unwrap_or(false)
+                path_buf.starts_with(allowed)
+                    || path_buf
+                        .canonicalize()
+                        .ok()
+                        .map(|p| p.starts_with(allowed))
+                        .unwrap_or(false)
             });
 
             if !is_allowed {
@@ -106,11 +102,10 @@ where
             return Ok(None);
         }
 
-        let contents = fs::read_to_string(path)
-            .context("Failed to read cache file")?;
+        let contents = fs::read_to_string(path).context("Failed to read cache file")?;
 
-        let entry: CacheEntry<T> = serde_json::from_str(&contents)
-            .context("Failed to parse cache file")?;
+        let entry: CacheEntry<T> =
+            serde_json::from_str(&contents).context("Failed to parse cache file")?;
 
         // Check if cache is still valid
         let now = Utc::now();
@@ -131,16 +126,15 @@ where
             timestamp: Utc::now(),
         };
 
-        let json = serde_json::to_string_pretty(&entry)
-            .context("Failed to serialize cache data")?;
+        let json =
+            serde_json::to_string_pretty(&entry).context("Failed to serialize cache data")?;
 
         // Ensure parent directory exists with secure permissions
         if let Some(parent) = Path::new(&self.path).parent() {
             create_secure_dir(parent)?;
         }
 
-        fs::write(&self.path, json)
-            .context("Failed to write cache file")?;
+        fs::write(&self.path, json).context("Failed to write cache file")?;
 
         Ok(())
     }
@@ -148,8 +142,7 @@ where
     /// Clear cache
     pub fn clear(&self) -> Result<()> {
         if Path::new(&self.path).exists() {
-            fs::remove_file(&self.path)
-                .context("Failed to remove cache file")?;
+            fs::remove_file(&self.path).context("Failed to remove cache file")?;
         }
         Ok(())
     }

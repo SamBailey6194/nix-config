@@ -96,13 +96,17 @@ fn main() -> Result<()> {
     if all_valid {
         println!(
             "{}",
-            "✅ All critical secrets verified successfully!".green().bold()
+            "✅ All critical secrets verified successfully!"
+                .green()
+                .bold()
         );
         Ok(())
     } else {
         println!(
             "{}",
-            "❌ Some secrets are missing or have incorrect permissions!".red().bold()
+            "❌ Some secrets are missing or have incorrect permissions!"
+                .red()
+                .bold()
         );
         std::process::exit(1);
     }
@@ -146,7 +150,7 @@ fn verify_secret_path(path: &Path) -> Result<SecretCheck> {
 
         // 2. Check file ownership (must be owned by current user)
         let file_uid = metadata.uid();
-        let current_uid = unsafe { libc::getuid() };
+        let current_uid = nix::unistd::Uid::current().as_raw();
         if file_uid != current_uid {
             security_checks_passed = false;
             eprintln!(
@@ -236,7 +240,12 @@ fn test_github_ssh(account: &str) -> Result<()> {
     print!("  Testing {}... ", host);
 
     let output = Command::new("ssh")
-        .args(["-T", "-o", "StrictHostKeyChecking=accept-new", &format!("git@{}", host)])
+        .args([
+            "-T",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            &format!("git@{}", host),
+        ])
         .output()
         .context("Failed to execute ssh command")?;
 

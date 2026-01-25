@@ -15,7 +15,10 @@ pub fn validate_device_name(device: &str) -> Result<String> {
     }
 
     // Only allow alphanumeric, hyphens, and underscores
-    if !device.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+    if !device
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    {
         anyhow::bail!(
             "Device name must contain only alphanumeric characters, hyphens, and underscores"
         );
@@ -54,11 +57,17 @@ pub fn validate_hop_count(hops: usize) -> Result<usize> {
 pub fn validate_wg_key(key: &str) -> Result<()> {
     // WireGuard keys are base64-encoded 32-byte values (44 characters with padding)
     if key.len() != 44 {
-        anyhow::bail!("Invalid WireGuard key length (expected 44 characters, got {})", key.len());
+        anyhow::bail!(
+            "Invalid WireGuard key length (expected 44 characters, got {})",
+            key.len()
+        );
     }
 
     // Check for valid base64 characters
-    if !key.chars().all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=') {
+    if !key
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=')
+    {
         anyhow::bail!("Invalid WireGuard key: contains invalid base64 characters");
     }
 
@@ -72,7 +81,10 @@ pub fn validate_hostname(hostname: &str) -> Result<()> {
     }
 
     // Allow alphanumeric, hyphens, and dots
-    if !hostname.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '.') {
+    if !hostname
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '.')
+    {
         anyhow::bail!("Invalid hostname: contains invalid characters");
     }
 

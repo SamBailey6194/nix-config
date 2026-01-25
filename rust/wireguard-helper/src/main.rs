@@ -1,16 +1,16 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-mod commands;
-mod mullvad_api;
-mod wg_config;
 mod cache;
-mod route_history;
+mod commands;
 mod metrics_logger;
-mod validation;
+mod mullvad_api;
 mod paths;
+mod route_history;
+mod validation;
+mod wg_config;
 
-use commands::{init, rotate, verify, status, set_exit, metrics, cgroup_launch};
+use commands::{cgroup_launch, init, metrics, rotate, set_exit, status, verify};
 
 #[derive(Parser)]
 #[command(name = "wireguard-helper")]

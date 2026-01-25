@@ -15,10 +15,7 @@ pub fn run(_repo_root: &Path, device: &str) -> Result<()> {
     println!("   sudo cat /etc/ssh/ssh_host_ed25519_key.pub");
     println!();
     println!("3. Add the key to secrets/secrets.nix:");
-    println!(
-        "   {} = \"ssh-ed25519 AAAA... root@{}\";",
-        device, device
-    );
+    println!("   {} = \"ssh-ed25519 AAAA... root@{}\";", device, device);
     println!();
     println!("4. Rekey all secrets to include the new device:");
     println!("   agenix-helper rekey");

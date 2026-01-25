@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
 use crate::metrics_logger::MetricsLogger;
+use anyhow::{Context, Result};
 
 const DEFAULT_LOG_FILE: &str = "/var/log/vpn-logs.txt";
 
@@ -13,7 +13,8 @@ pub fn run(tail: bool, lines: usize) -> Result<()> {
 
     if tail {
         println!("VPN Metrics (last {} lines):\n", lines);
-        let tail_lines = logger.read_tail(lines)
+        let tail_lines = logger
+            .read_tail(lines)
             .context("Failed to read metrics log")?;
 
         for line in tail_lines {
@@ -21,8 +22,8 @@ pub fn run(tail: bool, lines: usize) -> Result<()> {
         }
     } else {
         // Show full file
-        let contents = std::fs::read_to_string(DEFAULT_LOG_FILE)
-            .context("Failed to read metrics log")?;
+        let contents =
+            std::fs::read_to_string(DEFAULT_LOG_FILE).context("Failed to read metrics log")?;
         println!("{}", contents);
     }
 

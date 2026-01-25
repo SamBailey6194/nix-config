@@ -10,8 +10,8 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     // Validate server name to prevent injection attacks
     let server_name = crate::validation::validate_name(server_name, "Server")?;
 
-    let devices = devices
-        .unwrap_or_else(|| DEFAULT_DEVICES.iter().map(|s| s.to_string()).collect());
+    let devices =
+        devices.unwrap_or_else(|| DEFAULT_DEVICES.iter().map(|s| s.to_string()).collect());
 
     // Validate all device names
     for device in &devices {
@@ -43,10 +43,8 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        fs::set_permissions(
-            temp_dir.path(),
-            fs::Permissions::from_mode(0o700)
-        ).context("Failed to set secure permissions on temp directory")?;
+        fs::set_permissions(temp_dir.path(), fs::Permissions::from_mode(0o700))
+            .context("Failed to set secure permissions on temp directory")?;
     }
 
     let mut public_keys = Vec::new();
@@ -62,11 +60,16 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
         let passphrase = generate_random_passphrase()?;
 
         // Convert path to string with proper error handling
-        let temp_key_str = temp_key.to_str()
+        let temp_key_str = temp_key
+            .to_str()
             .context("Temporary key path contains invalid UTF-8")?;
 
-        // Create key with passphrase
-        let status = Command::new("ssh-keygen")
+        // SECURITY: Use stdin to pass passphrase instead of command-line args
+        // to prevent exposure in process listings (ps aux)
+        use std::io::Write;
+        use std::process::Stdio;
+
+        let mut child = Command::new("ssh-keygen")
             .args([
                 "-t",
                 "ed25519",
@@ -74,11 +77,20 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
                 &format!("{}@{}", device, server_name),
                 "-f",
                 temp_key_str,
-                "-N",
-                &passphrase,
             ])
-            .status()
-            .context("Failed to generate SSH key")?;
+            .stdin(Stdio::piped())
+            .spawn()
+            .context("Failed to spawn ssh-keygen")?;
+
+        // Write passphrase to stdin (ssh-keygen will prompt twice)
+        if let Some(mut stdin) = child.stdin.take() {
+            writeln!(stdin, "{}", passphrase)
+                .context("Failed to write passphrase to ssh-keygen stdin")?;
+            writeln!(stdin, "{}", passphrase)
+                .context("Failed to write passphrase confirmation to ssh-keygen stdin")?;
+        }
+
+        let status = child.wait().context("Failed to wait for ssh-keygen")?;
 
         if !status.success() {
             anyhow::bail!("ssh-keygen failed for device: {}", device);
@@ -106,11 +118,7 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
         // This prevents the private key from being written to disk unencrypted
         // TODO: Implement actual agenix encryption via stdin
         // For now, we'll just show what would happen
-        println!(
-            "    {} Would encrypt: {}",
-            "ℹ️".blue(),
-            key_age.dimmed()
-        );
+        println!("    {} Would encrypt: {}", "ℹ️".blue(), key_age.dimmed());
 
         // Encrypt passphrase
         let passphrase_age = format!("server-{}-{}-passphrase.age", server_name, device);
@@ -130,10 +138,7 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     // This ensures cleanup even if an error occurs
 
     println!();
-    crate::print_success(&format!(
-        "Generated SSH keys for {} devices",
-        devices.len()
-    ));
+    crate::print_success(&format!("Generated SSH keys for {} devices", devices.len()));
     println!();
 
     // Print public keys to add to server
@@ -150,7 +155,10 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     }
 
     println!("{}", "Next steps:".bold().yellow());
-    println!("  1. Add the above public keys to {}:/root/.ssh/authorized_keys", server_name);
+    println!(
+        "  1. Add the above public keys to {}:/root/.ssh/authorized_keys",
+        server_name
+    );
     println!("  2. Uncomment the server entries in secrets/secrets.nix");
     println!("  3. Run: agenix-helper rekey");
     println!("  4. Update modules/core/secrets-*.nix to deploy the keys");
@@ -164,8 +172,8 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
 /// Uses rand::thread_rng() which provides a cryptographically secure PRNG
 /// Returns a base64-encoded passphrase with 192 bits of entropy (24 bytes)
 fn generate_random_passphrase() -> Result<String> {
+    use base64::{engine::general_purpose::STANDARD, Engine};
     use rand::RngCore;
-    use base64::{Engine, engine::general_purpose::STANDARD};
 
     // Generate 24 bytes of cryptographically secure random data (192 bits of entropy)
     let mut rng = rand::thread_rng();

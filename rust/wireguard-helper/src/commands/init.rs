@@ -1,6 +1,6 @@
+use crate::wg_config;
 use anyhow::{Context, Result};
 use std::process::Command;
-use crate::wg_config;
 
 pub fn run(device: &str) -> Result<()> {
     // Validate device name to prevent injection attacks
@@ -10,8 +10,8 @@ pub fn run(device: &str) -> Result<()> {
 
     // Generate WireGuard keypair
     println!("Generating WireGuard keypair...");
-    let (private_key, public_key) = wg_config::generate_keypair()
-        .context("Failed to generate WireGuard keypair")?;
+    let (private_key, public_key) =
+        wg_config::generate_keypair().context("Failed to generate WireGuard keypair")?;
 
     // Validate the generated keys
     crate::validation::validate_wg_key(&private_key)
@@ -33,12 +33,12 @@ pub fn run(device: &str) -> Result<()> {
     println!("\nEncrypting private key to agenix...");
 
     // Create secure temporary file with private key
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
-    let mut temp_file = NamedTempFile::new()
-        .context("Failed to create temporary file")?;
-    temp_file.write_all(private_key.as_bytes())
+    let mut temp_file = NamedTempFile::new().context("Failed to create temporary file")?;
+    temp_file
+        .write_all(private_key.as_bytes())
         .context("Failed to write to temporary file")?;
 
     let _temp_path = temp_file.path();
@@ -58,7 +58,10 @@ pub fn run(device: &str) -> Result<()> {
 
     if !output.status.success() {
         // Log full error to stderr for debugging, but don't expose to user
-        eprintln!("DEBUG: agenix stderr: {}", String::from_utf8_lossy(&output.stderr));
+        eprintln!(
+            "DEBUG: agenix stderr: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         anyhow::bail!("Failed to encrypt private key. Check that agenix is installed and secrets.nix is configured correctly");
     }
 

@@ -1,7 +1,7 @@
+use crate::cache::Cache;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use crate::cache::Cache;
 
 const MULLVAD_API_URL: &str = "https://api.mullvad.net/app/v1/relays";
 const CACHE_TTL_HOURS: u64 = 6;
@@ -64,7 +64,7 @@ impl MullvadApi {
             std::path::Path::new(cache_path)
                 .file_name()
                 .and_then(|n| n.to_str())
-                .context("Invalid cache path")?
+                .context("Invalid cache path")?,
         )?;
 
         Ok(Self {
@@ -76,10 +76,16 @@ impl MullvadApi {
     pub fn fetch_relays(&mut self) -> Result<Vec<Relay>> {
         // Try to load from cache first
         if let Some(relay_list) = self.cache.load()? {
-            println!("Using cached relay list ({} relays)", relay_list.wireguard.relays.len());
+            println!(
+                "Using cached relay list ({} relays)",
+                relay_list.wireguard.relays.len()
+            );
 
             // Validate cached relays
-            let validation_failed = relay_list.wireguard.relays.iter()
+            let validation_failed = relay_list
+                .wireguard
+                .relays
+                .iter()
                 .any(|relay| validate_relay(relay).is_err());
 
             if validation_failed {
@@ -126,7 +132,10 @@ impl MullvadApi {
             .context("Failed to parse Mullvad API response")?;
 
         // Validate all relays before caching
-        println!("Validating {} relays from API...", relay_list.wireguard.relays.len());
+        println!(
+            "Validating {} relays from API...",
+            relay_list.wireguard.relays.len()
+        );
         let mut valid_relays = Vec::new();
         let mut invalid_count = 0;
 
@@ -141,7 +150,10 @@ impl MullvadApi {
         }
 
         if invalid_count > 0 {
-            eprintln!("WARNING: {} relays failed validation and were skipped", invalid_count);
+            eprintln!(
+                "WARNING: {} relays failed validation and were skipped",
+                invalid_count
+            );
         }
 
         if valid_relays.is_empty() {
@@ -205,7 +217,7 @@ impl MullvadApi {
         let mut used_countries = HashSet::new();
 
         // Select entry relay (random from other regions)
-        use rand::seq::{SliceRandom, IteratorRandom};
+        use rand::seq::{IteratorRandom, SliceRandom};
         let mut rng = rand::thread_rng();
 
         let entry = other_relays
@@ -238,7 +250,13 @@ impl MullvadApi {
 
         println!("Selected {}-hop chain:", hops.len());
         for (i, hop) in hops.iter().enumerate() {
-            println!("  Hop {}: {} ({}, {})", i + 1, hop.hostname, hop.city_name, hop.country_code);
+            println!(
+                "  Hop {}: {} ({}, {})",
+                i + 1,
+                hop.hostname,
+                hop.city_name,
+                hop.country_code
+            );
         }
 
         Ok(hops)

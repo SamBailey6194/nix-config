@@ -32,17 +32,21 @@ pub fn run(command: &[String]) -> Result<()> {
         "--scope",
         "--slice=vpn-apps",
         &format!("--description=VPN-routed application: {}", safe_description),
-        "--",  // CRITICAL: Separator prevents option injection
+        "--", // CRITICAL: Separator prevents option injection
     ]);
 
     cmd.args(command);
 
-    let output = cmd.output()
+    let output = cmd
+        .output()
         .context("Failed to launch command via systemd-run")?;
 
     if !output.status.success() {
         // Log full error to stderr for debugging, don't expose to user
-        eprintln!("DEBUG: systemd-run stderr: {}", String::from_utf8_lossy(&output.stderr));
+        eprintln!(
+            "DEBUG: systemd-run stderr: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         anyhow::bail!("Failed to launch command via systemd-run. Check that systemd is available and configured correctly");
     }
 

@@ -34,28 +34,25 @@ impl RouteHistory {
             return Ok(Self::new());
         }
 
-        let contents = fs::read_to_string(path)
-            .context("Failed to read route history file")?;
+        let contents = fs::read_to_string(path).context("Failed to read route history file")?;
 
-        let history: RouteHistory = serde_json::from_str(&contents)
-            .context("Failed to parse route history")?;
+        let history: RouteHistory =
+            serde_json::from_str(&contents).context("Failed to parse route history")?;
 
         Ok(history)
     }
 
     /// Save route history to file
     pub fn save(&self, path: &str) -> Result<()> {
-        let json = serde_json::to_string_pretty(self)
-            .context("Failed to serialize route history")?;
+        let json =
+            serde_json::to_string_pretty(self).context("Failed to serialize route history")?;
 
         // Ensure parent directory exists
         if let Some(parent) = Path::new(path).parent() {
-            fs::create_dir_all(parent)
-                .context("Failed to create history directory")?;
+            fs::create_dir_all(parent).context("Failed to create history directory")?;
         }
 
-        fs::write(path, json)
-            .context("Failed to write route history file")?;
+        fs::write(path, json).context("Failed to write route history file")?;
 
         Ok(())
     }

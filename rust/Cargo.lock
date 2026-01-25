@@ -2010,7 +2010,7 @@ dependencies = [
  "clap",
  "colored",
  "dirs",
- "libc",
+ "nix",
  "walkdir",
  "which",
 ]

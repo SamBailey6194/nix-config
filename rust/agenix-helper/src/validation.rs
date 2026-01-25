@@ -70,7 +70,10 @@ pub fn validate_name(name: &str, type_name: &str) -> Result<String> {
     }
 
     // Only allow alphanumeric and hyphens
-    if !name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+    if !name
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    {
         anyhow::bail!(
             "{} name must contain only alphanumeric characters, hyphens, and underscores",
             type_name
@@ -115,9 +118,18 @@ mod tests {
 
     #[test]
     fn test_validate_secret_name_accepts_valid() {
-        assert_eq!(validate_secret_name("github-key").unwrap(), "github-key.age");
-        assert_eq!(validate_secret_name("github-key.age").unwrap(), "github-key.age");
-        assert_eq!(validate_secret_name("server_key").unwrap(), "server_key.age");
+        assert_eq!(
+            validate_secret_name("github-key").unwrap(),
+            "github-key.age"
+        );
+        assert_eq!(
+            validate_secret_name("github-key.age").unwrap(),
+            "github-key.age"
+        );
+        assert_eq!(
+            validate_secret_name("server_key").unwrap(),
+            "server_key.age"
+        );
     }
 
     #[test]

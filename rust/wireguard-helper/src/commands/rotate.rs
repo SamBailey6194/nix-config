@@ -1,14 +1,14 @@
-use anyhow::{Context, Result};
-use std::path::Path;
 use crate::mullvad_api::MullvadApi;
 use crate::route_history::RouteHistory;
 use crate::wg_config;
+use anyhow::{Context, Result};
+use std::path::Path;
 
 /// Create a directory with secure permissions (0700 - owner only)
 #[cfg(unix)]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    use std::os::unix::fs::DirBuilderExt;
     use std::fs::DirBuilder;
+    use std::os::unix::fs::DirBuilderExt;
 
     DirBuilder::new()
         .recursive(true)
@@ -20,8 +20,7 @@ fn create_secure_dir(path: &Path) -> Result<()> {
 
 #[cfg(not(unix))]
 fn create_secure_dir(path: &Path) -> Result<()> {
-    fs::create_dir_all(path)
-        .context("Failed to create directory")?;
+    fs::create_dir_all(path).context("Failed to create directory")?;
     Ok(())
 }
 
@@ -47,8 +46,8 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     let history_path_str = history_path
         .to_str()
         .context("History path contains invalid UTF-8")?;
-    let mut history = RouteHistory::load(history_path_str)
-        .context("Failed to load route history")?;
+    let mut history =
+        RouteHistory::load(history_path_str).context("Failed to load route history")?;
 
     let used_servers = history.get_used_servers();
     println!("Avoiding {} previously used servers", used_servers.len());
@@ -58,16 +57,17 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     let cache_path_str = cache_path
         .to_str()
         .context("Cache path contains invalid UTF-8")?;
-    let mut api = MullvadApi::new(cache_path_str)
-        .context("Failed to initialize Mullvad API client")?;
+    let mut api =
+        MullvadApi::new(cache_path_str).context("Failed to initialize Mullvad API client")?;
 
-    let selected_hops = api.select_hops(&exit, hops, &used_servers)
+    let selected_hops = api
+        .select_hops(&exit, hops, &used_servers)
         .context("Failed to select relay hops")?;
 
     // Read decrypted private key from agenix runtime location
     // Agenix deploys decrypted secrets to /run/agenix/ at boot time
-    let runtime_key_path = std::path::PathBuf::from("/run/agenix")
-        .join(format!("wireguard-{}-private", device));
+    let runtime_key_path =
+        std::path::PathBuf::from("/run/agenix").join(format!("wireguard-{}-private", device));
 
     // Check if the encrypted secret exists in the repo
     let encrypted_key_path = secrets_dir.join(format!("wireguard-{}-private.age", device));
@@ -116,7 +116,8 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     // Use agenix to encrypt the config directly via stdin
     use std::process::{Command, Stdio};
 
-    let config_secret_path_str = config_secret_path.to_str()
+    let config_secret_path_str = config_secret_path
+        .to_str()
         .context("Secret path contains invalid UTF-8")?;
 
     let mut agenix = Command::new("agenix")
@@ -127,31 +128,39 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
 
     if let Some(mut stdin) = agenix.stdin.take() {
         use std::io::Write;
-        stdin.write_all(config.as_bytes())
+        stdin
+            .write_all(config.as_bytes())
             .context("Failed to write config to agenix stdin")?;
     }
 
-    let status = agenix.wait()
-        .context("Failed to wait for agenix process")?;
+    let status = agenix.wait().context("Failed to wait for agenix process")?;
 
     if !status.success() {
-        anyhow::bail!("Failed to encrypt configuration with agenix (exit code: {:?})", status.code());
+        anyhow::bail!(
+            "Failed to encrypt configuration with agenix (exit code: {:?})",
+            status.code()
+        );
     }
 
-    println!("✅ Configuration encrypted to: {}", config_secret_path.display());
+    println!(
+        "✅ Configuration encrypted to: {}",
+        config_secret_path.display()
+    );
 
     // Update route history
-    let server_names: Vec<String> = selected_hops.iter()
-        .map(|r| r.hostname.clone())
-        .collect();
+    let server_names: Vec<String> = selected_hops.iter().map(|r| r.hostname.clone()).collect();
     history.add(server_names, exit.to_string());
-    history.save(history_path_str)
+    history
+        .save(history_path_str)
         .context("Failed to save route history")?;
 
     println!("\n🎯 Next steps:");
     println!("1. Commit the encrypted config:");
     println!("   git add {}", config_secret_path.display());
-    println!("   git commit -m 'feat(wireguard): Update Mullvad config for {}'", device);
+    println!(
+        "   git commit -m 'feat(wireguard): Update Mullvad config for {}'",
+        device
+    );
     println!("2. Rebuild NixOS:");
     println!("   sudo nixos-rebuild switch --flake .#{}", device);
     println!("3. Start VPN:");
