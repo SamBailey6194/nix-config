@@ -66,11 +66,11 @@
       # CLAUDE_CODE_OAUTH_TOKEN will be set via systemd user environment
     };
 
-    # Additional PATH entries
-    # Note: On NixOS, prefer adding packages to home.packages instead
-    sessionVariables.PATH = lib.mkAfter [
-      "$ANDROID_HOME/emulator"
-      "$ANDROID_HOME/platform-tools"
+    # Additional PATH entries for Android SDK
+    # Note: Only needed if you do Android/React Native development
+    sessionPath = [
+      "$HOME/Android/Sdk/emulator"
+      "$HOME/Android/Sdk/platform-tools"
     ];
   };
 
