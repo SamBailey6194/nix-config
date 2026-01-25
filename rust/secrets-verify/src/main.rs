@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
+use nix::unistd::Uid;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -150,7 +151,7 @@ fn verify_secret_path(path: &Path) -> Result<SecretCheck> {
 
         // 2. Check file ownership (must be owned by current user)
         let file_uid = metadata.uid();
-        let current_uid = nix::unistd::Uid::current().as_raw();
+        let current_uid = Uid::current().as_raw();
         if file_uid != current_uid {
             security_checks_passed = false;
             eprintln!(
