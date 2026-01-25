@@ -18,19 +18,19 @@
     };
 
     # Hyprland Wayland Compositor
-    hyprland = {
-      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # hyprland = {
+    #   url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
 
-    # Affinity Apps (Designer, Photo, Publisher)
-    affinity-nix = {
-      url = "github:mrshmllow/affinity-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # # Affinity Apps (Designer, Photo, Publisher)
+    # affinity-nix = {
+    #   url = "github:mrshmllow/affinity-nix";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, agenix, ... }@inputs: {
     # NixOS System Configurations
     nixosConfigurations = {
       # Current Intel Laptop (i5-10210U, 32GB RAM)
