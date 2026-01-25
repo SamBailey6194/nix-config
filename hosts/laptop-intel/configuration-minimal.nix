@@ -37,6 +37,9 @@
     htop
   ];
 
+  # Enable zsh (required for user shell)
+  programs.zsh.enable = true;
+
   # System State Version
   system.stateVersion = "24.11";
 }
