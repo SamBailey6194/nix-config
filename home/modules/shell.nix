@@ -40,12 +40,6 @@
       if command -v ddev &> /dev/null; then
         eval "$(ddev completion zsh)"
       fi
-
-      # NVM integration (if nvm is installed)
-      # Note: On NixOS, consider using Home Manager's nodejs instead
-      export NVM_DIR="$HOME/.nvm"
-      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-      [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
     '';
 
     # Shell aliases
@@ -80,13 +74,6 @@
     ];
   };
 
-  # Source custom functions
-  programs.zsh.initExtra = lib.mkAfter ''
-    # Source custom functions (Ubuntu-specific, not needed on NixOS)
-    if [ -f ~/.zsh_functions/apt_wrapper ]; then
-      source ~/.zsh_functions/apt_wrapper
-    fi
-  '';
 
   # Starship prompt (alternative to Oh My Zsh themes)
   # Disabled by default since you're using custom PROMPT
