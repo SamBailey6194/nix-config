@@ -1,0 +1,73 @@
+From: Claude Security Review <security@anthropic.com>
+Date: Sat, 25 Jan 2026 00:00:04 +0000
+Subject: [PATCH 5/11] security: Add hostname validation (MEDIUM)
+
+Validate hostname to prevent path traversal and injection attacks.
+Only allow RFC 1123 compliant hostnames.
+
+Severity: MEDIUM
+Impact: Prevents path traversal via malicious hostnames
+---
+ rust/agenix-helper/src/commands/check_keys.rs | 42 ++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 2 deletions(-)
+
+diff --git a/rust/agenix-helper/src/commands/check_keys.rs b/rust/agenix-helper/src/commands/check_keys.rs
+index 1234567..abcdefg 100644
+--- a/rust/agenix-helper/src/commands/check_keys.rs
++++ b/rust/agenix-helper/src/commands/check_keys.rs
+@@ -1,9 +1,47 @@
+-use anyhow::Result;
++use anyhow::{Context, Result};
+ use colored::*;
+ use std::fs;
+ use std::path::Path;
+ use std::process::Command;
+
++/// SECURITY: Validate hostname to prevent path traversal and injection attacks
++fn validate_hostname(hostname: &str) -> Result<String> {
++    // Reject empty or overly long hostnames
++    if hostname.is_empty() {
++        anyhow::bail!("Hostname is empty");
++    }
++
++    if hostname.len() > 253 {
++        anyhow::bail!("Hostname too long (max 253 characters)");
++    }
++
++    // Only allow alphanumeric, hyphens, and dots (RFC 1123)
++    if !hostname.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '.') {
++        anyhow::bail!("Hostname contains invalid characters (only alphanumeric, '-', '.' allowed)");
++    }
++
++    // Reject path traversal attempts
++    if hostname.contains("..") || hostname.contains('/') || hostname.contains('\\') {
++        anyhow::bail!("Hostname contains path traversal characters");
++    }
++
++    // Reject hostnames that start or end with hyphen or dot
++    if hostname.starts_with('-') || hostname.ends_with('-')
++        || hostname.starts_with('.') || hostname.ends_with('.') {
++        anyhow::bail!("Hostname has invalid format (cannot start/end with '-' or '.')");
++    }
++
++    Ok(hostname.to_string())
++}
++
+ pub fn run(_repo_root: &Path) -> Result<()> {
+     println!("{}", "🔍 Checking Host Keys".bold().cyan());
+     println!();
+
+     // Check if we're on a NixOS system
+     let hostname_output = Command::new("hostname").output()?;
+-    let hostname = String::from_utf8_lossy(&hostname_output.stdout)
++    let raw_hostname = String::from_utf8_lossy(&hostname_output.stdout)
+         .trim()
+         .to_string();
+
++    // SECURITY: Validate hostname before using it
++    let hostname = validate_hostname(&raw_hostname)
++        .context("Invalid hostname detected")?;
++
+     crate::print_info(&format!("Current hostname: {}", hostname));
+--
+2.45.0

@@ -5,7 +5,9 @@ pub fn run(repo_root: &Path) -> Result<()> {
     let secrets_dir = repo_root.join("secrets");
 
     crate::print_info("Rekeying all secrets...");
-    crate::print_warning("This will re-encrypt all secrets with the current public keys in secrets.nix");
+    crate::print_warning(
+        "This will re-encrypt all secrets with the current public keys in secrets.nix",
+    );
 
     // Run agenix -r (rekey all secrets)
     std::env::set_current_dir(&secrets_dir)?;

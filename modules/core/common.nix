@@ -25,6 +25,8 @@
     git
     vim
     neovim
+    rclone
+    fuse
 
     # System monitoring
     htop

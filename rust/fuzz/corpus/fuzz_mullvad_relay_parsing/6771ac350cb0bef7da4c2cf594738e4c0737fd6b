@@ -1,0 +1,1 @@
+{"wireguard":{"relays":[{"hostname":"se-sto-wg-001","ipv4_addr_in":"185.65.134.66","ipv6_addr_in":"2a03:1b20:5:f01a01f","public_key":"WJN7WBFnoJnXs=","multihop_port":51820,"country_code":"se","city_name":"Stockholm","actiue":true}]}}

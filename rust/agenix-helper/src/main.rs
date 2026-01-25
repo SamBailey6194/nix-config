@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 mod commands;
+mod validation;
 
 #[derive(Parser)]
 #[command(author, version, about = "Helper CLI for managing agenix secrets", long_about = None)]

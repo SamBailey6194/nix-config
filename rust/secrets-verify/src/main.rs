@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
+use nix::unistd::Uid;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -24,7 +25,6 @@ struct Cli {
 
 struct SecretCheck {
     name: String,
-    path: PathBuf,
     exists: bool,
     permissions: Option<u32>,
     is_valid: bool,
@@ -97,13 +97,17 @@ fn main() -> Result<()> {
     if all_valid {
         println!(
             "{}",
-            "✅ All critical secrets verified successfully!".green().bold()
+            "✅ All critical secrets verified successfully!"
+                .green()
+                .bold()
         );
         Ok(())
     } else {
         println!(
             "{}",
-            "❌ Some secrets are missing or have incorrect permissions!".red().bold()
+            "❌ Some secrets are missing or have incorrect permissions!"
+                .red()
+                .bold()
         );
         std::process::exit(1);
     }
@@ -115,6 +119,8 @@ fn verify_secret(secrets_dir: &Path, name: &str) -> Result<SecretCheck> {
 }
 
 fn verify_secret_path(path: &Path) -> Result<SecretCheck> {
+    use std::os::unix::fs::MetadataExt;
+
     let name = path
         .file_name()
         .and_then(|n| n.to_str())
@@ -130,13 +136,64 @@ fn verify_secret_path(path: &Path) -> Result<SecretCheck> {
         let perms = metadata.permissions().mode();
         permissions = Some(perms & 0o777);
 
-        // Check if it's a valid SSH private key
-        is_valid = check_ssh_key_format(path)? && permissions == Some(0o600);
+        // Security checks
+        let mut security_checks_passed = true;
+
+        // 1. Check file permissions (must be 0600)
+        if permissions != Some(0o600) {
+            security_checks_passed = false;
+            eprintln!(
+                "  WARNING: {} has incorrect permissions: {:o} (expected 0600)",
+                name,
+                permissions.unwrap_or(0)
+            );
+        }
+
+        // 2. Check file ownership (must be owned by current user)
+        let file_uid = metadata.uid();
+        let current_uid = Uid::current().as_raw();
+        if file_uid != current_uid {
+            security_checks_passed = false;
+            eprintln!(
+                "  WARNING: {} not owned by current user (file uid: {}, current uid: {})",
+                name, file_uid, current_uid
+            );
+        }
+
+        // 3. Check parent directory permissions (should not have group/other access)
+        if let Some(parent) = path.parent() {
+            if let Ok(parent_meta) = fs::metadata(parent) {
+                let parent_perms = parent_meta.permissions().mode() & 0o777;
+                if parent_perms & 0o077 != 0 {
+                    eprintln!(
+                        "  WARNING: Parent directory {} has group/other permissions: {:o}",
+                        parent.display(),
+                        parent_perms
+                    );
+                }
+
+                // Check parent ownership
+                let parent_uid = parent_meta.uid();
+                if parent_uid != current_uid {
+                    eprintln!(
+                        "  WARNING: Parent directory {} not owned by current user",
+                        parent.display()
+                    );
+                }
+            }
+        }
+
+        // 4. Check if it's a valid SSH private key
+        let is_valid_format = check_ssh_key_format(path)?;
+        if !is_valid_format {
+            security_checks_passed = false;
+        }
+
+        is_valid = is_valid_format && security_checks_passed;
     }
 
     Ok(SecretCheck {
         name,
-        path: path.to_path_buf(),
         exists,
         permissions,
         is_valid,
@@ -184,7 +241,12 @@ fn test_github_ssh(account: &str) -> Result<()> {
     print!("  Testing {}... ", host);
 
     let output = Command::new("ssh")
-        .args(["-T", "-o", "StrictHostKeyChecking=accept-new", &format!("git@{}", host)])
+        .args([
+            "-T",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            &format!("git@{}", host),
+        ])
         .output()
         .context("Failed to execute ssh command")?;
 
@@ -197,9 +259,32 @@ fn test_github_ssh(account: &str) -> Result<()> {
         println!("{}", "✅ Success".green());
     } else {
         println!("{}", "❌ Failed".red());
-        if !combined.is_empty() {
-            println!("    Output: {}", combined.trim());
+
+        // SECURITY: Only show debug output if VERBOSE environment variable is set
+        // This prevents information leakage in logs and terminal output
+        if std::env::var("VERBOSE").is_ok() {
+            // Sanitize output - remove potentially sensitive information
+            let sanitized = combined
+                .lines()
+                .filter(|line| {
+                    // Filter out lines that may contain sensitive key data
+                    !line.to_lowercase().contains("key")
+                        && !line.to_lowercase().contains("fingerprint")
+                        && !line.to_lowercase().contains("signature")
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            eprintln!("DEBUG: SSH connection failed for {}", host);
+            eprintln!("DEBUG: Sanitized output: {}", sanitized.trim());
+            eprintln!("    (Set VERBOSE=1 to see this debug output)");
+        } else {
+            // Show generic message without leaking details
+            eprintln!("    SSH connection failed (set VERBOSE=1 for details)");
         }
+
+        // Show sanitized message to user
+        println!("    Check SSH configuration and key permissions");
     }
 
     Ok(())

@@ -105,6 +105,10 @@
         # Additional dependencies for Rust tools
         pkg-config
         openssl
+
+        # VPN tools (Phase 6: Wireguard + Mullvad)
+        curl   # For IP verification and Mullvad API
+        jq     # For JSON parsing
       ];
 
       # Auto-build Rust tools when entering dev shell
@@ -113,7 +117,7 @@
         echo ""
 
         if [ -d rust ]; then
-          echo "Building Rust tools (secrets-verify, agenix-helper)..."
+          echo "Building Rust tools..."
           cd rust
           cargo build --release 2>&1 | grep -E "(Compiling|Finished|error)" || true
           cd ..
@@ -121,7 +125,11 @@
 
           # Add Rust tools to PATH
           export PATH="$PWD/rust/target/release:$PATH"
-          echo "✅ Rust tools available: secrets-verify, agenix-helper"
+          echo "✅ Rust tools available:"
+          echo "  - secrets-verify, agenix-helper"
+          echo "  - wireguard-helper"
+          echo "  - malware-scanner"
+          echo "  - restic-manage, zfs-manage, raid-manage"
           echo ""
         fi
 
@@ -130,6 +138,10 @@
         echo "  agenix -r              - Rekey all secrets"
         echo "  secrets-verify         - Verify deployed secrets"
         echo "  agenix-helper          - Helper CLI for secrets management"
+        echo "  wireguard-helper       - Mullvad VPN management"
+        echo "  restic-manage          - Restic backup configuration"
+        echo "  zfs-manage             - ZFS storage management"
+        echo "  raid-manage            - RAID array management"
         echo ""
       '';
     };

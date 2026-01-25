@@ -1,0 +1,41 @@
+[package]
+name = "storage-manager"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "restic-manage"
+path = "src/restic.rs"
+
+[[bin]]
+name = "zfs-manage"
+path = "src/zfs.rs"
+
+[[bin]]
+name = "raid-manage"
+path = "src/raid.rs"
+
+[dependencies]
+# CLI and terminal
+clap.workspace = true
+colored.workspace = true
+
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+
+# File system
+walkdir.workspace = true
+dirs.workspace = true
+
+# Date/time for backup schedules
+chrono.workspace = true
+
+[dev-dependencies]

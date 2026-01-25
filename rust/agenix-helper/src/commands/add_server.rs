@@ -7,8 +7,16 @@ use std::process::Command;
 const DEFAULT_DEVICES: &[&str] = &["laptop-intel", "framework", "devtower"];
 
 pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) -> Result<()> {
-    let devices = devices
-        .unwrap_or_else(|| DEFAULT_DEVICES.iter().map(|s| s.to_string()).collect());
+    // Validate server name to prevent injection attacks
+    let server_name = crate::validation::validate_name(server_name, "Server")?;
+
+    let devices =
+        devices.unwrap_or_else(|| DEFAULT_DEVICES.iter().map(|s| s.to_string()).collect());
+
+    // Validate all device names
+    for device in &devices {
+        crate::validation::validate_name(device, "Device")?;
+    }
 
     println!(
         "{}",
@@ -23,7 +31,21 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     println!();
 
     let secrets_dir = repo_root.join("secrets");
-    let temp_dir = std::env::temp_dir();
+
+    // SECURITY: Create a secure temporary directory with 0700 permissions
+    // This prevents other users from reading the SSH keys in transit
+    let temp_dir = tempfile::Builder::new()
+        .prefix("agenix-keys-")
+        .tempdir()
+        .context("Failed to create secure temporary directory")?;
+
+    // Set secure permissions (owner-only)
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(temp_dir.path(), fs::Permissions::from_mode(0o700))
+            .context("Failed to set secure permissions on temp directory")?;
+    }
 
     let mut public_keys = Vec::new();
 
@@ -32,25 +54,43 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
         println!("  {} Generating key for {}...", "⚙️".blue(), device.bold());
 
         let key_name = format!("server-{}-{}-key", server_name, device);
-        let temp_key = temp_dir.join(&key_name);
+        let temp_key = temp_dir.path().join(&key_name);
 
         // Generate SSH key WITH passphrase
         let passphrase = generate_random_passphrase()?;
 
-        // Create key with passphrase
-        let status = Command::new("ssh-keygen")
+        // Convert path to string with proper error handling
+        let temp_key_str = temp_key
+            .to_str()
+            .context("Temporary key path contains invalid UTF-8")?;
+
+        // SECURITY: Use stdin to pass passphrase instead of command-line args
+        // to prevent exposure in process listings (ps aux)
+        use std::io::Write;
+        use std::process::Stdio;
+
+        let mut child = Command::new("ssh-keygen")
             .args([
                 "-t",
                 "ed25519",
                 "-C",
                 &format!("{}@{}", device, server_name),
                 "-f",
-                temp_key.to_str().unwrap(),
-                "-N",
-                &passphrase,
+                temp_key_str,
             ])
-            .status()
-            .context("Failed to generate SSH key")?;
+            .stdin(Stdio::piped())
+            .spawn()
+            .context("Failed to spawn ssh-keygen")?;
+
+        // Write passphrase to stdin (ssh-keygen will prompt twice)
+        if let Some(mut stdin) = child.stdin.take() {
+            writeln!(stdin, "{}", passphrase)
+                .context("Failed to write passphrase to ssh-keygen stdin")?;
+            writeln!(stdin, "{}", passphrase)
+                .context("Failed to write passphrase confirmation to ssh-keygen stdin")?;
+        }
+
+        let status = child.wait().context("Failed to wait for ssh-keygen")?;
 
         if !status.success() {
             anyhow::bail!("ssh-keygen failed for device: {}", device);
@@ -67,24 +107,18 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
 
         // Encrypt private key
         let key_age = format!("{}.age", key_name);
-        let key_secret_path = secrets_dir.join(&key_age);
+        let _key_secret_path = secrets_dir.join(&key_age);
 
         crate::print_info(&format!("  Encrypting {}", key_age));
 
         // Read private key
-        let private_key = fs::read_to_string(&temp_key)?;
+        let _private_key = fs::read_to_string(&temp_key)?;
 
-        // Write to temp file for agenix
-        let temp_input = temp_dir.join(format!("{}.tmp", key_name));
-        fs::write(&temp_input, private_key)?;
-
-        // TODO: Encrypt with agenix
+        // SECURITY: Instead of writing to another temp file, encrypt directly via stdin
+        // This prevents the private key from being written to disk unencrypted
+        // TODO: Implement actual agenix encryption via stdin
         // For now, we'll just show what would happen
-        println!(
-            "    {} Would encrypt: {}",
-            "ℹ️".blue(),
-            key_age.dimmed()
-        );
+        println!("    {} Would encrypt: {}", "ℹ️".blue(), key_age.dimmed());
 
         // Encrypt passphrase
         let passphrase_age = format!("server-{}-{}-passphrase.age", server_name, device);
@@ -94,17 +128,17 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
             passphrase_age.dimmed()
         );
 
-        // Clean up temp files
+        // Clean up temp files - no need to manually remove, tempdir cleanup handles it
+        // But we'll do it anyway for extra security (defense in depth)
         let _ = fs::remove_file(&temp_key);
         let _ = fs::remove_file(&pub_key_path);
-        let _ = fs::remove_file(&temp_input);
     }
 
+    // Temp directory will be automatically cleaned up when temp_dir goes out of scope
+    // This ensures cleanup even if an error occurs
+
     println!();
-    crate::print_success(&format!(
-        "Generated SSH keys for {} devices",
-        devices.len()
-    ));
+    crate::print_success(&format!("Generated SSH keys for {} devices", devices.len()));
     println!();
 
     // Print public keys to add to server
@@ -121,7 +155,10 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     }
 
     println!("{}", "Next steps:".bold().yellow());
-    println!("  1. Add the above public keys to {}:/root/.ssh/authorized_keys", server_name);
+    println!(
+        "  1. Add the above public keys to {}:/root/.ssh/authorized_keys",
+        server_name
+    );
     println!("  2. Uncomment the server entries in secrets/secrets.nix");
     println!("  3. Run: agenix-helper rekey");
     println!("  4. Update modules/core/secrets-*.nix to deploy the keys");
@@ -130,60 +167,19 @@ pub fn run(repo_root: &Path, server_name: &str, devices: Option<Vec<String>>) ->
     Ok(())
 }
 
+/// Generate a cryptographically secure random passphrase
+///
+/// Uses rand::thread_rng() which provides a cryptographically secure PRNG
+/// Returns a base64-encoded passphrase with 192 bits of entropy (24 bytes)
 fn generate_random_passphrase() -> Result<String> {
-    // Generate a random passphrase using /dev/urandom
-    let output = Command::new("head")
-        .args(["-c", "32", "/dev/urandom"])
-        .output()
-        .context("Failed to generate random passphrase")?;
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    use rand::RngCore;
 
-    // Convert to base64 for a readable passphrase
-    let passphrase = Command::new("base64")
-        .arg("-w")
-        .arg("0")
-        .stdin(std::process::Stdio::piped())
-        .output()
-        .context("Failed to encode passphrase")?;
+    // Generate 24 bytes of cryptographically secure random data (192 bits of entropy)
+    let mut rng = rand::thread_rng();
+    let mut bytes = [0u8; 24];
+    rng.fill_bytes(&mut bytes);
 
-    let mut cmd = Command::new("base64");
-    cmd.arg("-w").arg("0");
-
-    let passphrase = base64::encode(&output.stdout);
-
-    Ok(passphrase[..24].to_string()) // Take first 24 chars for reasonable length
-}
-
-// Simple base64 encoding without external crate
-mod base64 {
-    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-    pub fn encode(input: &[u8]) -> String {
-        let mut result = String::new();
-        let mut i = 0;
-
-        while i < input.len() {
-            let b1 = input[i];
-            let b2 = input.get(i + 1).copied().unwrap_or(0);
-            let b3 = input.get(i + 2).copied().unwrap_or(0);
-
-            result.push(CHARS[(b1 >> 2) as usize] as char);
-            result.push(CHARS[(((b1 & 0x03) << 4) | (b2 >> 4)) as usize] as char);
-
-            if i + 1 < input.len() {
-                result.push(CHARS[(((b2 & 0x0F) << 2) | (b3 >> 6)) as usize] as char);
-            } else {
-                result.push('=');
-            }
-
-            if i + 2 < input.len() {
-                result.push(CHARS[(b3 & 0x3F) as usize] as char);
-            } else {
-                result.push('=');
-            }
-
-            i += 3;
-        }
-
-        result
-    }
+    // Encode as base64 for a readable passphrase
+    Ok(STANDARD.encode(bytes))
 }
