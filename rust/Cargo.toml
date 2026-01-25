@@ -2,7 +2,12 @@
 members = [
     "secrets-verify",
     "agenix-helper",
+    "wireguard-helper",  # Phase 6 - Mullvad VPN management
+    "malware-scanner",   # Phase 7 - Malware scanning and threat protection
     # "security-wrapper",  # Phase 10 - Future security wrapper for OpenBao
+]
+exclude = [
+    "fuzz",  # Fuzzing workspace (separate - uses cargo-fuzz)
 ]
 resolver = "2"
 
@@ -35,3 +40,20 @@ toml = "0.8"
 
 # SSH and crypto (for future use)
 ssh2 = "0.9"
+
+# HTTP client (for Mullvad API)
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+
+# Date/time handling (for cache TTL and metrics)
+chrono = { version = "0.4", features = ["serde"] }
+
+# Random number generation (for relay selection)
+rand = "0.8"
+
+# System interaction (for cgroups and process management)
+nix = { version = "0.27", features = ["process", "user"] }
+libc = "0.2"
+
+# Additional dependencies for malware-scanner
+uuid = { version = "1.7", features = ["v4", "serde"] }
+notify-rust = "4.10"

@@ -2,6 +2,9 @@ use anyhow::Result;
 use std::path::Path;
 
 pub fn run(_repo_root: &Path, device: &str) -> Result<()> {
+    // Validate device name to prevent injection attacks
+    let device = crate::validation::validate_name(device, "Device")?;
+
     crate::print_info(&format!("Initializing secrets for device: {}", device));
 
     println!();

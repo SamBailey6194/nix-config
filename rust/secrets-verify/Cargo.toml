@@ -16,3 +16,4 @@ anyhow = { workspace = true }
 walkdir = { workspace = true }
 which = { workspace = true }
 dirs = { workspace = true }
+libc = { workspace = true }
