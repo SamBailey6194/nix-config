@@ -40,7 +40,8 @@
         modules = [
           ./hosts/laptop-intel/configuration.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
+          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
+          # affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -57,7 +58,8 @@
         modules = [
           ./hosts/framework/configuration.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
+          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
+          # affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -74,7 +76,8 @@
         modules = [
           ./hosts/devtower/configuration.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
+          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
+          # affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
