@@ -14,3 +14,11 @@ result-*
 # Secrets (Phase 2+)
 secrets/*.age
 !secrets/secrets.nix
+
+# Rust build artifacts
+rust/target/
+target/
+
+# Fuzzing artifacts
+rust/fuzz/target/
+rust/fuzz/artifacts/
