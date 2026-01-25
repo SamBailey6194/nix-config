@@ -78,12 +78,12 @@
   networking.firewall.enable = true;
 
   # Affinity Apps (all devices get these)
-  programs.affinity = {
-    enable = true;
-    designer = true;
-    photo = true;
-    publisher = true;
-  };
+  # programs.affinity = {
+  #   enable = true;
+  #   designer = true;
+  #   photo = true;
+  #   publisher = true;
+  # };
 
   # System State Version
   system.stateVersion = "24.11";
