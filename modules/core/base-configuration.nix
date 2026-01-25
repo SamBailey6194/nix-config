@@ -41,10 +41,10 @@
   ];
 
   # Enable Hyprland (all devices use Hyprland)
-  programs.hyprland = {
-    enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
-  };
+  # programs.hyprland = {
+  #   enable = true;
+  #   package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+  # };
 
   # Sound - PipeWire (all devices)
   security.rtkit.enable = true;
@@ -66,16 +66,16 @@
   };
 
   # SSH
-  services.openssh = {
-    enable = true;
-    settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
-    };
-  };
+  # services.openssh = {
+  #   enable = true;
+  #   settings = {
+  #     PermitRootLogin = "no";
+  #     PasswordAuthentication = false;
+  #   };
+  # };
 
   # Firewall
-  networking.firewall.enable = true;
+  # networking.firewall.enable = true;
 
   # Affinity Apps (all devices get these)
   # programs.affinity = {
