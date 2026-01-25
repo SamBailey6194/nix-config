@@ -18,6 +18,7 @@
 
     # Hardware-specific
     ../../modules/hardware/amd-laptop.nix
+    ../../modules/hardware/openrgb.nix  # RGB control for keyboard/mouse
 
     # Software
     ../../modules/software/creative.nix  # DaVinci Resolve Studio

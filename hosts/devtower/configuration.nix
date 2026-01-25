@@ -18,7 +18,8 @@
 
     # Hardware-specific
     ../../modules/hardware/amd-desktop.nix
-    ../../modules/hardware/go-xlr.nix  # Go XLR audio interface
+    ../../modules/hardware/go-xlr.nix   # Go XLR audio interface
+    ../../modules/hardware/openrgb.nix  # RGB control for keyboard/mouse/components
 
     # Software
     ../../modules/software/creative.nix  # DaVinci Resolve Studio
