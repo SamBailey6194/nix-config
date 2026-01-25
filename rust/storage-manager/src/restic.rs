@@ -340,7 +340,7 @@ fn list_backups(verbose: bool) -> Result<()> {
 
 fn generate_services(_force: bool) -> Result<()> {
     let config = load_config()?;
-    let hostname = get_hostname()?;
+    let _hostname = get_hostname()?;
 
     if config.backups.is_empty() {
         println!("{}", "No backups configured. Nothing to generate.".yellow());
@@ -352,7 +352,7 @@ fn generate_services(_force: bool) -> Result<()> {
 
     for (name, backup) in &config.backups {
         let service_name = format!("restic-backup@{}.service", name);
-        let timer_name = format!("restic-backup@{}.timer", name);
+        let _timer_name = format!("restic-backup@{}.timer", name);
 
         println!("  {} {}", "→".blue(), service_name);
 

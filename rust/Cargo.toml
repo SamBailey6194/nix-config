@@ -4,6 +4,7 @@ members = [
     "agenix-helper",
     "wireguard-helper",  # Phase 6 - Mullvad VPN management
     "malware-scanner",   # Phase 7 - Malware scanning and threat protection
+    "storage-manager",   # Phase 8 - Storage management (Restic, ZFS, RAID)
     # "security-wrapper",  # Phase 10 - Future security wrapper for OpenBao
 ]
 exclude = [

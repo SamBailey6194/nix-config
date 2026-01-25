@@ -10,6 +10,9 @@ Personal NixOS configuration with Hyprland, dotfiles, and Rust tooling for multi
 - Development environment dotfiles (Zed, git, zsh, etc.)
 - Per-device secrets management with agenix (Phase 2 ✅)
 - Rust CLI tools for secrets verification and management (Phase 2 ✅)
+- Wireguard VPN with Mullvad integration (Phase 6 ✅)
+- Malware scanner with real-time protection (Phase 7 ✅)
+- Runtime-configurable storage management (Phase 8 ✅)
 - Future: Rust-based security wrapper with OpenBao integration (Phase 10)
 
 ## Current Phase: Phase 2 - Secrets Management ✅ COMPLETE
@@ -65,6 +68,19 @@ nix-config/
 │   │   ├── amd-desktop.nix    # AMD desktop (full performance)
 │   │   └── go-xlr.nix         # Go XLR audio interface (devtower only)
 │   │
+│   ├── network/            # Network and VPN modules
+│   │   ├── wireguard-mullvad.nix   # Mullvad VPN integration
+│   │   ├── wireguard-firewall.nix  # VPN firewall rules
+│   │   └── wireguard-routes.nix    # Split tunneling
+│   │
+│   ├── security/           # Security modules
+│   │   └── malware-scanner.nix     # Real-time malware protection
+│   │
+│   ├── storage/            # Storage management (Phase 8)
+│   │   ├── restic.nix         # Runtime-configurable backups
+│   │   ├── zfs.nix            # ZFS management framework
+│   │   └── raid.nix           # RAID management framework
+│   │
 │   ├── software/           # Software suites
 │   │   └── creative.nix       # DaVinci Resolve Studio
 │   │
@@ -81,11 +97,17 @@ nix-config/
 │   ├── PER-DEVICE-SECRETS.md  # Per-device secrets architecture guide
 │   └── *.age                  # Encrypted secrets (safe to commit)
 │
-├── rust/                   # Rust tooling for secrets management (Phase 2)
+├── rust/                   # Rust tooling workspace
 │   ├── Cargo.toml             # Workspace root
 │   ├── README.md              # Rust tooling guide
 │   ├── secrets-verify/        # Verify secrets deployed correctly
-│   └── agenix-helper/         # Helper CLI for managing secrets
+│   ├── agenix-helper/         # Helper CLI for managing secrets
+│   ├── wireguard-helper/      # Mullvad VPN management (Phase 6)
+│   ├── malware-scanner/       # Malware scanning engine (Phase 7)
+│   └── storage-manager/       # Storage CLI tools (Phase 8)
+│       ├── restic-manage      # Restic backup configuration
+│       ├── zfs-manage         # ZFS management helper
+│       └── raid-manage        # RAID management helper
 │
 ├── home/                   # Home Manager (user environment)
 │   ├── common.nix             # Shared dotfiles, packages, programs
@@ -141,6 +163,18 @@ agenix-helper list            # List all secrets
 agenix-helper rekey           # Rekey all secrets
 agenix-helper add-server <name>  # Generate per-device server keys
 agenix-helper check-keys      # Verify host keys
+
+wireguard-helper init         # Initialize VPN configuration
+wireguard-helper rotate       # Rotate VPN servers
+wireguard-helper status       # Show VPN status
+
+malware-scanner scan <path>   # Scan for malware
+malware-scanner quarantine list  # List quarantined files
+
+restic-manage add-repo        # Add backup repository
+restic-manage add-backup      # Configure backup job
+zfs-manage create-pool        # Create ZFS pool
+raid-manage create            # Create RAID array
 ```
 
 ## Multi-Account Git
