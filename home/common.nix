@@ -10,6 +10,7 @@
     ./modules/neovim.nix    # Neovim configuration
     ./modules/shell.nix     # Zsh + Oh My Zsh configuration
     ./modules/hyprland.nix  # Hyprland Wayland compositor
+    ./modules/cloud.nix     # Google Drive linked via rclone and fuse
   ];
 
   # Home Manager state version
@@ -30,13 +31,19 @@
     videos = "$HOME/Videos";
   };
 
+  # Custom directory structure for git repositories
+  # (XDG only supports standard directories, so we use home.file instead)
+  home.file."Repos/personal/.keep".text = "";
+  home.file."Repos/syntek/.keep".text = "";
+  home.file."Repos/missional-gen/.keep".text = "";
+
   # Fonts
   fonts.fontconfig.enable = true;
 
   # Shared packages across all devices
   home.packages = with pkgs; [
     # Development tools
-    vscode
+    # vscode
     gh # GitHub CLI
 
     # CLI utilities

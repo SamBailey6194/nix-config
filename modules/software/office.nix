@@ -11,7 +11,7 @@
 
     # PDF tools
     # pdftk                   # PDF toolkit
-    # qpdf                    # PDF manipulation
+    qpdf                    # PDF manipulation
     # poppler_utils           # PDF utilities (pdfinfo, pdftotext, etc.)
 
     # Markdown editors
