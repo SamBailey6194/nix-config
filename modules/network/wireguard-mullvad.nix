@@ -6,6 +6,13 @@ let
   cfg = config.networking.wireguard-mullvad;
 in
 {
+  # Import submodules at top level (imports cannot be inside config)
+  imports = [
+    ./wireguard-firewall.nix
+    ./wireguard-routes.nix
+    ./wireguard-cgroups.nix
+  ];
+
   options.networking.wireguard-mullvad = {
     enable = mkEnableOption "Mullvad WireGuard VPN with multi-hop";
 
@@ -78,13 +85,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Import firewall, routing, and cgroup modules
-    imports = [
-      ./wireguard-firewall.nix
-      ./wireguard-routes.nix
-      ./wireguard-cgroups.nix
-    ];
-
     # Agenix secrets
     age.secrets = {
       "wireguard-${cfg.device}-private" = {
