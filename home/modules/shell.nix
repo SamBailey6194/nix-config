@@ -65,14 +65,14 @@
       # For now, set it manually or via environment.d
       # CLAUDE_CODE_OAUTH_TOKEN will be set via systemd user environment
     };
-
-    # Additional PATH entries for Android SDK
-    # Note: Only needed if you do Android/React Native development
-    sessionPath = [
-      "$HOME/Android/Sdk/emulator"
-      "$HOME/Android/Sdk/platform-tools"
-    ];
   };
+
+  # Additional PATH entries for Android SDK (top-level Home Manager option)
+  # Note: Only needed if you do Android/React Native development
+  home.sessionPath = [
+    "$HOME/Android/Sdk/emulator"
+    "$HOME/Android/Sdk/platform-tools"
+  ];
 
 
   # Starship prompt (alternative to Oh My Zsh themes)
