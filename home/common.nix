@@ -70,7 +70,7 @@
 
     # Fonts
     jetbrains-mono             # JetBrains Mono
-    nerdfonts                  # Nerd Fonts for icons
+    # nerdfonts                  # Nerd Fonts for icons
 
     # File managers
     thunar
