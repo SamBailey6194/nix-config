@@ -11,6 +11,9 @@ let
     else throw "No recognized laptop user found";
 in
 {
+  # Configure agenix to use the system SSH host key
+  age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
   age.secrets = {
     github-ssh-personal = {
       file = ../../secrets/github-ssh-personal.age;

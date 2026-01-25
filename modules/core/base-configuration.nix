@@ -23,6 +23,13 @@
   time.timeZone = "Europe/London"; # UK GMT
   i18n.defaultLocale = "en_GB.UTF-8";
 
+  # XDG portal support for home-manager
+  # Required when using home-manager via NixOS module with useUserPackages
+  environment.pathsToLink = [
+    "/share/applications"
+    "/share/xdg-desktop-portal"
+  ];
+
   # Base system packages (common to all devices)
   # Note: Most software is now in modules/software/*.nix
   environment.systemPackages = with pkgs; [
