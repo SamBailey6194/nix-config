@@ -230,11 +230,12 @@ reboot
 
 **First Boot**:
 
-1. At login screen, log in as your user (default: `sam-dev`)
-2. Set user password:
+1. At login prompt, log in as **root** (using the password you set during installation)
+2. Set password for your user account:
    ```bash
-   passwd
+   passwd sam-laptop   # For laptop-intel
    ```
+3. Log out and log back in as `sam-laptop` with the new password
 
 **Verification**:
 
@@ -672,7 +673,7 @@ sudo nixos-rebuild switch --flake .#laptop-intel
 # Switch to TTY (Ctrl+Alt+F2)
 # Login as root
 # Set user password
-sudo passwd sam-dev
+sudo passwd sam-laptop   # For laptop-intel
 # Try login again
 ```
 

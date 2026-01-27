@@ -54,50 +54,46 @@ let
 
 in
 {
-  # Configure SSH client
-  programs.ssh = {
-    enable = true;
-
-    # Auto-generated SSH config using per-device keys
-    extraConfig = ''
-      # ============================================================================
-      # Auto-Generated SSH Config (Per-Device Keys)
-      # Device: ${hostname}
-      # ============================================================================
-
-      ${githubSSHConfig}
-
-      # ============================================================================
-      # Server Configurations (Add per-device server keys here)
-      # ============================================================================
-
-      # Example: Client ACME Server
-      # Host client-acme
-      #   HostName acme.example.com
-      #   User root
-      #   IdentityFile ~/.ssh/server-acme-${hostname}-key
-      #   IdentitiesOnly yes
-      #   AddKeysToAgent yes
-
-      # ============================================================================
-      # Global SSH Settings
-      # ============================================================================
-
-      # Use SSH keys from ssh-agent when available
-      Host *
-        AddKeysToAgent yes
-        ServerAliveInterval 60
-        ServerAliveCountMax 3
-        # Disable HashKnownHosts for easier management
-        HashKnownHosts no
-    '';
-  };
-
   # Enable SSH agent for managing keys
   programs.ssh.startAgent = true;
 
-  # Add helpful SSH utilities
+  # Add SSH client package
   environment.systemPackages = with pkgs; [
     openssh
   ];
+
+  # Write SSH config to /etc/ssh/ssh_config.d/
+  # This applies system-wide SSH configuration
+  environment.etc."ssh/ssh_config.d/99-nix-config.conf".text = ''
+    # ============================================================================
+    # Auto-Generated SSH Config (Per-Device Keys)
+    # Device: ${hostname}
+    # ============================================================================
+
+    ${githubSSHConfig}
+
+    # ============================================================================
+    # Server Configurations (Add per-device server keys here)
+    # ============================================================================
+
+    # Example: Client ACME Server
+    # Host client-acme
+    #   HostName acme.example.com
+    #   User root
+    #   IdentityFile ~/.ssh/server-acme-${hostname}-key
+    #   IdentitiesOnly yes
+    #   AddKeysToAgent yes
+
+    # ============================================================================
+    # Global SSH Settings
+    # ============================================================================
+
+    # Use SSH keys from ssh-agent when available
+    Host *
+      AddKeysToAgent yes
+      ServerAliveInterval 60
+      ServerAliveCountMax 3
+      # Disable HashKnownHosts for easier management
+      HashKnownHosts no
+  '';
 }
