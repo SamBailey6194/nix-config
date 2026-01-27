@@ -96,7 +96,9 @@
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
     font-awesome
-    (nerd-fonts.override { fonts = [ "jetbrains-mono" "fira-code" "hack" ]; })
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    nerd-fonts.hack
   ];
 
   # Session variables
