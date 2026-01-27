@@ -79,9 +79,6 @@ in {
     # Enable ZFS kernel module
     boot.supportedFilesystems = [ "zfs" ];
 
-    # Ensure ZFS services are enabled
-    boot.zfs.enabled = true;
-
     # ZFS module parameters (sane defaults, can be overridden)
     boot.kernelParams = [
       # ARC (cache) tuning - adjust based on RAM
@@ -95,19 +92,19 @@ in {
       pools = [ ]; # Scrubs all imported pools
     };
 
-    # ZFS event daemon (monitors pool health)
-    services.zfs.zed = {
-      enable = true;
-      settings = {
-        ZED_DEBUG_LOG = "/var/log/zed.debug.log";
-        ZED_EMAIL_ADDR = mkIf (cfg.emailOnDegraded != null) [ cfg.emailOnDegraded ];
-        ZED_EMAIL_PROG = "${pkgs.mailutils}/bin/mail";
-        ZED_EMAIL_OPTS = "-s '@SUBJECT@' @ADDRESS@";
-
-        # Email on these events
-        ZED_NOTIFY_VERBOSE = false;
-        ZED_NOTIFY_DATA = true;
-      };
+    # ZFS event daemon configuration (monitors pool health)
+    # ZED is automatically started by the ZFS service
+    environment.etc."zfs/zed.d/zed.rc" = mkIf cfg.enableMonitoring {
+      text = ''
+        ZED_DEBUG_LOG="/var/log/zed.debug.log"
+        ${optionalString (cfg.emailOnDegraded != null) ''
+          ZED_EMAIL_ADDR="${cfg.emailOnDegraded}"
+          ZED_EMAIL_PROG="${pkgs.mailutils}/bin/mail"
+          ZED_EMAIL_OPTS="-s '@SUBJECT@' @ADDRESS@"
+        ''}
+        ZED_NOTIFY_VERBOSE=0
+        ZED_NOTIFY_DATA=1
+      '';
     };
 
     # Snapshot management framework
