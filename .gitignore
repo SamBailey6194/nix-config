@@ -22,3 +22,6 @@ target/
 # Fuzzing artifacts
 rust/fuzz/target/
 rust/fuzz/artifacts/
+
+# Flake lock (system-specific)
+flake.lock
