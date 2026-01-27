@@ -14,8 +14,8 @@
   # Enable OpenRGB service for automatic detection
   services.hardware.openrgb = {
     enable = true;
-    # OpenRGB server allows remote control and automation
-    server.enable = true;
+    # Note: The server functionality is built-in to the main service
+    # Start OpenRGB manually with --server flag if needed for remote control
   };
 
   # Udev rules for hardware access (required for USB devices)

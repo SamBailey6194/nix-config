@@ -14,7 +14,7 @@
     extraPackages = with pkgs; [
       rocmPackages.clr.icd
       libva
-      vaapiVdpau
+      libva-vdpau-driver  # Renamed from vaapiVdpau
       libvdpau-va-gl
     ];
   };
@@ -25,11 +25,9 @@
   # Desktop: Full performance mode (no power management)
   powerManagement.cpuFreqGovernor = "performance";
 
-  # OpenGL/Vulkan
-  hardware.opengl = {
-    driSupport = true;
-    driSupport32Bit = true;
-  };
+  # Note: hardware.opengl options have been removed as they are deprecated.
+  # DRI support is now automatically enabled when hardware.graphics.enable = true.
+  # The hardware.graphics block at the top handles all graphics configuration.
 
   # Low latency audio (desktop/workstation)
   services.pipewire.extraConfig.pipewire = {

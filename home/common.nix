@@ -103,7 +103,7 @@
   # Kitty terminal
   programs.kitty = {
     enable = true;
-    theme = "Tokyo Night";
+    themeFile = "tokyo_night_night";  # Using themeFile instead of deprecated theme
     font = {
       name = "JetBrainsMono Nerd Font";
       size = 11;

@@ -14,7 +14,7 @@
     extraPackages = with pkgs; [
       rocmPackages.clr.icd
       libva
-      vaapiVdpau
+      libva-vdpau-driver  # Renamed from vaapiVdpau
       libvdpau-va-gl
     ];
   };
@@ -23,8 +23,9 @@
   services.xserver.videoDrivers = [ "amdgpu" ];
 
   # Laptop Power Management (AMD-specific)
+  # Note: power-profiles-daemon and tlp conflict - use only one
   services.thermald.enable = false; # Intel only
-  services.power-profiles-daemon.enable = true;
+  services.power-profiles-daemon.enable = false; # Disabled - using TLP instead
   services.tlp = {
     enable = true;
     settings = {
@@ -38,9 +39,7 @@
   # Backlight Control
   programs.light.enable = true;
 
-  # OpenGL/Vulkan
-  hardware.opengl = {
-    driSupport = true;
-    driSupport32Bit = true;
-  };
+  # Note: hardware.opengl options have been removed as they are deprecated.
+  # DRI support is now automatically enabled when hardware.graphics.enable = true.
+  # The hardware.graphics block at the top handles all graphics configuration.
 }

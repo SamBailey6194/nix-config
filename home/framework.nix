@@ -16,9 +16,9 @@
     # (DaVinci Resolve Studio is in system packages)
   ];
 
-  # Framework-specific Hyprland settings
-  wayland.windowManager.hyprland.settings = {
-    # Higher workspace count for video editing workflow
+  # Framework-specific Hyprland keybindings
+  # Higher workspace count for video editing workflow
+  wayland.windowManager.hyprland.settings.bind = [
     "$mod, 6, workspace, 6"
     "$mod, 7, workspace, 7"
     "$mod, 8, workspace, 8"
@@ -28,5 +28,5 @@
     "$mod SHIFT, 7, movetoworkspace, 7"
     "$mod SHIFT, 8, movetoworkspace, 8"
     "$mod SHIFT, 9, movetoworkspace, 9"
-  };
+  ];
 }

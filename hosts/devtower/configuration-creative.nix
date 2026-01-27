@@ -4,7 +4,7 @@
   # STAGE 5: CREATIVE SOFTWARE (devtower)
   # Adds: DaVinci Resolve Studio + Blender + Go XLR audio
   # AMD Radeon GPU supports DaVinci Resolve Studio via Rusticl
-  # Note: Affinity Apps are not available on Linux
+  # Affinity Apps via affinity-nix (Wine-based)
 
   imports = [
     # Previous stages
@@ -56,6 +56,11 @@
     tree
     btop
     fastfetch
+  ] ++ [
+    # Affinity Apps (via Wine - from affinity-nix flake)
+    inputs.affinity-nix.packages.${pkgs.system}.designer
+    inputs.affinity-nix.packages.${pkgs.system}.photo
+    inputs.affinity-nix.packages.${pkgs.system}.publisher
   ];
 
   # Enable zsh

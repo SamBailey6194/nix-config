@@ -65,23 +65,23 @@
       };
 
       # Stage 5: Creative (GIMP + Affinity - no DaVinci on Intel GPU)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       laptop-intel-creative = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/laptop-intel/configuration-creative.nix
-          affinity-nix.nixosModules.default
         ];
       };
 
       # Stage 6: Full (all software + Affinity + VPN + malware scanner)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       laptop-intel = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/laptop-intel/configuration-full.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -124,23 +124,23 @@
       };
 
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender + Affinity)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       framework-creative = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/framework/configuration-creative.nix
-          affinity-nix.nixosModules.default
         ];
       };
 
       # Stage 6: Full (all software + Affinity + VPN + malware scanner)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/framework/configuration-full.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -183,23 +183,23 @@
       };
 
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender, Go XLR + Affinity)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       devtower-creative = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/devtower/configuration-creative.nix
-          affinity-nix.nixosModules.default
         ];
       };
 
       # Stage 6: Full (all software + Affinity + VPN + malware scanner + OpenRGB)
+      # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       devtower = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/devtower/configuration-full.nix
           agenix.nixosModules.default
-          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;

@@ -2,9 +2,9 @@
 
 {
   # STAGE 5: CREATIVE SOFTWARE (laptop-intel)
-  # Adds: Blender only (Intel UHD Graphics - NO DaVinci Resolve)
+  # Adds: GIMP, Inkscape, Krita (Intel UHD Graphics - NO DaVinci Resolve)
   # DaVinci Resolve Studio requires AMD/NVIDIA GPU
-  # Note: Affinity Apps are not available on Linux
+  # Affinity Apps via affinity-nix (Wine-based)
 
   imports = [
     # Previous stages
@@ -60,6 +60,11 @@
     inkscape             # Vector graphics
     krita                # Digital painting
     # kdenlive           # Video editing (lighter than DaVinci)
+  ] ++ [
+    # Affinity Apps (via Wine - from affinity-nix flake)
+    inputs.affinity-nix.packages.${pkgs.system}.designer
+    inputs.affinity-nix.packages.${pkgs.system}.photo
+    inputs.affinity-nix.packages.${pkgs.system}.publisher
   ];
 
   # Enable zsh

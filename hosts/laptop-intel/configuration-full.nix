@@ -63,6 +63,11 @@
     gimp                 # Image editing
     inkscape             # Vector graphics
     krita                # Digital painting
+  ] ++ [
+    # Affinity Apps (via Wine - from affinity-nix flake)
+    inputs.affinity-nix.packages.${pkgs.system}.designer
+    inputs.affinity-nix.packages.${pkgs.system}.photo
+    inputs.affinity-nix.packages.${pkgs.system}.publisher
   ];
 
   # Enable zsh
