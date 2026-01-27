@@ -51,9 +51,9 @@
   # For convenience, create a wrapper script in your home directory or add to shell aliases:
   #   alias resolve='ROC_ENABLE_PRE_VEGA=1 RUSTICL_ENABLE=amdgpu,amdgpu-pro,radv,radeon,radeonsi DRI_PRIME=1 QT_QPA_PLATFORM=xcb davinci-resolve-studio'
 
-  # Note: Affinity Apps (Designer, Photo, Publisher) are enabled via
-  # programs.affinity in base-configuration.nix, so all devices get them.
-  # They're listed here conceptually as part of the creative suite.
+  # Note: Affinity Apps (Designer, Photo, Publisher) are added via
+  # affinity-nix flake input in flake.nix for configurations that import this module.
+  # They are installed on all devices that use configuration-creative.nix or configuration-full.nix.
 
   # GPU requirements for DaVinci Resolve Studio:
   # - AMD Radeon GPU with Rusticl/OpenCL support (recommended for NixOS)

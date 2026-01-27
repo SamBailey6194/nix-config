@@ -1,5 +1,11 @@
 # NixOS Configuration Architecture
 
+**Last Updated**: 27/01/2026
+**Version**: 0.1.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
 This document explains the modular architecture of this NixOS configuration.
 
 ## Design Philosophy
@@ -14,13 +20,18 @@ This document explains the modular architecture of this NixOS configuration.
 
 ```
 nix-config/
-├── flake.nix                  # Entry point - defines all hosts
-├── hosts/                     # Per-device configurations (minimal)
+├── flake.nix                  # Entry point - defines all hosts + stages
+├── hosts/                     # Per-device configurations
 │   ├── laptop-intel/
-│   │   ├── configuration.nix  # Just imports modules + hostname
-│   │   └── hardware-configuration.nix
-│   ├── framework/
-│   └── devtower/
+│   │   ├── configuration-minimal.nix      # Stage 1: Installation only
+│   │   ├── configuration-desktop.nix      # Stage 2: + Hyprland
+│   │   ├── configuration-dev.nix          # Stage 3: + Dev tools
+│   │   ├── configuration-productivity.nix # Stage 4: + Office/comms
+│   │   ├── configuration-creative.nix     # Stage 5: + Creative software
+│   │   ├── configuration-full.nix         # Stage 6: Daily use (FULL)
+│   │   └── hardware-configuration.nix     # Auto-generated
+│   ├── framework/              # Same staged configs
+│   └── devtower/               # Same staged configs
 │
 ├── modules/                   # Reusable modules (the meat of the config)
 │   ├── core/
@@ -98,6 +109,59 @@ Each host configuration is **minimal** - it just imports the relevant modules:
 - Different username per device (sam-laptop, sam-framework, sam-desktop)
 - Separate passwords and home directories
 
+## Staged Installation Architecture
+
+To avoid tmpfs space issues during installation and enable incremental testing, each device has **6 configuration stages**:
+
+### Stage Progression
+
+```
+Stage 1 (Minimal)          → Base system only (for nixos-install)
+  ↓
+Stage 2 (Desktop)          → + Hyprland + zsh + SSH
+  ↓
+Stage 3 (Development)      → + Browsers + Zed + Neovim + dev tools
+  ↓
+Stage 4 (Productivity)     → + LibreOffice + communication + media
+  ↓
+Stage 5 (Creative)         → + DaVinci/Blender (GPU-dependent)
+  ↓
+Stage 6 (Full)             → Everything + Home Manager (DAILY USE)
+```
+
+### Configuration Files
+
+Each host has 6 configuration files:
+
+| File | Flake Target | Purpose |
+|------|--------------|---------|
+| `configuration-minimal.nix` | `{device}-minimal` | Installation only |
+| `configuration-desktop.nix` | `{device}-desktop` | Desktop environment |
+| `configuration-dev.nix` | `{device}-dev` | Development tools |
+| `configuration-productivity.nix` | `{device}-productivity` | Office & communication |
+| `configuration-creative.nix` | `{device}-creative` | Creative software |
+| `configuration-full.nix` | `{device}` | **Daily use (all updates)** |
+
+### Installation Workflow
+
+```bash
+# 1. Install with minimal config
+nixos-install --flake .#laptop-intel-minimal
+
+# 2-5. After reboot, progressively add features
+sudo nixos-rebuild switch --flake .#laptop-intel-desktop
+sudo nixos-rebuild switch --flake .#laptop-intel-dev
+sudo nixos-rebuild switch --flake .#laptop-intel-productivity
+sudo nixos-rebuild switch --flake .#laptop-intel-creative
+
+# 6. Switch to full config (for all future updates)
+sudo nixos-rebuild switch --flake .#laptop-intel
+```
+
+**Key Point**: Stages 1-5 are **one-time installation steps**. Stage 6 (`{device}`) is the **permanent configuration** used for all future updates.
+
+**See**: `docs/STAGED-INSTALLATION-GUIDE.md` for complete details.
+
 ### Home Manager
 
 **Common Configuration** (`home/common.nix`):
@@ -120,12 +184,17 @@ Each host configuration is **minimal** - it just imports the relevant modules:
 
 ## Adding a New Device
 
-1. Create `hosts/{device-name}/configuration.nix`
-2. Import relevant modules (base + hardware + software + user)
-3. Create `modules/users/{device-name}.nix` if needed
-4. Create `home/{device-name}.nix` that imports `common.nix`
-5. Update `flake.nix` to add the new host
-6. Generate hardware-configuration.nix during installation
+1. Create `hosts/{device-name}/configuration.nix` (full configuration)
+2. Create `hosts/{device-name}/configuration-minimal.nix` (for installation)
+   - See `docs/MINIMAL-CONFIG-TEMPLATE.md` for detailed guidance
+   - Follow the standard pattern for consistency
+3. Import relevant modules (base + hardware + software + user)
+4. Create `modules/users/{device-name}.nix` if needed
+5. Create `home/{device-name}.nix` that imports `common.nix`
+6. Update `flake.nix` to add both full and minimal targets
+7. Generate hardware-configuration.nix during installation
+
+**Important**: Always create a minimal configuration for new devices to avoid tmpfs space issues during installation. The minimal config template supports workstations, servers, NAS, routers, and other device types.
 
 ## Adding a New Module
 

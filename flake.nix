@@ -18,30 +18,71 @@
     };
 
     # Hyprland Wayland Compositor
-    # hyprland = {
-    #   url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    hyprland = {
+      url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    # # Affinity Apps (Designer, Photo, Publisher)
-    # affinity-nix = {
-    #   url = "github:mrshmllow/affinity-nix";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    # Affinity Apps (Designer, Photo, Publisher)
+    affinity-nix = {
+      url = "github:mrshmllow/affinity-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, ... }@inputs: {
     # NixOS System Configurations
     nixosConfigurations = {
-      # Current Intel Laptop (i5-10210U, 32GB RAM)
+      # ============================================================================
+      # LAPTOP-INTEL (Intel i5-10210U, 32GB RAM, Intel UHD Graphics)
+      # ============================================================================
+
+      # Stage 1: Minimal (for installation only)
+      laptop-intel-minimal = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/laptop-intel/configuration-minimal.nix ];
+      };
+
+      # Stage 2: Desktop (Hyprland + zsh + SSH)
+      laptop-intel-desktop = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/laptop-intel/configuration-desktop.nix ];
+      };
+
+      # Stage 3: Development (+ browsers, Zed, Neovim)
+      laptop-intel-dev = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/laptop-intel/configuration-dev.nix ];
+      };
+
+      # Stage 4: Productivity (+ LibreOffice, communication)
+      laptop-intel-productivity = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/laptop-intel/configuration-productivity.nix ];
+      };
+
+      # Stage 5: Creative (GIMP + Affinity - no DaVinci on Intel GPU)
+      laptop-intel-creative = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/laptop-intel/configuration-creative.nix
+          affinity-nix.nixosModules.default
+        ];
+      };
+
+      # Stage 6: Full (all software + Affinity + VPN + malware scanner)
       laptop-intel = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./hosts/laptop-intel/configuration.nix
+          ./hosts/laptop-intel/configuration-full.nix
           agenix.nixosModules.default
-          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
-          # affinity-nix.nixosModules.default
+          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -51,26 +92,56 @@
         ];
       };
 
-      # Minimal installation configuration for laptop-intel
-      # Use this during nixos-install to avoid tmpfs space issues
-      # After successful boot, rebuild with laptop-intel target
-      laptop-intel-minimal = nixpkgs.lib.nixosSystem {
+      # ============================================================================
+      # FRAMEWORK (AMD Ryzen + Radeon, 64GB RAM)
+      # ============================================================================
+
+      # Stage 1: Minimal (for installation only)
+      framework-minimal = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/framework/configuration-minimal.nix ];
+      };
+
+      # Stage 2: Desktop (Hyprland + zsh + SSH)
+      framework-desktop = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/framework/configuration-desktop.nix ];
+      };
+
+      # Stage 3: Development (+ browsers, Zed, Neovim)
+      framework-dev = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/framework/configuration-dev.nix ];
+      };
+
+      # Stage 4: Productivity (+ LibreOffice, communication)
+      framework-productivity = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/framework/configuration-productivity.nix ];
+      };
+
+      # Stage 5: Creative (+ DaVinci Resolve Studio, Blender + Affinity)
+      framework-creative = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./hosts/laptop-intel/configuration-minimal.nix
+          ./hosts/framework/configuration-creative.nix
+          affinity-nix.nixosModules.default
         ];
       };
 
-      # Future Framework Laptop (AMD Ryzen + Radeon, 64GB RAM)
+      # Stage 6: Full (all software + Affinity + VPN + malware scanner)
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./hosts/framework/configuration.nix
+          ./hosts/framework/configuration-full.nix
           agenix.nixosModules.default
-          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
-          # affinity-nix.nixosModules.default
+          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
@@ -80,15 +151,56 @@
         ];
       };
 
-      # Future DevTower Desktop (AMD CPU + GPU, 64GB RAM, Go XLR)
+      # ============================================================================
+      # DEVTOWER (AMD CPU + GPU, 64GB RAM, Go XLR)
+      # ============================================================================
+
+      # Stage 1: Minimal (for installation only)
+      devtower-minimal = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/devtower/configuration-minimal.nix ];
+      };
+
+      # Stage 2: Desktop (Hyprland + zsh + SSH)
+      devtower-desktop = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/devtower/configuration-desktop.nix ];
+      };
+
+      # Stage 3: Development (+ browsers, Zed, Neovim)
+      devtower-dev = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/devtower/configuration-dev.nix ];
+      };
+
+      # Stage 4: Productivity (+ LibreOffice, communication)
+      devtower-productivity = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [ ./hosts/devtower/configuration-productivity.nix ];
+      };
+
+      # Stage 5: Creative (+ DaVinci Resolve Studio, Blender, Go XLR + Affinity)
+      devtower-creative = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/devtower/configuration-creative.nix
+          affinity-nix.nixosModules.default
+        ];
+      };
+
+      # Stage 6: Full (all software + Affinity + VPN + malware scanner + OpenRGB)
       devtower = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
-          ./hosts/devtower/configuration.nix
+          ./hosts/devtower/configuration-full.nix
           agenix.nixosModules.default
-          # TODO: Re-enable after installation - affinity-nix doesn't expose nixosModules.default
-          # affinity-nix.nixosModules.default
+          affinity-nix.nixosModules.default
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;

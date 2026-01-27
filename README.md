@@ -1,33 +1,35 @@
 # NixOS Configuration
 
+**Last Updated**: 27/01/2026
+**Version**: 0.1.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
 Personal NixOS configuration with Hyprland, dotfiles, and Rust security tooling for multi-device deployment.
 
 **Current Focus:** Single device (laptop-intel) with full secrets management, VPN, malware protection, and storage systems.
 
 ## Quick Links
 
-- **Getting Started:** [Installation Guide](INSTALL.md) | [Quick Start](QUICK-START.md)
-- **Architecture:** [System Architecture](ARCHITECTURE.md)
-- **Secrets:** [Secrets Setup](PHASE-2-SECRETS-SETUP.md) | [Per-Device Model](secrets/PER-DEVICE-SECRETS.md)
-- **VPN:** [VPN Quick Start](QUICK-START-VPN.md) | [Full VPN Guide](PHASE-6-WIREGUARD-MULLVAD.md)
-- **Storage:** [Storage Quick Start](STORAGE-QUICKSTART.md) | [Storage Guide](docs/STORAGE-MANAGEMENT.md)
-- **Security:** [Malware Scanner Quick Start](MALWARE-SCANNER-QUICKSTART.md) | [Full Scanner Guide](MALWARE-SCANNER.md)
+- **Getting Started:** [Installation Guide](docs/INSTALLATION.md) | [Architecture](docs/ARCHITECTURE.md)
+- **Core Features:** [Secrets](docs/SECRETS.md) | [VPN](docs/VPN.md) | [Storage](docs/STORAGE.md) | [Security](docs/MALWARE-SCANNER.md)
+- **Complete Index:** [Documentation Hub](docs/README.md)
 
-## Current Status
+## Overview
 
-### Implemented (Laptop-Intel Ready)
+A complete NixOS configuration featuring a **6-stage progressive installation system** that builds your system incrementally, from minimal base to full desktop environment. Designed for single-device deployment first (laptop-intel), with plans to expand to framework laptop and devtower desktop.
 
-| Feature | Status | Documentation |
-|---------|--------|---------------|
-| **Base System** | ✅ Complete | [Phase 1](PHASE-1-COMPLETE.md) |
-| **Secrets Management** | ✅ Complete | [Phase 2 Setup](PHASE-2-SECRETS-SETUP.md), [Implementation](PHASE-2-IMPLEMENTATION-SUMMARY.md) |
-| **Hyprland Desktop** | ✅ Complete | [Phase 4](PHASE-4-COMPLETE.md), [Hyprland Configs](HYPRLAND-CONFIGS-SUMMARY.md) |
-| **Wireguard VPN** | ✅ Complete | [Phase 6](PHASE-6-WIREGUARD-MULLVAD.md), [Quick Start](QUICK-START-VPN.md) |
-| **Malware Scanner** | ✅ Complete | [Phase 7](PHASE-7-MALWARE-SCANNER-SUMMARY.md), [Quick Start](MALWARE-SCANNER-QUICKSTART.md) |
-| **Storage Management** | ✅ Complete | [Phase 8](PHASE-8-STORAGE-SUMMARY.md), [Quick Start](STORAGE-QUICKSTART.md) |
-| **Rust Tooling** | ✅ Complete | [Rust Tools Overview](rust/README.md) |
+### Key Features
 
-All features ready for testing after NixOS installation on laptop-intel.
+- **Staged Installation** - 6 progressive stages avoid tmpfs issues during installation
+- **Hyprland Desktop** - Modern Wayland compositor with modular configuration
+- **Per-Device Secrets** - Zero-trust model with unique SSH keys per device (Agenix)
+- **Mullvad VPN** - Multi-hop WireGuard with kill switch and split tunneling
+- **Malware Protection** - Real-time scanning with ClamAV, YARA, and custom detection
+- **Storage Management** - Runtime-configurable Restic backups, ZFS, and RAID
+- **Development Environment** - Language servers, Docker, and tooling for Python, TypeScript, Rust, PHP
+- **Rust Tooling** - 6 CLI tools for secrets, VPN, malware scanning, and storage management
 
 ### Current Device
 
@@ -35,150 +37,169 @@ All features ready for testing after NixOS installation on laptop-intel.
 |------|------|----------|--------|
 | laptop-intel | sam-laptop | Intel i5-10210U, 32GB RAM, Intel UHD Graphics | ✅ Ready for install |
 
-### Future Devices (Not Yet Configured)
+### Future Devices
 
-- **framework** - AMD Ryzen, 64GB RAM, AMD Radeon (Phase 3)
-- **devtower** - AMD desktop, 64GB RAM, AMD Radeon + Go XLR (Phase 3)
+- **framework** - AMD Ryzen, 64GB RAM, AMD Radeon (future)
+- **devtower** - AMD desktop, 64GB RAM, AMD Radeon + Go XLR audio (future)
 
-## Features
+## Installation Stages
 
-### Security
-- **Per-device secrets** with agenix encryption
-- **Zero-trust model** - Each device has unique SSH keys for GitHub
-- **Malware scanner** with real-time protection and ClamAV integration
-- **VPN kill switch** - Blocks traffic if VPN drops
-- **Multi-hop routing** - 5+ hop chains through Mullvad
+The staged installation system builds your system progressively, avoiding tmpfs issues:
 
-### Networking
-- **Mullvad VPN** with automatic rotation and split tunneling
-- **Per-app VPN routing** via cgroups
-- **LAN bypass** for local network access
-- **Production server bypass** for audit trail
+| Stage | Target | What's Included | Purpose | Time |
+|-------|--------|-----------------|---------|------|
+| 1 | `{device}-minimal` | Base OS, network, shell | Boot test | 10-20 min |
+| 2 | `{device}-desktop` | Hyprland, terminal, launcher | Desktop environment | 15-30 min |
+| 3 | `{device}-dev` | Browsers, dev tools, language servers | Development | 20-40 min |
+| 4 | `{device}-productivity` | LibreOffice, Discord, Zoom, VLC | Office & communication | 15-25 min |
+| 5 | `{device}-creative` | Blender, GIMP, DaVinci (GPU-dependent) | Creative software | 30-60 min |
+| 6 | `{device}` | ALL stages combined | **Daily use** | 5-30 min updates |
 
-### Storage
-- **Restic backups** - Runtime-configurable encrypted backups
-- **ZFS support** - Advanced filesystem with snapshots
-- **RAID management** - Linux software RAID with monitoring
-- **No Nix editing** - Configure via CLI and JSON files
+**Example flow:**
+```bash
+# Stage 1: Minimal installation
+nixos-install --flake .#laptop-intel-minimal
 
-### Desktop
-- **Hyprland** Wayland compositor with modular configs
-- **Per-device customization** - Base config + device-specific overlays
-- **Multi-account Git** - Directory-based account switching
-- **Development tools** - Python, TypeScript, Rust, PHP, GraphQL
+# Stage 2: Add desktop environment
+sudo nixos-rebuild switch --flake .#laptop-intel-desktop
 
-### Development
-- **Rust workspace** with 6 CLI tools
-- **Just commands** for automation
-- **Fuzzing infrastructure** for security testing
-- **Linting and formatting** for all languages
+# Stage 6: Full configuration for daily use
+sudo nixos-rebuild switch --flake .#laptop-intel
+```
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete walkthrough.
 
 ## Quick Start
 
-### Prerequisites
+### 1. Install NixOS
 
-1. Download NixOS ISO from [nixos.org](https://nixos.org/download.html)
-2. Create bootable USB: `dd if=nixos.iso of=/dev/sdX bs=4M status=progress`
-3. Boot from USB
+```bash
+# Download NixOS ISO from nixos.org
+# Create bootable USB: dd if=nixos.iso of=/dev/sdX bs=4M status=progress
+# Boot from USB
 
-### Installation (10 Steps)
+# Stage 1: Minimal installation (10-20 min)
+nixos-install --flake .#laptop-intel-minimal
+reboot
 
-See [INSTALL.md](INSTALL.md) for detailed step-by-step instructions.
+# Stage 2: Desktop environment (15-30 min)
+sudo nixos-rebuild switch --flake .#laptop-intel-desktop
 
-**TL;DR:**
-1. Partition disk (EFI + root + swap)
-2. Format and mount filesystems
-3. Generate hardware config
-4. Clone this repo
-5. Install with flake: `nixos-install --flake .#laptop-intel`
-6. Set root password and reboot
-7. Log in and rebuild: `sudo nixos-rebuild switch --flake .#laptop-intel`
+# Stage 6: Full configuration (5-30 min)
+sudo nixos-rebuild switch --flake .#laptop-intel
+```
 
-### Post-Installation
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete guide with disk partitioning and setup.
 
-After NixOS is running:
+### 2. Setup Secrets
 
-1. **Setup secrets:** Follow [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md)
-2. **Setup VPN:** Follow [QUICK-START-VPN.md](QUICK-START-VPN.md)
-3. **Setup storage:** Follow [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md)
-4. **Verify installation:** [QUICK-START.md](QUICK-START.md)
+```bash
+# Generate per-device GitHub SSH keys
+agenix-helper add-device laptop-intel
 
-## Documentation Index
+# Encrypt secrets
+agenix-helper edit github-ssh-personal-laptop-intel
 
-### Getting Started
-- [INSTALL.md](INSTALL.md) - Full installation guide
-- [QUICK-START.md](QUICK-START.md) - Post-install verification
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
+# Deploy
+sudo nixos-rebuild switch --flake .#laptop-intel
+```
 
-### Secrets Management
-- [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md) - Step-by-step secrets setup
-- [secrets/PER-DEVICE-SECRETS.md](secrets/PER-DEVICE-SECRETS.md) - Zero-trust secrets model
-- [secrets/README.md](secrets/README.md) - Quick reference
-- [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md) - What was implemented
+See [docs/SECRETS.md](docs/SECRETS.md) for complete guide.
 
-### VPN
-- [QUICK-START-VPN.md](QUICK-START-VPN.md) - 5-minute VPN setup
-- [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md) - Complete VPN guide
-- [rust/wireguard-helper/README.md](rust/wireguard-helper/README.md) - VPN CLI tool
+### 3. Optional: Enable VPN
 
-### Storage
-- [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md) - Quick start guide
-- [docs/STORAGE-MANAGEMENT.md](docs/STORAGE-MANAGEMENT.md) - Complete storage guide
+```bash
+# Generate 5-hop VPN configuration
+just vpn-rotate laptop-intel
 
-### Security
-- [MALWARE-SCANNER-QUICKSTART.md](MALWARE-SCANNER-QUICKSTART.md) - Quick start guide
-- [MALWARE-SCANNER.md](MALWARE-SCANNER.md) - Complete malware scanner guide
-- [PHASE-7-MALWARE-SCANNER-SUMMARY.md](PHASE-7-MALWARE-SCANNER-SUMMARY.md) - Implementation summary
+# Start VPN
+just vpn-up
 
-### Desktop Environment
-- [HYPRLAND-CONFIGS-SUMMARY.md](HYPRLAND-CONFIGS-SUMMARY.md) - Hyprland configuration
-- [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md) - Home Manager integration
-- [NEOVIM-SETUP.md](NEOVIM-SETUP.md) - Neovim configuration
+# Verify connection
+just vpn-verify
+```
+
+See [docs/VPN.md](docs/VPN.md) for complete guide.
+
+### 4. Optional: Configure Backups
+
+```bash
+# Add backup job
+restic-manage add-backup home --paths /home --repository local
+
+# Run backup
+restic-backup-now home
+```
+
+See [docs/STORAGE.md](docs/STORAGE.md) for complete guide.
+
+## Documentation
+
+Comprehensive documentation organized by topic:
+
+### Core Guides
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture and design principles
+- **[docs/INSTALLATION.md](docs/INSTALLATION.md)** - Complete NixOS installation with 6 stages
+- **[docs/SECRETS.md](docs/SECRETS.md)** - Per-device secrets management with Agenix
+- **[docs/VPN.md](docs/VPN.md)** - Mullvad WireGuard multi-hop VPN setup
+- **[docs/STORAGE.md](docs/STORAGE.md)** - Restic backups, ZFS, and RAID management
+- **[docs/MALWARE-SCANNER.md](docs/MALWARE-SCANNER.md)** - Real-time malware protection
+
+### Software-Specific
+
+- **[docs/DAVINCI-RESOLVE-AMD.md](docs/DAVINCI-RESOLVE-AMD.md)** - DaVinci Resolve Studio on AMD GPUs
+- **[docs/NEOVIM-SETUP.md](docs/NEOVIM-SETUP.md)** - Neovim editor configuration
 
 ### Development
-- [rust/README.md](rust/README.md) - Rust tooling overview
-- [rust/secrets-verify/README.md](rust/secrets-verify/README.md) - Secrets verification tool
-- [rust/agenix-helper/README.md](rust/agenix-helper/README.md) - Agenix helper CLI
-- [rust/wireguard-helper/README.md](rust/wireguard-helper/README.md) - Wireguard CLI
-- [rust/malware-scanner/README.md](rust/malware-scanner/README.md) - Malware scanner
-- [rust/fuzz/README.md](rust/fuzz/README.md) - Fuzzing infrastructure
-- [rust/fuzz/FUZZING-GUIDE.md](rust/fuzz/FUZZING-GUIDE.md) - Fuzzing guide
 
-### Additional Topics
-- [DAVINCI-RESOLVE-AMD.md](DAVINCI-RESOLVE-AMD.md) - DaVinci Resolve setup for AMD GPUs
-- [FUZZING-INFRASTRUCTURE-SUMMARY.md](FUZZING-INFRASTRUCTURE-SUMMARY.md) - Fuzzing infrastructure
-- [modules/software/README.md](modules/software/README.md) - Software modules
+- **[rust/README.md](rust/README.md)** - Rust tooling overview
+- **[rust/secrets-verify/README.md](rust/secrets-verify/README.md)** - Secrets verification tool
+- **[rust/agenix-helper/README.md](rust/agenix-helper/README.md)** - Agenix helper CLI
+- **[rust/wireguard-helper/README.md](rust/wireguard-helper/README.md)** - VPN management CLI
+- **[rust/malware-scanner/README.md](rust/malware-scanner/README.md)** - Malware scanner CLI
+- **[rust/storage-manager/README.md](rust/storage-manager/README.md)** - Storage management tools
 
-### Phase Summaries
-- [PHASE-1-COMPLETE.md](PHASE-1-COMPLETE.md) - Base system
-- [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md) - Secrets
-- [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md) - Home Manager
-- [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md) - VPN
-- [PHASE-7-MALWARE-SCANNER-SUMMARY.md](PHASE-7-MALWARE-SCANNER-SUMMARY.md) - Security
-- [PHASE-8-STORAGE-SUMMARY.md](PHASE-8-STORAGE-SUMMARY.md) - Storage
-- [IMPLEMENTATION-COMPLETE.md](IMPLEMENTATION-COMPLETE.md) - Overall summary
+### Complete Index
 
-## Architecture
+**[docs/README.md](docs/README.md)** - Full documentation index with quick reference
 
-This configuration uses a **modular design** with shared base configuration and device-specific additions.
+Historical phase documentation and implementation notes are archived in [docs/archive/](docs/archive/).
+
+## Repository Structure
 
 ```
 nix-config/
 ├── flake.nix               # Entry point - defines hosts and dev shell
-├── justfile                # Task automation commands
+├── flake.lock              # Locked dependencies
+├── justfile                # Task automation (just --list)
 │
-├── hosts/                  # Per-device configs (minimal imports)
-│   └── laptop-intel/       # Intel i5-10210U, 32GB, Intel UHD
+├── docs/                   # Documentation
+│   ├── INSTALLATION.md     # 6-stage installation guide
+│   ├── ARCHITECTURE.md     # System architecture
+│   ├── SECRETS.md          # Per-device secrets setup
+│   ├── VPN.md              # Mullvad VPN configuration
+│   ├── STORAGE.md          # Backup and storage systems
+│   ├── MALWARE-SCANNER.md  # Malware protection
+│   └── archive/            # Historical phase documentation
+│
+├── hosts/                  # Per-device configurations
+│   ├── laptop-intel/       # Intel i5-10210U, 32GB, Intel UHD
+│   │   ├── configuration.nix           # Stage 6 (full)
+│   │   ├── configuration-minimal.nix   # Stage 1 (minimal)
+│   │   └── hardware-configuration.nix  # Generated by NixOS
+│   ├── framework/          # AMD Ryzen, 64GB (future)
+│   └── devtower/           # AMD desktop, 64GB (future)
 │
 ├── modules/                # Reusable modules
-│   ├── core/               # Shared base configuration
-│   ├── hardware/           # Hardware-specific (Intel/AMD, laptop/desktop)
-│   ├── desktop/hyprland/   # Hyprland compositor
+│   ├── core/               # Base configuration (nix settings, SSH)
+│   ├── hardware/           # Intel/AMD, laptop/desktop
+│   ├── desktop/hyprland/   # Hyprland Wayland compositor
 │   ├── network/            # VPN, firewall, routing
 │   ├── security/           # Malware scanner
 │   ├── storage/            # Restic, ZFS, RAID
-│   ├── software/           # Software suites (creative, etc.)
-│   └── users/              # Device-specific user accounts
+│   ├── software/           # Creative suite (DaVinci, etc.)
+│   └── users/              # Per-device user accounts
 │
 ├── home/                   # Home Manager (user environment)
 │   ├── common.nix          # Shared dotfiles and packages
@@ -187,11 +208,10 @@ nix-config/
 ├── config/                 # Dotfiles
 │   ├── git/                # Multi-account Git configs
 │   ├── hypr/               # Modular Hyprland configs
-│   ├── zed/                # Zed editor
-│   └── ...                 # Other dotfiles
+│   ├── zed/, kitty/, etc.  # Application configs
 │
 ├── secrets/                # Agenix encrypted secrets
-│   ├── secrets.nix         # Secret definitions
+│   ├── secrets.nix         # Secret definitions and keys
 │   └── *.age               # Encrypted files (safe to commit)
 │
 └── rust/                   # Rust CLI tools
@@ -202,88 +222,115 @@ nix-config/
     └── storage-manager/    # Storage CLI tools
 ```
 
-**Key Principles:**
-- **DRY** - Shared config defined once in base modules
-- **Composability** - Each host imports only needed modules
-- **Separation** - Hardware, software, users kept separate
-- **Per-device isolation** - Each device has unique secrets and user
+**Design Principles:**
+- **Modular** - Shared base + device-specific overrides
+- **Composable** - Each host imports only needed modules
+- **Staged** - 6 progressive installation targets
+- **Secure** - Per-device secrets with zero-trust model
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed explanation.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed explanation.
 
-## Commands
+## Common Commands
 
 All commands available via `just`. Run `just --list` to see all commands.
 
 ### System Management
 ```bash
+# Daily use
+sudo nixos-rebuild switch --flake .#laptop-intel   # Apply changes
+nix flake update                                    # Update inputs
+sudo nix-collect-garbage -d                         # Clean old generations
+
+# With just automation
 just rebuild                  # Rebuild current system
-just rebuild-host <host>      # Rebuild specific host
-just check                    # Test configuration syntax
 just update                   # Update flake inputs
-just diff                     # Show configuration changes
+just check                    # Test configuration syntax
 ```
 
 ### Secrets Management
 ```bash
-just verify-secrets           # Verify all secrets deployed
-just edit-secret <name>       # Edit an encrypted secret
-just list-secrets             # List all secrets
-just rekey-secrets            # Rekey after adding hosts
+agenix-helper edit <secret>   # Edit encrypted secret
+agenix-helper list            # List all secrets
+agenix-helper rekey           # Rekey after adding hosts
+secrets-verify                # Verify secrets deployed
 ```
 
 ### VPN Management
 ```bash
 just vpn-up                   # Start VPN
-just vpn-down                 # Stop VPN
 just vpn-status               # Show VPN status
-just vpn-verify               # Verify VPN connection
-just vpn-set-exit uk          # Switch exit location (uk/us/eu)
+just vpn-verify               # Verify connection
 just vpn-rotate laptop-intel  # Generate new 5-hop config
 just vpn-app firefox          # Launch app through VPN
 ```
 
 ### Storage Management
 ```bash
-just backup-now <name>        # Run backup immediately
-just restic-snapshots <repo>  # List snapshots
-just zfs-status               # ZFS pool status
-just raid-status              # RAID array status
+restic-manage add-backup home --paths /home --repository local  # Add backup
+restic-backup-now home        # Run backup immediately
+restic-repo local snapshots   # List backups
+zfs-manage pool-status        # ZFS status (if enabled)
 ```
 
 ### Security
 ```bash
-just malware-scan <path>      # Scan for malware
-just malware-status           # Show scanner status
+malware-scanner scan ~/Downloads --quarantine  # Scan directory
+malware-scanner status                          # Show scanner status
+malware-scanner test                            # Test detection
 ```
 
 ### Development
 ```bash
-just dev                      # Enter nix dev shell with Rust tools
+nix develop                   # Enter dev shell with Rust tools
 just build-rust               # Build Rust tools
 just test-rust                # Test Rust tools
 just lint                     # Run all linters
-just format                   # Format all code
 ```
 
-## Rust Tools
+See [docs/README.md](docs/README.md) for complete command reference.
 
-All Rust tools are automatically available in `nix develop`:
+## Features in Detail
 
-```bash
-secrets-verify                # Verify secrets deployed correctly
-agenix-helper edit <secret>   # Edit encrypted secret
-wireguard-helper rotate       # Rotate VPN servers
-malware-scanner scan <path>   # Scan for malware
-restic-manage add-repo        # Add backup repository
-zfs-manage create-pool        # Create ZFS pool
-raid-manage create            # Create RAID array
-```
+### Per-Device Secrets (Agenix)
+Each device has **unique** SSH keys for GitHub and servers:
+- Device compromise only exposes that device's keys
+- Independent key rotation per device
+- Full audit trail of which device accessed what
+- Two-tier security: GitHub (no passphrase), servers (with passphrase)
 
-See [rust/README.md](rust/README.md) for complete documentation.
+### Multi-Hop VPN (Mullvad WireGuard)
+5-hop chain provides strong anonymity:
+- Entry → Relay1 → Relay2 → Relay3 → Exit
+- VPN provider can't correlate your origin and destination
+- Kill switch blocks traffic if VPN drops
+- Split tunneling keeps LAN functional
+- Per-app routing via cgroups
 
-## Multi-Account Git
+### Malware Protection
+Multi-engine threat detection:
+- ClamAV signatures (8+ million)
+- YARA pattern matching
+- Behavioral heuristics
+- Hash-based detection
+- Real-time monitoring
 
-Directory-based conditional includes automatically switch GitHub accounts:
+### Storage Management
+Runtime-configurable without editing Nix:
+- **Restic** - Encrypted backups to local/cloud
+- **ZFS** - Advanced filesystem with snapshots
+- **RAID** - Linux software RAID with monitoring
+- Configure via CLI and JSON files
+
+### Development Stack
+Comprehensive language support:
+- **Python** - Ruff, Pyright, python-lsp-server, Django stubs
+- **TypeScript/JavaScript** - Prettier, ESLint, tsc
+- **Rust** - rustfmt, Clippy, rust-analyzer
+- **PHP** - php-cs-fixer, Intelephense
+- **Markdown, GraphQL, Tailwind CSS** - Language servers included
+
+### Multi-Account Git
+Directory-based account switching:
 
 | Directory | Account | SSH Host |
 |-----------|---------|----------|
@@ -293,148 +340,47 @@ Directory-based conditional includes automatically switch GitHub accounts:
 
 Verify with: `git config user.email` in each directory.
 
-## Development Stack Support
+## Troubleshooting
 
-- **Python:** Ruff, Pyright, python-lsp-server, Django stubs
-- **TypeScript/JavaScript:** Prettier, ESLint, tsc
-- **Rust:** rustfmt, Clippy, rust-analyzer
-- **PHP:** php-cs-fixer, Intelephense
-- **Markdown:** Prettier, markdownlint, markdown-toc
-- **GraphQL, Tailwind CSS:** Language servers included
+### Installation Issues
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) troubleshooting section for:
+- tmpfs space issues during installation
+- Hardware detection problems
+- Boot loader configuration
 
-## Completed Phases
+### Secrets Not Working
+See [docs/SECRETS.md](docs/SECRETS.md) troubleshooting section for:
+- Permission denied errors
+- SSH key deployment issues
+- Agenix decryption problems
 
-### Phase 1: Base System ✅
-- NixOS with Hyprland running on laptop-intel
-- Flake-based configuration
-- Core modules (common.nix, nix-settings.nix)
-- Base Hyprland desktop module
+### VPN Connection Problems
+See [docs/VPN.md](docs/VPN.md) troubleshooting section for:
+- Connection failures
+- Kill switch issues
+- Split tunneling problems
 
-**Documentation:** [PHASE-1-COMPLETE.md](PHASE-1-COMPLETE.md)
+### Backup Failures
+See [docs/STORAGE.md](docs/STORAGE.md) troubleshooting section for:
+- Repository initialization
+- Permission issues
+- Systemd timer problems
 
-### Phase 2: Secrets Management ✅
-- Per-device secrets with agenix
-- Zero-trust model (unique keys per device)
-- Rust tooling (secrets-verify, agenix-helper)
-- Auto-generated SSH config per device
-- Two-tier security (GitHub vs Servers)
+## Support and Resources
 
-**Documentation:** [PHASE-2-SECRETS-SETUP.md](PHASE-2-SECRETS-SETUP.md), [PHASE-2-IMPLEMENTATION-SUMMARY.md](PHASE-2-IMPLEMENTATION-SUMMARY.md)
-
-### Phase 4: Home Manager ✅
-- User environment management
-- Dotfiles integration
-- Git, Zsh, Starship, Kitty, Zed
-- Modular Hyprland configs (base + device-specific)
-
-**Documentation:** [PHASE-4-COMPLETE.md](PHASE-4-COMPLETE.md), [HYPRLAND-CONFIGS-SUMMARY.md](HYPRLAND-CONFIGS-SUMMARY.md)
-
-### Phase 6: Wireguard VPN (Partial) ✅
-- Mullvad VPN with multi-hop routing (5+ hops)
-- Split tunneling (LAN bypass)
-- Kill switch (prevent IP leaks)
-- Automatic rotation (weekly)
-- Per-app VPN routing via cgroups
-- Rust CLI tool (wireguard-helper)
-
-**Documentation:** [PHASE-6-WIREGUARD-MULLVAD.md](PHASE-6-WIREGUARD-MULLVAD.md), [QUICK-START-VPN.md](QUICK-START-VPN.md)
-
-**Note:** Full Wireguard mesh network between devices pending Phase 3 (multi-device).
-
-### Phase 7: Malware Scanner ✅
-- Real-time malware protection
-- ClamAV integration with custom signatures
-- Quarantine system
-- Automatic updates
-- Rust CLI tool
-
-**Documentation:** [MALWARE-SCANNER.md](MALWARE-SCANNER.md), [MALWARE-SCANNER-QUICKSTART.md](MALWARE-SCANNER-QUICKSTART.md)
-
-### Phase 8: Storage Management ✅
-- Runtime-configurable Restic backups
-- ZFS pool and dataset management
-- RAID management with monitoring
-- No Nix editing after initial setup
-- Rust CLI tools
-
-**Documentation:** [STORAGE-QUICKSTART.md](STORAGE-QUICKSTART.md), [docs/STORAGE-MANAGEMENT.md](docs/STORAGE-MANAGEMENT.md)
-
-### Phase 10: Rust Tooling (Partial) ✅
-- secrets-verify - Secrets verification
-- agenix-helper - Agenix management
-- wireguard-helper - VPN management
-- malware-scanner - Malware detection
-- storage-manager - Storage tools (restic-manage, zfs-manage, raid-manage)
-- Fuzzing infrastructure
-
-**Documentation:** [rust/README.md](rust/README.md)
-
-**Note:** Full secrets wrapper with OpenBao integration pending Phase 9.
-
-## Future Phases (Not Yet Implemented)
-
-### Phase 3: Multi-Device
-- Add framework (AMD laptop) configuration
-- Add devtower (AMD desktop) configuration
-- Device-specific modules (hardware, software)
-- Shared secrets between devices
-- Test multi-device deployment
-
-### Phase 5: Local VM Testing
-- VM configurations for testing
-- QEMU virtualization
-- Test workflow before hardware deployment
-
-### Phase 6: Wireguard Network (Complete)
-- Full Wireguard mesh between all devices
-- Hub topology (one device as central hub)
-- Peer-to-peer connectivity
-
-### Phase 7: Server Modules
-- nginx module
-- Cloudflare Tunnel (cloudflared)
-- gunicorn + uvicorn
-- Test server stack locally
-
-### Phase 8: Hetzner Staging
-- Cloud server deployment
-- Production-ready server config
-- Cloudflare integration
-- Full stack testing
-
-### Phase 9: OpenBao Setup
-- OpenBao deployment on Hetzner
-- Migrate from agenix to OpenBao for runtime secrets
-- Keep agenix for bootstrap token only
-- Rust wrapper integration
-
-### Phase 10: Rust Wrapper (Complete)
-- Full secrets management via Rust
-- Django-compatible encryption
-- TOTP and IP-based encryption
-- API clients (Cloudflare, GitHub)
-- Rotation scheduler
-- Unix socket server
-
-### Phase 11: Production Workflow
-- CI/CD pipeline with GitHub Actions
-- Branch strategy (feature → dev → staging → main)
-- Automatic staging deploys
-- Manual production approval
-
-### Phase 12: Additional Infrastructure (Partial)
-- NAS configuration
-- Router configuration (NixOS on router)
-- Raspberry Pi configuration
-- Full Tailscale or Wireguard mesh
-- Vaultwarden password management
-
-## Support
-
-- **Issues:** File issues in this repository
-- **Documentation:** See links above for detailed guides
-- **Commands:** Run `just --list` for all available commands
+- **Project Repository** - https://github.com/SamBailey6194/nix-config
+- **Documentation Hub** - [docs/README.md](docs/README.md)
+- **NixOS Manual** - https://nixos.org/manual/nixos/stable/
+- **Home Manager** - https://nix-community.github.io/home-manager/
+- **Hyprland Wiki** - https://wiki.hyprland.org/
+- **Mullvad Support** - https://mullvad.net/support
 
 ## License
 
-Personal configuration - use at your own risk.
+Personal configuration provided as-is. Use at your own risk.
+
+---
+
+**Last Updated**: 2026-01-27
+**Maintained By**: Sam Bailey
+**Current Status**: Single-device deployment ready (laptop-intel)

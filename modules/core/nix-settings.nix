@@ -14,6 +14,9 @@
       max-jobs = "auto";
       cores = 0; # Use all available cores
 
+      # Download optimization (256 MB buffer for large packages)
+      download-buffer-size = 268435456; # 256 MB in bytes
+
       # Trusted users (for remote builds, etc.)
       trusted-users = [ "root" "@wheel" ];
 

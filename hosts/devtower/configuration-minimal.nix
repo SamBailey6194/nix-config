@@ -11,8 +11,8 @@
 
     # Essential only
     ../../modules/core/nix-settings.nix
-    ../../modules/hardware/intel-laptop.nix
-    ../../modules/users/laptop.nix
+    ../../modules/hardware/amd-desktop.nix
+    ../../modules/users/devtower.nix
 
     # Storage management (runtime-configurable - available from start)
     ../../modules/storage/restic.nix
@@ -21,7 +21,7 @@
   ];
 
   # Device identity
-  networking.hostName = "laptop-intel";
+  networking.hostName = "devtower";
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;

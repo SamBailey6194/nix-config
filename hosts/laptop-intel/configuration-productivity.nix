@@ -1,23 +1,31 @@
 { config, pkgs, inputs, ... }:
 
 {
-  # MINIMAL INSTALLATION CONFIGURATION
-  # Use this for initial nixos-install to avoid tmpfs space issues
-  # After successful boot, switch to configuration.nix and rebuild
+  # STAGE 4: PRODUCTIVITY SOFTWARE
+  # Adds: LibreOffice + communication + media
+  # Rebuild with this after dev tools are working
 
   imports = [
-    # Hardware (required)
+    # Previous stages
     ./hardware-configuration.nix
 
-    # Essential only
+    # Core modules
     ../../modules/core/nix-settings.nix
     ../../modules/hardware/intel-laptop.nix
     ../../modules/users/laptop.nix
 
-    # Storage management (runtime-configurable - available from start)
-    ../../modules/storage/restic.nix
-    ../../modules/storage/zfs.nix
-    ../../modules/storage/raid.nix
+    # Desktop + SSH
+    ../../modules/desktop/hyprland
+    ../../modules/core/ssh-config.nix
+
+    # Development
+    ../../modules/software/browsers.nix
+    ../../modules/software/development.nix
+
+    # NEW: Productivity & communication
+    ../../modules/software/office.nix
+    ../../modules/software/communication.nix
+    ../../modules/software/media.nix
   ];
 
   # Device identity
@@ -34,15 +42,18 @@
   time.timeZone = "Europe/London";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  # Minimal system packages
+  # System packages
   environment.systemPackages = with pkgs; [
     vim
     wget
     git
     htop
+    tree
+    btop
+    fastfetch
   ];
 
-  # Enable zsh (required for user shell)
+  # Enable zsh
   programs.zsh.enable = true;
 
   # System State Version

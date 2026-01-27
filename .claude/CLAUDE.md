@@ -213,70 +213,32 @@ Verify with: `git config user.email` in each directory.
 
 ## Installation
 
-### Phase 1: Install NixOS on laptop-intel
+### Staged Installation Approach
 
-1. **Download NixOS ISO**: Get minimal ISO from nixos.org
-2. **Create bootable USB**: `dd if=nixos.iso of=/dev/sdX bs=4M status=progress`
-3. **Boot from USB**: Boot laptop from USB, select "NixOS Installer"
-4. **Partition disk** (example for 1TB disk):
-   ```bash
-   # Create GPT partition table
-   parted /dev/nvme0n1 -- mklabel gpt
+We use a **6-stage progressive installation** to:
+- Avoid tmpfs space issues during installation
+- Verify each layer works before adding the next
+- Isolate problems to specific software groups
+- Get a bootable system quickly to test hardware
 
-   # EFI boot partition (1GB)
-   parted /dev/nvme0n1 -- mkpart ESP fat32 1MiB 1GiB
-   parted /dev/nvme0n1 -- set 1 esp on
+**Complete guide**: See `docs/STAGED-INSTALLATION-GUIDE.md`
 
-   # Root partition (remaining space - 8GB for swap)
-   parted /dev/nvme0n1 -- mkpart primary 1GiB -8GiB
+**Quick reference**:
+```bash
+# Stage 1: Minimal (installation only)
+nixos-install --flake .#laptop-intel-minimal
 
-   # Swap partition (8GB)
-   parted /dev/nvme0n1 -- mkpart primary linux-swap -8GiB 100%
-   ```
+# After reboot, progressively add features:
+sudo nixos-rebuild switch --flake .#laptop-intel-desktop       # Stage 2
+sudo nixos-rebuild switch --flake .#laptop-intel-dev           # Stage 3
+sudo nixos-rebuild switch --flake .#laptop-intel-productivity  # Stage 4
+sudo nixos-rebuild switch --flake .#laptop-intel-creative      # Stage 5
 
-5. **Format partitions**:
-   ```bash
-   mkfs.fat -F 32 -n boot /dev/nvme0n1p1
-   mkfs.ext4 -L nixos /dev/nvme0n1p2
-   mkswap -L swap /dev/nvme0n1p3
-   ```
+# Stage 6: Switch to full config (for all future updates)
+sudo nixos-rebuild switch --flake .#laptop-intel
+```
 
-6. **Mount filesystems**:
-   ```bash
-   mount /dev/disk/by-label/nixos /mnt
-   mkdir -p /mnt/boot
-   mount /dev/disk/by-label/boot /mnt/boot
-   swapon /dev/nvme0n1p3
-   ```
-
-7. **Generate hardware config**:
-   ```bash
-   nixos-generate-config --root /mnt
-   ```
-
-8. **Clone this repo**:
-   ```bash
-   nix-shell -p git
-   git clone https://github.com/SamBailey6194/nix-config /mnt/etc/nixos/nix-config
-   ```
-
-9. **Copy generated hardware config**:
-   ```bash
-   cp /mnt/etc/nixos/hardware-configuration.nix \
-      /mnt/etc/nixos/nix-config/hosts/laptop-intel/hardware-configuration.nix
-   ```
-
-10. **Install NixOS**:
-    ```bash
-    nixos-install --flake /mnt/etc/nixos/nix-config#laptop-intel
-    ```
-
-11. **Set root password when prompted**, then **reboot**
-
-12. **After reboot, rebuild from flake**:
-    ```bash
-    sudo nixos-rebuild switch --flake /etc/nixos/nix-config#laptop-intel
-    ```
+**Disk setup**: See `MINIMAL-INSTALL-GUIDE.md` for partitioning and formatting
 
 ### Legacy Dotfiles Installation (Pre-NixOS)
 

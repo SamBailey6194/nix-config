@@ -1,23 +1,26 @@
 { config, pkgs, inputs, ... }:
 
 {
-  # MINIMAL INSTALLATION CONFIGURATION
-  # Use this for initial nixos-install to avoid tmpfs space issues
-  # After successful boot, switch to configuration.nix and rebuild
+  # STAGE 3: DEVELOPMENT TOOLS
+  # Adds: Browsers + Zed + Neovim + dev tools
+  # Rebuild with this after desktop environment is working
 
   imports = [
-    # Hardware (required)
+    # Previous stages
     ./hardware-configuration.nix
 
-    # Essential only
+    # Core modules
     ../../modules/core/nix-settings.nix
     ../../modules/hardware/intel-laptop.nix
     ../../modules/users/laptop.nix
 
-    # Storage management (runtime-configurable - available from start)
-    ../../modules/storage/restic.nix
-    ../../modules/storage/zfs.nix
-    ../../modules/storage/raid.nix
+    # Desktop environment + SSH
+    ../../modules/desktop/hyprland
+    ../../modules/core/ssh-config.nix
+
+    # NEW: Development tools
+    ../../modules/software/browsers.nix
+    ../../modules/software/development.nix
   ];
 
   # Device identity
@@ -34,15 +37,18 @@
   time.timeZone = "Europe/London";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  # Minimal system packages
+  # System packages (core + desktop)
   environment.systemPackages = with pkgs; [
     vim
     wget
     git
     htop
+    tree
+    btop
+    fastfetch
   ];
 
-  # Enable zsh (required for user shell)
+  # Enable zsh
   programs.zsh.enable = true;
 
   # System State Version

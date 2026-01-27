@@ -1,27 +1,26 @@
 { config, pkgs, inputs, ... }:
 
 {
-  # MINIMAL INSTALLATION CONFIGURATION
-  # Use this for initial nixos-install to avoid tmpfs space issues
-  # After successful boot, switch to configuration.nix and rebuild
+  # STAGE 2: DESKTOP ENVIRONMENT
+  # Adds: Hyprland + zsh + GitHub SSH config
+  # After minimal install boots successfully, rebuild with this config
 
   imports = [
-    # Hardware (required)
+    # Previous stage
     ./hardware-configuration.nix
 
-    # Essential only
+    # Core modules
     ../../modules/core/nix-settings.nix
-    ../../modules/hardware/intel-laptop.nix
-    ../../modules/users/laptop.nix
+    ../../modules/hardware/amd-laptop.nix
+    ../../modules/users/framework.nix
 
-    # Storage management (runtime-configurable - available from start)
-    ../../modules/storage/restic.nix
-    ../../modules/storage/zfs.nix
-    ../../modules/storage/raid.nix
+    # NEW: Desktop environment + SSH
+    ../../modules/desktop/hyprland
+    ../../modules/core/ssh-config.nix
   ];
 
   # Device identity
-  networking.hostName = "laptop-intel";
+  networking.hostName = "framework";
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;
@@ -34,12 +33,15 @@
   time.timeZone = "Europe/London";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  # Minimal system packages
+  # System packages (minimal + desktop essentials)
   environment.systemPackages = with pkgs; [
     vim
     wget
     git
     htop
+    tree
+    btop
+    fastfetch
   ];
 
   # Enable zsh (required for user shell)
