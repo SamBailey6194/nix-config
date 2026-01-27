@@ -237,14 +237,14 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Install restic
-    environment.systemPackages = [ pkgs.restic ];
-
     # Create all backup services
     services.restic.backups = backupServices;
 
-    # Helper scripts for backup management
+    # Install restic and helper scripts for backup management
     environment.systemPackages = [
+      pkgs.restic
+
+
       (pkgs.writeScriptBin "restic-list-repos" ''
         #!${pkgs.bash}/bin/bash
         echo "Configured Restic Repositories for ${cfg.device}:"

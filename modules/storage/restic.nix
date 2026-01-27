@@ -74,12 +74,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Install Restic
-    environment.systemPackages = [
-      pkgs.restic
-      # Rust tool installed separately via workspace
-    ];
-
     # Create state directory
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDirectory} 0750 root root -"
@@ -156,8 +150,11 @@ in {
       };
     };
 
-    # Helper scripts that work with runtime config
+    # Install Restic and helper scripts that work with runtime config
     environment.systemPackages = [
+      pkgs.restic
+      # Rust tool installed separately via workspace
+
       # List all configured backups
       (pkgs.writeScriptBin "restic-list" ''
         #!${pkgs.bash}/bin/bash

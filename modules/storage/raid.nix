@@ -88,12 +88,6 @@ in {
       ARRAY <ignore> UUID=*
     '';
 
-    # Install RAID utilities
-    environment.systemPackages = [
-      pkgs.mdadm
-      # Rust tool installed separately via workspace
-    ];
-
     # RAID monitoring daemon
     systemd.services.mdmonitor = mkIf cfg.enableMonitoring {
       description = "mdadm Software RAID Monitor";
@@ -225,8 +219,11 @@ in {
       "dev.raid.speed_limit_max" = cfg.checkSpeed;
     };
 
-    # Helper scripts
+    # Install RAID utilities and helper scripts
     environment.systemPackages = [
+      pkgs.mdadm
+      # Rust tool installed separately via workspace
+
       # Show RAID status
       (pkgs.writeScriptBin "raid-status" ''
         #!${pkgs.bash}/bin/bash

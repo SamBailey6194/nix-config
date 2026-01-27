@@ -82,12 +82,6 @@ in {
     # Ensure ZFS services are enabled
     boot.zfs.enabled = true;
 
-    # Install ZFS utilities
-    environment.systemPackages = [
-      pkgs.zfs
-      # Rust tool installed separately via workspace
-    ];
-
     # ZFS module parameters (sane defaults, can be overridden)
     boot.kernelParams = [
       # ARC (cache) tuning - adjust based on RAM
@@ -234,8 +228,11 @@ in {
       };
     };
 
-    # Helper scripts
+    # Install ZFS utilities and helper scripts
     environment.systemPackages = [
+      pkgs.zfs
+      # Rust tool installed separately via workspace
+
       # Show pool status with colors
       (pkgs.writeScriptBin "zfs-status" ''
         #!${pkgs.bash}/bin/bash
