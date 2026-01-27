@@ -3,9 +3,27 @@
 {
   # Hyprland Wayland Compositor Configuration
   # Base configuration with vim-style navigation
+  #
+  # NOTE: This Home Manager module ONLY provides user-level configuration.
+  # The actual Hyprland package and system integration is handled by the
+  # NixOS module (programs.hyprland.enable) in modules/desktop/hyprland/default.nix
+  #
+  # See: https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/
+  # See: https://wiki.nixos.org/wiki/Hyprland
 
   wayland.windowManager.hyprland = {
     enable = true;
+
+    # CRITICAL: Use the Hyprland package from NixOS module, not Home Manager
+    # This prevents duplicate systemd services and symlink conflicts
+    # Requires Home Manager 5dc1c2e40410f7dabef3ba8bf4fdb3145eae3ceb or later
+    package = null;
+    portalPackage = null;
+
+    # CRITICAL: Disable systemd integration to prevent conflicts with UWSM
+    # The NixOS module handles session management via UWSM (if enabled)
+    # or via its own systemd integration
+    systemd.enable = false;
 
     settings = {
       # Modifier key
