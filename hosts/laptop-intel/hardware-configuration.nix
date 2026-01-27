@@ -21,7 +21,7 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
-  # Blacklist problematic SD card reader that causes boot hang
+  # Blacklist problematic SD Card
   boot.blacklistedKernelModules = [ "rtsx_pci" "rtsx_pci_sdmmc" ];
 
   # File Systems - TEMPLATE (REPLACE DURING INSTALLATION)
