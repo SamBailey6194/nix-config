@@ -2,7 +2,8 @@
 
 {
   # Hyprland Wayland Compositor Configuration
-  # Base configuration with vim-style navigation
+  # Uses modular .conf files from config/hypr/ for Hyprland settings
+  # Uses Nix for companion programs (waybar, wofi, etc.)
   #
   # NOTE: This Home Manager module ONLY provides user-level configuration.
   # The actual Hyprland package and system integration is handled by the
@@ -25,205 +26,22 @@
     # or via its own systemd integration
     systemd.enable = false;
 
-    settings = {
-      # Modifier key
-      "$mod" = "SUPER";
+    # Source the modular .conf files instead of using Nix settings
+    # This allows easier editing with familiar Hyprland syntax
+    extraConfig = builtins.readFile ../../config/hypr/hyprland.conf;
+  };
 
-      # Monitor configuration
-      # Default: auto-detect
-      # Device-specific overrides in home/{laptop,framework,devtower}.nix
-      monitor = ",preferred,auto,1";
-
-      # Startup applications
-      exec-once = [
-        "waybar"           # Status bar
-        "hyprpaper"        # Wallpaper daemon
-        "dunst"            # Notification daemon
-        "nm-applet"        # NetworkManager applet
-      ];
-
-      # Environment variables
-      env = [
-        "XCURSOR_SIZE,24"
-        "HYPRCURSOR_SIZE,24"
-      ];
-
-      # Input configuration
-      input = {
-        kb_layout = "gb";  # UK keyboard layout
-        follow_mouse = 1;
-
-        sensitivity = 0; # -1.0 - 1.0, 0 means no modification
-
-        touchpad = {
-          natural_scroll = true;
-        };
-      };
-
-      # General window settings
-      general = {
-        gaps_in = 5;
-        gaps_out = 10;
-        border_size = 2;
-
-        # Ayu Dark colors
-        "col.active_border" = "rgba(ffb454ee) rgba(59c2ffee) 45deg";
-        "col.inactive_border" = "rgba(595959aa)";
-
-        resize_on_border = true;
-        allow_tearing = false;
-
-        layout = "dwindle";
-      };
-
-      # Decoration
-      decoration = {
-        rounding = 8;
-
-        active_opacity = 1.0;
-        inactive_opacity = 0.95;
-
-        drop_shadow = true;
-        shadow_range = 4;
-        shadow_render_power = 3;
-        "col.shadow" = "rgba(1a1a1aee)";
-
-        blur = {
-          enabled = true;
-          size = 3;
-          passes = 1;
-
-          vibrancy = 0.1696;
-        };
-      };
-
-      # Animations
-      animations = {
-        enabled = true;
-
-        bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
-
-        animation = [
-          "windows, 1, 7, myBezier"
-          "windowsOut, 1, 7, default, popin 80%"
-          "border, 1, 10, default"
-          "borderangle, 1, 8, default"
-          "fade, 1, 7, default"
-          "workspaces, 1, 6, default"
-        ];
-      };
-
-      # Layout: Dwindle
-      dwindle = {
-        pseudotile = true;
-        preserve_split = true;
-      };
-
-      # Layout: Master
-      master = {
-        new_status = "master";
-      };
-
-      # Misc settings
-      misc = {
-        force_default_wallpaper = 0;
-        disable_hyprland_logo = true;
-      };
-
-      # Keybindings
-      bind = [
-        # Applications
-        "$mod, RETURN, exec, kitty"
-        "$mod, D, exec, wofi --show drun"
-        "$mod, B, exec, ${pkgs.librewolf}/bin/librewolf"
-        "$mod SHIFT, B, exec, ${pkgs.firefox}/bin/firefox"
-        "$mod, E, exec, thunar"
-
-        # Window management
-        "$mod, Q, killactive"
-        "$mod SHIFT, E, exit"
-        "$mod, V, togglefloating"
-        "$mod, P, pseudo" # dwindle
-        "$mod, J, togglesplit" # dwindle
-        "$mod, M, fullscreen"
-
-        # Focus navigation (vim-style)
-        "$mod, H, movefocus, l"
-        "$mod, L, movefocus, r"
-        "$mod, K, movefocus, u"
-        "$mod, J, movefocus, d"
-
-        # Move windows (vim-style)
-        "$mod SHIFT, H, movewindow, l"
-        "$mod SHIFT, L, movewindow, r"
-        "$mod SHIFT, K, movewindow, u"
-        "$mod SHIFT, J, movewindow, d"
-
-        # Workspace navigation
-        "$mod, 1, workspace, 1"
-        "$mod, 2, workspace, 2"
-        "$mod, 3, workspace, 3"
-        "$mod, 4, workspace, 4"
-        "$mod, 5, workspace, 5"
-        "$mod, 6, workspace, 6"
-        "$mod, 7, workspace, 7"
-        "$mod, 8, workspace, 8"
-        "$mod, 9, workspace, 9"
-        "$mod, 0, workspace, 10"
-
-        # Move window to workspace
-        "$mod SHIFT, 1, movetoworkspace, 1"
-        "$mod SHIFT, 2, movetoworkspace, 2"
-        "$mod SHIFT, 3, movetoworkspace, 3"
-        "$mod SHIFT, 4, movetoworkspace, 4"
-        "$mod SHIFT, 5, movetoworkspace, 5"
-        "$mod SHIFT, 6, movetoworkspace, 6"
-        "$mod SHIFT, 7, movetoworkspace, 7"
-        "$mod SHIFT, 8, movetoworkspace, 8"
-        "$mod SHIFT, 9, movetoworkspace, 9"
-        "$mod SHIFT, 0, movetoworkspace, 10"
-
-        # Special workspace (scratchpad)
-        "$mod, S, togglespecialworkspace, magic"
-        "$mod SHIFT, S, movetoworkspace, special:magic"
-
-        # Scroll through workspaces
-        "$mod, mouse_down, workspace, e+1"
-        "$mod, mouse_up, workspace, e-1"
-
-        # Screenshot
-        ", Print, exec, grim -g \"$(slurp)\" - | swappy -f -"
-        "$mod, Print, exec, grim - | swappy -f -"
-
-        # Audio controls (laptop volume keys)
-        ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
-        ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-        ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-        ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-
-        # Brightness controls (laptop brightness keys)
-        ", XF86MonBrightnessUp, exec, brightnessctl set +5%"
-        ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
-      ];
-
-      # Mouse bindings
-      bindm = [
-        "$mod, mouse:272, movewindow"
-        "$mod, mouse:273, resizewindow"
-      ];
-
-      # Window rules
-      windowrulev2 = [
-        # Float certain windows
-        "float, class:^(pavucontrol)$"
-        "float, class:^(qpwgraph)$"
-        "float, class:^(nm-connection-editor)$"
-
-        # Opacity rules
-        "opacity 0.95 0.95, class:^(kitty)$"
-        "opacity 0.95 0.95, class:^(thunar)$"
-      ];
-    };
+  # Copy the modular config files to ~/.config/hypr/
+  # This allows Hyprland to source them at runtime
+  home.file = {
+    ".config/hypr/base.conf".source = ../../config/hypr/base.conf;
+    ".config/hypr/monitors.conf".source = ../../config/hypr/monitors.conf;
+    ".config/hypr/input.conf".source = ../../config/hypr/input.conf;
+    ".config/hypr/appearance.conf".source = ../../config/hypr/appearance.conf;
+    ".config/hypr/animations.conf".source = ../../config/hypr/animations.conf;
+    ".config/hypr/keybinds.conf".source = ../../config/hypr/keybinds.conf;
+    ".config/hypr/windowrules.conf".source = ../../config/hypr/windowrules.conf;
+    ".config/hypr/autostart.conf".source = ../../config/hypr/autostart.conf;
   };
 
   # Hyprpaper configuration (wallpaper daemon)
