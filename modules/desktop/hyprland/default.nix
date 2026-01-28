@@ -10,13 +10,15 @@
     xwayland.enable = true;
   };
 
-  # XDG Portal for screen sharing, etc.
+  # XDG Portal configuration
+  # NOTE: programs.hyprland.enable already sets up xdg-desktop-portal-hyprland
+  # We just need to add GTK portal and configure the portal selection
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
     ];
+    config.common.default = "*";
   };
 
   # Required packages for Hyprland ecosystem
