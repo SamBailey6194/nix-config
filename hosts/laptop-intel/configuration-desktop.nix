@@ -42,6 +42,7 @@
     tree
     btop
     fastfetch
+    efibootmgr  # Manage UEFI boot order
   ];
 
   # Enable zsh (required for user shell)

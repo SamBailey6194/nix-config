@@ -40,6 +40,7 @@
     wget
     git
     htop
+    efibootmgr  # Manage UEFI boot order
   ];
 
   # Enable zsh (required for user shell)
