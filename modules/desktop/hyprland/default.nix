@@ -10,6 +10,18 @@
     xwayland.enable = true;
   };
 
+  # Display Manager (graphical login screen)
+  # Using greetd with tuigreet - lightweight and Wayland-native
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --cmd Hyprland";
+        user = "greeter";
+      };
+    };
+  };
+
   # XDG Portal configuration
   # NOTE: programs.hyprland.enable already sets up xdg-desktop-portal-hyprland
   # We just need to add GTK portal and configure the portal selection
