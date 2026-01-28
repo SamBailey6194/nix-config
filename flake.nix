@@ -47,7 +47,15 @@
       laptop-intel-desktop = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/laptop-intel/configuration-desktop.nix ];
+        modules = [
+          ./hosts/laptop-intel/configuration-desktop.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-laptop = import ./home/laptop.nix;
+          }
+        ];
       };
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
