@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 29/01/2026
-**Version**: 0.8.0
+**Version**: 0.9.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -36,6 +36,25 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.9.0] - 29/01/2026
+
+### Added
+- Tailscale VPN service for secure mesh networking across devices
+- Remmina remote desktop client for VNC/RDP connections to client computers
+- Firewall rules for Tailscale traffic (trusted interface)
+- Optional x11vnc server configuration for incoming remote connections
+- Comprehensive setup guide: `docs/TAILSCALE-REMMINA-SETUP.md`
+
+### Technical Details
+- Tailscale service enabled with automatic network-online dependency
+- Firewall configured with `checkReversePath = "loose"` for Tailscale
+- Remmina installed with VNC, RDP, and SSH protocol support
+- x11vnc server configuration provided (commented out by default for security)
+- VNC firewall rules configured to only allow Tailscale interface connections
+- Deployed across all hosts: laptop-intel, framework, devtower
 
 ---
 

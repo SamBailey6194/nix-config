@@ -28,6 +28,8 @@
 
     # Security and networking (installed last - Phase 6+)
     ../../modules/network/wireguard-mullvad.nix
+    ../../modules/network/tailscale.nix
+    ../../modules/network/remote-desktop.nix
     ../../modules/security/malware-scanner.nix
 
     # Secrets (when ready for Phase 2)

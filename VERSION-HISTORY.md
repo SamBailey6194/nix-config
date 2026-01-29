@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 29/01/2026
-**Version**: 0.7.0
+**Version**: 0.9.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -43,6 +43,63 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [0.9.0] - 29/01/2026
+
+### Technical Changes
+
+#### Network - Tailscale VPN Integration
+- **Module Created**: `modules/network/tailscale.nix`
+- **Service Configuration**:
+  - `services.tailscale.enable = true`
+  - Network dependency: `wants = [ "network-online.target" ]`
+  - Auto-start after network is ready
+- **Firewall Rules**:
+  - Trusted interface: `tailscale0`
+  - UDP port: `config.services.tailscale.port` (default 41641)
+  - Reverse path check: `loose` (required for Tailscale routing)
+- **Packages**: `tailscale` CLI tool
+- **Purpose**: Secure mesh VPN for remote access to client computers
+
+#### Network - Remote Desktop Client
+- **Module Created**: `modules/network/remote-desktop.nix`
+- **Packages Installed**:
+  - `remmina` - Remote desktop client (VNC, RDP, SSH protocols)
+- **Optional Configuration** (commented out by default):
+  - `x11vnc` server for incoming connections
+  - systemd user service for x11vnc
+  - Firewall rules for VNC port 5900 (Tailscale interface only)
+- **Security**: VNC server disabled by default, only allows Tailscale connections when enabled
+
+#### Documentation
+- **File Created**: `docs/TAILSCALE-REMMINA-SETUP.md`
+- **Contents**:
+  - Initial Tailscale authentication steps
+  - Client computer VNC server setup (x11vnc on Ubuntu/Linux)
+  - Remmina configuration for VNC connections
+  - Troubleshooting guide
+  - Security best practices
+
+#### Host Configuration Updates
+- **Files Modified**:
+  - `hosts/laptop-intel/configuration-full.nix`
+  - `hosts/framework/configuration-full.nix`
+  - `hosts/devtower/configuration-full.nix`
+- **Changes**: Added imports for:
+  - `../../modules/network/tailscale.nix`
+  - `../../modules/network/remote-desktop.nix`
+
+#### Use Case
+- Remote support for client computers
+- Secure VPN mesh network across all devices
+- VNC/RDP access to clients from anywhere
+- Works alongside existing Mullvad VPN (separate use cases)
+
+---
+
+## [0.8.0] - 29/01/2026
 
 ---
 
