@@ -30,7 +30,7 @@
     ../../modules/security/malware-scanner.nix
 
     # Secrets (when ready for Phase 2)
-    # ../../modules/core/secrets-laptop.nix
+    ../../modules/core/secrets-laptop.nix
   ];
 
   # Device identity

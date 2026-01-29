@@ -56,6 +56,56 @@
     allowBroken = false;
   };
 
+  # ============================================================================
+  # nix-ld: Run unpatched dynamic binaries on NixOS
+  # ============================================================================
+  # NixOS cannot run dynamically linked executables (e.g., npm packages,
+  # downloaded binaries) because they expect libraries in /lib, /usr/lib, etc.
+  #
+  # nix-ld provides a compatibility layer that:
+  # 1. Creates /lib64/ld-linux-x86-64.so.2 pointing to the Nix store
+  # 2. Sets LD_LIBRARY_PATH to include common libraries
+  #
+  # This allows tools like:
+  # - npm install -g @anthropic-ai/claude-code (uses downloaded Node.js)
+  # - Downloaded AppImages
+  # - Pre-compiled development tools
+  #
+  # Without nix-ld, you get: "Could not start dynamically linked executable"
+  # ============================================================================
+  programs.nix-ld = {
+    enable = true;
+    # Libraries commonly needed by dynamically linked programs
+    # Add more as needed based on specific tool requirements
+    libraries = with pkgs; [
+      # Core C/C++ libraries
+      stdenv.cc.cc.lib
+      glibc
+
+      # SSL/TLS for network operations
+      openssl
+
+      # Compression libraries
+      zlib
+      bzip2
+      xz
+
+      # ICU for internationalization (Node.js, Electron apps)
+      icu
+
+      # Graphics libraries (for Electron apps, GUI tools)
+      libGL
+      xorg.libX11
+      xorg.libXext
+      xorg.libXrender
+      xorg.libXi
+
+      # Additional commonly needed libraries
+      curl
+      libgcc
+    ];
+  };
+
   # System version (for reference)
   # This is set in host configuration, not here
 }

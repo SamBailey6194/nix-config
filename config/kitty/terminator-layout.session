@@ -1,0 +1,19 @@
+# Kitty session file - Terminator-style layout
+# One big terminal at top, bottom split left/right
+#
+# To use this layout: kitty --session ~/.config/kitty/terminator-layout.session
+# Or create a Hyprland keybind to launch it
+
+# Create the layout
+# First window: top (full width)
+launch zsh
+
+# Split horizontally to create bottom section
+launch --location=hsplit zsh
+
+# Split the bottom window vertically to create left/right split
+focus_matching_window num:2
+launch --location=vsplit zsh
+
+# Focus back to the top window
+focus_matching_window num:1
