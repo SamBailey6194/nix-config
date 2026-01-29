@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 29/01/2026
-**Version**: 0.7.0
+**Version**: 0.7.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.7.1 - 29/01/2026](#071---29012026)
 - [0.7.0 - 29/01/2026](#070---29012026)
 - [0.6.7 - 28/01/2026](#067---28012026)
 - [0.6.6 - 28/01/2026](#066---28012026)
@@ -34,6 +35,19 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.7.1] - 29/01/2026
+
+### Fixed
+- Fixed duplicate `decoration` blocks in Hyprland device-specific configurations causing boot errors
+- Converted nested decoration/animation blocks to direct property overrides using colon syntax
+- Applied fix to laptop-intel.conf, framework.conf, and devtower.conf
+
+### Changed
+- Replaced `decoration { blur { ... } }` syntax with `decoration:blur:property = value` syntax
+- Replaced `animations { ... }` block in devtower.conf with individual animation property overrides
 
 ---
 
