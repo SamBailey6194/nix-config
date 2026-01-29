@@ -40,6 +40,12 @@
       if command -v ddev &> /dev/null; then
         eval "$(ddev completion zsh)"
       fi
+
+      # NVM config to control Node and NPM
+      export NVM_DIR="''$([ -z "''${XDG_CONFIG_HOME-}" ] && \
+        printf %s "''${HOME}/.nvm" || \
+        printf %s "''${XDG_CONFIG_HOME}/nvm")"
+      [ -s "''$NVM_DIR/nvm.sh" ] && \. "''$NVM_DIR/nvm.sh"
     '';
 
     # Shell aliases
@@ -59,6 +65,8 @@
 
       # Android SDK (if you use React Native or Android development)
       ANDROID_HOME = "$HOME/Android/Sdk";
+
+
 
       # Claude Code OAuth Token
       # Note: In Phase 2, this should be moved to secrets management
