@@ -1,12 +1,12 @@
 { config, pkgs, ... }:
 
 {
-  # Stage 6: Full configuration for laptop-intel
+  # Stage 2: Desktop configuration for laptop-intel
   # User: sam-laptop
   # Hardware: Intel i5-10210U, 32GB RAM, Intel UHD Graphics
 
   imports = [
-    ./stages/full.nix
+    ./stages/desktop.nix
   ];
 
   # Copy device-specific Hyprland config to standard location

@@ -1,13 +1,13 @@
 { config, pkgs, ... }:
 
 {
-  # Device-specific home config for devtower
+  # Stage 6: Full configuration for devtower
   # User: sam-desktop
   # Hardware: AMD CPU + GPU, 64GB RAM, Go XLR
   # Software: DaVinci Resolve Studio, Affinity Apps, Go XLR Utility
 
   imports = [
-    ./common.nix
+    ./stages/full.nix
   ];
 
   # DevTower-specific packages

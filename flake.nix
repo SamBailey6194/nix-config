@@ -53,7 +53,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.sam-laptop = import ./home/laptop.nix;
+            home-manager.users.sam-laptop = import ./home/laptop-desktop.nix;
           }
         ];
       };
@@ -62,14 +62,30 @@
       laptop-intel-dev = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/laptop-intel/configuration-dev.nix ];
+        modules = [
+          ./hosts/laptop-intel/configuration-dev.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-laptop = import ./home/laptop-dev.nix;
+          }
+        ];
       };
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       laptop-intel-productivity = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/laptop-intel/configuration-productivity.nix ];
+        modules = [
+          ./hosts/laptop-intel/configuration-productivity.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-laptop = import ./home/laptop-productivity.nix;
+          }
+        ];
       };
 
       # Stage 5: Creative (GIMP + Affinity - no DaVinci on Intel GPU)
@@ -79,6 +95,12 @@
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/laptop-intel/configuration-creative.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-laptop = import ./home/laptop-creative.nix;
+          }
         ];
       };
 
@@ -114,21 +136,45 @@
       framework-desktop = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/framework/configuration-desktop.nix ];
+        modules = [
+          ./hosts/framework/configuration-desktop.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-framework = import ./home/framework-desktop.nix;
+          }
+        ];
       };
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
       framework-dev = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/framework/configuration-dev.nix ];
+        modules = [
+          ./hosts/framework/configuration-dev.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-framework = import ./home/framework-dev.nix;
+          }
+        ];
       };
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       framework-productivity = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/framework/configuration-productivity.nix ];
+        modules = [
+          ./hosts/framework/configuration-productivity.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-framework = import ./home/framework-productivity.nix;
+          }
+        ];
       };
 
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender + Affinity)
@@ -138,6 +184,12 @@
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/framework/configuration-creative.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-framework = import ./home/framework-creative.nix;
+          }
         ];
       };
 
@@ -173,21 +225,45 @@
       devtower-desktop = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/devtower/configuration-desktop.nix ];
+        modules = [
+          ./hosts/devtower/configuration-desktop.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-desktop = import ./home/devtower-desktop.nix;
+          }
+        ];
       };
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
       devtower-dev = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/devtower/configuration-dev.nix ];
+        modules = [
+          ./hosts/devtower/configuration-dev.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-desktop = import ./home/devtower-dev.nix;
+          }
+        ];
       };
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       devtower-productivity = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/devtower/configuration-productivity.nix ];
+        modules = [
+          ./hosts/devtower/configuration-productivity.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-desktop = import ./home/devtower-productivity.nix;
+          }
+        ];
       };
 
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender, Go XLR + Affinity)
@@ -197,6 +273,12 @@
         specialArgs = { inherit inputs; };
         modules = [
           ./hosts/devtower/configuration-creative.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.sam-desktop = import ./home/devtower-creative.nix;
+          }
         ];
       };
 
