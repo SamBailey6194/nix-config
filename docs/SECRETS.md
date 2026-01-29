@@ -1,22 +1,10 @@
 # Secrets Management with Agenix
 
-**Last Updated**: 27/01/2026
-**Version**: 0.1.0
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Security Model](#security-model)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-- [Setup Guide](#setup-guide)
-- [Naming Conventions](#naming-conventions)
-- [Examples](#examples)
-- [Troubleshooting](#troubleshooting)
-- [Reference](#reference)
 
 ---
 

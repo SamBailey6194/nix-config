@@ -1,22 +1,10 @@
 # Mullvad VPN Setup with WireGuard
 
-**Last Updated**: 27/01/2026
-**Version**: 0.1.0
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Prerequisites](#prerequisites)
-- [Setup Guide](#setup-guide)
-- [Daily Usage](#daily-usage)
-- [Architecture](#architecture)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Troubleshooting](#troubleshooting)
-- [Reference](#reference)
 
 ---
 

@@ -1,22 +1,10 @@
 # Storage Management: Restic, ZFS, and RAID
 
-**Last Updated**: 27/01/2026
-**Version**: 0.1.0
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Philosophy](#philosophy)
-- [Restic Backups](#restic-backups)
-- [ZFS Storage](#zfs-storage)
-- [RAID Management](#raid-management)
-- [Configuration](#configuration)
-- [Monitoring](#monitoring)
-- [Troubleshooting](#troubleshooting)
-- [Reference](#reference)
 
 ---
 

@@ -1,5 +1,12 @@
 # Fuzzing Infrastructure
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 Comprehensive fuzzing for security-critical Rust tools in nix-config.
 
 ## Quick Start

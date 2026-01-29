@@ -1,5 +1,12 @@
 # DaVinci Resolve Studio on NixOS with AMD GPU
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 **Last Updated**: 27/01/2026
 **Version**: 0.1.0
 **Maintained By**: Development Team

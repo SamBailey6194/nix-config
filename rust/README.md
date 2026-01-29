@@ -1,5 +1,12 @@
 # Rust Tooling for NixOS Configuration
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This workspace contains Rust-based CLI tools for managing the NixOS configuration, with a focus on secrets management and security.
 
 ## Tools

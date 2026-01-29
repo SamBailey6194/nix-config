@@ -1,5 +1,12 @@
 # Fuzzing Guide for nix-config Rust Tools
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This guide covers comprehensive fuzzing infrastructure for security-critical Rust tools in the nix-config repository.
 
 ## Table of Contents

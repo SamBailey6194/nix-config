@@ -1,5 +1,12 @@
 # Software Modules Organization
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This directory contains purpose-specific software modules that can be mixed and matched across devices.
 
 ## Module Overview

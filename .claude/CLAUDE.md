@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Purpose

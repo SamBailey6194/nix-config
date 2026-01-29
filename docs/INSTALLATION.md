@@ -1,22 +1,10 @@
 # NixOS Installation Guide
 
-**Last Updated**: 27/01/2026
-**Version**: 0.1.0
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Why Staged Installation?](#why-staged-installation)
-- [Installation Stages](#installation-stages)
-- [Pre-Installation](#pre-installation)
-- [Stage-by-Stage Workflow](#stage-by-stage-workflow)
-- [Device-Specific Targets](#device-specific-targets)
-- [Post-Installation](#post-installation)
-- [Troubleshooting](#troubleshooting)
-- [Quick Reference](#quick-reference)
 
 ---
 

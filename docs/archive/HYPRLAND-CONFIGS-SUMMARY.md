@@ -1,5 +1,12 @@
 # Hyprland Modular Configuration Summary
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 Created: 2026-01-24
 Phase: 4 - Home Manager + Dotfiles Integration
 

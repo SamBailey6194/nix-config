@@ -1,3 +1,11 @@
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
+
   # How to carry Out Updates
 
 **Last Updated**: 27/01/2026

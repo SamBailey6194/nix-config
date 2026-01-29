@@ -1,5 +1,12 @@
 # Security Patches
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This directory contains security fixes from the comprehensive Rust security review conducted on 2026-01-25.
 
 ## Overview

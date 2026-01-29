@@ -1,5 +1,12 @@
 # Minimal Configuration Template
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This guide explains how to create minimal installation configurations for new NixOS devices. Minimal configurations are used during `nixos-install` to avoid tmpfs space issues when building large configurations.
 
 ## Table of Contents

@@ -1,5 +1,12 @@
 # Hyprland Configuration Integration Guide
 
+**Last Updated**: 29/01/2026
+**Version**: 0.7.0
+**Maintained By**: Development Team
+**Language**: British English (en_GB)
+**Timezone**: Europe/London
+
+---
 This document explains how the modular Hyprland configs in `config/hypr/` integrate with the NixOS Home Manager configuration.
 
 ## Current Setup (Phase 4)
