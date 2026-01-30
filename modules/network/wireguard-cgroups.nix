@@ -68,18 +68,18 @@ in
     # This is handled by wireguard-mullvad.nix postUp script
     # No additional configuration needed here
 
-    # Create systemd user services for configured apps
-    systemd.user.services = listToAttrs (map (app: {
-      name = "vpn-${app}";
-      value = {
-        description = "VPN-routed ${app}";
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.${app} or pkgs.runCommand "app-${app}" {} "echo ${app}"}/bin/${app}";
-          Slice = "vpn-apps.slice";
-          Restart = "on-failure";
-        };
-      };
-    }) cfg.apps);
+    # Note: Systemd user services for specific apps should be created manually
+    # per-device as needed, using the vpn-app wrapper script.
+    # Auto-generating services is problematic because:
+    # - Package names don't always match binary names
+    # - Not all apps need persistent services
+    # Example manual service in home-manager:
+    #   systemd.user.services.vpn-firefox = {
+    #     description = "VPN-routed Firefox";
+    #     serviceConfig = {
+    #       ExecStart = "${pkgs.vpn-app}/bin/vpn-app firefox";
+    #       Slice = "vpn-apps.slice";
+    #     };
+    #   };
   };
 }

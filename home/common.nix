@@ -11,6 +11,7 @@
     ./modules/shell.nix     # Zsh + Oh My Zsh configuration
     ./modules/hyprland.nix  # Hyprland Wayland compositor
     ./modules/cloud.nix     # Google Drive linked via rclone and fuse
+    ./modules/vpn.nix       # VPN-first browser configuration
   ];
 
   # Home Manager state version
