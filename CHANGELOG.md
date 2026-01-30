@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 30/01/2026
-**Version**: 0.9.2
+**Version**: 0.10.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.9.2 - 30/01/2026](#092---30012026)
 - [0.9.1 - 30/01/2026](#091---30012026)
 - [0.8.0 - 29/01/2026](#080---29012026)
@@ -38,6 +39,20 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.10.0] - 30/01/2026
+
+### Added
+- Python 3.14 as default Python version for new development projects
+- Python 3.13 maintained for legacy project support
+- Complete package management tooling (pip, virtualenv) for both Python versions
+- Seamless integration with UV package manager for fast dependency installation
+
+### Changed
+- Updated development environment to support latest Python 3.14 features
+- Dual Python version support enables smooth migration path from legacy to modern Python
 
 ---
 

@@ -1,7 +1,7 @@
 # Version History
 
-**Last Updated**: 29/01/2026
-**Version**: 0.9.0
+**Last Updated**: 30/01/2026
+**Version**: 0.10.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.7.0 - 29/01/2026](#070---29012026)
 - [0.6.7 - 28/01/2026](#067---28012026)
 - [0.6.6 - 28/01/2026](#066---28012026)
@@ -43,6 +44,22 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [0.10.0] - 30/01/2026
+
+### Added
+- Python 3.14 as default Python version for new projects
+- Python 3.13 maintained for legacy project compatibility
+- pip and virtualenv packages for both Python 3.14 and 3.13
+
+### Technical Details
+**Module**: `modules/software/development.nix`
+
+Upgraded Python development environment to support latest Python 3.14 whilst maintaining backwards compatibility with Python 3.13 for legacy projects. Both versions include complete package management tooling (pip, virtualenv) and integrate with UV for fast package installation.
+
+**Impact**: Development environment now supports cutting-edge Python features whilst maintaining legacy project compatibility.
 
 ---
 
