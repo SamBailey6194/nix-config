@@ -24,7 +24,7 @@
       # Sans-serif fonts
       noto-fonts                # Google's Noto family
       noto-fonts-color-emoji    # Emoji support (renamed from noto-fonts-emoji)
-      ubuntu_font_family        # Ubuntu fonts (includes Ubuntu Mono)
+      ubuntu-classic       # Ubuntu fonts (includes Ubuntu Mono)
 
       # Icon fonts (for terminal prompts and UI)
       nerd-fonts.fira-code
