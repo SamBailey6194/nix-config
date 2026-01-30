@@ -22,9 +22,9 @@
       source-code-pro      # Adobe's monospace font
 
       # Sans-serif fonts
-      noto-fonts           # Google's Noto family
-      noto-fonts-emoji     # Emoji support
-      ubuntu_font_family   # Ubuntu fonts (includes Ubuntu Mono)
+      noto-fonts                # Google's Noto family
+      noto-fonts-color-emoji    # Emoji support (renamed from noto-fonts-emoji)
+      ubuntu_font_family        # Ubuntu fonts (includes Ubuntu Mono)
 
       # Icon fonts (for terminal prompts and UI)
       nerd-fonts.fira-code
