@@ -2,21 +2,30 @@
 
 {
   # FULL CONFIGURATION (laptop-intel)
-  # Use this after staged installation is complete
-  # All future updates should use this configuration
+  # Comprehensive configuration after all staged installations complete
+  # This is the primary configuration used by .#laptop-intel
 
   imports = [
     # Hardware
     ./hardware-configuration.nix
 
     # Core modules
+    ../../modules/core/base-configuration.nix
+    ../../modules/core/common.nix
     ../../modules/core/nix-settings.nix
-    ../../modules/hardware/intel-laptop.nix
-    ../../modules/users/laptop.nix
 
-    # Desktop + SSH
+    # Secrets management (commented until SSH keys are set up)
+    # ../../modules/core/secrets-laptop.nix
+
+    # SSH configuration (commented until secrets are ready)
+    # ../../modules/core/ssh-config.nix
+
+    # Hardware-specific
+    ../../modules/hardware/intel-laptop.nix
+    ../../modules/hardware/openrgb.nix  # RGB control for keyboard/mouse
+
+    # Desktop environment
     ../../modules/desktop/hyprland
-    ../../modules/core/ssh-config.nix
 
     # Software suites
     ../../modules/software/browsers.nix
@@ -25,18 +34,63 @@
     ../../modules/software/communication.nix
     ../../modules/software/media.nix
 
-    # Security and networking (installed last - Phase 6+)
+    # Network and security (Phase 6+)
     ../../modules/network/wireguard-mullvad.nix
     ../../modules/network/tailscale.nix
     ../../modules/network/remote-desktop.nix
     ../../modules/security/malware-scanner.nix
 
-    # Secrets (when ready for Phase 2)
-    ../../modules/core/secrets-laptop.nix
+    # User
+    ../../modules/users/laptop.nix
   ];
+
+  # Enable SSH to generate host keys for agenix
+  services.openssh.enable = true;
 
   # Device identity
   networking.hostName = "laptop-intel";
+
+  # Mullvad WireGuard VPN Configuration (Phase 6)
+  networking.wireguard-mullvad = {
+    enable = true;
+    device = "laptop-intel";
+
+    # Production servers that bypass VPN (for audit trail)
+    bypassIPs = [
+      # Add production server IPs here
+      # "203.0.113.5"
+    ];
+
+    # Kill switch enabled
+    enableKillSwitch = true;
+
+    # Per-app VPN routing via cgroups
+    cgroupApps = [
+      "firefox"       # Browser through VPN
+      "librewolf"     # Browser through VPN
+      "chrome"        # Browser through VPN
+      "transmission"  # Torrents through VPN
+    ];
+
+    # Current exit location (uk/us/eu)
+    currentExit = "uk";
+
+    # Minimum hop count for multi-hop
+    minHops = 5;
+
+    # Enable automatic weekly rotation
+    autoRotate = {
+      enable = true;
+      schedule = "Sun *-*-* 03:00:00";  # Sunday 3 AM
+    };
+
+    # Enable metrics logging
+    metricsLogging = {
+      enable = true;
+      interval = "5min";
+      logFile = "/var/log/vpn-logs.txt";
+    };
+  };
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;

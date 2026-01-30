@@ -30,6 +30,9 @@
     ../../modules/users/laptop.nix
   ];
 
+  # Enable SSH to generate host keys for agenix
+  services.openssh.enable = true;
+
   # Device identity
   networking.hostName = "laptop-intel";
 
