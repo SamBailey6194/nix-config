@@ -35,10 +35,12 @@
     ../../modules/software/media.nix
 
     # Network and security (Phase 6+)
-    ../../modules/network/wireguard-mullvad.nix
+    # TODO: Enable after VPN secrets are created
+    # ../../modules/network/wireguard-mullvad.nix
     ../../modules/network/tailscale.nix
     ../../modules/network/remote-desktop.nix
-    ../../modules/security/malware-scanner.nix
+    # TODO: Enable after malware scanner is configured
+    # ../../modules/security/malware-scanner.nix
 
     # User
     ../../modules/users/laptop.nix
@@ -51,46 +53,47 @@
   networking.hostName = "laptop-intel";
 
   # Mullvad WireGuard VPN Configuration (Phase 6)
-  networking.wireguard-mullvad = {
-    enable = true;
-    device = "laptop-intel";
-
-    # Production servers that bypass VPN (for audit trail)
-    bypassIPs = [
-      # Add production server IPs here
-      # "203.0.113.5"
-    ];
-
-    # Kill switch enabled
-    enableKillSwitch = true;
-
-    # Per-app VPN routing via cgroups
-    cgroupApps = [
-      "firefox"       # Browser through VPN
-      "librewolf"     # Browser through VPN
-      "google-chrome" # Browser through VPN (or use "chromium")
-      "transmission"  # Torrents through VPN
-    ];
-
-    # Current exit location (uk/us/eu)
-    currentExit = "uk";
-
-    # Minimum hop count for multi-hop
-    minHops = 5;
-
-    # Enable automatic weekly rotation
-    autoRotate = {
-      enable = true;
-      schedule = "Sun *-*-* 03:00:00";  # Sunday 3 AM
-    };
-
-    # Enable metrics logging
-    metricsLogging = {
-      enable = true;
-      interval = "5min";
-      logFile = "/var/log/vpn-logs.txt";
-    };
-  };
+  # TODO: Uncomment after creating VPN secrets (see Option 2 below)
+  # networking.wireguard-mullvad = {
+  #   enable = true;
+  #   device = "laptop-intel";
+  #
+  #   # Production servers that bypass VPN (for audit trail)
+  #   bypassIPs = [
+  #     # Add production server IPs here
+  #     # "203.0.113.5"
+  #   ];
+  #
+  #   # Kill switch enabled
+  #   enableKillSwitch = true;
+  #
+  #   # Per-app VPN routing via cgroups
+  #   cgroupApps = [
+  #     "firefox"       # Browser through VPN
+  #     "librewolf"     # Browser through VPN
+  #     "google-chrome" # Browser through VPN (or use "chromium")
+  #     "transmission"  # Torrents through VPN
+  #   ];
+  #
+  #   # Current exit location (uk/us/eu)
+  #   currentExit = "uk";
+  #
+  #   # Minimum hop count for multi-hop
+  #   minHops = 5;
+  #
+  #   # Enable automatic weekly rotation
+  #   autoRotate = {
+  #     enable = true;
+  #     schedule = "Sun *-*-* 03:00:00";  # Sunday 3 AM
+  #   };
+  #
+  #   # Enable metrics logging
+  #   metricsLogging = {
+  #     enable = true;
+  #     interval = "5min";
+  #     logFile = "/var/log/vpn-logs.txt";
+  #   };
+  # };
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;
