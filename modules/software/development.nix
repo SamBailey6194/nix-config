@@ -38,9 +38,12 @@
     pnpm
 
     # Python tools
-    python312
-    python312Packages.pip
-    python312Packages.virtualenv
+    python314           # Default for new projects
+    python314Packages.pip
+    python314Packages.virtualenv
+    python313           # For legacy projects
+    python313Packages.pip
+    python313Packages.virtualenv
     uv                  # Fast Python package installer
 
     # Rust toolchain (alternative to rustup)
