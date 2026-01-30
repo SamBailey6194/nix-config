@@ -1,7 +1,7 @@
 # Changelog
 
-**Last Updated**: 29/01/2026
-**Version**: 0.9.0
+**Last Updated**: 30/01/2026
+**Version**: 0.9.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -36,6 +36,24 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.9.1] - 30/01/2026
+
+### Fixed
+- Home Manager file collision errors during `nixos-rebuild switch`
+- Comprehensive legacy dotfile cleanup system backs up 40+ conflicting files before Home Manager activation
+- Automatic one-time cleanup prevents mimeapps.list and other file conflicts
+
+### Added
+- `home/modules/legacy-cleanup.nix` - Modular legacy file backup and removal system
+- `docs/LEGACY-FILE-CLEANUP.md` - User guide for backup and restoration
+- `docs/LEGACY-CLEANUP-IMPLEMENTATION.md` - Technical implementation details
+
+### Changed
+- Refactored `home/stages/base.nix` - Replaced inline backup script with modular legacy-cleanup import
+- Removed inline mimeapps.list cleanup from `home/stages/desktop.nix` (now handled by module)
 
 ---
 
