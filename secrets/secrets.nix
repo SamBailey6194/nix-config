@@ -20,7 +20,7 @@ let
   # Host keys (machine SSH host keys - extracted after NixOS installation)
   # Each NixOS machine generates these during installation at /etc/ssh/ssh_host_ed25519_key.pub
   # Get them with: ssh-keyscan <hostname> or cat /etc/ssh/ssh_host_ed25519_key.pub
-  laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_LAPTOP_HOST_KEY_HERE root@laptop-intel";
+  laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIPZckL/JszhuspKDhEsd5LpD4b4GvM2WPHFgHUAc29v root@laptop-intel";
   framework = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_FRAMEWORK_HOST_KEY_HERE root@framework";
   devtower = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_DEVTOWER_HOST_KEY_HERE root@devtower";
 
