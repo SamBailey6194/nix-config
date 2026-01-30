@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 30/01/2026
-**Version**: 0.10.0
+**Version**: 0.11.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.11.0 - 30/01/2026](#0110---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.7.0 - 29/01/2026](#070---29012026)
 - [0.6.7 - 28/01/2026](#067---28012026)
@@ -44,6 +45,27 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [0.11.0] - 30/01/2026
+
+### Added
+- **OpenRGB Support**: Enabled RGB control for keyboard and mouse peripherals
+- **Hyprland Desktop**: Enabled full Hyprland Wayland compositor environment
+- **Mullvad WireGuard VPN**: Activated Phase 6 VPN with multi-hop routing, kill switch, and per-app VPN (Firefox, LibreWolf, Chrome, Transmission)
+- **VPN Configuration**: UK exit location, 5-hop minimum, automatic weekly rotation (Sundays 3 AM), metrics logging
+
+### Configuration
+- Uncommented `modules/hardware/openrgb.nix` for RGB peripheral control
+- Uncommented `modules/desktop/hyprland` for desktop environment
+- Uncommented `modules/network/wireguard-mullvad.nix` for VPN functionality
+- Enabled hostname `laptop-intel` identification
+- Added LibreWolf and Chrome to VPN cgroup applications
+
+### Technical Changes
+- **File**: `hosts/laptop-intel/configuration.nix`
+- Changed 45 insertions, 43 deletions (formatting and feature activation)
 
 ---
 
