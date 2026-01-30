@@ -68,7 +68,7 @@
     cgroupApps = [
       "firefox"       # Browser through VPN
       "librewolf"     # Browser through VPN
-      "chrome"        # Browser through VPN
+      "google-chrome" # Browser through VPN (or use "chromium")
       "transmission"  # Torrents through VPN
     ];
 
