@@ -4,6 +4,14 @@
   # Base configuration shared across ALL devices
   # Device-specific settings go in hosts/{device}/configuration.nix
 
+  # Nixpkgs overlays for additional packages
+  nixpkgs.overlays = [
+    # Claude Code - always up-to-date native binary
+    (final: prev: {
+      claude-code = inputs.claude-code-nix.packages.${prev.system}.default;
+    })
+  ];
+
   imports = [
     ./fonts.nix                    # System fonts
     ../software/browsers.nix       # LibreWolf, Firefox, Chrome

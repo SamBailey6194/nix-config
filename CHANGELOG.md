@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 30/01/2026
-**Version**: 0.10.0
+**Version**: 0.12.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.9.2 - 30/01/2026](#092---30012026)
 - [0.9.1 - 30/01/2026](#091---30012026)
@@ -39,6 +40,23 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.12.0] - 30/01/2026
+
+### Added
+- Native Nix package for Claude Code via `claude-code-nix` flake input
+- Automatic hourly updates for Claude Code through Nix package management
+- Nixpkgs overlay to provide `pkgs.claude-code` across all modules
+
+### Changed
+- Replaced curl-based Claude Code installation with native Nix package
+- Removed `.local/bin` PATH addition from shell configuration (no longer needed)
+- Updated documentation in `nix-settings.nix` to reflect native package installation
+
+### Removed
+- Manual PATH configuration for Claude Code installation directory
 
 ---
 

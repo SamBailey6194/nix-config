@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 30/01/2026
-**Version**: 0.11.0
+**Version**: 0.12.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.11.0 - 30/01/2026](#0110---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.7.0 - 29/01/2026](#070---29012026)
@@ -45,6 +46,30 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [0.12.0] - 30/01/2026
+
+### Added
+- Native Nix package installation for Claude Code via `claude-code-nix` flake input from `github:sadjow/claude-code-nix`
+- Nixpkgs overlay in `modules/core/base-configuration.nix` to provide `pkgs.claude-code` system-wide
+- Automatic hourly updates for Claude Code through Nix package update mechanism
+
+### Changed
+- Replaced manual curl-based Claude Code installation with native Nix package in `home/common.nix`
+- Removed `.local/bin` PATH addition from `home/modules/shell.nix` (no longer required for Claude Code)
+- Updated documentation comment in `modules/core/nix-settings.nix` to clarify that Claude Code now uses Nix package instead of npm installation
+
+### Technical Details
+**Files Modified**:
+- `flake.nix`: Added `claude-code-nix` input with nixpkgs follows, added to outputs parameters
+- `modules/core/base-configuration.nix`: Created nixpkgs overlay for `claude-code` package
+- `home/common.nix`: Added `claude-code` to package list with updated comment explaining native binary and hourly updates
+- `home/modules/shell.nix`: Removed Claude Code PATH configuration (3 lines deleted)
+- `modules/core/nix-settings.nix`: Updated nix-ld documentation to reflect Claude Code's native installation method
+
+**Impact**: Claude Code is now managed as a first-class Nix package with automatic updates, eliminating the need for manual PATH configuration and npm-based installation
 
 ---
 

@@ -27,9 +27,15 @@
       url = "github:mrshmllow/affinity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Claude Code (hourly updates, native binary)
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, ... }@inputs: {
     # NixOS System Configurations
     nixosConfigurations = {
       # ============================================================================

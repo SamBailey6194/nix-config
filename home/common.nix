@@ -95,10 +95,11 @@
     # Bluetooth
     blueman
 
-    # Claude Code CLI
+    # Claude Code CLI (native binary, hourly updates)
     # Note: Claude Code plugins should be configured in ~/.config/claude/
     # after installation. Your custom plugins (syntek-dev-suite, syntek-rust-security,
     # syntek-infra) should be cloned to ~/Repos/personal/claude-plugins/ and symlinked.
+    claude-code
   ];
 
   # Kitty terminal

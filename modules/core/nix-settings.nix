@@ -67,9 +67,12 @@
   # 2. Sets LD_LIBRARY_PATH to include common libraries
   #
   # This allows tools like:
-  # - npm install -g @anthropic-ai/claude-code (uses downloaded Node.js)
+  # - npm packages (e.g., npm install -g some-package)
   # - Downloaded AppImages
   # - Pre-compiled development tools
+  #
+  # NOTE: Claude Code is installed via Nix package (github:sadjow/claude-code-nix)
+  # rather than npm, so it doesn't require nix-ld.
   #
   # Without nix-ld, you get: "Could not start dynamically linked executable"
   # ============================================================================
