@@ -41,17 +41,17 @@ in
   # ============================================================================
 
   # Personal GitHub (SamBailey6194)
-  # "github-ssh-personal-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "github-ssh-personal-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "github-ssh-personal-framework.age".publicKeys = allUsers ++ [ framework ];
   # "github-ssh-personal-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # Syntek GitHub (syntek-studio)
-  # "github-ssh-syntek-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "github-ssh-syntek-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "github-ssh-syntek-framework.age".publicKeys = allUsers ++ [ framework ];
   # "github-ssh-syntek-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # Missional Gen GitHub (sam-missionalgen)
-  # "github-ssh-missionalgen-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "github-ssh-missionalgen-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "github-ssh-missionalgen-framework.age".publicKeys = allUsers ++ [ framework ];
   # "github-ssh-missionalgen-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
@@ -92,7 +92,7 @@ in
   # 256-bit AES-GCM keys for encrypting quarantined malware samples
   # ============================================================================
 
-  # "malware-scanner-quarantine-key-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "malware-scanner-quarantine-key-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "malware-scanner-quarantine-key-framework.age".publicKeys = allUsers ++ [ framework ];
   # "malware-scanner-quarantine-key-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
