@@ -18,8 +18,8 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Enable cgroup v2 net_cls controller
-    systemd.enableCgroupAccounting = true;
+    # Cgroup accounting is enabled by default in NixOS 24.11+
+    # No explicit enablement needed
 
     # Create cgroup slice for VPN apps
     systemd.slices.vpn-apps = {
