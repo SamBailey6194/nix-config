@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 **Last Updated**: 30/01/2026
-**Version**: 0.9.2
+**Version**: 0.9.3
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
