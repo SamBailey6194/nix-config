@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 30/01/2026
-**Version**: 0.9.1
+**Version**: 0.9.2
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,8 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [0.9.2 - 30/01/2026](#092---30012026)
+- [0.9.1 - 30/01/2026](#091---30012026)
 - [0.8.0 - 29/01/2026](#080---29012026)
 - [0.7.1 - 29/01/2026](#071---29012026)
 - [0.7.0 - 29/01/2026](#070---29012026)
@@ -36,6 +38,21 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [0.9.2] - 30/01/2026
+
+### Fixed
+- Hyprland configuration syntax errors across all device configs (laptop-intel, framework, devtower)
+- Converted deprecated colon syntax to new nested block syntax for decoration settings
+- Fixed animation bezier definitions using correct top-level `bezier` keyword
+- Prevents Hyprland boot errors due to deprecated syntax
+
+### Changed
+- Added explicit monitor configuration for laptop-intel (1920x1080@60 on eDP-1)
+- Migrated `decoration:blur:size` syntax to nested `decoration { blur { size } }` blocks
+- Migrated `animations:bezier` to top-level `bezier` declarations
 
 ---
 
