@@ -5,6 +5,10 @@ members = [
     "wireguard-helper",  # Phase 6 - Mullvad VPN management
     "malware-scanner",   # Phase 7 - Malware scanning and threat protection
     "storage-manager",   # Phase 8 - Storage management (Restic, ZFS, RAID)
+    "luks-manage",       # LUKS encryption management
+    "btrfs-manage",      # BTRFS filesystem management
+    "vault-manage",      # Per-folder encryption (gocryptfs)
+    "tpm-manage",        # TPM2 management
     # "security-wrapper",  # Phase 10 - Future security wrapper for OpenBao
 ]
 exclude = [

@@ -1,0 +1,22 @@
+[package]
+name = "vault-manage"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vault-manage"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+colored = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+which = { workspace = true }
+dirs = { workspace = true }
+whoami = "1.5"

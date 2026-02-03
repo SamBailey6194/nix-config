@@ -1,7 +1,7 @@
 # Changelog
 
-**Last Updated**: 30/01/2026
-**Version**: 0.12.0
+**Last Updated**: 03/02/2026
+**Version**: 1.0.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.0.0 - 03/02/2026](#100---03022026) 🎉
 - [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
 - [0.9.2 - 30/01/2026](#092---30012026)
@@ -40,6 +41,92 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.0.0] - 03/02/2026 🎉
+
+**PRODUCTION READY MILESTONE** - First stable release with comprehensive encryption, multi-device support, and production-grade security.
+
+### Added
+- **LUKS + BTRFS Encryption Support**: Full disk encryption with TPM2 auto-unlock and password fallback
+  - LUKS encryption modules with TPM2 integration (`modules/security/luks-encryption.nix`)
+  - BTRFS filesystem with subvolumes, compression, and snapshots (`modules/filesystem/btrfs.nix`)
+  - BTRFS layout presets for laptop and devtower configurations (`modules/filesystem/btrfs-layouts.nix`)
+  - zram compressed swap support (no swap partition needed) (`modules/filesystem/zram.nix`)
+  - Automatic LUKS header backups for disaster recovery
+  - TRIM support for SSD performance with encryption
+
+- **Comprehensive Installation Guide**: Production-ready installation documentation
+  - Device-specific instructions for laptop-intel, framework, and devtower (`docs/INSTALLATION.md`)
+  - Side-by-side comparison: Standard (ext4) vs LUKS+BTRFS installation methods
+  - Multi-drive setup guide for devtower (OS, home, and media drives)
+  - TPM2 auto-unlock configuration guide
+  - BTRFS snapshot management and rollback procedures
+  - Staged installation workflow (6 stages from minimal to full)
+  - Comprehensive troubleshooting section
+  - Installation checklist for tracking progress
+
+- **Security Modules**: Production-grade security tooling
+  - Encryption tools suite with GPG, VeraCrypt, 7-Zip, gocryptfs (`modules/security/encryption-tools.nix`)
+  - Folder-based encryption with EncFS and CryFS (`modules/security/folder-encryption.nix`)
+  - Hardened SSH daemon configuration (`modules/security/ssh-daemon.nix`)
+  - Security implementation documentation (`SECURITY-IMPLEMENTATION-SUMMARY.md`)
+  - Encryption guide for end-users (`docs/ENCRYPTION-GUIDE.md`)
+
+- **Rust Storage Management Tools**: CLI utilities for managing encrypted storage
+  - `btrfs-manage`: BTRFS pool creation, snapshot management, and scrubbing
+  - `luks-manage`: LUKS container management and key rotation
+  - `tpm-manage`: TPM2 enrollment and key management
+  - `vault-manage`: HashiCorp Vault integration for secrets storage
+
+- **Remote Desktop Infrastructure** (ready to enable):
+  - Wireguard + Defguard + RustDesk remote desktop setup (`modules/network/remote-desktop.nix`)
+  - 2FA authentication gateway via Defguard
+  - Zero-trust remote access over Wireguard VPN
+  - Firewall rules scoped to Wireguard interface only
+  - Documentation for enabling remote desktop features
+
+- **Multi-Device Support**: Enhanced device-specific configurations
+  - Device-specific BTRFS layouts (single-drive laptop vs multi-drive devtower)
+  - Per-device encryption settings with hardware-appropriate defaults
+  - GPU-specific creative software configurations
+  - RAM-appropriate zram swap sizing
+
+### Changed
+- **Updated INSTALLATION.md**: Integrated encryption options throughout installation workflow
+- **Enhanced configuration-full.nix**: Added commented imports for all new security and filesystem modules
+- **Improved remote-desktop.nix**: Added future Wireguard/Defguard/RustDesk setup alongside existing Tailscale
+- **Updated flake inputs**: Added dependencies for new Rust storage management tools
+
+### Removed
+- **Deleted fuzzing workflow**: Removed `.github/workflows/fuzzing.yml` (not applicable to NixOS configs)
+
+### Security
+- ✅ Full disk encryption with LUKS2
+- ✅ TPM2 integration for auto-unlock with password fallback
+- ✅ BTRFS with transparent compression (zstd)
+- ✅ Automatic snapshots for system rollback
+- ✅ Hardware-appropriate security defaults per device
+- ✅ Zero-trust remote desktop architecture (Wireguard + 2FA)
+
+### Breaking Changes
+- None - all encryption and security features are opt-in
+- Existing configurations continue to work without modification
+- New installations can choose Standard or LUKS+BTRFS at install time
+
+### Migration Notes
+- **New installations**: Choose LUKS+BTRFS during initial setup for full encryption
+- **Existing systems**: Can migrate to encryption by backing up, repartitioning, and restoring
+- **Standard installations**: Continue to work as-is with no changes required
+
+### Version Significance
+This 1.0.0 release marks the configuration as **production-ready** with:
+- ✅ Comprehensive security features (encryption, TPM2, hardening)
+- ✅ Multi-device support (laptop-intel, framework, devtower)
+- ✅ Complete installation documentation
+- ✅ Disaster recovery capabilities (snapshots, LUKS header backups)
+- ✅ Professional remote desktop infrastructure (ready to enable)
 
 ---
 

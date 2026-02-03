@@ -42,6 +42,18 @@
     # TODO: Enable after malware scanner is configured
     # ../../modules/security/malware-scanner.nix
 
+    # Security tools (Phase 9 - Encryption & Hardening)
+    # Uncomment to enable encryption tools suite
+    # ../../modules/security/encryption-tools.nix
+    # ../../modules/security/folder-encryption.nix
+    # ../../modules/security/luks-encryption.nix
+    # ../../modules/security/ssh-daemon.nix
+
+    # Filesystem (Optional - enable if using BTRFS/ZFS)
+    # ../../modules/filesystem/btrfs.nix
+    # ../../modules/filesystem/btrfs-layouts.nix
+    # ../../modules/filesystem/zram.nix  # Compressed swap in RAM
+
     # User
     ../../modules/users/laptop.nix
   ];
@@ -122,6 +134,9 @@
     gimp                 # Image editing
     inkscape             # Vector graphics
     krita                # Digital painting
+
+    # Claude Code Nix Package
+    claude-code
   ] ++ [
     # Affinity Apps (via Wine - from affinity-nix flake)
     inputs.affinity-nix.packages.${pkgs.system}.designer

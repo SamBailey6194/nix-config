@@ -27,15 +27,9 @@
       url = "github:mrshmllow/affinity-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # Claude Code (hourly updates, native binary)
-    claude-code-nix = {
-      url = "github:sadjow/claude-code-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, ... }@inputs: {
     # NixOS System Configurations
     nixosConfigurations = {
       # ============================================================================
@@ -330,6 +324,12 @@
         # VPN tools (Phase 6: Wireguard + Mullvad)
         curl   # For IP verification and Mullvad API
         jq     # For JSON parsing
+
+        # Encryption and filesystem tools
+        cryptsetup      # LUKS management
+        tpm2-tools      # TPM2 management
+        btrfs-progs     # BTRFS filesystem tools
+        gocryptfs       # Per-folder encryption
       ];
 
       # Auto-build Rust tools when entering dev shell
@@ -351,6 +351,7 @@
           echo "  - wireguard-helper"
           echo "  - malware-scanner"
           echo "  - restic-manage, zfs-manage, raid-manage"
+          echo "  - luks-manage, btrfs-manage, vault-manage, tpm-manage"
           echo ""
         fi
 
@@ -363,6 +364,10 @@
         echo "  restic-manage          - Restic backup configuration"
         echo "  zfs-manage             - ZFS storage management"
         echo "  raid-manage            - RAID array management"
+        echo "  luks-manage            - LUKS encryption management"
+        echo "  btrfs-manage           - BTRFS filesystem management"
+        echo "  vault-manage           - Per-folder encryption (gocryptfs)"
+        echo "  tpm-manage             - TPM2 management"
         echo ""
       '';
     };

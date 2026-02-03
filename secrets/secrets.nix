@@ -97,6 +97,30 @@ in
   # "malware-scanner-quarantine-key-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # ============================================================================
+  # LUKS Encryption Passphrases (Per-Device Fallback Recovery)
+  # These are fallback passphrases when TPM2 auto-unlock fails
+  # DevTower has separate passphrases for OS, home, and media drives
+  # ============================================================================
+
+  # Laptop LUKS passphrases (single drive)
+  "luks-passphrase-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "luks-passphrase-framework.age".publicKeys = allUsers ++ [ framework ];
+
+  # DevTower LUKS passphrases (3 separate drives)
+  # "luks-passphrase-devtower-os.age".publicKeys = allUsers ++ [ devtower ];      # /dev/nvme1n1p2 (OS)
+  # "luks-passphrase-devtower-home.age".publicKeys = allUsers ++ [ devtower ];    # /dev/sdd1 (Home)
+  # "luks-passphrase-devtower-media.age".publicKeys = allUsers ++ [ devtower ];   # /dev/sdc1 (Media)
+
+  # ============================================================================
+  # Per-Folder Encryption Master Keys (gocryptfs)
+  # Optional master keys for vault recovery (users can also use passwords only)
+  # ============================================================================
+
+  "vault-master-key-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "vault-master-key-framework.age".publicKeys = allUsers ++ [ framework ];
+  # "vault-master-key-devtower.age".publicKeys = allUsers ++ [ devtower ];
+
+  # ============================================================================
   # Server SSH Keys (Per-Device, WITH Passphrases)
   # Example: Client ACME server - each device has unique credentials
   # Format: server-<name>-<device>-key.age (private key)

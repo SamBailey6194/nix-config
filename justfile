@@ -39,6 +39,78 @@ check-keys:
     agenix-helper check-keys
 
 # ============================================================================
+# Encryption Management
+# ============================================================================
+
+# Show LUKS device status
+luks-status:
+    sudo luks-manage status
+
+# Enroll TPM2 for auto-unlock
+enroll-tpm2 DEVICE:
+    sudo luks-manage enroll-tpm2 {{DEVICE}}
+
+# Backup LUKS headers
+backup-luks-headers:
+    sudo luks-manage backup-header /dev/nvme0n1p2
+
+# Test LUKS passphrase
+test-luks-passphrase DEVICE:
+    sudo luks-manage test-unlock {{DEVICE}}
+
+# Show BTRFS filesystem usage
+btrfs-usage:
+    sudo btrfs-manage usage /
+
+# List BTRFS snapshots
+list-snapshots:
+    sudo btrfs-manage list-snapshots
+
+# Create BTRFS snapshot
+snapshot SUBVOL NAME="":
+    sudo btrfs-manage snapshot {{SUBVOL}} --name {{NAME}}
+
+# Cleanup old snapshots (keep last 7)
+cleanup-snapshots KEEP="7":
+    sudo btrfs-manage cleanup --keep {{KEEP}}
+
+# Run BTRFS scrub (data integrity check)
+scrub PATH="/":
+    sudo btrfs-manage scrub {{PATH}}
+
+# Show TPM2 status
+tpm-status:
+    sudo tpm-manage status
+
+# List TPM2-enrolled devices
+tpm-enrolled:
+    sudo tpm-manage enrolled-devices
+
+# Verify TPM2 is working
+tpm-verify:
+    sudo tpm-manage verify
+
+# Create encrypted vault
+create-vault NAME:
+    vault-manage create {{NAME}}
+
+# Mount encrypted vault
+mount-vault NAME:
+    vault-manage mount {{NAME}}
+
+# Unmount encrypted vault
+unmount-vault NAME:
+    vault-manage unmount {{NAME}}
+
+# List all vaults
+list-vaults:
+    vault-manage list
+
+# Show mounted vaults
+vault-status:
+    vault-manage status
+
+# ============================================================================
 # NixOS System Management
 # ============================================================================
 
