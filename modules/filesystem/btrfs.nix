@@ -130,8 +130,8 @@ in
       compsize  # Check compression ratio
     ];
 
-    # Configure filesystem mounts
-    fileSystems = mapAttrs' (name: subvolCfg:
+    # Configure filesystem mounts (override hardware-configuration.nix)
+    fileSystems = lib.mkForce (mapAttrs' (name: subvolCfg:
       nameValuePair subvolCfg.mountPoint {
         device = cfg.rootDevice;
         fsType = "btrfs";
@@ -147,7 +147,7 @@ in
           [ "nodatacow" ]
         ) ++ subvolCfg.extraOptions;
       }
-    ) cfg.subvolumes;
+    ) cfg.subvolumes);
 
     # Automatic scrub for data integrity
     services.btrfs.autoScrub = mkIf cfg.enableScrub {
