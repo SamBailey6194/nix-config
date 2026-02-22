@@ -1,7 +1,7 @@
 # Changelog
 
-**Last Updated**: 03/02/2026
-**Version**: 1.0.0
+**Last Updated**: 22/02/2026
+**Version**: 1.0.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.0.1 - 22/02/2026](#101---22022026)
 - [1.0.0 - 03/02/2026](#100---03022026) 🎉
 - [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
@@ -41,6 +42,23 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.0.1] - 22/02/2026
+
+### Fixed
+- **Hyprland GSettings warnings**: Added `gsettings-desktop-schemas` and `glib` packages to resolve "does not exist" warnings for cursor-theme and cursor-size settings
+- **Hyprland XDG_DATA_DIRS**: Added session variable to include GSettings schema paths
+- **Neovim lualine separators**: Fixed empty string escaping in lualine section_separators configuration
+- **Git safe directory**: Added system-level gitconfig allowing root to use the live nix-config repo in `/etc/nixos/nix-config`
+
+### Files Changed
+- `modules/desktop/hyprland/default.nix` - GSettings schema packages and XDG_DATA_DIRS fix
+- `home/modules/neovim.nix` - Lualine separator string escaping
+- `modules/core/base-configuration.nix` - Git safe directory for root
+
+Version: 1.0.0 → 1.0.1
 
 ---
 

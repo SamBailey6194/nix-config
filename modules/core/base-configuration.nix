@@ -81,6 +81,13 @@
     };
   };
 
+  # Allow root to use the live nix-config repo in /etc/nixos
+  # Required for: sudo git -C /etc/nixos/nix-config pull
+  environment.etc."gitconfig".text = ''
+    [safe]
+      directory = /etc/nixos/nix-config
+  '';
+
   # SSH
   # services.openssh = {
   #   enable = true;

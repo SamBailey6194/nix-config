@@ -1,7 +1,7 @@
 # Version History
 
-**Last Updated**: 30/01/2026
-**Version**: 0.12.0
+**Last Updated**: 22/02/2026
+**Version**: 1.0.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.0.1 - 22/02/2026](#101---22022026)
 - [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.11.0 - 30/01/2026](#0110---30012026)
 - [0.10.0 - 30/01/2026](#0100---30012026)
@@ -46,6 +47,28 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.0.1] - 22/02/2026
+
+### Summary
+Bug fixes for Hyprland GSettings warnings, Neovim lualine separator escaping, and git safe directory configuration.
+
+### Bugs Fixed
+| Bug | Solution | Files |
+|-----|----------|-------|
+| GSettings "does not exist" warnings | Added gsettings-desktop-schemas and glib packages | `modules/desktop/hyprland/default.nix` |
+| Cursor theme/size warnings | Added GSettings schema paths to XDG_DATA_DIRS | `modules/desktop/hyprland/default.nix` |
+| Lualine separator escaping | Fixed empty string quoting in section_separators | `home/modules/neovim.nix` |
+| Root git access denied | Added safe directory for /etc/nixos/nix-config | `modules/core/base-configuration.nix` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `modules/desktop/hyprland/default.nix` | Added gsettings-desktop-schemas, glib packages and XDG_DATA_DIRS session variable |
+| `home/modules/neovim.nix` | Fixed lualine section_separators empty string escaping |
+| `modules/core/base-configuration.nix` | Added /etc/gitconfig with safe directory for nix-config |
 
 ---
 

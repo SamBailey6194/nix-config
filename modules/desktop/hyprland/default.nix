@@ -35,6 +35,10 @@
 
   # Required packages for Hyprland ecosystem
   environment.systemPackages = with pkgs; [
+    # GSettings schemas (fixes "does not exist" warnings for cursor-theme/cursor-size)
+    gsettings-desktop-schemas
+    glib
+
     # Wayland utilities
     wayland
     wayland-protocols
@@ -119,5 +123,6 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # Hint electron apps to use Wayland
     WLR_NO_HARDWARE_CURSORS = "1"; # Fix cursor rendering on some hardware
+    XDG_DATA_DIRS = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.glib}/share/gsettings-schemas/${pkgs.glib.name}:$XDG_DATA_DIRS";
   };
 }
