@@ -2,36 +2,46 @@
 # This file defines which secrets exist and which machines can decrypt them
 #
 # Per-Device Security Model:
+#   - User keys: Per-device keys for agenix encrypt/decrypt during development
+#   - Host keys: Machine SSH keys for decryption during nixos-rebuild
 #   - GitHub keys: Per-device keys WITHOUT passphrases (convenience)
 #   - Server/VPN/VM keys: Per-device keys WITH passphrases (security)
 #   - Device compromise only exposes keys for THAT device
 #
-# Usage:
-#   1. Generate host SSH keys: ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_agenix
-#   2. Add public keys to this file
-#   3. Create encrypted secrets: agenix -e github-ssh-personal.age
-#   4. Reference secrets in NixOS configs via age.secrets
+# Setup per device:
+#   1. Generate a dedicated agenix user key:
+#      ssh-keygen -t ed25519 -C "sam@<device>" -f ~/.ssh/id_ed25519_agenix
+#   2. Paste the public key below for that device
+#   3. After rekeying, that device can encrypt/decrypt secrets:
+#      agenix -i ~/.ssh/id_ed25519_agenix -e <secret>.age
 
 let
-  # User keys (for initial secret creation and management)
-  # These are YOUR personal SSH keys used to encrypt/decrypt secrets during development
-  sam-personal = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_YOUR_PERSONAL_KEY_HERE sam@personal";
+  # ============================================================================
+  # User keys (per-device, for encrypting/decrypting secrets during development)
+  # These let YOU run `agenix -e` on each machine you edit secrets from.
+  # Generate with: ssh-keygen -t ed25519 -C "sam@<device>" -f ~/.ssh/id_ed25519_agenix
+  # Get public key: cat ~/.ssh/id_ed25519_agenix.pub
+  # ============================================================================
+  sam-laptop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDDdE+EkEkG7BtvLb5mDPC6bPbs0vzw1yq6xcfmv+hao sam@laptop-intel";
+  # sam-ubuntu = "ssh-ed25519 REPLACE_WITH_UBUNTU_PC_USER_KEY sam@ubuntu-pc";
 
+  # ============================================================================
   # Host keys (machine SSH host keys - extracted after NixOS installation)
   # Each NixOS machine generates these during installation at /etc/ssh/ssh_host_ed25519_key.pub
   # Get them with: ssh-keyscan <hostname> or cat /etc/ssh/ssh_host_ed25519_key.pub
+  # ============================================================================
   laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIPZckL/JszhuspKDhEsd5LpD4b4GvM2WPHFgHUAc29v root@laptop-intel";
-  framework = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_FRAMEWORK_HOST_KEY_HERE root@framework";
-  devtower = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEPLOY_DEVTOWER_HOST_KEY_HERE root@devtower";
+  # framework = "ssh-ed25519 REPLACE_WITH_FRAMEWORK_HOST_KEY root@framework";
+  # devtower = "ssh-ed25519 REPLACE_WITH_DEVTOWER_HOST_KEY root@devtower";
 
-  # Key groups for easy management
-  allUsers = [ sam-personal ];
-  allHosts = [ laptop-intel framework devtower ];
+  # Key groups for easy management (only include keys with real values)
+  allUsers = [ sam-laptop ];
+  allHosts = [ laptop-intel ];
   allKeys = allUsers ++ allHosts;
 
-  # Specific device groups
-  laptops = [ laptop-intel framework ];
-  desktops = [ devtower ];
+  # Specific device groups (uncomment when devices are set up)
+  # laptops = [ laptop-intel framework ];
+  # desktops = [ devtower ];
 in
 {
   # ============================================================================
@@ -67,21 +77,22 @@ in
   # "wireguard-devtower-private.age".publicKeys = allUsers ++ [ devtower ];
 
   # Mullvad account numbers (from mullvad.net)
-  "mullvad-account-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # TODO: Uncomment when wireguard-helper multi-hop rotation is implemented
+  # "mullvad-account-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-account-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-account-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # Generated multi-hop configs (rotated by wireguard-helper)
-  "mullvad-wg-config-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "mullvad-wg-config-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-wg-config-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-wg-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # API cache and route history (avoid reusing servers)
-  "mullvad-relay-cache-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "mullvad-relay-cache-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-relay-cache-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-relay-cache-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
-  "mullvad-route-history-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "mullvad-route-history-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-route-history-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-route-history-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
@@ -128,8 +139,8 @@ in
   # ============================================================================
 
   # Example: Uncomment when adding your first client server
-  # "server-acme-laptop-intel-key.age".publicKeys = allUsers ++ [ laptop-intel ];
-  # "server-acme-laptop-intel-passphrase.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "server-acme-laptop-intel-key.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "server-acme-laptop-intel-passphrase.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "server-acme-framework-key.age".publicKeys = allUsers ++ [ framework ];
   # "server-acme-framework-passphrase.age".publicKeys = allUsers ++ [ framework ];
   # "server-acme-devtower-key.age".publicKeys = allUsers ++ [ devtower ];

@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 22/02/2026
-**Version**: 1.0.1
+**Version**: 1.1.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.1.0 - 22/02/2026](#110---22022026)
 - [1.0.1 - 22/02/2026](#101---22022026)
 - [1.0.0 - 03/02/2026](#100---03022026) 🎉
 - [0.12.0 - 30/01/2026](#0120---30012026)
@@ -42,6 +43,37 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.1.0] - 22/02/2026
+
+### Added
+- **Per-device encrypted secrets**: 9 agenix-encrypted `.age` files for laptop-intel (GitHub SSH keys, LUKS passphrase, malware scanner key, vault master key, server ACME credentials, Wireguard private key)
+- **Dynamic hostname interpolation**: secrets-laptop.nix now uses `config.networking.hostName` for portable per-device secret paths
+- **LUKS passphrase secret**: Fallback decryption when TPM2 auto-unlock fails
+- **Malware scanner quarantine key**: 256-bit AES-GCM key for quarantine encryption
+- **Vault master key**: gocryptfs recovery key for per-folder encryption
+- **Server ACME secrets**: SSH key and passphrase for server deployments
+
+### Changed
+- **secrets.nix**: Replaced placeholder keys with real user and host keys, added per-device agenix user key, commented out unimplemented Mullvad/Wireguard secrets, enabled server-acme secrets
+- **.gitignore**: Allow `.age` files (encrypted, safe to commit), track `flake.lock`, protect unencrypted private keys
+- **configuration-full.nix**: Enabled `secrets-laptop.nix` and `ssh-config.nix` imports (previously commented out)
+
+### Security
+- Real SSH ed25519 keys deployed for laptop-intel user and host
+- Per-device agenix user key for encrypt/decrypt during development
+- Zero-trust model: each device only decrypts its own secrets
+
+### Files Changed
+- `secrets/secrets.nix` - Real keys, per-device user key, tidied declarations
+- `modules/core/secrets-laptop.nix` - Dynamic hostname, 6 new secret declarations
+- `.gitignore` - Allow .age files, track flake.lock
+- `hosts/laptop-intel/configuration-full.nix` - Enabled secrets and SSH imports
+- `secrets/*.age` (9 new files) - Encrypted secrets for laptop-intel
+
+Version: 1.0.1 → 1.1.0
 
 ---
 

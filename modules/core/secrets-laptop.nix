@@ -9,34 +9,91 @@ let
     if config.users.users ? sam-laptop then "sam-laptop"
     else if config.users.users ? sam-framework then "sam-framework"
     else throw "No recognized laptop user found";
+
+  hostname = config.networking.hostName;
 in
 {
   # Configure agenix to use the system SSH host key
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   age.secrets = {
+    # ========================================================================
+    # GitHub SSH Keys (per-device, no passphrases)
+    # Decrypted to ~/.ssh/ for SSH config to reference
+    # ========================================================================
     github-ssh-personal = {
-      file = ../../secrets/github-ssh-personal-laptop-intel.age;
-      path = "/home/${username}/.ssh/github-laptop-intel-personal";
+      file = ../../secrets/github-ssh-personal-${hostname}.age;
+      path = "/home/${username}/.ssh/github-${hostname}-personal";
       owner = username;
       group = "users";
       mode = "0600";
     };
 
     github-ssh-syntek = {
-      file = ../../secrets/github-ssh-syntek-laptop-intel.age;
-      path = "/home/${username}/.ssh/github-laptop-intel-syntek";
+      file = ../../secrets/github-ssh-syntek-${hostname}.age;
+      path = "/home/${username}/.ssh/github-${hostname}-syntek";
       owner = username;
       group = "users";
       mode = "0600";
     };
 
     github-ssh-missionalgen = {
-      file = ../../secrets/github-ssh-missionalgen-laptop-intel.age;
-      path = "/home/${username}/.ssh/github-laptop-intel-missionalgen";
+      file = ../../secrets/github-ssh-missionalgen-${hostname}.age;
+      path = "/home/${username}/.ssh/github-${hostname}-missionalgen";
       owner = username;
       group = "users";
       mode = "0600";
     };
+
+    # ========================================================================
+    # LUKS Passphrase (fallback when TPM2 auto-unlock fails)
+    # ========================================================================
+    luks-passphrase = {
+      file = ../../secrets/luks-passphrase-${hostname}.age;
+      mode = "0400";
+    };
+
+    # ========================================================================
+    # Malware Scanner Quarantine Key (256-bit AES-GCM)
+    # ========================================================================
+    malware-scanner-quarantine-key = {
+      file = ../../secrets/malware-scanner-quarantine-key-${hostname}.age;
+      mode = "0400";
+    };
+
+    # ========================================================================
+    # Per-Folder Encryption Master Key (gocryptfs recovery)
+    # ========================================================================
+    vault-master-key = {
+      file = ../../secrets/vault-master-key-${hostname}.age;
+      owner = username;
+      mode = "0400";
+    };
+
+    # ========================================================================
+    # Server SSH Keys (per-device, with passphrases)
+    # ========================================================================
+    server-acme-key = {
+      file = ../../secrets/server-acme-${hostname}-key.age;
+      path = "/home/${username}/.ssh/server-acme-${hostname}-key";
+      owner = username;
+      group = "users";
+      mode = "0600";
+    };
+
+    server-acme-passphrase = {
+      file = ../../secrets/server-acme-${hostname}-passphrase.age;
+      owner = username;
+      mode = "0400";
+    };
+
+    # ========================================================================
+    # Wi-Fi Passwords (shared across all devices)
+    # TODO: Uncomment when wifi-passwords.age is created
+    # ========================================================================
+    # wifi-passwords = {
+    #   file = ../../secrets/wifi-passwords.age;
+    #   mode = "0400";
+    # };
   };
 }

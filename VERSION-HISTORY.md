@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 22/02/2026
-**Version**: 1.0.1
+**Version**: 1.1.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.1.0 - 22/02/2026](#110---22022026)
 - [1.0.1 - 22/02/2026](#101---22022026)
 - [0.12.0 - 30/01/2026](#0120---30012026)
 - [0.11.0 - 30/01/2026](#0110---30012026)
@@ -47,6 +48,40 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.1.0] - 22/02/2026
+
+### Summary
+Activated per-device secrets management with real SSH keys and 9 encrypted `.age` secret files for laptop-intel. Secrets module now uses dynamic hostname interpolation for portable multi-device deployment.
+
+### Features Added
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Encrypted .age secrets | 9 per-device encrypted secrets for laptop-intel | `secrets/*.age` |
+| Dynamic hostname paths | secrets-laptop.nix uses config.networking.hostName | `modules/core/secrets-laptop.nix` |
+| LUKS passphrase secret | TPM2 fallback decryption key | `secrets/luks-passphrase-laptop-intel.age` |
+| Malware scanner key | AES-GCM quarantine encryption key | `secrets/malware-scanner-quarantine-key-laptop-intel.age` |
+| Vault master key | gocryptfs recovery key | `secrets/vault-master-key-laptop-intel.age` |
+| Server ACME credentials | SSH key and passphrase for server deployment | `secrets/server-acme-laptop-intel-*.age` |
+
+### Configuration Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| Real SSH keys in secrets.nix | Replace placeholder keys with actual device keys | `secrets/secrets.nix` |
+| Enabled secrets imports | Activate agenix decryption at boot | `hosts/laptop-intel/configuration-full.nix` |
+| Allow .age in git | Encrypted files are safe to commit | `.gitignore` |
+| Track flake.lock | Reproducible builds | `.gitignore` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `secrets/secrets.nix` | Real user/host keys, per-device agenix user key, tidied declarations |
+| `modules/core/secrets-laptop.nix` | Dynamic hostname, 6 new secret declarations (LUKS, malware, vault, server) |
+| `.gitignore` | Allow .age files, track flake.lock, protect unencrypted keys |
+| `hosts/laptop-intel/configuration-full.nix` | Enabled secrets-laptop.nix and ssh-config.nix imports |
+| `secrets/*.age` | 9 new encrypted secret files |
 
 ---
 

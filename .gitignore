@@ -11,9 +11,10 @@
 result
 result-*
 
-# Secrets (Phase 2+)
-secrets/*.age
-!secrets/secrets.nix
+# Secrets - .age files ARE safe to commit (they're encrypted)
+# Never commit unencrypted private keys
+id_ed25519*
+!*.pub
 
 # Rust build artifacts
 rust/target/
@@ -22,6 +23,3 @@ target/
 # Fuzzing artifacts
 rust/fuzz/target/
 rust/fuzz/artifacts/
-
-# Flake lock (system-specific)
-flake.lock

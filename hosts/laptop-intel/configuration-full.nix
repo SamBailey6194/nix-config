@@ -14,11 +14,11 @@
     ../../modules/core/common.nix
     ../../modules/core/nix-settings.nix
 
-    # Secrets management (commented until SSH keys are set up)
-    # ../../modules/core/secrets-laptop.nix
+    # Secrets management (agenix decrypts at boot)
+    ../../modules/core/secrets-laptop.nix
 
-    # SSH configuration (commented until secrets are ready)
-    # ../../modules/core/ssh-config.nix
+    # SSH configuration (per-device keys for GitHub + servers)
+    ../../modules/core/ssh-config.nix
 
     # Hardware-specific
     ../../modules/hardware/intel-laptop.nix
