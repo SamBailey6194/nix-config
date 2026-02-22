@@ -7,7 +7,10 @@
     # Build settings
     settings = {
       # Experimental features
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
 
       # Build optimization
       auto-optimise-store = true;
@@ -18,7 +21,10 @@
       download-buffer-size = 268435456; # 256 MB in bytes
 
       # Trusted users (for remote builds, etc.)
-      trusted-users = [ "root" "@wheel" ];
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
 
       # Substituters and cache
       substituters = [
@@ -98,10 +104,10 @@
 
       # Graphics libraries (for Electron apps, GUI tools)
       libGL
-      xorg.libX11
-      xorg.libXext
-      xorg.libXrender
-      xorg.libXi
+      libX11
+      libXext
+      libXrender
+      libXi
 
       # Additional commonly needed libraries
       curl
