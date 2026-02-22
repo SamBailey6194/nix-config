@@ -57,16 +57,18 @@
 
       # Stage 1: Minimal (for installation only)
       laptop-intel-minimal = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/laptop-intel/configuration-minimal.nix ];
+        modules = [
+          { nixpkgs.hostPlatform = system; }
+          ./hosts/laptop-intel/configuration-minimal.nix
+        ];
       };
 
       # Stage 2: Desktop (Hyprland + zsh + SSH)
       laptop-intel-desktop = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/laptop-intel/configuration-desktop.nix
           home-manager.nixosModules.home-manager
           {
@@ -79,9 +81,9 @@
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
       laptop-intel-dev = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/laptop-intel/configuration-dev.nix
           home-manager.nixosModules.home-manager
           {
@@ -94,9 +96,9 @@
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       laptop-intel-productivity = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/laptop-intel/configuration-productivity.nix
           home-manager.nixosModules.home-manager
           {
@@ -110,9 +112,9 @@
       # Stage 5: Creative (GIMP + Affinity - no DaVinci on Intel GPU)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       laptop-intel-creative = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/laptop-intel/configuration-creative.nix
           home-manager.nixosModules.home-manager
           {
@@ -126,9 +128,9 @@
       # Stage 6: Full (all software + Affinity + VPN + malware scanner)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       laptop-intel = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/laptop-intel/configuration-full.nix
           agenix.nixosModules.default
           home-manager.nixosModules.home-manager
@@ -146,16 +148,18 @@
 
       # Stage 1: Minimal (for installation only)
       framework-minimal = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/framework/configuration-minimal.nix ];
+        modules = [
+          { nixpkgs.hostPlatform = system; }
+          ./hosts/framework/configuration-minimal.nix
+        ];
       };
 
       # Stage 2: Desktop (Hyprland + zsh + SSH)
       framework-desktop = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/framework/configuration-desktop.nix
           home-manager.nixosModules.home-manager
           {
@@ -168,9 +172,9 @@
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
       framework-dev = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/framework/configuration-dev.nix
           home-manager.nixosModules.home-manager
           {
@@ -183,9 +187,9 @@
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       framework-productivity = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/framework/configuration-productivity.nix
           home-manager.nixosModules.home-manager
           {
@@ -199,9 +203,9 @@
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender + Affinity)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       framework-creative = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/framework/configuration-creative.nix
           home-manager.nixosModules.home-manager
           {
@@ -215,9 +219,9 @@
       # Stage 6: Full (all software + Affinity + VPN + malware scanner)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       framework = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/framework/configuration-full.nix
           agenix.nixosModules.default
           home-manager.nixosModules.home-manager
@@ -235,16 +239,18 @@
 
       # Stage 1: Minimal (for installation only)
       devtower-minimal = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
-        modules = [ ./hosts/devtower/configuration-minimal.nix ];
+        modules = [
+          { nixpkgs.hostPlatform = system; }
+          ./hosts/devtower/configuration-minimal.nix
+        ];
       };
 
       # Stage 2: Desktop (Hyprland + zsh + SSH)
       devtower-desktop = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/devtower/configuration-desktop.nix
           home-manager.nixosModules.home-manager
           {
@@ -257,9 +263,9 @@
 
       # Stage 3: Development (+ browsers, Zed, Neovim)
       devtower-dev = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/devtower/configuration-dev.nix
           home-manager.nixosModules.home-manager
           {
@@ -272,9 +278,9 @@
 
       # Stage 4: Productivity (+ LibreOffice, communication)
       devtower-productivity = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/devtower/configuration-productivity.nix
           home-manager.nixosModules.home-manager
           {
@@ -288,9 +294,9 @@
       # Stage 5: Creative (+ DaVinci Resolve Studio, Blender, Go XLR + Affinity)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       devtower-creative = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/devtower/configuration-creative.nix
           home-manager.nixosModules.home-manager
           {
@@ -304,9 +310,9 @@
       # Stage 6: Full (all software + Affinity + VPN + malware scanner + OpenRGB)
       # Note: Affinity packages added via inputs.affinity-nix.packages in configuration
       devtower = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs; };
         modules = [
+          { nixpkgs.hostPlatform = system; }
           ./hosts/devtower/configuration-full.nix
           agenix.nixosModules.default
           home-manager.nixosModules.home-manager
@@ -320,14 +326,14 @@
     };
 
     # Development Shell (for secret management and Rust development)
-    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
-      buildInputs = with nixpkgs.legacyPackages.x86_64-linux; [
+    devShells.${system}.default = pkgs.mkShell {
+      buildInputs = with pkgs; [
         # Core tools
         git
         vim
 
         # Agenix for secrets management
-        agenix.packages.x86_64-linux.default
+        agenix.packages.${system}.default
 
         # Rust toolchain for building secrets-verify and agenix-helper
         cargo

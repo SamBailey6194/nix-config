@@ -14,44 +14,51 @@
 
       # Search engines
       search = {
-        default = "DuckDuckGo";
+        default = "ddg";
         force = true;
 
         engines = {
-          "DuckDuckGo" = {
+          "ddg" = {
+            name = "DuckDuckGo";
             urls = [{ template = "https://duckduckgo.com/?q={searchTerms}"; }];
-            iconUpdateURL = "https://duckduckgo.com/favicon.ico";
+            icon = "https://duckduckgo.com/favicon.ico";
             definedAliases = [ "@ddg" ];
           };
 
-          "Google" = {
+          "google" = {
+            name = "Google";
             urls = [{ template = "https://www.google.com/search?q={searchTerms}"; }];
-            iconUpdateURL = "https://www.google.com/favicon.ico";
+            icon = "https://www.google.com/favicon.ico";
             definedAliases = [ "@g" ];
           };
 
-          "GitHub" = {
+          "github" = {
+            name = "GitHub";
             urls = [{ template = "https://github.com/search?q={searchTerms}"; }];
-            iconUpdateURL = "https://github.com/favicon.ico";
+            icon = "https://github.com/favicon.ico";
             definedAliases = [ "@gh" ];
           };
 
-          "NixOS Options" = {
+          "nixos-options" = {
+            name = "NixOS Options";
             urls = [{ template = "https://search.nixos.org/options?query={searchTerms}"; }];
-            iconUpdateURL = "https://nixos.org/favicon.ico";
+            icon = "https://nixos.org/favicon.ico";
             definedAliases = [ "@no" ];
           };
 
-          "NixOS Packages" = {
+          "nixos-packages" = {
+            name = "NixOS Packages";
             urls = [{ template = "https://search.nixos.org/packages?query={searchTerms}"; }];
-            iconUpdateURL = "https://nixos.org/favicon.ico";
+            icon = "https://nixos.org/favicon.ico";
             definedAliases = [ "@np" ];
           };
         };
       };
 
       # Bookmarks (from your Ubuntu Firefox profile)
-      bookmarks = [
+      bookmarks = {
+        force = true;
+        settings = [
         {
           name = "Toolbar";
           toolbar = true;
@@ -85,6 +92,7 @@
           ];
         }
       ];
+      };
 
       # Privacy and security settings (from your Ubuntu Firefox)
       settings = {

@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 22/02/2026
-**Version**: 1.3.0
+**Version**: 1.3.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
 - [1.2.0 - 22/02/2026](#120---22022026)
@@ -46,6 +47,52 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.3.1] - 22/02/2026
+
+### Fixed
+- **All `nix flake check` warnings resolved** (zero warnings, zero errors across 18 configs)
+- **Firefox bookmarks**: Migrated to new submodule format with `force` and `settings` keys
+- **Firefox search engines**: Switched from display names to IDs (`"DuckDuckGo"` → `"ddg"`, `"Google"` → `"google"`)
+- **`iconUpdateURL` deprecated**: Replaced with `icon` across all search engine definitions
+- **`greetd.tuigreet` renamed**: Updated to `pkgs.tuigreet`
+- **`programs.zsh.initExtra` deprecated**: Migrated to `programs.zsh.initContent`
+- **`programs.zsh.dotDir` warning**: Set to XDG config directory (`${config.xdg.configHome}/zsh`)
+- **`xfce.thunar-volman` and `xfce.thunar-archive-plugin`**: Moved to top-level `pkgs`
+- **`vimPlugins.fugitive` renamed**: Updated to `vimPlugins.vim-fugitive`
+- **`programs.neovim.extraLuaConfig` renamed**: Migrated to `programs.neovim.initLua`
+- **Neovim lualine empty strings**: Changed Lua `''` to `""` to avoid Nix string delimiter conflict
+- **`programs.git.*` renamed**: Migrated `userName`, `userEmail`, `extraConfig`, `aliases` to unified `programs.git.settings`
+- **`programs.bash.enableCompletion` renamed**: Updated to `programs.bash.completion.enable`
+- **`pkgs.system` deprecated**: Replaced with `pkgs.stdenv.hostPlatform.system` across all host configs
+- **`system` argument deprecated**: Replaced with `nixpkgs.hostPlatform` module in all 18 `nixosSystem` blocks
+
+### Changed
+- **Terminal**: Replaced terminator with kitty as default terminal (`Super+Return` opens kitty)
+- **Git account names**: Corrected to match actual GitHub usernames (SamBailey6194, Syntek-Studio, sam-missional-gen)
+
+### Removed
+- **terminator**: Removed package, config file, and keybinding references
+- **`config/terminator/config`**: Deleted unused terminator configuration
+- **`config/kitty/terminator-layout.session`**: Deleted unused session file (Hyprland handles tiling)
+
+### Files Changed
+- `flake.nix` - Replaced `system` with `nixpkgs.hostPlatform` module, cleaned up devShell
+- `home/modules/browsers.nix` - Firefox bookmarks, search engines, icon URLs
+- `home/modules/git.nix` - Migrated to `settings` API, corrected account names
+- `home/modules/neovim.nix` - `initLua`, `vim-fugitive`, empty string fix
+- `home/modules/shell.nix` - `initContent`, `dotDir`
+- `home/common.nix` - `thunar-volman`, `thunar-archive-plugin`
+- `home/stages/desktop.nix` - Removed terminator, cleaned up kitty references
+- `config/hypr/keybinds.conf` - `Super+Return` → kitty
+- `modules/desktop/hyprland/default.nix` - `tuigreet`, `stdenv.hostPlatform.system`
+- `modules/core/base-configuration.nix` - `prev.stdenv.hostPlatform.system`
+- `modules/core/common.nix` - `bash.completion.enable`
+- `hosts/*/configuration-{full,creative}.nix` (6 files) - `stdenv.hostPlatform.system`
+
+Version: 1.3.0 → 1.3.1
 
 ---
 

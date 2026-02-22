@@ -8,7 +8,7 @@
   nixpkgs.overlays = [
     # Claude Code - always up-to-date native binary
     (final: prev: {
-      claude-code = inputs.claude-code-nix.packages.${prev.system}.default;
+      claude-code = inputs.claude-code-nix.packages.${prev.stdenv.hostPlatform.system}.default;
     })
 
     # Rust CLI tools from this repository

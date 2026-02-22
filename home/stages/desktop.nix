@@ -14,8 +14,8 @@
 
   # Desktop-only packages
   home.packages = with pkgs; [
-    # Terminal
-    terminator
+    # Terminal (kitty is configured in home/common.nix)
+    # kitty is already available via programs.kitty.enable
 
     # System tools
     htop
@@ -29,8 +29,8 @@
 
     # File managers
     thunar
-    xfce.thunar-volman
-    xfce.thunar-archive-plugin
+    thunar-volman
+    thunar-archive-plugin
 
     # Image viewers
     imv
@@ -50,57 +50,8 @@
     blueman
   ];
 
-  # Terminator terminal configuration
-  # Uses your existing Ubuntu Terminator config with familiar layout
-  # Configuration file will be at ~/.config/terminator/config
-  home.file.".config/terminator/config".source = ../../config/terminator/config;
-
-  # ============================================================================
-  # KITTY TERMINAL (COMMENTED OUT - USING TERMINATOR)
-  # ============================================================================
-  # Kitty is fully disabled. Terminator is the default terminal.
-  # To re-enable Kitty alongside Terminator, uncomment the entire block below.
-  # You can then launch Kitty via wofi (Super+D → "kitty")
-  # ============================================================================
-  #
-  # programs.kitty = {
-  #   enable = true;
-  #   themeFile = "tokyo_night_night";
-  #   font = {
-  #     name = "JetBrainsMono Nerd Font";
-  #     size = 11;
-  #   };
-  #   settings = {
-  #     confirm_os_window_close = 0;
-  #     enable_audio_bell = false;
-  #     window_padding_width = 4;
-  #
-  #     # Enable window layouts (Terminator-style splitting)
-  #     enabled_layouts = "splits,stack";
-  #
-  #     # Window border settings
-  #     window_border_width = "1pt";
-  #     active_border_color = "#ffb454";
-  #     inactive_border_color = "#1f2430";
-  #   };
-  #
-  #   # Keybindings for window splitting
-  #   keybindings = {
-  #     "ctrl+shift+o" = "launch --location=hsplit";
-  #     "ctrl+shift+e" = "launch --location=vsplit";
-  #     "ctrl+shift+up" = "neighboring_window up";
-  #     "ctrl+shift+down" = "neighboring_window down";
-  #     "ctrl+shift+left" = "neighboring_window left";
-  #     "ctrl+shift+right" = "neighboring_window right";
-  #     "ctrl+shift+r" = "start_resizing_window";
-  #     "ctrl+shift+w" = "close_window";
-  #     "ctrl+shift+enter" = "launch --cwd=current";
-  #     "ctrl+shift+l" = "next_layout";
-  #   };
-  # };
-  #
-  # # Kitty session file for Terminator-style layout
-  # home.file.".config/kitty/terminator-layout.session".source = ../../config/kitty/terminator-layout.session;
+  # Kitty terminal is configured in home/common.nix (programs.kitty)
+  # Launched via Super+Return (see config/hypr/keybinds.conf)
 
   # Dunst notification daemon
   services.dunst = {

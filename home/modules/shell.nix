@@ -6,6 +6,7 @@
 
   programs.zsh = {
     enable = true;
+    dotDir = "${config.xdg.configHome}/zsh";
     enableCompletion = true;
     syntaxHighlighting.enable = true;
     autosuggestion.enable = true;
@@ -23,7 +24,7 @@
 
     # Custom prompt (overrides robbyrussell theme)
     # Green arrow, cyan directory
-    initExtra = ''
+    initContent = ''
       PROMPT='%F{green}%B→%b %F{cyan}%B%~%b%f '
 
       # Cyan input text color

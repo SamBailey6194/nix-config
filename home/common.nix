@@ -75,8 +75,8 @@
 
     # File managers
     thunar
-    xfce.thunar-volman
-    xfce.thunar-archive-plugin
+    thunar-volman
+    thunar-archive-plugin
 
     # Image viewers
     imv

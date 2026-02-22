@@ -52,7 +52,7 @@
 
   # Shell configuration
   programs.zsh.enable = true;
-  programs.bash.enableCompletion = true;
+  programs.bash.completion.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

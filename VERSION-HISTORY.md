@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 22/02/2026
-**Version**: 1.3.0
+**Version**: 1.3.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
 - [1.2.0 - 22/02/2026](#120---22022026)
@@ -51,6 +52,57 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.3.1] - 22/02/2026
+
+### Summary
+Resolved all `nix flake check` evaluation warnings (zero warnings across 18 configs), replaced terminator with kitty, and migrated deprecated Home Manager options to their current equivalents.
+
+### Bugs Fixed
+| Bug | Solution | Files |
+|-----|----------|-------|
+| Firefox bookmarks format | Migrated to `{ force = true; settings = [...] }` | `browsers.nix` |
+| Search engines by name | Switched to IDs (`ddg`, `google`, etc.) | `browsers.nix` |
+| `iconUpdateURL` deprecated | Replaced with `icon` | `browsers.nix` |
+| `greetd.tuigreet` renamed | → `pkgs.tuigreet` | `hyprland/default.nix` |
+| `zsh.initExtra` deprecated | → `initContent` | `shell.nix` |
+| `zsh.dotDir` warning | Set to XDG config directory | `shell.nix` |
+| `xfce.thunar-*` moved | → top-level `pkgs` | `common.nix`, `desktop.nix` |
+| `vimPlugins.fugitive` renamed | → `vim-fugitive` | `neovim.nix` |
+| `neovim.extraLuaConfig` renamed | → `initLua` | `neovim.nix` |
+| Lua `''` empty string | → `""` (double quotes) | `neovim.nix` |
+| `git.*` options renamed | → `git.settings.*` | `git.nix` |
+| `bash.enableCompletion` renamed | → `bash.completion.enable` | `common.nix` |
+| `pkgs.system` deprecated | → `pkgs.stdenv.hostPlatform.system` | 8 host/module files |
+| `system` argument deprecated | → `nixpkgs.hostPlatform` module | `flake.nix` |
+
+### Configuration Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| Terminal: terminator → kitty | Kitty is already configured, Hyprland handles tiling | `keybinds.conf`, `desktop.nix` |
+| Git account names corrected | Match actual GitHub usernames | `git.nix` |
+| Deleted `config/terminator/` | No longer used | Removed |
+| Deleted `config/kitty/terminator-layout.session` | Hyprland handles tiling | Removed |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `flake.nix` | `nixpkgs.hostPlatform` module, cleaned up devShell references |
+| `home/modules/browsers.nix` | Bookmarks, search engines, icon URLs |
+| `home/modules/git.nix` | Unified `settings` API, corrected account names |
+| `home/modules/neovim.nix` | `initLua`, `vim-fugitive`, empty string fix |
+| `home/modules/shell.nix` | `initContent`, `dotDir` |
+| `home/common.nix` | `thunar-volman`, `thunar-archive-plugin` |
+| `home/stages/desktop.nix` | Removed terminator package and config |
+| `config/hypr/keybinds.conf` | `Super+Return` → kitty |
+| `modules/desktop/hyprland/default.nix` | `tuigreet`, `stdenv.hostPlatform.system` |
+| `modules/core/base-configuration.nix` | `prev.stdenv.hostPlatform.system` |
+| `modules/core/common.nix` | `bash.completion.enable` |
+| `hosts/*/configuration-{full,creative}.nix` | `stdenv.hostPlatform.system` (6 files) |
+| `config/terminator/config` | Deleted |
+| `config/kitty/terminator-layout.session` | Deleted |
 
 ---
 

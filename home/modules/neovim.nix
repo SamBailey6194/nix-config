@@ -40,7 +40,7 @@
 
       # Git integration
       gitsigns-nvim            # Git signs in gutter
-      fugitive                 # Git commands
+      vim-fugitive             # Git commands
 
       # UI enhancements
       lualine-nvim             # Status line
@@ -75,7 +75,7 @@
     ];
 
     # Lua configuration
-    extraLuaConfig = ''
+    initLua = ''
       -- Neovim configuration with Lua
       -- Designed to work alongside Zed, using same LSP servers
 
@@ -334,7 +334,7 @@
         options = {
           theme = 'ayu_dark',
           component_separators = { left = '|', right = '|'},
-          section_separators = { left = '', right = ''},
+          section_separators = { left = "", right = ""},
         }
       })
 

@@ -7,11 +7,14 @@
   programs.git = {
     enable = true;
 
-    # Base user config (overridden by conditional includes)
-    userName = "Sam Bailey";
-    userEmail = "sambailey6194@gmail.com";
+    # Git settings (unified config)
+    settings = {
+      # Base user config (overridden by conditional includes per directory)
+      user = {
+        name = "SamBailey6194";
+        email = "sambailey6194@gmail.com";
+      };
 
-    extraConfig = {
       # Core settings
       core = {
         editor = "zed --wait";
@@ -78,19 +81,19 @@
       includeIf."gitdir:/mnt/archive/OldRepos/missional-gen/" = {
         path = "~/.gitconfig-missional-gen";
       };
-    };
 
-    # Git aliases
-    aliases = {
-      st = "status";
-      co = "checkout";
-      br = "branch";
-      ci = "commit";
-      lg = "log --oneline --graph --decorate -20";
-      last = "log -1 HEAD";
-      unstage = "reset HEAD --";
-      amend = "commit --amend --no-edit";
-      undo = "reset --soft HEAD~1";
+      # Aliases
+      alias = {
+        st = "status";
+        co = "checkout";
+        br = "branch";
+        ci = "commit";
+        lg = "log --oneline --graph --decorate -20";
+        last = "log -1 HEAD";
+        unstage = "reset HEAD --";
+        amend = "commit --amend --no-edit";
+        undo = "reset --soft HEAD~1";
+      };
     };
   };
 
@@ -108,7 +111,7 @@
 
   home.file.".gitconfig-syntek".text = ''
     [user]
-        name = syntek-studio
+        name = Syntek-Studio
         email = sam.bailey@syntekstudio.com
 
     [url "git@github-syntek:"]
@@ -117,7 +120,7 @@
 
   home.file.".gitconfig-missional-gen".text = ''
     [user]
-        name = sam-missionalgen
+        name = sam-missional-gen
         email = sam@missionalgen.co.uk
 
     [url "git@github-mg:"]
