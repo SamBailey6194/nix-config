@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 22/02/2026
-**Version**: 1.3.1
+**Version**: 1.4.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.4.0 - 22/02/2026](#140---22022026)
 - [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
@@ -52,6 +53,67 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.4.0] - 22/02/2026
+
+### Summary
+Installed Rust CLI tools system-wide and replaced template hardware configuration with actual device configuration for laptop-intel.
+
+### Features Added
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Rust CLI tools system-wide | All 9 Rust workspace tools installed system-wide | `modules/core/common.nix` |
+| secrets-verify | Verify secrets deployed correctly | Available via `secrets-verify` |
+| agenix-helper | Manage encrypted secrets | Available via `agenix-helper` |
+| wireguard-helper | VPN management CLI | Available via `wireguard-helper` |
+| malware-scanner | Multi-engine malware scanning | Available via `malware-scanner` |
+| restic-manage | Backup configuration CLI | Available via `restic-manage` |
+| zfs-manage | ZFS management helper | Available via `zfs-manage` |
+| raid-manage | RAID management helper | Available via `raid-manage` |
+| luks-manage | LUKS container management | Available via `luks-manage` |
+| tpm-manage | TPM2 enrollment and key management | Available via `tpm-manage` |
+
+### Hardware Configuration
+| Change | Description | Files |
+|--------|-------------|-------|
+| Real hardware config | Replaced template with actual laptop-intel configuration | `hosts/laptop-intel/hardware-configuration.nix` |
+| BTRFS on LUKS | /dev/sda2 encrypted with LUKS, BTRFS filesystem with subvolumes | `hosts/laptop-intel/hardware-configuration.nix` |
+| Subvolume layout | root, home, nix, log, snapshots with compression | `hosts/laptop-intel/hardware-configuration.nix` |
+| Boot partition | /dev/sda1 FAT32 EFI system partition mounted at /boot | `hosts/laptop-intel/hardware-configuration.nix` |
+| Intel microcode | CPU microcode updates enabled | `hosts/laptop-intel/hardware-configuration.nix` |
+
+### Configuration Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| DRY principle | Install Rust tools once in common.nix instead of per-host | `modules/core/common.nix` |
+| Removed XDG_DATA_DIRS | Redundant session variable already set elsewhere | `modules/desktop/hyprland/default.nix` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `hosts/laptop-intel/hardware-configuration.nix` | Real device hardware config with BTRFS on LUKS (62 lines) |
+| `modules/core/common.nix` | Added 9 Rust CLI tools to system packages (6 lines) |
+| `modules/desktop/hyprland/default.nix` | Removed redundant XDG_DATA_DIRS session variable (1 line) |
+
+### Dependencies Added
+| Package | Purpose | Available As |
+|---------|---------|--------------|
+| pkgs.secrets-verify | Secrets verification | `secrets-verify` command |
+| pkgs.agenix-helper | Secrets management | `agenix-helper` command |
+| pkgs.wireguard-helper | VPN management | `wireguard-helper` command |
+| pkgs.malware-scanner | Security scanning | `malware-scanner` command |
+| pkgs.restic-manage | Backup management | `restic-manage` command |
+| pkgs.zfs-manage | ZFS management | `zfs-manage` command |
+| pkgs.raid-manage | RAID management | `raid-manage` command |
+| pkgs.luks-manage | LUKS management | `luks-manage` command |
+| pkgs.tpm-manage | TPM2 management | `tpm-manage` command |
+
+### Performance Notes
+- Rust tools built as optimised Nix packages with release profile
+- Tools available system-wide without nix develop shell
+- One-time installation across all devices via common.nix
 
 ---
 

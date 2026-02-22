@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 22/02/2026
-**Version**: 1.3.1
+**Version**: 1.4.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.4.0 - 22/02/2026](#140---22022026)
 - [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
@@ -47,6 +48,40 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.4.0] - 22/02/2026
+
+### Added
+- **Rust CLI tools system-wide**: All 9 Rust workspace tools installed via `modules/core/common.nix` (DRY - one place instead of per-host)
+  - `secrets-verify` - Verify secrets deployed correctly
+  - `agenix-helper` - Manage encrypted secrets
+  - `wireguard-helper` - VPN management CLI
+  - `malware-scanner` - Multi-engine malware scanning
+  - `restic-manage` - Backup configuration CLI
+  - `zfs-manage` - ZFS management helper
+  - `raid-manage` - RAID management helper
+  - `luks-manage` - LUKS container management
+  - `tpm-manage` - TPM2 enrollment and key management
+- **Real hardware configuration**: Replaced template with actual laptop-intel device config
+  - BTRFS on LUKS: /dev/sda2 encrypted with LUKS, BTRFS filesystem
+  - Subvolume layout: root, home, nix, log, snapshots with zstd compression
+  - Boot partition: /dev/sda1 FAT32 EFI system partition at /boot
+  - Intel CPU microcode updates enabled
+
+### Changed
+- **DRY principle**: Moved Rust tool installation from per-host to common.nix for all devices
+
+### Removed
+- **Redundant session variable**: Removed XDG_DATA_DIRS from Hyprland config (set elsewhere)
+
+### Files Changed
+- `hosts/laptop-intel/hardware-configuration.nix` - Real BTRFS on LUKS config (62 lines)
+- `modules/core/common.nix` - Added 9 Rust CLI tools system-wide (6 lines)
+- `modules/desktop/hyprland/default.nix` - Removed redundant XDG_DATA_DIRS (1 line)
+
+Version: 1.3.1 → 1.4.0
 
 ---
 

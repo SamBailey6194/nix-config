@@ -1,7 +1,7 @@
 # Release Notes
 
-**Last Updated**: 29/01/2026
-**Version**: 0.7.0
+**Last Updated**: 22/02/2026
+**Version**: 1.4.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -17,46 +17,49 @@
 
 ## Latest Release
 
-### Version 0.7.0 - 29 January 2026
+### Version 1.4.0 - 22 February 2026
 
 #### What's New
 
-**Progressive Installation with Home Manager**
-Your NixOS system can now be installed in stages with full Home Manager integration from the desktop stage onwards. This means:
-- Your personal settings, themes, and dotfiles are applied automatically
-- Consistent user experience across all stages
-- No manual configuration needed after installation
+**System-Wide Management Tools**
+All management tools are now available everywhere in your system without any setup:
+- Type `secrets-verify` to check your encrypted secrets are working
+- Use `agenix-helper` to manage encrypted passwords and keys
+- Run `wireguard-helper` to manage your VPN connections
+- Execute `malware-scanner` to scan for security threats
+- Configure backups with `restic-manage`
+- Manage advanced storage with `zfs-manage`, `raid-manage`, `luks-manage`
+- Control security hardware with `tpm-manage`
 
-**Modern Display Manager**
-We've switched to greetd, a lightweight and modern display manager that:
-- Starts faster and uses less memory than the previous system
-- Better supports Wayland (the modern display protocol)
-- Provides a smoother login experience
+These tools are automatically available on all your devices - no need to activate developer mode or run special commands.
 
-**Better Hyprland Configuration**
-The Hyprland window manager now uses native configuration files:
-- Faster startup times
-- Easier to customise and maintain
-- More reliable behaviour
-- Split into logical sections (monitors, keybinds, appearance)
+**Real Hardware Configuration**
+Your laptop now has its actual hardware configuration instead of a template:
+- **Encrypted Storage**: Your entire system drive is encrypted for security
+- **Efficient Filesystem**: Uses BTRFS with automatic compression to save space
+- **Smart Organisation**: System files, your documents, and backups are neatly separated
+- **Optimised Boot**: EFI boot partition configured for fast, reliable startup
+- **CPU Updates**: Automatic Intel microcode updates for better performance and security
 
-**Boot Management Tools**
-Added tools to manage your UEFI boot order:
-- Easily change boot priority
-- Manage multiple operating systems
-- Fix boot issues without BIOS changes
+#### How This Helps You
 
-#### Improvements
+**Simpler Workflow**
+Previously, you needed to enter a special developer environment to use these management tools. Now they're just there whenever you need them - type the command and it works.
 
-- **Performance**: Hyprland now starts faster without Nix evaluation overhead
-- **User Experience**: Home Manager provides consistent settings from Stage 2 onwards
-- **Reliability**: Native configuration format reduces configuration errors
+**Better Organisation**
+Instead of installing tools separately on each computer, they're configured once and available everywhere. This means:
+- Consistent tools across all your devices
+- Easier to maintain (update in one place, works everywhere)
+- No duplicated configuration
+
+**Production Ready**
+Your laptop configuration is now based on the actual hardware in the device, not a generic template. This means better performance and reliability.
 
 #### Coming Soon
 
-- Complete NixOS installation on primary laptop
+- Complete NixOS installation process
 - Multi-device file synchronisation
-- Enhanced window manager customisation
+- Enhanced security features
 
 ---
 
