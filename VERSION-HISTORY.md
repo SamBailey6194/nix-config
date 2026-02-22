@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 22/02/2026
-**Version**: 1.2.0
+**Version**: 1.2.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.2.1 - 22/02/2026](#121---22022026)
 - [1.2.0 - 22/02/2026](#120---22022026)
 - [1.1.0 - 22/02/2026](#110---22022026)
 - [1.0.1 - 22/02/2026](#101---22022026)
@@ -49,6 +50,23 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.2.1] - 22/02/2026
+
+### Summary
+Added flake.lock to version control for reproducible builds across all devices.
+
+### Configuration Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| Track flake.lock | Reproducible builds across devices | `flake.lock` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `flake.lock` | Locked dependency versions for all flake inputs (917 lines) |
 
 ---
 
