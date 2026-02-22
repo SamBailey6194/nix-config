@@ -48,6 +48,7 @@
     gcc
     gnumake
     pkg-config
+    just
   ];
 
   # Shell configuration
