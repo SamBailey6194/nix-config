@@ -331,6 +331,9 @@
         curl   # For IP verification and Mullvad API
         jq     # For JSON parsing
 
+        # Nix language server (for Zed/editors)
+        nixd
+
         # Encryption and filesystem tools
         cryptsetup      # LUKS management
         tpm2-tools      # TPM2 management

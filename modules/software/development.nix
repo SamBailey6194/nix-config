@@ -15,6 +15,9 @@
     gh                  # GitHub CLI
     git-lfs            # Git Large File Storage
 
+    # Environment management
+    direnv            # Auto-load dev environments per directory
+
     # Build tools
     gnumake
     cmake
@@ -23,6 +26,7 @@
     # Container tools
     docker
     docker-compose
+    ddev              # Docker-based local PHP+Node.js dev environments
 
     # Database tools
     postgresql
@@ -57,7 +61,8 @@
     nodePackages.vscode-langservers-extracted  # HTML, CSS, JSON, ESLint
     pyright                                    # Python type checking
     rust-analyzer                              # Rust
-    nil                                        # Nix language server
+    nixd                                       # Nix language server (used by Zed)
+    nil                                        # Nix language server (used by Neovim)
     lua-language-server                        # Lua (for Neovim config)
 
     # Linters and formatters (shared by all editors)

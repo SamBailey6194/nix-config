@@ -225,6 +225,12 @@
     # CLAUDE_CODE_OAUTH_TOKEN = ""; # Set this via secrets or manually
   };
 
+  # Direnv - auto-load dev environments from .envrc files
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;  # Cached nix develop (much faster reloads)
+  };
+
   # Allow Home Manager to manage itself
   programs.home-manager.enable = true;
 }

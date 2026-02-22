@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 22/02/2026
-**Version**: 1.1.0
+**Version**: 1.2.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.2.0 - 22/02/2026](#120---22022026)
 - [1.1.0 - 22/02/2026](#110---22022026)
 - [1.0.1 - 22/02/2026](#101---22022026)
 - [1.0.0 - 03/02/2026](#100---03022026) 🎉
@@ -43,6 +44,29 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.2.0] - 22/02/2026
+
+### Added
+- **Direnv integration**: Auto-load dev environments from `.envrc` files with nix-direnv caching for fast reloads
+- **DDEV**: Docker-based local PHP and Node.js development environments
+- **nixd language server**: Nix language server for Zed IDE (alongside nil for Neovim)
+- **.envrc**: Project-level `use flake` for automatic dev shell activation
+
+### Changed
+- **development.nix**: Added direnv, ddev, and nixd packages to system-level development tools
+- **flake.nix**: Added nixd to the Nix dev shell for editor integration
+- **home/common.nix**: Enabled `programs.direnv` with nix-direnv for cached `nix develop`
+
+### Files Changed
+- `flake.nix` - Added nixd to dev shell
+- `modules/software/development.nix` - Added direnv, ddev, nixd packages
+- `home/common.nix` - Enabled direnv with nix-direnv
+- `.envrc` - New file: `use flake` for auto dev shell
+
+Version: 1.1.0 → 1.2.0
 
 ---
 
