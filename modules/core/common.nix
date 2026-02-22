@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   # System-wide common configuration for all hosts
@@ -49,7 +49,9 @@
     gnumake
     pkg-config
     just
-  ];
+  ]
+  # Rust CLI tools (secrets-verify, agenix-helper, wireguard-helper, etc.)
+  ++ (builtins.attrValues inputs.self.packages.${pkgs.stdenv.hostPlatform.system});
 
   # Shell configuration
   programs.zsh.enable = true;
