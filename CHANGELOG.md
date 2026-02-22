@@ -1,7 +1,7 @@
 # Changelog
 
 **Last Updated**: 22/02/2026
-**Version**: 1.2.1
+**Version**: 1.3.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
 - [1.2.0 - 22/02/2026](#120---22022026)
 - [1.1.0 - 22/02/2026](#110---22022026)
@@ -45,6 +46,37 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.3.0] - 22/02/2026
+
+### Added
+- **Rust Nix derivations**: New `rust/nix/default.nix` builds all 9 Rust CLI tools as proper Nix packages (`nix build .#malware-scanner`, etc.)
+- **Flake packages output**: Rust tools available via `packages.x86_64-linux` with a combined `default` package
+- **Rust tools overlay**: Added to `base-configuration.nix` so tools are available as `pkgs.<tool-name>` across all modules
+- **Mullvad VPN activated** on laptop-intel: Multi-hop routing (5 hops), kill switch, per-app VPN (Firefox, LibreWolf, Chrome, Transmission), UK exit, weekly rotation, metrics logging
+- **Malware scanner activated** on laptop-intel: Real-time file monitoring and boot scan enabled
+- **4 Mullvad encrypted secrets**: Account number, relay cache, route history, and WireGuard config for laptop-intel
+- **wireguard-tools**: Added to common system packages for all devices
+
+### Fixed
+- **Missing core module imports**: Added `base-configuration.nix` and `common.nix` imports to framework and devtower host configurations
+- **Malware scanner package reference**: Simplified to use `pkgs.malware-scanner` from overlay (removed fallback `callPackage`)
+
+### Files Changed
+- `flake.nix` - Added Rust tools packages output and overlay
+- `rust/nix/default.nix` - New: Nix derivations for 9 Rust workspace crates
+- `hosts/laptop-intel/configuration-full.nix` - Activated VPN, malware scanner, reformatted
+- `hosts/framework/configuration-full.nix` - Added missing core module imports
+- `hosts/devtower/configuration-full.nix` - Added missing core module imports
+- `modules/core/base-configuration.nix` - Added Rust tools nixpkgs overlay
+- `modules/core/common.nix` - Added wireguard-tools package
+- `modules/security/malware-scanner.nix` - Simplified package reference
+- `secrets/secrets.nix` - Uncommented Mullvad secrets for laptop-intel
+- `secrets/mullvad-*.age` (4 files) - New encrypted Mullvad secrets
+
+Version: 1.2.1 → 1.3.0
 
 ---
 

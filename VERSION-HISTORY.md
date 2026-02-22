@@ -1,7 +1,7 @@
 # Version History
 
 **Last Updated**: 22/02/2026
-**Version**: 1.2.1
+**Version**: 1.3.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.3.0 - 22/02/2026](#130---22022026)
 - [1.2.1 - 22/02/2026](#121---22022026)
 - [1.2.0 - 22/02/2026](#120---22022026)
 - [1.1.0 - 22/02/2026](#110---22022026)
@@ -50,6 +51,52 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.3.0] - 22/02/2026
+
+### Summary
+Activated Mullvad VPN and malware scanner on laptop-intel, added Nix derivations for all Rust CLI tools, and fixed missing core module imports on framework/devtower.
+
+### Features Added
+| Feature | Description | Files |
+|---------|-------------|-------|
+| Rust Nix derivations | Build all 9 Rust tools as Nix packages | `rust/nix/default.nix`, `flake.nix` |
+| Rust tools overlay | `pkgs.malware-scanner` etc. available system-wide | `modules/core/base-configuration.nix` |
+| Mullvad VPN | Multi-hop (5), kill switch, per-app VPN, UK exit | `hosts/laptop-intel/configuration-full.nix` |
+| Malware scanner | Real-time monitoring and boot scan | `hosts/laptop-intel/configuration-full.nix` |
+| Mullvad secrets | 4 encrypted .age files for laptop-intel | `secrets/mullvad-*.age` |
+| wireguard-tools | System package for all devices | `modules/core/common.nix` |
+
+### Bugs Fixed
+| Bug | Solution | Files |
+|-----|----------|-------|
+| Missing core imports on framework/devtower | Added base-configuration.nix and common.nix | `hosts/framework/configuration-full.nix`, `hosts/devtower/configuration-full.nix` |
+| Malware scanner package fallback | Use overlay instead of callPackage fallback | `modules/security/malware-scanner.nix` |
+
+### Configuration Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| Flake packages output | `nix build .#<tool>` support | `flake.nix` |
+| Uncommented Mullvad secrets | VPN now active on laptop-intel | `secrets/secrets.nix` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `flake.nix` | Added Rust tools packages output with `let` block and overlay |
+| `rust/nix/default.nix` | New: Nix derivations for 9 Rust workspace crates |
+| `hosts/laptop-intel/configuration-full.nix` | Activated VPN, malware scanner, reformatted (162 lines changed) |
+| `hosts/framework/configuration-full.nix` | Added base-configuration.nix and common.nix imports |
+| `hosts/devtower/configuration-full.nix` | Added base-configuration.nix and common.nix imports |
+| `modules/core/base-configuration.nix` | Added Rust tools nixpkgs overlay |
+| `modules/core/common.nix` | Added wireguard-tools to network tools |
+| `modules/security/malware-scanner.nix` | Simplified default package to `pkgs.malware-scanner` |
+| `secrets/secrets.nix` | Uncommented 4 Mullvad secret declarations for laptop-intel |
+| `secrets/mullvad-account-laptop-intel.age` | New: Encrypted Mullvad account number |
+| `secrets/mullvad-relay-cache-laptop-intel.age` | New: Encrypted relay cache |
+| `secrets/mullvad-route-history-laptop-intel.age` | New: Encrypted route history |
+| `secrets/mullvad-wg-config-laptop-intel.age` | New: Encrypted WireGuard config |
 
 ---
 

@@ -35,7 +35,20 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, ... }@inputs:
+  let
+    system = "x86_64-linux";
+    pkgs = nixpkgs.legacyPackages.${system};
+    rustTools = import ./rust/nix { inherit pkgs; };
+  in {
+    # Rust CLI tool packages (nix build .#<name>)
+    packages.${system} = rustTools // {
+      default = pkgs.symlinkJoin {
+        name = "nix-config-rust-tools";
+        paths = builtins.attrValues rustTools;
+      };
+    };
+
     # NixOS System Configurations
     nixosConfigurations = {
       # ============================================================================

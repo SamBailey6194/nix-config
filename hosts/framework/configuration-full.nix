@@ -10,6 +10,8 @@
     ./hardware-configuration.nix
 
     # Core modules
+    ../../modules/core/base-configuration.nix
+    ../../modules/core/common.nix
     ../../modules/core/nix-settings.nix
     ../../modules/hardware/amd-laptop.nix
     ../../modules/users/framework.nix

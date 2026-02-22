@@ -37,6 +37,7 @@
     dig
     nmap
     traceroute
+    wireguard-tools
 
     # Archive tools
     unzip

@@ -10,6 +10,9 @@
     (final: prev: {
       claude-code = inputs.claude-code-nix.packages.${prev.system}.default;
     })
+
+    # Rust CLI tools from this repository
+    (final: prev: import ../../rust/nix { pkgs = final; })
   ];
 
   imports = [

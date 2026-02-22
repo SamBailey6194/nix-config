@@ -77,22 +77,21 @@ in
   # "wireguard-devtower-private.age".publicKeys = allUsers ++ [ devtower ];
 
   # Mullvad account numbers (from mullvad.net)
-  # TODO: Uncomment when wireguard-helper multi-hop rotation is implemented
-  # "mullvad-account-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "mullvad-account-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-account-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-account-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # Generated multi-hop configs (rotated by wireguard-helper)
-  # "mullvad-wg-config-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "mullvad-wg-config-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-wg-config-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-wg-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # API cache and route history (avoid reusing servers)
-  # "mullvad-relay-cache-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "mullvad-relay-cache-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-relay-cache-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-relay-cache-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
-  # "mullvad-route-history-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "mullvad-route-history-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "mullvad-route-history-framework.age".publicKeys = allUsers ++ [ framework ];
   # "mullvad-route-history-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
