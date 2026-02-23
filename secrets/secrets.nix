@@ -30,7 +30,7 @@ let
   # Each NixOS machine generates these during installation at /etc/ssh/ssh_host_ed25519_key.pub
   # Get them with: ssh-keyscan <hostname> or cat /etc/ssh/ssh_host_ed25519_key.pub
   # ============================================================================
-  laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIPZckL/JszhuspKDhEsd5LpD4b4GvM2WPHFgHUAc29v root@laptop-intel";
+  laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHXF52LZvZybhGO0LJGl8UU/SV8t1dODetofFo5CDU4W root@laptop-intel";
   # framework = "ssh-ed25519 REPLACE_WITH_FRAMEWORK_HOST_KEY root@framework";
   # devtower = "ssh-ed25519 REPLACE_WITH_DEVTOWER_HOST_KEY root@devtower";
 
