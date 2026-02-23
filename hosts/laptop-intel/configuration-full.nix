@@ -53,7 +53,7 @@
     # Uncomment to enable encryption tools suite
     # ../../modules/security/encryption-tools.nix
     # ../../modules/security/folder-encryption.nix
-    # ../../modules/security/luks-encryption.nix
+    ../../modules/security/luks-encryption.nix
     # ../../modules/security/ssh-daemon.nix
 
     # Filesystem (Optional - enable if using BTRFS/ZFS)
@@ -127,6 +127,26 @@
       interval = "5min";
       logFile = "/var/log/vpn-logs.txt";
     };
+  };
+
+  # LUKS encryption with TPM2 auto-unlock
+  # After rebuilding, run: just enroll-tpm2 /dev/nvme0n1p2
+  security.luksEncryption = {
+    enable = true;
+    devices.cryptroot = {
+      device = "/dev/disk/by-uuid/4cf4afe8-4076-4249-b963-9d29bd918458";
+      name = "cryptroot";
+      allowDiscards = true;   # TRIM for SSD
+      preLVM = true;
+      fallbackToPassword = true;
+      tpm2Device = "auto";
+    };
+  };
+
+  # TPM2 user-space support (udev rules, tools access)
+  security.tpm2 = {
+    enable = true;
+    abrmd.enable = true;  # TPM2 access broker for concurrent access
   };
 
   # Boot Loader
