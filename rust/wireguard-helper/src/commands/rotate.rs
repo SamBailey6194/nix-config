@@ -116,8 +116,16 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     // Use agenix to encrypt the config directly via stdin
     use std::process::{Command, Stdio};
 
+    // When running as root (via sudo), agenix can't find user SSH keys.
+    // Use the host SSH key which root can read and is authorised in secrets.nix.
+    let host_key_path = "/etc/ssh/ssh_host_ed25519_key";
+    let mut agenix_args = vec!["-e", &config_secret_name];
+    if std::path::Path::new(host_key_path).exists() {
+        agenix_args.extend(["-i", host_key_path]);
+    }
+
     let mut agenix = Command::new("agenix")
-        .args(["-e", &config_secret_name])
+        .args(&agenix_args)
         .current_dir(&secrets_dir)
         .stdin(Stdio::piped())
         .spawn()

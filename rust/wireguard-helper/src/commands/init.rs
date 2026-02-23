@@ -48,8 +48,16 @@ pub fn run(device: &str) -> Result<()> {
         .to_str()
         .context("Secret path contains invalid UTF-8")?;
 
+    // When running as root (via sudo), agenix can't find user SSH keys.
+    // Use the host SSH key which root can read and is authorised in secrets.nix.
+    let host_key_path = "/etc/ssh/ssh_host_ed25519_key";
+    let mut agenix_args = vec!["-e", secret_path_str];
+    if std::path::Path::new(host_key_path).exists() {
+        agenix_args.extend(["-i", host_key_path]);
+    }
+
     let output = Command::new("agenix")
-        .args(["-e", secret_path_str])
+        .args(&agenix_args)
         .stdin(std::process::Stdio::piped())
         .output()
         .context("Failed to run agenix")?;
