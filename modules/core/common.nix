@@ -49,6 +49,9 @@
     gnumake
     pkg-config
     just
+
+    # Secrets management
+    inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default
   ]
   # Rust CLI tools (secrets-verify, agenix-helper, wireguard-helper, etc.)
   ++ (builtins.attrValues inputs.self.packages.${pkgs.stdenv.hostPlatform.system});
