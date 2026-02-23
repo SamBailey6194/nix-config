@@ -72,15 +72,24 @@
   networking.hostName = "laptop-intel";
 
   # Malware scanner with real-time file monitoring
+  # NOTE: boot scan and real-time monitoring disabled until malware-scanner
+  # Rust binary is built and deployed on this system. Enabling these without
+  # the binary causes systemd to block greetd (display-manager.service),
+  # stalling boot at the login screen.
   security.malwareScanner = {
     enable = true;
-    realTimeMonitoring.enable = true;
-    bootScan.enable = true;
+    realTimeMonitoring.enable = false;
+    bootScan.enable = false;
   };
 
   # Mullvad WireGuard VPN with multi-hop rotation
+  # NOTE: Disabled until agenix secrets are verified decryptable on this host.
+  # The kill switch (iptables -A OUTPUT -j REJECT) blocks ALL networking if the
+  # VPN can't connect, which makes the system unusable. Enable incrementally:
+  #   1. First: enable = true, enableKillSwitch = false (test VPN connects)
+  #   2. Then: enableKillSwitch = true (once VPN is confirmed working)
   networking.wireguard-mullvad = {
-    enable = true;
+    enable = false;
     device = "laptop-intel";
 
     # Production servers that bypass VPN (for audit trail)
@@ -89,8 +98,8 @@
       # "203.0.113.5"
     ];
 
-    # Kill switch enabled
-    enableKillSwitch = true;
+    # Kill switch - KEEP DISABLED until VPN is confirmed working
+    enableKillSwitch = false;
 
     # Per-app VPN routing via cgroups
     cgroupApps = [
