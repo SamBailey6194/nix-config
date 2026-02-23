@@ -122,9 +122,9 @@ fn list_enrolled_devices() -> Result<()> {
     println!("{}", "=== TPM2-Enrolled LUKS Devices ===".cyan().bold());
     println!();
 
-    // Find all LUKS devices
+    // Find all LUKS devices using list mode (-l) to avoid tree-drawing characters
     let output = Command::new("lsblk")
-        .args(&["-o", "NAME,TYPE,FSTYPE", "-p", "-n"])
+        .args(["-o", "NAME,TYPE,FSTYPE", "-p", "-n", "-l"])
         .output()
         .context("Failed to list block devices")?;
 
@@ -141,15 +141,11 @@ fn list_enrolled_devices() -> Result<()> {
         }
 
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.is_empty() {
+        if parts.is_empty() || !parts[0].starts_with('/') {
             continue;
         }
 
-        // Strip lsblk tree characters (└─, ├─, │ etc.) from device path
-        let device = parts[0].trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '/');
-        if device.is_empty() {
-            continue;
-        }
+        let device = parts[0];
         found_any = true;
 
         // Check if device has TPM2 enrollment via cryptsetup luksDump
@@ -158,8 +154,8 @@ fn list_enrolled_devices() -> Result<()> {
             .output();
 
         match luksdump_output {
-            Ok(output) => {
-                let info = String::from_utf8_lossy(&output.stdout);
+            Ok(dump_output) => {
+                let info = String::from_utf8_lossy(&dump_output.stdout);
                 if info.contains("systemd-tpm2") {
                     println!("{} {}", "✓".green(), device.green());
                     println!("  {}", "TPM2 enrolled".dimmed());

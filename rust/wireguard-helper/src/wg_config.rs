@@ -25,7 +25,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = {}:{}
 PersistentKeepalive = 25
 "#,
-        private_key, exit_relay.public_key, exit_relay.ipv4_addr_in, exit_relay.multihop_port
+        private_key, exit_relay.pubkey, exit_relay.ipv4_addr_in, exit_relay.multihop_port
     );
 
     Ok(config)

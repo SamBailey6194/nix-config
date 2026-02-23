@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-const MULLVAD_API_URL: &str = "https://api.mullvad.net/app/v1/relays";
+const MULLVAD_API_URL: &str = "https://api.mullvad.net/www/relays/wireguard/";
 const CACHE_TTL_HOURS: u64 = 6;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -11,25 +11,16 @@ pub struct Relay {
     pub hostname: String,
     pub ipv4_addr_in: String,
     pub ipv6_addr_in: String,
-    pub public_key: String,
+    #[serde(alias = "public_key")]
+    pub pubkey: String,
     pub multihop_port: u16,
     pub country_code: String,
     pub city_name: String,
     pub active: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RelayList {
-    pub wireguard: WireguardRelays,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct WireguardRelays {
-    pub relays: Vec<Relay>,
-}
-
 pub struct MullvadApi {
-    cache: Cache<RelayList>,
+    cache: Cache<Vec<Relay>>,
 }
 
 /// Validate a relay entry from the API
@@ -43,7 +34,7 @@ fn validate_relay(relay: &Relay) -> Result<()> {
         .with_context(|| format!("Invalid IPv4 address: {}", relay.ipv4_addr_in))?;
 
     // Validate public key format (WireGuard keys are 44 chars base64)
-    crate::validation::validate_wg_key(&relay.public_key)
+    crate::validation::validate_wg_key(&relay.pubkey)
         .with_context(|| format!("Invalid public key for {}", relay.hostname))?;
 
     // Validate port number
@@ -59,6 +50,16 @@ fn validate_relay(relay: &Relay) -> Result<()> {
 
 impl MullvadApi {
     pub fn new(cache_path: &str) -> Result<Self> {
+        // Clear old cache on format change (app/v1 -> www API)
+        let path = std::path::Path::new(cache_path);
+        if path.exists() {
+            if let Ok(contents) = std::fs::read_to_string(path) {
+                if contents.contains("\"wireguard\"") {
+                    let _ = std::fs::remove_file(path);
+                }
+            }
+        }
+
         // Validate cache path
         let _validated = crate::validation::validate_simple_filename(
             std::path::Path::new(cache_path)
@@ -75,25 +76,18 @@ impl MullvadApi {
     /// Fetch relay list from Mullvad API (with caching)
     pub fn fetch_relays(&mut self) -> Result<Vec<Relay>> {
         // Try to load from cache first
-        if let Some(relay_list) = self.cache.load()? {
-            println!(
-                "Using cached relay list ({} relays)",
-                relay_list.wireguard.relays.len()
-            );
+        if let Some(relays) = self.cache.load()? {
+            println!("Using cached relay list ({} relays)", relays.len());
 
             // Validate cached relays
-            let validation_failed = relay_list
-                .wireguard
-                .relays
-                .iter()
-                .any(|relay| validate_relay(relay).is_err());
+            let validation_failed = relays.iter().any(|relay| validate_relay(relay).is_err());
 
             if validation_failed {
                 eprintln!("WARNING: Cached relays failed validation, fetching fresh data");
                 self.cache.clear()?;
                 // Don't recurse - fall through to API fetch
             } else {
-                return Ok(relay_list.wireguard.relays);
+                return Ok(relays);
             }
         }
 
@@ -127,21 +121,18 @@ impl MullvadApi {
             }
         }
 
-        let relay_list = response
-            .json::<RelayList>()
+        let relays = response
+            .json::<Vec<Relay>>()
             .context("Failed to parse Mullvad API response")?;
 
         // Validate all relays before caching
-        println!(
-            "Validating {} relays from API...",
-            relay_list.wireguard.relays.len()
-        );
-        let mut valid_relays = Vec::new();
+        println!("Validating {} relays from API...", relays.len());
+        let mut valid_hostnames = Vec::new();
         let mut invalid_count = 0;
 
-        for relay in &relay_list.wireguard.relays {
+        for relay in &relays {
             match validate_relay(relay) {
-                Ok(_) => valid_relays.push(relay.hostname.clone()),
+                Ok(_) => valid_hostnames.push(relay.hostname.clone()),
                 Err(e) => {
                     eprintln!("WARNING: Skipping invalid relay: {}", e);
                     invalid_count += 1;
@@ -156,16 +147,16 @@ impl MullvadApi {
             );
         }
 
-        if valid_relays.is_empty() {
+        if valid_hostnames.is_empty() {
             anyhow::bail!("No valid relays received from API");
         }
 
-        println!("Validated {} relays successfully", valid_relays.len());
+        println!("Validated {} relays successfully", valid_hostnames.len());
 
         // Save to cache
-        self.cache.save(&relay_list)?;
+        self.cache.save(&relays)?;
 
-        Ok(relay_list.wireguard.relays)
+        Ok(relays)
     }
 
     /// Select N-hop chain avoiding previous routes
