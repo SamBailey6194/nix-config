@@ -96,6 +96,8 @@ in
         set -euo pipefail
 
         BACKUP_DIR="${cfg.headerBackupPath}"
+        mkdir -p "$BACKUP_DIR"
+        chmod 700 "$BACKUP_DIR"
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
         ${concatStringsSep "\n" (mapAttrsToList (name: deviceCfg: ''
@@ -109,7 +111,7 @@ in
               --header-backup-file "$BACKUP_FILE" 2>/dev/null || true
 
             # Keep only the 5 most recent backups per device
-            ls -t "$BACKUP_DIR/$NAME-header-"*.img 2>/dev/null | tail -n +6 | xargs -r rm -f
+            ls -t "$BACKUP_DIR/$NAME-header-"*.img 2>/dev/null | tail -n +6 | xargs -r rm -f || true
           fi
         '') cfg.devices)}
 
