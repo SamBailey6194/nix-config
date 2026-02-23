@@ -145,18 +145,22 @@ fn list_enrolled_devices() -> Result<()> {
             continue;
         }
 
-        let device = parts[0];
+        // Strip lsblk tree characters (└─, ├─, │ etc.) from device path
+        let device = parts[0].trim_start_matches(|c: char| !c.is_ascii_alphanumeric() && c != '/');
+        if device.is_empty() {
+            continue;
+        }
         found_any = true;
 
-        // Check if device has TPM2 enrollment
-        let luksmeta_output = Command::new("systemd-cryptenroll")
-            .args(&[device])
+        // Check if device has TPM2 enrollment via cryptsetup luksDump
+        let luksdump_output = Command::new("cryptsetup")
+            .args(["luksDump", device])
             .output();
 
-        match luksmeta_output {
+        match luksdump_output {
             Ok(output) => {
                 let info = String::from_utf8_lossy(&output.stdout);
-                if info.contains("tpm2") {
+                if info.contains("systemd-tpm2") {
                     println!("{} {}", "✓".green(), device.green());
                     println!("  {}", "TPM2 enrolled".dimmed());
                 } else {

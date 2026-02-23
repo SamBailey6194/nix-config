@@ -37,19 +37,20 @@ pub fn run() -> Result<()> {
     let response: MullvadCheckResponse =
         serde_json::from_str(&response_text).context("Failed to parse Mullvad API response")?;
 
-    if !response.mullvad_exit_ip {
+    if response.mullvad_exit_ip {
+        println!("✅ Connected via Mullvad");
+    } else {
         println!("⚠️  Warning: Not using Mullvad exit IP");
+        println!("   Traffic may not be routed through the VPN tunnel");
     }
-
-    println!("✅ Connected via Mullvad");
     println!("   Exit IP: {}", response.ip);
     println!("   Location: {}, {}", response.city, response.country);
 
-    // Check WireGuard handshake
-    let output = Command::new("wg")
-        .args(["show", "mullvad0"])
+    // Check WireGuard handshake (needs root to see peer details)
+    let output = Command::new("sudo")
+        .args(["wg", "show", "mullvad0"])
         .output()
-        .context("Failed to check WireGuard status")?;
+        .context("Failed to check WireGuard status (sudo required)")?;
 
     let wg_output = String::from_utf8_lossy(&output.stdout);
 

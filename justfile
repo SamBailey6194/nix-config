@@ -42,6 +42,20 @@ check-keys:
 # Encryption Management
 # ============================================================================
 
+# Full TPM2 setup: verify hardware, show LUKS devices, enroll, and confirm
+setup-tpm2 DEVICE:
+    @echo "=== Step 1: Verify TPM2 hardware ==="
+    sudo tpm-manage verify
+    @echo ""
+    @echo "=== Step 2: Show LUKS devices ==="
+    sudo luks-manage status
+    @echo ""
+    @echo "=== Step 3: Enroll TPM2 for auto-unlock ==="
+    sudo luks-manage enroll-tpm2 {{DEVICE}}
+    @echo ""
+    @echo "=== Step 4: Verify enrolment ==="
+    sudo tpm-manage enrolled-devices
+
 # Show LUKS device status
 luks-status:
     sudo luks-manage status

@@ -23,3 +23,6 @@ target/
 # Fuzzing artifacts
 rust/fuzz/target/
 rust/fuzz/artifacts/
+
+# .direnv auto generated folder from .envrc
+.direnv/

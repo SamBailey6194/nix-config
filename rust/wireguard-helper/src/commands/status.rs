@@ -18,15 +18,19 @@ pub fn run() -> Result<()> {
 
     println!("✅ Interface: UP");
 
-    // Get WireGuard details
-    let output = Command::new("wg")
-        .args(["show", "mullvad0"])
+    // Get WireGuard details (needs root to see peer details)
+    let output = Command::new("sudo")
+        .args(["wg", "show", "mullvad0"])
         .output()
-        .context("Failed to get WireGuard details")?;
+        .context("Failed to get WireGuard details (sudo required)")?;
 
     let wg_output = String::from_utf8_lossy(&output.stdout);
     println!("\nWireGuard Details:");
-    println!("{}", wg_output);
+    if wg_output.trim().is_empty() {
+        println!("  No peer details available (interface may not have peers configured)");
+    } else {
+        println!("{}", wg_output);
+    }
 
     // Get current IP and location
     let output = Command::new("curl")
@@ -56,12 +60,20 @@ pub fn run() -> Result<()> {
     let tx_bytes = std::fs::read_to_string("/sys/class/net/mullvad0/statistics/tx_bytes")
         .unwrap_or_else(|_| "0".to_string());
 
-    let rx_mb: u64 = rx_bytes.trim().parse().unwrap_or(0) / 1024 / 1024;
-    let tx_mb: u64 = tx_bytes.trim().parse().unwrap_or(0) / 1024 / 1024;
+    let rx: u64 = rx_bytes.trim().parse().unwrap_or(0);
+    let tx: u64 = tx_bytes.trim().parse().unwrap_or(0);
 
     println!("\nTraffic Statistics:");
-    println!("  Downloaded: {} MB", rx_mb);
-    println!("  Uploaded: {} MB", tx_mb);
+    if rx >= 1024 * 1024 {
+        println!("  Downloaded: {} MB", rx / 1024 / 1024);
+    } else {
+        println!("  Downloaded: {} KB", rx / 1024);
+    }
+    if tx >= 1024 * 1024 {
+        println!("  Uploaded: {} MB", tx / 1024 / 1024);
+    } else {
+        println!("  Uploaded: {} KB", tx / 1024);
+    }
 
     Ok(())
 }
