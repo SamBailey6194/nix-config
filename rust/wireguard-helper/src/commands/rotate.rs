@@ -122,6 +122,7 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
 
     let mut agenix = Command::new("agenix")
         .args(["-e", config_secret_path_str])
+        .current_dir(&secrets_dir)
         .stdin(Stdio::piped())
         .spawn()
         .context("Failed to start agenix for encryption. Is agenix installed?")?;
