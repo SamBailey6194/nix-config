@@ -11,6 +11,17 @@
     ../modules/neovim.nix    # Neovim configuration
   ];
 
+  # Direnv - auto-load dev environments from .envrc files
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;  # Cached nix develop (much faster reloads)
+    config = {
+      whitelist = {
+        prefix = [ "~/Repos" ];
+      };
+    };
+  };
+
   # Development tools
   home.packages = with pkgs; [
     # Version control

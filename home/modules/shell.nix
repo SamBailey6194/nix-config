@@ -64,6 +64,10 @@
       # UV package manager - use copy mode for cross-filesystem installs
       UV_LINK_MODE = "copy";
 
+      # Justfile - accessible from any directory
+      JUST_JUSTFILE = "$HOME/Repos/personal/nix-config/justfile";
+      JUST_WORKING_DIRECTORY = "$HOME/Repos/personal/nix-config";
+
       # Android SDK (if you use React Native or Android development)
       ANDROID_HOME = "$HOME/Android/Sdk";
 
