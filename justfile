@@ -328,9 +328,9 @@ show-inputs:
 vpn-init DEVICE:
     sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper init {{DEVICE}}
 
-# Rotate Mullvad servers (generate new config)
-vpn-rotate DEVICE EXIT="uk" HOPS="5":
-    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper rotate {{DEVICE}} --exit {{EXIT}} --hops {{HOPS}}
+# Rotate Mullvad servers (2-hop: entry → exit)
+vpn-rotate DEVICE EXIT="uk" ADDRESS="10.74.122.237/32" ADDRESS6="fc00:bbbb:bbbb:bb01::b:7aec/128":
+    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper rotate {{DEVICE}} --exit {{EXIT}} --address {{ADDRESS}} --address6 {{ADDRESS6}}
     @echo "Run 'just rebuild && just vpn-restart' to apply new configuration"
 
 # Switch exit location and rotate

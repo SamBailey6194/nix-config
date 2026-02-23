@@ -44,6 +44,7 @@ just vpn-verify
 ```
 
 **Expected output**:
+
 ```
 ✅ VPN interface is up
 ✅ Connected via Mullvad
@@ -84,6 +85,7 @@ wireguard-helper init laptop-intel
 ```
 
 **Output**:
+
 ```
 Generated WireGuard keys for laptop-intel:
 
@@ -115,6 +117,7 @@ agenix -e secrets/mullvad-account-laptop-intel.age
 ```
 
 **In the editor**:
+
 - Paste your 16-digit account number (e.g., `1234567890123456`)
 - Save and exit (Ctrl+D in nano, :wq in vim)
 
@@ -128,6 +131,7 @@ just vpn-rotate laptop-intel
 ```
 
 **Output**:
+
 ```
 Generating 5-hop Mullvad WireGuard configuration for laptop-intel:
 
@@ -195,6 +199,7 @@ sudo nixos-rebuild switch --flake .#laptop-intel
 ```
 
 Agenix will:
+
 1. Decrypt VPN secrets
 2. Configure WireGuard interface
 3. Set up routing rules
@@ -214,6 +219,7 @@ just vpn-verify
 ```
 
 **Expected output**:
+
 ```
 ✅ VPN interface is up
 ✅ Connected via Mullvad
@@ -283,18 +289,19 @@ journalctl -fu wireguard-metrics  # Real-time monitoring
 ### Network Routing
 
 The VPN uses custom routing tables to separate:
+
 - **LAN traffic** (bypasses VPN, direct to local network)
 - **VPN traffic** (routed through WireGuard multi-hop chain)
 - **Kill switch** (blocks all traffic if VPN is down)
 
 ### Routing Tables
 
-| Table | Purpose | CIDR | Priority |
-|-------|---------|------|----------|
-| `local` | System routes | N/A | N/A |
-| `main` | Default routes | N/A | N/A |
-| `1000` (vpn) | VPN traffic | 0.0.0.0/0 | 100 |
-| LAN bypass | Local networks | 192.168.0.0/16 | 50 |
+| Table        | Purpose        | CIDR           | Priority |
+| ------------ | -------------- | -------------- | -------- |
+| `local`      | System routes  | N/A            | N/A      |
+| `main`       | Default routes | N/A            | N/A      |
+| `1000` (vpn) | VPN traffic    | 0.0.0.0/0      | 100      |
+| LAN bypass   | Local networks | 192.168.0.0/16 | 50       |
 
 ### Multi-Hop Chain
 
@@ -313,6 +320,7 @@ Exit Server (London) → Internet
 ```
 
 **Why 5+ hops?**
+
 - Each hop can only see previous and next hop
 - Exit server doesn't know your origin IP
 - No single node has complete path information
@@ -321,6 +329,7 @@ Exit Server (London) → Internet
 ### Kill Switch
 
 If VPN connection drops, firewall rules block:
+
 - ✅ Internet traffic (prevent leaks)
 - ✅ Allow LAN access (local network still works)
 - ✅ Allow VPN handshake traffic (to reconnect)
@@ -482,6 +491,7 @@ journalctl -fu wireguard-metrics
 ```
 
 Metrics logged every 5 minutes:
+
 - Connected clients
 - Data sent/received
 - Handshake status
@@ -494,18 +504,21 @@ Metrics logged every 5 minutes:
 ### VPN Won't Connect
 
 **Check logs**:
+
 ```bash
 sudo journalctl -u wg-quick-mullvad0 -n 50
 sudo journalctl -u wireguard-metrics -n 50
 ```
 
 **Common causes**:
+
 - Mullvad account number is wrong
 - WireGuard keys are invalid
 - Public key not added to Mullvad account
 - Network connectivity issue
 
 **Solution**:
+
 ```bash
 # Verify Mullvad account
 cat /run/agenix/mullvad-account-laptop-intel
@@ -520,17 +533,20 @@ sudo systemctl restart wg-quick-mullvad0
 ### Can't Access Internet
 
 **Check kill switch**:
+
 ```bash
 sudo iptables -L -n | grep -i wireguard
 ```
 
 **Check routing**:
+
 ```bash
 ip rule list
 ip route list table 1000
 ```
 
 **Temporarily disable kill switch**:
+
 ```nix
 enableKillSwitch = false;
 sudo nixos-rebuild switch --flake .#laptop-intel
@@ -540,16 +556,19 @@ just vpn-up
 ### Metrics Not Logging
 
 **Check timer**:
+
 ```bash
 systemctl list-timers | grep wireguard
 ```
 
 **Check logs**:
+
 ```bash
 cat /var/log/vpn-logs.txt
 ```
 
 **Restart service**:
+
 ```bash
 sudo systemctl restart wireguard-metrics.timer
 ```
@@ -557,11 +576,13 @@ sudo systemctl restart wireguard-metrics.timer
 ### VPN Too Slow
 
 **Reasons**:
+
 - 5-hop chain adds latency
 - Exit server is geographically far
 - Network congestion
 
 **Solutions**:
+
 ```bash
 # Rotate to different servers
 just vpn-rotate laptop-intel
@@ -575,21 +596,25 @@ just vpn-set-exit us   # Try different location
 ### Apps Not Routing Through VPN
 
 **Check configuration**:
+
 ```bash
 grep cgroupApps hosts/laptop-intel/configuration.nix
 ```
 
 **Check if app is running**:
+
 ```bash
 ps aux | grep firefox
 ```
 
 **Verify cgroup setup**:
+
 ```bash
 cat /proc/self/cgroup | grep net_cls
 ```
 
 **Restart cgroup service**:
+
 ```bash
 sudo systemctl restart wireguard-cgroups.service
 just vpn-app firefox  # Try again
@@ -601,49 +626,49 @@ just vpn-app firefox  # Try again
 
 ### Just Commands
 
-| Command | Purpose |
-|---------|---------|
-| `just vpn-up` | Start VPN |
-| `just vpn-down` | Stop VPN |
-| `just vpn-status` | Detailed status |
-| `just vpn-verify` | Quick connection check |
-| `just vpn-restart` | Restart VPN |
-| `just vpn-set-exit uk` | Switch to UK exit |
-| `just vpn-set-exit us` | Switch to US exit |
-| `just vpn-rotate laptop-intel` | Generate new config |
-| `just vpn-app firefox` | Launch Firefox via VPN |
-| `just vpn-metrics` | View metrics log |
+| Command                        | Purpose                |
+| ------------------------------ | ---------------------- |
+| `just vpn-up`                  | Start VPN              |
+| `just vpn-down`                | Stop VPN               |
+| `just vpn-status`              | Detailed status        |
+| `just vpn-verify`              | Quick connection check |
+| `just vpn-restart`             | Restart VPN            |
+| `just vpn-set-exit uk`         | Switch to UK exit      |
+| `just vpn-set-exit us`         | Switch to US exit      |
+| `just vpn-rotate laptop-intel` | Generate new config    |
+| `just vpn-app firefox`         | Launch Firefox via VPN |
+| `just vpn-metrics`             | View metrics log       |
 
 ### Rust Tools (in `nix develop`)
 
-| Tool | Purpose |
-|------|---------|
-| `wireguard-helper init` | Generate WireGuard keys |
-| `wireguard-helper rotate` | Rotate VPN servers |
-| `wireguard-helper status` | Show VPN status |
-| `wireguard-helper verify` | Verify connection |
-| `wireguard-helper metrics` | Display metrics |
+| Tool                       | Purpose                 |
+| -------------------------- | ----------------------- |
+| `wireguard-helper init`    | Generate WireGuard keys |
+| `wireguard-helper rotate`  | Rotate VPN servers      |
+| `wireguard-helper status`  | Show VPN status         |
+| `wireguard-helper verify`  | Verify connection       |
+| `wireguard-helper metrics` | Display metrics         |
 
 ### File Locations
 
-| Path | Purpose |
-|------|---------|
-| `secrets/mullvad-account-*.age` | Encrypted account number |
+| Path                              | Purpose                    |
+| --------------------------------- | -------------------------- |
+| `secrets/mullvad-account-*.age`   | Encrypted account number   |
 | `secrets/mullvad-wg-config-*.age` | Encrypted WireGuard config |
-| `/etc/wireguard/mullvad0.conf` | Active WireGuard config |
-| `/run/wireguard/` | Runtime WireGuard state |
-| `/var/log/vpn-logs.txt` | VPN metrics log |
-| `~/.ssh/mullvad-priv-key` | Private WireGuard key |
+| `/etc/wireguard/mullvad0.conf`    | Active WireGuard config    |
+| `/run/wireguard/`                 | Runtime WireGuard state    |
+| `/var/log/vpn-logs.txt`           | VPN metrics log            |
+| `~/.ssh/mullvad-priv-key`         | Private WireGuard key      |
 
 ### Systemd Services
 
-| Service | Purpose |
-|---------|---------|
-| `wg-quick-mullvad0` | WireGuard interface |
-| `wireguard-metrics.timer` | Metrics logging |
-| `wireguard-metrics.service` | Metrics job |
-| `wireguard-firewall` | Kill switch firewall |
-| `wireguard-cgroups.service` | Per-app VPN routing |
+| Service                     | Purpose              |
+| --------------------------- | -------------------- |
+| `wg-quick-mullvad0`         | WireGuard interface  |
+| `wireguard-metrics.timer`   | Metrics logging      |
+| `wireguard-metrics.service` | Metrics job          |
+| `wireguard-firewall`        | Kill switch firewall |
+| `wireguard-cgroups.service` | Per-app VPN routing  |
 
 ---
 
@@ -663,6 +688,13 @@ just vpn-app firefox  # Try again
 - ✅ Encrypted secrets in git (agenix)
 - ✅ Split tunneling keeps LAN functional
 - ✅ Route history prevents repeated servers
+
+## Mullvad VPN Inforamtion
+
+**Laptop-Intel**
+Name: sharp oyster
+IPv4: 10.74.122.237/32
+IPv6: fc00:bbbb:bbbb:bb01::b:7aec/128
 
 ## Support
 

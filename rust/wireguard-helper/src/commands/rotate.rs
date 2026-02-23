@@ -24,15 +24,14 @@ fn create_secure_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
+pub fn run(device: &str, exit: &str, ipv4_address: &str, ipv6_address: &str) -> Result<()> {
     // Validate inputs to prevent injection attacks
     let device = crate::validation::validate_device_name(device)?;
     let exit = crate::validation::validate_country_code(exit)?;
-    let hops = crate::validation::validate_hop_count(hops)?;
 
     println!("Rotating Mullvad servers for device: {}", device);
     println!("Exit location: {}", exit);
-    println!("Hops: {}", hops);
+    println!("Client address: {}, {}", ipv4_address, ipv6_address);
 
     // Get directories
     let cache_dir = crate::paths::get_cache_dir()?;
@@ -60,9 +59,13 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     let mut api =
         MullvadApi::new(cache_path_str).context("Failed to initialize Mullvad API client")?;
 
+    // Mullvad supports 2-hop multi-hop: entry → exit
     let selected_hops = api
-        .select_hops(&exit, hops, &used_servers)
+        .select_hops(&exit, 2, &used_servers)
         .context("Failed to select relay hops")?;
+
+    let entry_relay = &selected_hops[0];
+    let exit_relay = &selected_hops[1];
 
     // Read decrypted private key from agenix runtime location
     // Agenix deploys decrypted secrets to /run/agenix/ at boot time
@@ -101,9 +104,15 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     crate::validation::validate_wg_key(&private_key)
         .context("Invalid WireGuard private key format")?;
 
-    // Generate WireGuard config
-    let config = wg_config::generate_config(&private_key, &selected_hops)
-        .context("Failed to generate WireGuard config")?;
+    // Generate WireGuard config (2-hop: connect to entry on exit's multihop_port)
+    let config = wg_config::generate_config(
+        &private_key,
+        entry_relay,
+        exit_relay,
+        ipv4_address,
+        ipv6_address,
+    )
+    .context("Failed to generate WireGuard config")?;
 
     // SECURITY: Encrypt configuration directly to agenix without writing cleartext to disk
     // This prevents the private key from being exposed in /tmp

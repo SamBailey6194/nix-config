@@ -28,7 +28,7 @@ enum Commands {
         device: String,
     },
 
-    /// Rotate Mullvad servers (5+ hop chain)
+    /// Rotate Mullvad servers (2-hop: entry → exit)
     Rotate {
         /// Device hostname
         device: String,
@@ -37,9 +37,13 @@ enum Commands {
         #[arg(long, default_value = "uk")]
         exit: String,
 
-        /// Number of hops (5-10)
-        #[arg(long, default_value = "5")]
-        hops: usize,
+        /// Mullvad-assigned IPv4 address (e.g., 10.74.122.237/32)
+        #[arg(long)]
+        address: String,
+
+        /// Mullvad-assigned IPv6 address (e.g., fc00:bbbb:bbbb:bb01::b:7aec/128)
+        #[arg(long)]
+        address6: String,
     },
 
     /// Verify VPN connection and exit location
@@ -79,8 +83,13 @@ fn main() -> Result<()> {
         Commands::Init { device } => {
             init::run(&device)?;
         }
-        Commands::Rotate { device, exit, hops } => {
-            rotate::run(&device, &exit, hops)?;
+        Commands::Rotate {
+            device,
+            exit,
+            address,
+            address6,
+        } => {
+            rotate::run(&device, &exit, &address, &address6)?;
         }
         Commands::Verify => {
             verify::run()?;

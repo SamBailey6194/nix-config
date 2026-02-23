@@ -1,31 +1,35 @@
 use crate::mullvad_api::Relay;
 use anyhow::Result;
 
-/// Generate WireGuard config for multi-hop chain
-pub fn generate_config(private_key: &str, hops: &[Relay]) -> Result<String> {
-    if hops.is_empty() {
-        anyhow::bail!("Cannot generate config with zero hops");
-    }
-
-    // For multi-hop, we need to chain the servers
-    // Simple approach: Use the last hop as the main peer
-    // (Full multi-hop chaining may require multiple interfaces - simplified for MVP)
-
-    let exit_relay = hops.last().unwrap();
-
+/// Generate WireGuard config for Mullvad multi-hop (2-hop: entry → exit)
+///
+/// Mullvad multi-hop works by connecting to the ENTRY relay on the EXIT relay's
+/// multihop_port. The entry relay then forwards traffic to the exit relay internally.
+pub fn generate_config(
+    private_key: &str,
+    entry_relay: &Relay,
+    exit_relay: &Relay,
+    ipv4_address: &str,
+    ipv6_address: &str,
+) -> Result<String> {
     let config = format!(
         r#"[Interface]
-PrivateKey = {}
-Address = 10.64.0.1/32
+PrivateKey = {private_key}
+Address = {ipv4_address},{ipv6_address}
 DNS = 10.64.0.1
 
 [Peer]
-PublicKey = {}
+PublicKey = {entry_pubkey}
 AllowedIPs = 0.0.0.0/0, ::/0
-Endpoint = {}:{}
+Endpoint = {entry_ip}:{exit_multihop_port}
 PersistentKeepalive = 25
 "#,
-        private_key, exit_relay.pubkey, exit_relay.ipv4_addr_in, exit_relay.multihop_port
+        private_key = private_key,
+        ipv4_address = ipv4_address,
+        ipv6_address = ipv6_address,
+        entry_pubkey = entry_relay.pubkey,
+        entry_ip = entry_relay.ipv4_addr_in,
+        exit_multihop_port = exit_relay.multihop_port,
     );
 
     Ok(config)
