@@ -2,6 +2,9 @@
 # Run with: just <command>
 # List all commands: just --list
 
+# Repo-level paths (used by sudo commands that lose $HOME)
+export NIX_CONFIG_SECRETS_DIR := justfile_directory() / "secrets"
+
 # Default recipe shows help
 default:
     @just --list
@@ -323,17 +326,17 @@ show-inputs:
 
 # Initialize WireGuard for a device
 vpn-init DEVICE:
-    wireguard-helper init {{DEVICE}}
+    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper init {{DEVICE}}
 
 # Rotate Mullvad servers (generate new config)
-vpn-rotate DEVICE:
-    wireguard-helper rotate {{DEVICE}}
-    @echo "Run 'just rebuild' to apply new configuration"
+vpn-rotate DEVICE EXIT="uk" HOPS="5":
+    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper rotate {{DEVICE}} --exit {{EXIT}} --hops {{HOPS}}
+    @echo "Run 'just rebuild && just vpn-restart' to apply new configuration"
 
 # Switch exit location and rotate
 vpn-set-exit EXIT:
-    wireguard-helper set-exit {{EXIT}}
-    just vpn-rotate laptop-intel
+    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper set-exit {{EXIT}}
+    just vpn-rotate laptop-intel {{EXIT}}
 
 # Verify VPN connection and exit location
 vpn-verify:
