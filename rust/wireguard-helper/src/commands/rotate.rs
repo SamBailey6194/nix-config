@@ -116,12 +116,8 @@ pub fn run(device: &str, exit: &str, hops: usize) -> Result<()> {
     // Use agenix to encrypt the config directly via stdin
     use std::process::{Command, Stdio};
 
-    let config_secret_path_str = config_secret_path
-        .to_str()
-        .context("Secret path contains invalid UTF-8")?;
-
     let mut agenix = Command::new("agenix")
-        .args(["-e", config_secret_path_str])
+        .args(["-e", &config_secret_name])
         .current_dir(&secrets_dir)
         .stdin(Stdio::piped())
         .spawn()

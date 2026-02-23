@@ -42,12 +42,7 @@
       warn-dirty = false;
     };
 
-    # Garbage collection
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 30d";
-    };
+    # Garbage collection handled by custom service in common.nix
 
     # Automatic store optimization
     optimise = {
