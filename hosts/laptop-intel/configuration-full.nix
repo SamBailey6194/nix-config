@@ -89,7 +89,7 @@
   #   1. First: enable = true, enableKillSwitch = false (test VPN connects)
   #   2. Then: enableKillSwitch = true (once VPN is confirmed working)
   networking.wireguard-mullvad = {
-    enable = false;
+    enable = true;
     device = "laptop-intel";
 
     # Production servers that bypass VPN (for audit trail)
