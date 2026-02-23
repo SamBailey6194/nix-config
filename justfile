@@ -362,6 +362,12 @@ vpn-down:
 vpn-restart:
     sudo systemctl restart wg-quick-mullvad0
 
+# Kill VPN completely (stop tunnel + disable kill switch firewall)
+vpn-kill:
+    sudo systemctl stop wg-quick-mullvad0 || true
+    sudo systemctl stop firewall || true
+    @echo "VPN tunnel stopped and kill switch firewall disabled"
+
 # Launch app through VPN (via cgroup routing)
 vpn-app COMMAND:
     wireguard-helper vpn-app {{COMMAND}}

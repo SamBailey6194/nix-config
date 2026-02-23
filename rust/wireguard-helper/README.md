@@ -11,7 +11,7 @@ Mullvad WireGuard VPN management tool with multi-hop routing, split tunneling, a
 
 ## Features
 
-- **Multi-Hop Routing**: Minimum 5-hop chains (1 entry + 3-4 relays + 1 exit)
+- **Multi-Hop Routing**: 2-hop multi-hop via Mullvad (entry relay → exit server)
 - **Split Tunneling**: Bypass VPN for LAN and production servers
 - **Kill Switch**: Block all traffic if VPN drops
 - **Automatic Rotation**: Weekly server rotation (Sunday 3 AM)
@@ -41,13 +41,13 @@ wireguard-helper init laptop-intel
 Generate new multi-hop configuration:
 
 ```bash
-wireguard-helper rotate <device> [--exit uk|us|eu] [--hops 5-10]
+wireguard-helper rotate <device> --address <ipv4> --address6 <ipv6> [--exit uk|us|eu]
 ```
 
 Examples:
 ```bash
-wireguard-helper rotate laptop-intel
-wireguard-helper rotate laptop-intel --exit us --hops 7
+wireguard-helper rotate laptop-intel --address 10.74.122.237/32 --address6 fc00:bbbb:bbbb:bb01::b:7aec/128
+wireguard-helper rotate laptop-intel --address 10.74.122.237/32 --address6 fc00:bbbb:bbbb:bb01::b:7aec/128 --exit us
 ```
 
 ### Verify Connection
@@ -112,13 +112,14 @@ wireguard-helper vpn-app docker pull ubuntu:latest
 
 ## Architecture
 
-### Multi-Hop Chain
+### Multi-Hop Chain (2-Hop)
 
-Build 5+ hop chains by selecting random servers from different countries:
+Mullvad WireGuard supports 2-hop multi-hop. The tool selects an entry relay and exit server from different countries:
 
-1. **Entry Relay**: European server (non-exit country)
-2. **Relay Hops**: 3-4 servers from different countries
-3. **Exit Relay**: UK/US/EU based on preference
+1. **Entry Relay**: Connects to the exit server via its `multihop_port`
+2. **Exit Server**: UK/US/EU based on preference — this is the IP seen by the internet
+
+> **Future**: Custom relay chains (3+ hops) via self-hosted WireGuard servers are planned for Phase 12.
 
 ### API Caching
 
@@ -219,7 +220,6 @@ networking.wireguard-mullvad = {
   enableKillSwitch = true;
   cgroupApps = [ "firefox" "transmission" ];
   currentExit = "uk";
-  minHops = 5;
   autoRotate.enable = true;
   metricsLogging.enable = true;
 };

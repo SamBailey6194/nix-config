@@ -29,7 +29,7 @@ wireguard-helper init laptop-intel
 agenix -e secrets/mullvad-account-laptop-intel.age
 # Paste your account number (e.g., 1234567890123456)
 
-# 5. Generate VPN configuration (5 random hops)
+# 5. Generate VPN configuration (2-hop: entry → exit)
 just vpn-rotate laptop-intel
 # Follow instructions to encrypt config with agenix
 
@@ -123,23 +123,20 @@ agenix -e secrets/mullvad-account-laptop-intel.age
 
 **Agenix will encrypt it** and save as `secrets/mullvad-account-laptop-intel.age`.
 
-### Step 5: Generate VPN Configuration (5-Hop Chain)
+### Step 5: Generate VPN Configuration (2-Hop Multi-Hop)
 
 ```bash
-# Generate configuration with 5+ random Mullvad servers
+# Generate 2-hop multi-hop configuration (entry → exit)
 just vpn-rotate laptop-intel
 ```
 
 **Output**:
 
 ```
-Generating 5-hop Mullvad WireGuard configuration for laptop-intel:
+Generating 2-hop Mullvad WireGuard configuration for laptop-intel:
 
-Entry node: Amsterdam (NL)
-Relay 1: Stockholm (SE)
-Relay 2: Frankfurt (DE)
-Relay 3: Paris (FR)
-Exit node: London (GB)
+Entry relay: Amsterdam (NL)
+Exit server: London (GB)
 
 Configuration saved to: /tmp/mullvad-wg-config-laptop-intel.tmp
 
@@ -185,7 +182,6 @@ networking.wireguard-mullvad = {
   enableKillSwitch = true;    # Block traffic if VPN down
 
   currentExit = "uk";         # Exit location (uk/us/eu)
-  minHops = 5;                # Minimum hop count
 
   autoRotate.enable = true;   # Weekly rotation (Sunday 3 AM)
   metricsLogging.enable = true; # Log every 5 minutes
@@ -260,7 +256,7 @@ This automatically rotates servers and rebuilds.
 ### Rotate Servers Manually
 
 ```bash
-just vpn-rotate laptop-intel  # Generate new 5-hop config
+just vpn-rotate laptop-intel  # Generate new 2-hop config
 just rebuild                  # Apply configuration
 just vpn-restart              # Restart VPN
 ```
@@ -303,28 +299,26 @@ The VPN uses custom routing tables to separate:
 | `1000` (vpn) | VPN traffic    | 0.0.0.0/0      | 100      |
 | LAN bypass   | Local networks | 192.168.0.0/16 | 50       |
 
-### Multi-Hop Chain
+### Multi-Hop Chain (2-Hop)
+
+Mullvad WireGuard supports **2-hop multi-hop**: traffic enters at one server and exits at another. The entry relay only sees your IP, the exit server only sees the entry relay — neither has the full picture.
 
 ```
 Your Device
-    ↓
-Entry Server (Amsterdam)
-    ↓
-Relay 1 (Stockholm)
-    ↓
-Relay 2 (Frankfurt)
-    ↓
-Relay 3 (Paris)
+    ↓ (encrypted tunnel)
+Entry Relay (Amsterdam) — connects to exit via multihop_port
     ↓
 Exit Server (London) → Internet
 ```
 
-**Why 5+ hops?**
+**Why 2-hop?**
 
-- Each hop can only see previous and next hop
-- Exit server doesn't know your origin IP
-- No single node has complete path information
-- Maximum privacy against VPN provider itself
+- Entry relay sees your IP but not your traffic destination
+- Exit server sees your traffic but not your real IP
+- Mullvad cannot correlate entry and exit without cross-referencing logs
+- This is the maximum hop count Mullvad's WireGuard infrastructure supports
+
+> **Future: Custom Multi-Hop VPN** — For chains beyond 2 hops, we plan to deploy self-hosted WireGuard relay servers across multiple providers (Hetzner, DigitalOcean, Linode, etc.), each managed as a NixOS host in this flake. This will enable route-specific tunnelling with 3+ hops (e.g., Device → self-hosted relay → Mullvad entry → Mullvad exit). See Phase 12 planning.
 
 ### Kill Switch
 
@@ -375,9 +369,6 @@ networking.wireguard-mullvad = {
 
   # Exit location
   currentExit = "uk";     # uk, us, eu
-
-  # Minimum hop count
-  minHops = 5;            # Minimum number of hops in chain
 
   # Per-app VPN routing (route specific apps through VPN)
   cgroupApps = [
@@ -577,7 +568,7 @@ sudo systemctl restart wireguard-metrics.timer
 
 **Reasons**:
 
-- 5-hop chain adds latency
+- Multi-hop adds some latency (entry + exit)
 - Exit server is geographically far
 - Network congestion
 
@@ -682,7 +673,7 @@ just vpn-app firefox  # Try again
 
 ## Security Notes
 
-- ✅ Minimum 5-hop chains prevent provider correlation
+- ✅ 2-hop multi-hop (entry + exit) prevents provider correlation
 - ✅ Kill switch prevents IP leaks
 - ✅ Per-device keys contain blast radius
 - ✅ Encrypted secrets in git (agenix)

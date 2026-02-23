@@ -45,10 +45,11 @@ pub fn validate_country_code(code: &str) -> Result<String> {
     Ok(code.to_string())
 }
 
-/// Validates a hop count
+/// Validates a hop count (for future custom relay expansion beyond Mullvad 2-hop)
+#[allow(dead_code)]
 pub fn validate_hop_count(hops: usize) -> Result<usize> {
-    if !(5..=10).contains(&hops) {
-        anyhow::bail!("Hop count must be between 5 and 10");
+    if !(2..=10).contains(&hops) {
+        anyhow::bail!("Hop count must be between 2 and 10");
     }
     Ok(hops)
 }

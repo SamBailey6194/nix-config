@@ -112,9 +112,6 @@
     # Current exit location (uk/us/eu)
     currentExit = "uk";
 
-    # Minimum hop count for multi-hop
-    minHops = 5;
-
     # Automatic weekly rotation (Sunday 3 AM)
     autoRotate = {
       enable = true;

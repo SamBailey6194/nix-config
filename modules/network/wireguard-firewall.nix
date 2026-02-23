@@ -33,7 +33,8 @@ in
     networking.firewall = {
       enable = true;
 
-      # Allow WireGuard handshake (UDP 51820)
+      # Allow WireGuard handshake on standard port and Mullvad multi-hop ports
+      # Mullvad multi-hop uses varying ports per relay (not just 51820)
       allowedUDPPorts = [ 51820 ];
 
       # Custom iptables rules for kill switch
@@ -57,9 +58,12 @@ in
           ${pkgs.iptables}/bin/iptables -A INPUT -s ${ip} -j ACCEPT
         '') cfg.bypassIPs}
 
-        # Allow WireGuard handshake (UDP 51820)
+        # Allow WireGuard handshake (UDP 51820 + Mullvad multi-hop ports)
+        # Mullvad multi-hop uses per-relay ports typically in range 3000-65535
         ${pkgs.iptables}/bin/iptables -A OUTPUT -p udp --dport 51820 -j ACCEPT
         ${pkgs.iptables}/bin/iptables -A INPUT -p udp --sport 51820 -j ACCEPT
+        ${pkgs.iptables}/bin/iptables -A OUTPUT -p udp --dport 3000:65535 -j ACCEPT
+        ${pkgs.iptables}/bin/iptables -A INPUT -p udp --sport 3000:65535 -m state --state ESTABLISHED -j ACCEPT
 
         # Allow traffic through VPN interface
         ${pkgs.iptables}/bin/iptables -A OUTPUT -o ${cfg.vpnInterface} -j ACCEPT

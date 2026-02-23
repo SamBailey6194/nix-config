@@ -29,11 +29,27 @@ pub fn run() -> Result<()> {
     println!("\nChecking exit location...");
 
     let output = Command::new("curl")
-        .args(["-s", "https://am.i.mullvad.net/json"])
+        .args(["-s", "--max-time", "10", "https://am.i.mullvad.net/json"])
         .output()
-        .context("Failed to check Mullvad status")?;
+        .context("Failed to run curl (is curl installed?)")?;
 
     let response_text = String::from_utf8_lossy(&output.stdout);
+
+    if !output.status.success() || response_text.trim().is_empty() {
+        println!("❌ Could not reach Mullvad API (https://am.i.mullvad.net/json)");
+        println!("   This means traffic is not flowing through the VPN tunnel.");
+        println!("   The WireGuard handshake may succeed but Mullvad is dropping packets.");
+        println!("\n   Common causes:");
+        println!("   - Interface Address doesn't match the public key registered in Mullvad");
+        println!("   - Multi-hop relay configuration issue");
+        println!("   - DNS not resolving through the tunnel");
+        println!("\n   Debug steps:");
+        println!("   1. Check your Mullvad address: https://mullvad.net/account → WireGuard");
+        println!("   2. Verify it matches the --address flag in 'just vpn-rotate'");
+        println!("   3. Try: curl -v https://am.i.mullvad.net/json");
+        anyhow::bail!("VPN tunnel is up but traffic is not flowing");
+    }
+
     let response: MullvadCheckResponse =
         serde_json::from_str(&response_text).context("Failed to parse Mullvad API response")?;
 

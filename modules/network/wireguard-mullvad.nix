@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -23,13 +28,17 @@ in
 
     bypassIPs = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "Production server IPs that bypass VPN (for audit trail)";
     };
 
     lanNetworks = mkOption {
       type = types.listOf types.str;
-      default = [ "192.168.0.0/16" "10.0.0.0/8" "172.16.0.0/12" ];
+      default = [
+        "192.168.0.0/16"
+        "10.0.0.0/8"
+        "172.16.0.0/12"
+      ];
       description = "LAN networks that bypass VPN";
     };
 
@@ -41,20 +50,18 @@ in
 
     cgroupApps = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "Applications to route through VPN via cgroups (e.g., firefox, transmission)";
     };
 
     currentExit = mkOption {
-      type = types.enum [ "uk" "us" "eu" ];
+      type = types.enum [
+        "uk"
+        "us"
+        "eu"
+      ];
       default = "uk";
       description = "Current VPN exit location";
-    };
-
-    minHops = mkOption {
-      type = types.int;
-      default = 5;
-      description = "Minimum number of hops for multi-hop routing";
     };
 
     autoRotate = {
@@ -120,33 +127,29 @@ in
       # Read generated config from agenix
       configFile = config.age.secrets."mullvad-wg-config-${cfg.device}".path;
 
-      # Mark packets for routing (fwmark for split tunneling)
+      # wg-quick handles all routing automatically when AllowedIPs = 0.0.0.0/0
+      # (creates its own fwmark, routing table, and policy rules)
       preUp = ''
         # Ensure directories exist
         mkdir -p /var/lib/wireguard
         mkdir -p /var/log
-
-        # Set firewall mark for VPN traffic
-        ${pkgs.iproute2}/bin/ip rule add fwmark 0x1 table 1000 priority 100 || true
       '';
 
       postUp = ''
-        # Apply firewall rules (kill switch)
+        # Allow forwarding through VPN interface
         ${pkgs.iptables}/bin/iptables -A FORWARD -o mullvad0 -j ACCEPT
         ${pkgs.iptables}/bin/iptables -A FORWARD -i mullvad0 -j ACCEPT
 
-        # Add bypass rules for LAN networks (priority 50 = higher than VPN)
+        # Explicit LAN bypass rules (belt-and-braces alongside wg-quick's
+        # suppress_prefixlength 0 which already allows specific LAN routes)
         ${concatMapStringsSep "\n" (net: ''
           ${pkgs.iproute2}/bin/ip rule add to ${net} table main priority 50 || true
         '') cfg.lanNetworks}
 
-        # Add bypass rules for production servers
+        # Bypass rules for production servers
         ${concatMapStringsSep "\n" (ip: ''
           ${pkgs.iproute2}/bin/ip rule add to ${ip} table main priority 50 || true
         '') cfg.bypassIPs}
-
-        # Default route through VPN (priority 100)
-        ${pkgs.iproute2}/bin/ip route add default dev mullvad0 table 1000 || true
       '';
 
       preDown = ''
@@ -158,8 +161,6 @@ in
         ${concatMapStringsSep "\n" (ip: ''
           ${pkgs.iproute2}/bin/ip rule del to ${ip} table main priority 50 || true
         '') cfg.bypassIPs}
-
-        ${pkgs.iproute2}/bin/ip rule del fwmark 0x1 table 1000 priority 100 || true
       '';
 
       postDown = ''

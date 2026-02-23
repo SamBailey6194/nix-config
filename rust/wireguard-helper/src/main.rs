@@ -49,7 +49,7 @@ enum Commands {
     /// Verify VPN connection and exit location
     Verify,
 
-    /// Show VPN status (interface, endpoint, handshake, IP/country, hop count)
+    /// Show VPN status (interface, endpoint, handshake, IP/country)
     Status,
 
     /// Switch exit location and trigger rotation
