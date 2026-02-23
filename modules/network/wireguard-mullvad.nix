@@ -122,6 +122,26 @@ in
       };
     };
 
+    # Ensure wg-quick waits for agenix to decrypt the VPN config before starting.
+    # Without this, wg-quick races agenix at boot — the interface comes up with no
+    # peers, no addresses, and no routing rules (silent failure).
+    systemd.services."wg-quick-mullvad0".preStart =
+      let
+        configPath = config.age.secrets."mullvad-wg-config-${cfg.device}".path;
+      in
+      ''
+        timeout=30
+        while [ ! -s "${configPath}" ] && [ "$timeout" -gt 0 ]; do
+          echo "Waiting for agenix to decrypt VPN config... (''${timeout}s remaining)"
+          sleep 1
+          timeout=$((timeout - 1))
+        done
+        if [ ! -s "${configPath}" ]; then
+          echo "ERROR: VPN config not available after 30s. Is agenix configured correctly?"
+          exit 1
+        fi
+      '';
+
     # WireGuard interface configuration
     networking.wg-quick.interfaces.mullvad0 = {
       # Read generated config from agenix
