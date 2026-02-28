@@ -10,7 +10,7 @@ mod route_history;
 mod validation;
 mod wg_config;
 
-use commands::{cgroup_launch, init, metrics, rotate, set_exit, status, verify};
+use commands::{cgroup_launch, init, metrics, rotate, status, verify};
 
 #[derive(Parser)]
 #[command(name = "wireguard-helper")]
@@ -28,20 +28,16 @@ enum Commands {
         device: String,
     },
 
-    /// Rotate Mullvad servers (2-hop: entry → exit)
+    /// Rotate Mullvad multi-hop servers (entry → UK exit). Keys are never changed.
     Rotate {
         /// Device hostname
         device: String,
 
-        /// Exit location (uk, us, or eu)
-        #[arg(long, default_value = "uk")]
-        exit: String,
-
-        /// Mullvad-assigned IPv4 address (e.g., 10.74.122.237/32)
+        /// Mullvad-assigned IPv4 address (from account portal, tied to public key)
         #[arg(long)]
         address: String,
 
-        /// Mullvad-assigned IPv6 address (e.g., fc00:bbbb:bbbb:bb01::b:7aec/128)
+        /// Mullvad-assigned IPv6 address (from account portal, tied to public key)
         #[arg(long)]
         address6: String,
     },
@@ -51,12 +47,6 @@ enum Commands {
 
     /// Show VPN status (interface, endpoint, handshake, IP/country)
     Status,
-
-    /// Switch exit location and trigger rotation
-    SetExit {
-        /// Exit location (uk, us, or eu)
-        location: String,
-    },
 
     /// Display VPN metrics from log file
     Metrics {
@@ -85,20 +75,16 @@ fn main() -> Result<()> {
         }
         Commands::Rotate {
             device,
-            exit,
             address,
             address6,
         } => {
-            rotate::run(&device, &exit, &address, &address6)?;
+            rotate::run(&device, &address, &address6)?;
         }
         Commands::Verify => {
             verify::run()?;
         }
         Commands::Status => {
             status::run()?;
-        }
-        Commands::SetExit { location } => {
-            set_exit::run(&location)?;
         }
         Commands::Metrics { tail, lines } => {
             metrics::run(tail, lines)?;

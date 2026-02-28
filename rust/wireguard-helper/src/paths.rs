@@ -88,31 +88,6 @@ pub fn get_cache_dir() -> Result<PathBuf> {
     anyhow::bail!("Cannot determine cache directory")
 }
 
-/// Get the config directory path
-///
-/// Uses XDG Base Directory specification with fallback to ~/.config
-pub fn get_config_dir() -> Result<PathBuf> {
-    // Try environment variable first
-    if let Ok(dir) = env::var("WIREGUARD_HELPER_CONFIG_DIR") {
-        let path = PathBuf::from(dir);
-        return Ok(path);
-    }
-
-    // Use XDG_CONFIG_HOME if set
-    if let Ok(config_home) = env::var("XDG_CONFIG_HOME") {
-        let path = PathBuf::from(config_home).join("wireguard-helper");
-        return Ok(path);
-    }
-
-    // Fallback to ~/.config/wireguard-helper
-    if let Ok(home) = env::var("HOME") {
-        let path = PathBuf::from(home).join(".config/wireguard-helper");
-        return Ok(path);
-    }
-
-    anyhow::bail!("Cannot determine config directory")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -123,13 +98,5 @@ mod tests {
         let dir = get_cache_dir().unwrap();
         assert_eq!(dir, PathBuf::from("/tmp/test-cache"));
         env::remove_var("WIREGUARD_HELPER_CACHE_DIR");
-    }
-
-    #[test]
-    fn test_get_config_dir_respects_env() {
-        env::set_var("WIREGUARD_HELPER_CONFIG_DIR", "/tmp/test-config");
-        let dir = get_config_dir().unwrap();
-        assert_eq!(dir, PathBuf::from("/tmp/test-config"));
-        env::remove_var("WIREGUARD_HELPER_CONFIG_DIR");
     }
 }

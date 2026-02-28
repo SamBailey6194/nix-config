@@ -61,13 +61,18 @@ in
           #!/usr/bin/env bash
           set -euo pipefail
 
-          # Run wireguard-helper rotate
-          /run/current-system/sw/bin/wireguard-helper rotate ${cfg.device}
+          # Load Mullvad-assigned device addresses (static, tied to registered public key)
+          source /etc/wireguard/device-addresses
 
-          # Rebuild NixOS with new config
+          # Rotate multi-hop servers — exit is always UK
+          /run/current-system/sw/bin/wireguard-helper rotate ${cfg.device} \
+            --address "$DEVICE_ADDRESS" \
+            --address6 "$DEVICE_ADDRESS6"
+
+          # Re-activate NixOS so agenix re-decrypts the updated config secret
           /run/current-system/sw/bin/nixos-rebuild switch --flake /etc/nixos/nix-config#${cfg.device}
 
-          # Restart VPN
+          # Restart VPN with new entry/exit servers
           systemctl restart wg-quick-mullvad0
         ''}";
       };

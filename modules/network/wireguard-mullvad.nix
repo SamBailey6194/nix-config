@@ -26,6 +26,18 @@ in
       description = "Device hostname (e.g., laptop-intel)";
     };
 
+    deviceAddress = mkOption {
+      type = types.str;
+      description = "Mullvad-assigned IPv4 address for this device (shown in Mullvad account portal after registering the public key, e.g. 10.74.122.237/32)";
+      example = "10.74.122.237/32";
+    };
+
+    deviceAddress6 = mkOption {
+      type = types.str;
+      description = "Mullvad-assigned IPv6 address for this device (shown in Mullvad account portal after registering the public key)";
+      example = "fc00:bbbb:bbbb:bb01::b:7aec/128";
+    };
+
     bypassIPs = mkOption {
       type = types.listOf types.str;
       default = [ ];
@@ -141,6 +153,33 @@ in
           exit 1
         fi
       '';
+
+    # Fix boot-time race condition: wg-quick must wait until NetworkManager has
+    # established an internet connection before attempting the Mullvad handshake.
+    # Without this the interface comes up but the handshake to Mullvad's servers
+    # fails (no route yet), and the kill switch then locks out all traffic.
+    systemd.services."wg-quick-mullvad0".after = [ "network-online.target" ];
+    systemd.services."wg-quick-mullvad0".wants = [ "network-online.target" ];
+
+    # Ensure NetworkManager-wait-online actually gates on real connectivity
+    # (not just "an interface exists") before network-online.target fires.
+    systemd.services.NetworkManager-wait-online.enable = lib.mkDefault true;
+
+    # Prevent NetworkManager from managing the WireGuard interface.
+    # If NM touches mullvad0 it can overwrite wg-quick's routing rules.
+    networking.networkmanager.unmanaged = [ "interface-name:mullvad0" ];
+
+    # Write device addresses to a well-known path so the auto-rotate systemd
+    # service and justfile can source them without needing them as CLI args.
+    # These addresses are NOT secret — they are the Mullvad-assigned IPs tied
+    # to the registered WireGuard public key and never change between rotations.
+    environment.etc."wireguard/device-addresses" = {
+      text = ''
+        DEVICE_ADDRESS=${cfg.deviceAddress}
+        DEVICE_ADDRESS6=${cfg.deviceAddress6}
+      '';
+      mode = "0644";
+    };
 
     # WireGuard interface configuration
     networking.wg-quick.interfaces.mullvad0 = {

@@ -24,13 +24,16 @@ fn create_secure_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn run(device: &str, exit: &str, ipv4_address: &str, ipv6_address: &str) -> Result<()> {
+pub fn run(device: &str, ipv4_address: &str, ipv6_address: &str) -> Result<()> {
     // Validate inputs to prevent injection attacks
     let device = crate::validation::validate_device_name(device)?;
-    let exit = crate::validation::validate_country_code(exit)?;
+
+    // Exit is permanently fixed to UK — this is enforced here, not via a CLI flag,
+    // so it cannot be accidentally overridden.
+    let exit = "uk";
 
     println!("Rotating Mullvad servers for device: {}", device);
-    println!("Exit location: {}", exit);
+    println!("Exit location: UK (fixed)");
     println!("Client address: {}, {}", ipv4_address, ipv6_address);
 
     // Get directories
@@ -61,7 +64,7 @@ pub fn run(device: &str, exit: &str, ipv4_address: &str, ipv6_address: &str) -> 
 
     // Mullvad supports 2-hop multi-hop: entry → exit
     let selected_hops = api
-        .select_hops(&exit, 2, &used_servers)
+        .select_hops(exit, 2, &used_servers)
         .context("Failed to select relay hops")?;
 
     let entry_relay = &selected_hops[0];

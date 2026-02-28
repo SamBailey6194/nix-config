@@ -92,27 +92,28 @@
     enable = true;
     device = "laptop-intel";
 
+    # Mullvad-assigned addresses for "sharp oyster" (laptop-intel public key).
+    # Static — only change if the keypair is regenerated (don't regenerate).
+    deviceAddress = "10.74.122.237/32";
+    deviceAddress6 = "fc00:bbbb:bbbb:bb01::b:7aec/128";
+
     # Production servers that bypass VPN (for audit trail)
     bypassIPs = [
-      # Add production server IPs here
       # "203.0.113.5"
     ];
 
-    # Kill switch - KEEP DISABLED until VPN is confirmed working
+    # Kill switch - KEEP DISABLED until VPN is confirmed working on first boot
     enableKillSwitch = false;
 
     # Per-app VPN routing via cgroups
     cgroupApps = [
-      "firefox"       # Browser through VPN
-      "librewolf"     # Browser through VPN
-      "google-chrome" # Browser through VPN
-      "transmission"  # Torrents through VPN
+      "firefox"
+      "librewolf"
+      "google-chrome"
+      "transmission"
     ];
 
-    # Current exit location (uk/us/eu)
-    currentExit = "uk";
-
-    # Automatic weekly rotation (Sunday 3 AM)
+    # Automatic weekly multi-hop server rotation (exit is always UK)
     autoRotate = {
       enable = true;
       schedule = "Sun *-*-* 03:00:00";

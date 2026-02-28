@@ -328,15 +328,22 @@ show-inputs:
 vpn-init DEVICE:
     sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper init {{DEVICE}}
 
-# Rotate Mullvad servers (2-hop: entry → exit)
-vpn-rotate DEVICE EXIT="uk" ADDRESS="10.74.122.237/32" ADDRESS6="fc00:bbbb:bbbb:bb01::b:7aec/128":
-    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper rotate {{DEVICE}} --exit {{EXIT}} --address {{ADDRESS}} --address6 {{ADDRESS6}}
-    @echo "Run 'just rebuild && just vpn-restart' to apply new configuration"
-
-# Switch exit location and rotate
-vpn-set-exit EXIT:
-    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" wireguard-helper set-exit {{EXIT}}
-    just vpn-rotate laptop-intel {{EXIT}}
+# Rotate Mullvad multi-hop servers (entry → UK exit). Keys are never rotated.
+# Device addresses are read from /etc/wireguard/device-addresses (written by NixOS module).
+vpn-rotate DEVICE="laptop-intel":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f /etc/wireguard/device-addresses ]; then
+        echo "ERROR: /etc/wireguard/device-addresses not found."
+        echo "Ensure networking.wireguard-mullvad.deviceAddress is set in your NixOS config and rebuild."
+        exit 1
+    fi
+    source /etc/wireguard/device-addresses
+    sudo NIX_CONFIG_SECRETS_DIR="{{justfile_directory()}}/secrets" \
+        wireguard-helper rotate {{DEVICE}} \
+        --address "$DEVICE_ADDRESS" \
+        --address6 "$DEVICE_ADDRESS6"
+    echo "Run 'just rebuild && just vpn-restart' to apply new configuration"
 
 # Verify VPN connection and exit location
 vpn-verify:
