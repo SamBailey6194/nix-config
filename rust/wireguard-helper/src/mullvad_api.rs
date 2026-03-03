@@ -10,12 +10,14 @@ const CACHE_TTL_HOURS: u64 = 6;
 pub struct Relay {
     pub hostname: String,
     pub ipv4_addr_in: String,
-    pub ipv6_addr_in: String,
+    #[serde(default)]
+    pub ipv6_addr_in: Option<String>,
     #[serde(alias = "public_key")]
     pub pubkey: String,
     pub multihop_port: u16,
     pub country_code: String,
-    pub city_name: String,
+    #[serde(default)]
+    pub city_name: Option<String>,
     pub active: bool,
 }
 
@@ -245,7 +247,7 @@ impl MullvadApi {
                 "  Hop {}: {} ({}, {})",
                 i + 1,
                 hop.hostname,
-                hop.city_name,
+                hop.city_name.as_deref().unwrap_or("Unknown"),
                 hop.country_code
             );
         }
