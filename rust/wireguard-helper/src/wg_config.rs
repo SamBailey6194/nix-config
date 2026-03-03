@@ -1,14 +1,12 @@
 use crate::mullvad_api::Relay;
 use anyhow::Result;
 
-/// Generate WireGuard config for Mullvad multi-hop (2-hop: entry → exit)
+/// Generate WireGuard config for a direct single-hop connection to a Mullvad relay.
 ///
-/// Mullvad multi-hop works by connecting to the ENTRY relay on the EXIT relay's
-/// multihop_port. The entry relay then forwards traffic to the exit relay internally.
+/// Connects directly to the exit relay on the standard WireGuard port (51820).
 pub fn generate_config(
     private_key: &str,
-    entry_relay: &Relay,
-    exit_relay: &Relay,
+    relay: &Relay,
     ipv4_address: &str,
     ipv6_address: &str,
 ) -> Result<String> {
@@ -19,17 +17,16 @@ Address = {ipv4_address},{ipv6_address}
 DNS = 10.64.0.1
 
 [Peer]
-PublicKey = {entry_pubkey}
+PublicKey = {relay_pubkey}
 AllowedIPs = 0.0.0.0/0, ::/0
-Endpoint = {entry_ip}:{exit_multihop_port}
+Endpoint = {relay_ip}:51820
 PersistentKeepalive = 25
 "#,
         private_key = private_key,
         ipv4_address = ipv4_address,
         ipv6_address = ipv6_address,
-        entry_pubkey = entry_relay.pubkey,
-        entry_ip = entry_relay.ipv4_addr_in,
-        exit_multihop_port = exit_relay.multihop_port,
+        relay_pubkey = relay.pubkey,
+        relay_ip = relay.ipv4_addr_in,
     );
 
     Ok(config)

@@ -161,11 +161,11 @@ impl MullvadApi {
         Ok(relays)
     }
 
-    /// Select N-hop chain avoiding previous routes
+    /// Select an exit relay avoiding previous routes
     pub fn select_hops(
         &mut self,
         exit_location: &str,
-        num_hops: usize,
+        _num_hops: usize,
         used_servers: &HashSet<String>,
     ) -> Result<Vec<Relay>> {
         let relays = self.fetch_relays()?;
@@ -189,68 +189,26 @@ impl MullvadApi {
             .cloned()
             .collect();
 
-        // Filter relays NOT in exit location (for entry/relays)
-        let other_relays: Vec<_> = active
-            .iter()
-            .filter(|r| !exit_countries.contains(&r.country_code.as_str()))
-            .filter(|r| !used_servers.contains(&r.hostname))
-            .cloned()
-            .collect();
-
         if exit_relays.is_empty() {
             anyhow::bail!("No available exit relays for location: {}", exit_location);
         }
 
-        if other_relays.len() < (num_hops - 1) {
-            anyhow::bail!("Not enough relays to build {}-hop chain", num_hops);
-        }
-
-        // Build hop chain: 1 entry + (N-2) relays + 1 exit
-        let mut hops = Vec::new();
-        let mut used_countries = HashSet::new();
-
-        // Select entry relay (random from other regions)
-        use rand::seq::{IteratorRandom, SliceRandom};
+        use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
 
-        let entry = other_relays
-            .iter()
-            .filter(|r| !used_countries.contains(&r.country_code))
-            .choose(&mut rng)
-            .context("Failed to select entry relay")?
-            .clone();
-        used_countries.insert(entry.country_code.clone());
-        hops.push(entry);
-
-        // Select intermediate relays (N-2)
-        for _ in 0..(num_hops - 2) {
-            let relay = other_relays
-                .iter()
-                .filter(|r| !used_countries.contains(&r.country_code))
-                .choose(&mut rng)
-                .context("Failed to select relay hop")?
-                .clone();
-            used_countries.insert(relay.country_code.clone());
-            hops.push(relay);
-        }
-
-        // Select exit relay
+        // Single-hop: just pick an exit relay
         let exit = exit_relays
             .choose(&mut rng)
             .context("Failed to select exit relay")?
             .clone();
-        hops.push(exit);
 
-        println!("Selected {}-hop chain:", hops.len());
-        for (i, hop) in hops.iter().enumerate() {
-            println!(
-                "  Hop {}: {} ({}, {})",
-                i + 1,
-                hop.hostname,
-                hop.city_name.as_deref().unwrap_or("Unknown"),
-                hop.country_code
-            );
-        }
+        let hops = vec![exit];
+
+        println!("Selected relay: {} ({}, {})",
+            hops[0].hostname,
+            hops[0].city_name.as_deref().unwrap_or("Unknown"),
+            hops[0].country_code
+        );
 
         Ok(hops)
     }

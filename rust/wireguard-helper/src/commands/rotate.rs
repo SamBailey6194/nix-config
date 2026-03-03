@@ -62,13 +62,12 @@ pub fn run(device: &str, ipv4_address: &str, ipv6_address: &str) -> Result<()> {
     let mut api =
         MullvadApi::new(cache_path_str).context("Failed to initialize Mullvad API client")?;
 
-    // Mullvad supports 2-hop multi-hop: entry → exit
+    // Select a single UK exit relay (direct connection, no multi-hop)
     let selected_hops = api
-        .select_hops(exit, 2, &used_servers)
-        .context("Failed to select relay hops")?;
+        .select_hops(exit, 1, &used_servers)
+        .context("Failed to select relay")?;
 
-    let entry_relay = &selected_hops[0];
-    let exit_relay = &selected_hops[1];
+    let relay = &selected_hops[0];
 
     // Read decrypted private key from agenix runtime location
     // Agenix deploys decrypted secrets to /run/agenix/ at boot time
@@ -107,11 +106,10 @@ pub fn run(device: &str, ipv4_address: &str, ipv6_address: &str) -> Result<()> {
     crate::validation::validate_wg_key(&private_key)
         .context("Invalid WireGuard private key format")?;
 
-    // Generate WireGuard config (2-hop: connect to entry on exit's multihop_port)
+    // Generate WireGuard config (direct single-hop to UK relay on port 51820)
     let config = wg_config::generate_config(
         &private_key,
-        entry_relay,
-        exit_relay,
+        relay,
         ipv4_address,
         ipv6_address,
     )
