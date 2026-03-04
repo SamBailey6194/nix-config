@@ -56,10 +56,9 @@
     ../../modules/security/luks-encryption.nix
     # ../../modules/security/ssh-daemon.nix
 
-    # Filesystem (Optional - enable if using BTRFS/ZFS)
-    # ../../modules/filesystem/btrfs.nix
-    # ../../modules/filesystem/btrfs-layouts.nix
-    # ../../modules/filesystem/zram.nix  # Compressed swap in RAM
+    # Filesystem
+    ../../modules/filesystem/btrfs-layouts.nix # BTRFS subvolume management + snapshots
+    ../../modules/filesystem/zram.nix          # Compressed swap in RAM
 
     # User
     ../../modules/users/laptop.nix
@@ -113,7 +112,7 @@
       "transmission"
     ];
 
-    # Automatic weekly multi-hop server rotation (exit is always UK)
+    # Automatic weekly server rotation (entry → UK exit multi-hop)
     autoRotate = {
       enable = true;
       schedule = "Sun *-*-* 03:00:00";
@@ -146,6 +145,16 @@
     enable = true;
     abrmd.enable = true; # TPM2 access broker for concurrent access
   };
+
+  # BTRFS subvolume layout (compression, scrub, snapper snapshots)
+  # Mounts are merged with hardware-configuration.nix — /boot is preserved.
+  filesystem.btrfsLayouts = {
+    layout = "laptop";
+    rootDevice = "/dev/disk/by-uuid/fc7428cf-f919-46b8-aaae-1a99d927aa93";
+  };
+
+  # Zram compressed swap (50% of 32GB RAM, zstd compression)
+  filesystem.zram.enable = true;
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;

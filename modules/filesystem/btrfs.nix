@@ -130,9 +130,12 @@ in
       compsize  # Check compression ratio
     ];
 
-    # Configure filesystem mounts (override hardware-configuration.nix)
-    fileSystems = lib.mkForce (mapAttrs' (name: subvolCfg:
-      nameValuePair subvolCfg.mountPoint {
+    # Configure BTRFS subvolume mounts with compression and tuned options.
+    # Uses mkOverride 90 per-mount so these take priority over
+    # hardware-configuration.nix (priority 100) while preserving non-BTRFS
+    # mounts like /boot which are not declared here.
+    fileSystems = mapAttrs' (name: subvolCfg:
+      nameValuePair subvolCfg.mountPoint (lib.mkOverride 90 {
         device = cfg.rootDevice;
         fsType = "btrfs";
         options = cfg.mountOptions ++ [
@@ -146,8 +149,8 @@ in
         else
           [ "nodatacow" ]
         ) ++ subvolCfg.extraOptions;
-      }
-    ) cfg.subvolumes);
+      })
+    ) cfg.subvolumes;
 
     # Automatic scrub for data integrity
     services.btrfs.autoScrub = mkIf cfg.enableScrub {

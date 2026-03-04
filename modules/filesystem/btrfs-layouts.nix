@@ -6,6 +6,8 @@ let
   cfg = config.filesystem.btrfsLayouts;
 in
 {
+  imports = [ ./btrfs.nix ];
+
   options.filesystem.btrfsLayouts = {
     layout = mkOption {
       type = types.enum [ "laptop" "devtower-os" "devtower-home" "devtower-media" ];

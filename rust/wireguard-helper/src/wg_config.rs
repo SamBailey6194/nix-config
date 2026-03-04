@@ -4,6 +4,8 @@ use anyhow::Result;
 /// Generate WireGuard config for a direct single-hop connection to a Mullvad relay.
 ///
 /// Connects directly to the exit relay on the standard WireGuard port (51820).
+/// Kept for potential fallback use when multi-hop is not desired.
+#[allow(dead_code)]
 pub fn generate_config(
     private_key: &str,
     relay: &Relay,
@@ -27,6 +29,44 @@ PersistentKeepalive = 25
         ipv6_address = ipv6_address,
         relay_pubkey = relay.pubkey,
         relay_ip = relay.ipv4_addr_in,
+    );
+
+    Ok(config)
+}
+
+/// Generate WireGuard config for a multi-hop connection through Mullvad.
+///
+/// Traffic flows: client → entry relay → exit relay → internet
+///
+/// The WireGuard tunnel connects to the **entry** relay's IP, but on the
+/// **exit** relay's `multihop_port`. The peer public key is the **exit**
+/// relay's key. Mullvad's infrastructure routes traffic from the entry
+/// to the exit internally.
+pub fn generate_multihop_config(
+    private_key: &str,
+    entry: &Relay,
+    exit: &Relay,
+    ipv4_address: &str,
+    ipv6_address: &str,
+) -> Result<String> {
+    let config = format!(
+        r#"[Interface]
+PrivateKey = {private_key}
+Address = {ipv4_address},{ipv6_address}
+DNS = 10.64.0.1
+
+[Peer]
+PublicKey = {exit_pubkey}
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = {entry_ip}:{exit_multihop_port}
+PersistentKeepalive = 25
+"#,
+        private_key = private_key,
+        ipv4_address = ipv4_address,
+        ipv6_address = ipv6_address,
+        exit_pubkey = exit.pubkey,
+        entry_ip = entry.ipv4_addr_in,
+        exit_multihop_port = exit.multihop_port,
     );
 
     Ok(config)

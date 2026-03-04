@@ -161,11 +161,16 @@ impl MullvadApi {
         Ok(relays)
     }
 
-    /// Select an exit relay avoiding previous routes
+    /// Select relays for the VPN route, avoiding previously used servers.
+    ///
+    /// - `num_hops == 1`: single-hop direct to an exit relay
+    /// - `num_hops == 2`: multi-hop with entry relay (different country) → exit relay
+    ///
+    /// Returns `[exit]` for single-hop or `[entry, exit]` for multi-hop.
     pub fn select_hops(
         &mut self,
         exit_location: &str,
-        _num_hops: usize,
+        num_hops: usize,
         used_servers: &HashSet<String>,
     ) -> Result<Vec<Relay>> {
         let relays = self.fetch_relays()?;
@@ -196,20 +201,53 @@ impl MullvadApi {
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
 
-        // Single-hop: just pick an exit relay
+        // Pick an exit relay
         let exit = exit_relays
             .choose(&mut rng)
             .context("Failed to select exit relay")?
             .clone();
 
-        let hops = vec![exit];
+        if num_hops >= 2 {
+            // Multi-hop: pick an entry relay from a DIFFERENT country than the exit
+            let entry_relays: Vec<_> = active
+                .iter()
+                .filter(|r| !exit_countries.contains(&r.country_code.as_str()))
+                .filter(|r| !used_servers.contains(&r.hostname))
+                .filter(|r| r.hostname != exit.hostname)
+                .cloned()
+                .collect();
 
-        println!("Selected relay: {} ({}, {})",
-            hops[0].hostname,
-            hops[0].city_name.as_deref().unwrap_or("Unknown"),
-            hops[0].country_code
-        );
+            if entry_relays.is_empty() {
+                anyhow::bail!("No available entry relays for multi-hop (need a relay outside {:?})", exit_countries);
+            }
 
-        Ok(hops)
+            let entry = entry_relays
+                .choose(&mut rng)
+                .context("Failed to select entry relay")?
+                .clone();
+
+            println!("Selected multi-hop route:");
+            println!("  Entry: {} ({}, {})",
+                entry.hostname,
+                entry.city_name.as_deref().unwrap_or("Unknown"),
+                entry.country_code
+            );
+            println!("  Exit:  {} ({}, {})",
+                exit.hostname,
+                exit.city_name.as_deref().unwrap_or("Unknown"),
+                exit.country_code
+            );
+
+            Ok(vec![entry, exit])
+        } else {
+            // Single-hop: direct to exit
+            println!("Selected relay: {} ({}, {})",
+                exit.hostname,
+                exit.city_name.as_deref().unwrap_or("Unknown"),
+                exit.country_code
+            );
+
+            Ok(vec![exit])
+        }
     }
 }
