@@ -42,6 +42,7 @@
     ".config/hypr/keybinds.conf".source = ../../config/hypr/keybinds.conf;
     ".config/hypr/windowrules.conf".source = ../../config/hypr/windowrules.conf;
     ".config/hypr/autostart.conf".source = ../../config/hypr/autostart.conf;
+    ".config/hypr/KEYBINDS.md".source = ../../config/hypr/KEYBINDS.md;
   };
 
   # Hyprpaper configuration (wallpaper daemon)
