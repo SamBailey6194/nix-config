@@ -94,8 +94,8 @@
 
     # Mullvad-assigned addresses for "sharp oyster" (laptop-intel public key).
     # Static — only change if the keypair is regenerated (don't regenerate).
-    deviceAddress = "10.74.122.237/32";
-    deviceAddress6 = "fc00:bbbb:bbbb:bb01::b:7aec/128";
+    deviceAddress = "10.64.107.64/32";
+    deviceAddress6 = "fc00:bbbb:bbbb:bb01::1:6b3f/128";
 
     # Production servers that bypass VPN (for audit trail)
     bypassIPs = [
@@ -134,7 +134,7 @@
     devices.cryptroot = {
       device = "/dev/disk/by-uuid/4cf4afe8-4076-4249-b963-9d29bd918458";
       name = "cryptroot";
-      allowDiscards = true;   # TRIM for SSD
+      allowDiscards = true; # TRIM for SSD
       preLVM = true;
       fallbackToPassword = true;
       tpm2Device = "auto";
@@ -144,7 +144,7 @@
   # TPM2 user-space support (udev rules, tools access)
   security.tpm2 = {
     enable = true;
-    abrmd.enable = true;  # TPM2 access broker for concurrent access
+    abrmd.enable = true; # TPM2 access broker for concurrent access
   };
 
   # Boot Loader

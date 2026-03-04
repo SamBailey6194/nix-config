@@ -683,9 +683,9 @@ just vpn-app firefox  # Try again
 ## Mullvad VPN Inforamtion
 
 **Laptop-Intel**
-Name: sharp oyster
-IPv4: 10.74.122.237/32
-IPv6: fc00:bbbb:bbbb:bb01::b:7aec/128
+Name: golden sloth
+IPv4: 10.64.107.64/32
+IPv6: fc00:bbbb:bbbb:bb01::1:6b3f/128
 
 ## Support
 
