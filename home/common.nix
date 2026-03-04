@@ -68,6 +68,11 @@
     # Productivity
     obsidian
     discord
+    teams-for-linux  # Microsoft Teams (community client)
+    zoom-us          # Zoom video conferencing
+
+    # Remote desktop
+    rustdesk
 
     # Fonts
     jetbrains-mono             # JetBrains Mono
