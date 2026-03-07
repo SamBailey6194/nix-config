@@ -95,4 +95,9 @@ in {
     pname = "tpm-manage";
     description = "TPM2 device management tool";
   };
+
+  dev-layout = buildWorkspaceCrate {
+    pname = "dev-layout";
+    description = "Hyprland dev layout launcher (Zed + 2 terminals)";
+  };
 }

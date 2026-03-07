@@ -9,6 +9,7 @@ members = [
     "btrfs-manage",      # BTRFS filesystem management
     "vault-manage",      # Per-folder encryption (gocryptfs)
     "tpm-manage",        # TPM2 management
+    "dev-layout",        # Hyprland dev layout launcher
     # "security-wrapper",  # Phase 10 - Future security wrapper for OpenBao
 ]
 exclude = [

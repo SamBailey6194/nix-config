@@ -8,6 +8,7 @@
 | `SUPER + SHIFT + Return` | Terminal with Neovim |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
+| `SUPER + SHIFT + Z`  | Dev layout (Zed + 2 terminals) |
 | `SUPER + F`          | File manager (Thunar)   |
 | `SUPER + W`          | LibreWolf browser       |
 | `SUPER + SHIFT + W`  | Firefox browser         |

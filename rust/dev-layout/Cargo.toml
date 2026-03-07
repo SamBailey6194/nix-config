@@ -1,0 +1,14 @@
+[package]
+name = "dev-layout"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dev-layout"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+colored = { workspace = true }
