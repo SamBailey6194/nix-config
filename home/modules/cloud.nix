@@ -1,6 +1,10 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
-{
+let
+  # Set to true once rclone.conf is configured with gdrive-personal and gdrive-business remotes
+  enableGdrive = false;
+in
+lib.mkIf enableGdrive {
   # Ensure Google Drive mount points exist
   home.file."GoogleDrive/Personal/.keep".text = "";
   home.file."GoogleDrive/Business/.keep".text = "";
