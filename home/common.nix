@@ -213,8 +213,13 @@
     size = 24;
   };
 
-  # Add ~/.local/bin to PATH
-  home.sessionPath = [ "$HOME/.local/bin" ];
+  # PATH additions (single source of truth for all devices)
+  home.sessionPath = [
+    "$HOME/.local/bin"
+    "$HOME/.cargo/bin"
+    "$HOME/Android/Sdk/emulator"
+    "$HOME/Android/Sdk/platform-tools"
+  ];
 
   # Session variables (additional to shell-specific ones)
   home.sessionVariables = {

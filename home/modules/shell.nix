@@ -83,14 +83,6 @@
     };
   };
 
-  # Additional PATH entries for Android SDK (top-level Home Manager option)
-  # Note: Only needed if you do Android/React Native development
-  home.sessionPath = [
-    "$HOME/.cargo/bin"                # Rustup-managed tools (rust-analyzer, cargo, etc.)
-    "$HOME/Android/Sdk/emulator"
-    "$HOME/Android/Sdk/platform-tools"
-  ];
-
 
   # Starship prompt (alternative to Oh My Zsh themes)
   # Disabled by default since you're using custom PROMPT
