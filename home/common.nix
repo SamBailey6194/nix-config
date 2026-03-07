@@ -213,6 +213,9 @@
     size = 24;
   };
 
+  # Add ~/.local/bin to PATH
+  home.sessionPath = [ "$HOME/.local/bin" ];
+
   # Session variables (additional to shell-specific ones)
   home.sessionVariables = {
     EDITOR = "zed --wait";
