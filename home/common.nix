@@ -213,13 +213,6 @@
     size = 24;
   };
 
-  # PATH additions (single source of truth for all devices)
-  home.sessionPath = [
-    "$HOME/.local/bin"
-    "$HOME/.cargo/bin"
-    "$HOME/Android/Sdk/emulator"
-    "$HOME/Android/Sdk/platform-tools"
-  ];
 
   # Session variables (additional to shell-specific ones)
   home.sessionVariables = {

@@ -22,6 +22,11 @@
       ];
     };
 
+    # PATH additions (sourced via .zshenv, works for all shell types)
+    envExtra = ''
+      export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/Android/Sdk/emulator:$HOME/Android/Sdk/platform-tools:$PATH"
+    '';
+
     # Custom prompt (overrides robbyrussell theme)
     # Green arrow, cyan directory
     initContent = ''
