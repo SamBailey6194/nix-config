@@ -50,17 +50,15 @@
     python313Packages.virtualenv
     uv                  # Fast Python package installer
 
-    # Rust toolchain (alternative to rustup)
-    # rustc
-    # cargo
-    # rustfmt
-    # clippy
+    # Rust toolchain via rustup (provides rustc, cargo, rustfmt, clippy)
+    # After install: rustup default stable && rustup component add rust-analyzer
+    rustup
 
     # Language servers (shared by Zed, Neovim, and other editors)
     nodePackages.typescript-language-server  # TypeScript/JavaScript
     nodePackages.vscode-langservers-extracted  # HTML, CSS, JSON, ESLint
     pyright                                    # Python type checking
-    rust-analyzer                              # Rust
+    # rust-analyzer provided by rustup (rustup component add rust-analyzer)
     nixd                                       # Nix language server (used by Zed)
     nil                                        # Nix language server (used by Neovim)
     lua-language-server                        # Lua (for Neovim config)
