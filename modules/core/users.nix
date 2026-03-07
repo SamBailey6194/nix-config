@@ -1,9 +1,13 @@
 { config, pkgs, ... }:
 
 {
-  # Define user accounts
+  # LEGACY: This file is a template and is NOT imported by any host.
+  # Each device uses its own user module in modules/users/ instead:
+  #   - modules/users/laptop.nix    (sam-laptop)
+  #   - modules/users/framework.nix (sam-framework)
+  #   - modules/users/devtower.nix  (sam-desktop)
 
-  # Main user: sam-dev
+  # Template user (not used - kept as reference)
   users.users.sam-dev = {
     isNormalUser = true;
     description = "Sam Bailey";
@@ -23,7 +27,7 @@
 
   # Root user configuration
   users.users.root = {
-    # Root login disabled - use sudo from sam-dev
+    # Root login disabled - use sudo from device user
     hashedPassword = "!"; # Locked password
   };
 

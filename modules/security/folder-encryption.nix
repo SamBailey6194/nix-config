@@ -15,13 +15,13 @@ in
           vaultsPath = mkOption {
             type = types.str;
             description = "Path to encrypted vault storage";
-            example = "/home/sam-laptop/vaults";
+            example = "$HOME/vaults";
           };
 
           mountPath = mkOption {
             type = types.str;
             description = "Path for mount points of unlocked vaults";
-            example = "/home/sam-laptop/mnt";
+            example = "$HOME/mnt";
           };
 
           defaultVaults = mkOption {

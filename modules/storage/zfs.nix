@@ -29,7 +29,7 @@
 #      zfs list
 #      zfs snapshot tank/data@backup-2024-01-01
 #
-# See: /home/sam-dev/Repos/personal/nix-config/docs/STORAGE-MANAGEMENT.md
+# See: docs/STORAGE-MANAGEMENT.md (relative to repo root)
 
 { config, lib, pkgs, ... }:
 

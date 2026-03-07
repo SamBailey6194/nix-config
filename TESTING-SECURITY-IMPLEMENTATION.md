@@ -11,7 +11,7 @@
 ### 1. Enter Development Shell
 
 ```bash
-cd /home/sam-dev/Repos/personal/nix-config
+cd ~/Repos/personal/nix-config
 nix develop
 ```
 

@@ -28,7 +28,7 @@
 #      mdadm --examine /dev/sda
 #      cat /proc/mdstat
 #
-# See: /home/sam-dev/Repos/personal/nix-config/docs/STORAGE-MANAGEMENT.md
+# See: docs/STORAGE-MANAGEMENT.md (relative to repo root)
 
 { config, lib, pkgs, ... }:
 

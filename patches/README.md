@@ -164,7 +164,7 @@ Edit `~/.config/zed/settings.json` and remove these lines:
 - All patches are tested and compile successfully
 - No breaking API changes
 - All fixes are backwards compatible
-- Original review: `/home/sam-dev/Repos/personal/nix-config/SECURITY-FIXES.md`
+- Original review: `SECURITY-FIXES.md` (repo root)
 
 ## Support
 

@@ -27,7 +27,7 @@
 #      - restic-password-<device>.age (repository password)
 #      - restic-b2-env-<device>.age (B2/S3 credentials)
 #
-# See: /home/sam-dev/Repos/personal/nix-config/docs/STORAGE-MANAGEMENT.md
+# See: docs/STORAGE-MANAGEMENT.md (relative to repo root)
 
 { config, lib, pkgs, ... }:
 

@@ -61,7 +61,7 @@ Created `storage-manager` workspace with three CLI tools:
 - Update mdadm.conf
 - Enable/disable monitoring
 
-All tools integrated into Rust workspace at `/home/sam-dev/Repos/personal/nix-config/rust/storage-manager/`
+All tools integrated into Rust workspace at `rust/storage-manager/`
 
 ### 3. Comprehensive Documentation ✅
 
