@@ -52,8 +52,8 @@
     # Shell aliases
     shellAliases = {
       # Claude Code with custom TMPDIR
-      claude = "TMPDIR=/home/sam-dev/.claude/tmp claude";
-      code = "TMPDIR=/home/sam-dev/.claude/tmp code";
+      claude = "TMPDIR=${config.home.homeDirectory}/.claude/tmp claude";
+      code = "TMPDIR=${config.home.homeDirectory}/.claude/tmp code";
 
       # Zed editor (nixpkgs installs as 'zeditor' to avoid name conflict)
       zed = "zeditor";
