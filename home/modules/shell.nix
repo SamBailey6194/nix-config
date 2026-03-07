@@ -42,11 +42,11 @@
         eval "$(ddev completion zsh)"
       fi
 
-      # NVM config to control Node and NPM
-      export NVM_DIR="''$([ -z "''${XDG_CONFIG_HOME-}" ] && \
-        printf %s "''${HOME}/.nvm" || \
-        printf %s "''${XDG_CONFIG_HOME}/nvm")"
-      [ -s "''$NVM_DIR/nvm.sh" ] && \. "''$NVM_DIR/nvm.sh"
+      # fnm (Fast Node Manager) for per-project Node.js versions
+      # Auto-switches when cd-ing into a directory with .node-version or .nvmrc
+      if command -v fnm &> /dev/null; then
+        eval "$(fnm env --use-on-cd)"
+      fi
     '';
 
     # Shell aliases
@@ -86,6 +86,7 @@
   # Additional PATH entries for Android SDK (top-level Home Manager option)
   # Note: Only needed if you do Android/React Native development
   home.sessionPath = [
+    "$HOME/.cargo/bin"                # Rustup-managed tools (rust-analyzer, cargo, etc.)
     "$HOME/Android/Sdk/emulator"
     "$HOME/Android/Sdk/platform-tools"
   ];

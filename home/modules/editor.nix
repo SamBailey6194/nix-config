@@ -325,10 +325,7 @@
         };
 
         rust-analyzer = {
-          binary = {
-            # Use rustup-managed rust-analyzer (~/.cargo/bin/rust-analyzer)
-            path_lookup = true;
-          };
+          # rust-analyzer found via PATH (~/.cargo/bin from rustup)
           initialization_options = {
             check = {
               command = "clippy";
