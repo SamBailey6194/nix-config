@@ -9,11 +9,12 @@
 
     # Git settings (unified config)
     settings = {
-      # Base user config (overridden by conditional includes per directory)
-      user = {
-        name = "SamBailey6194";
-        email = "sambailey6194@gmail.com";
-      };
+      # No default [user] block here — identity is handled entirely by
+      # conditional includes (includeIf) below. This prevents the default
+      # from overriding the includes, since Home Manager renders [user]
+      # alphabetically after [includeIf] in the generated config.
+      # Repos outside ~/Repos/{personal,syntek,missional-gen}/ will require
+      # explicit git config before committing, preventing accidental identity leaks.
 
       # Core settings
       core = {
