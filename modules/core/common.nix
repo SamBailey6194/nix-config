@@ -80,6 +80,9 @@
     pkg-config
     just
 
+    # Profiling & debugging
+    valgrind
+
     # Secrets management
     inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default
   ]
