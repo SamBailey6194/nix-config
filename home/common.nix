@@ -45,7 +45,8 @@
   home.packages = with pkgs; [
     # Development tools
     # vscode
-    gh # GitHub CLI
+    gh    # GitHub CLI
+    ngrok # Tunnel for webhook testing
 
     # CLI utilities
     ripgrep
