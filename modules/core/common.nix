@@ -69,6 +69,10 @@
     traceroute
     wireguard-tools
 
+    # DDEV/mkcert (locally-trusted SSL certs)
+    mkcert
+    nss.tools # needed for Firefox cert trust
+
     # Archive tools
     unzip
     zip
