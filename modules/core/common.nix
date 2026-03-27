@@ -100,13 +100,6 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # Trust mkcert root CA system-wide (for curl, Node.js, etc.)
-  # Browsers handle this via nss.tools, but system tools need this.
-  # Run `mkcert -install` once per device to generate the CA.
-  security.pki.certificateFiles =
-    let caFile = "/home/${config.users.users.${builtins.head (builtins.attrNames config.users.users)}/.local/share/mkcert/rootCA.pem";
-    in pkgs.lib.optional (builtins.pathExists caFile) caFile;
-
   # Console keymap and font
   console = {
     font = "Lat2-Terminus16";

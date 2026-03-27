@@ -33,4 +33,10 @@
     enable = true;
     wheelNeedsPassword = true;
   };
+
+  # Trust mkcert root CA system-wide (curl, Node.js, etc.)
+  # Run `mkcert -install` once after first rebuild to generate the CA.
+  security.pki.certificateFiles =
+    let caFile = /home/sam-laptop/.local/share/mkcert/rootCA.pem;
+    in pkgs.lib.optional (builtins.pathExists caFile) caFile;
 }
