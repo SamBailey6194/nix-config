@@ -78,6 +78,9 @@
     zip
     p7zip
 
+    # SSL/TLS
+    openssl
+
     # Build tools
     gcc
     gnumake
