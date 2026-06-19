@@ -74,9 +74,14 @@
         };
       };
 
+      # Git "Changes" panel on the RIGHT dock (project panel stays on the left),
+      # grouped by folder (tree). Flip tree_view to false for a flat file list —
+      # both modes are also toggleable from the panel's context menu.
       git_panel = {
         button = true;
-        dock = "left";
+        dock = "right";
+        tree_view = true;
+        default_width = 280;
       };
 
       # Panels

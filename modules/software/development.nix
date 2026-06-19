@@ -73,6 +73,10 @@
     ruff                                       # Python linter + formatter (fast!)
     nodePackages.prettier                      # JS/TS/JSON/YAML/Markdown formatter
     nodePackages.eslint                        # JavaScript/TypeScript linter
+
+    # Document conversion (markdown/html/docx/... -> PDF and between formats)
+    pandoc                                     # universal document converter
+    wkhtmltopdf                                # HTML -> PDF (also pandoc --pdf-engine=wkhtmltopdf)
   ];
 
   # Docker configuration

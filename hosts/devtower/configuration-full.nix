@@ -20,7 +20,10 @@
     ../../modules/core/nix-settings.nix
 
     # Secrets management (agenix decrypts at boot)
-    ../../modules/core/secrets-desktop.nix
+    # TODO: Uncomment once devtower is installed — needs its host key in
+    # secrets/secrets.nix and per-device .age secrets to exist (none yet, so
+    # importing this fails eval: agenix references non-existent *.age files).
+    # ../../modules/core/secrets-desktop.nix
 
     # SSH configuration (per-device keys for GitHub + servers)
     ../../modules/core/ssh-config.nix

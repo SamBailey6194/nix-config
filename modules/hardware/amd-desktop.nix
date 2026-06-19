@@ -40,6 +40,6 @@
 
   # System monitoring
   environment.systemPackages = with pkgs; [
-    nvtop # GPU monitoring
+    nvtopPackages.amd # GPU monitoring (nvtop was renamed to nvtopPackages.*)
   ];
 }

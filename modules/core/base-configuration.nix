@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   # Base configuration shared across ALL devices
@@ -22,6 +22,7 @@
     ../software/media.nix          # VLC, Spotify, image viewers
     ../software/development.nix    # VS Code, Docker, language tools
     ../software/office.nix         # LibreOffice
+    ../software/networking.nix     # DNS/TCP/HTTP/packet/load-testing CLI tools
   ];
 
   # Boot Loader (can be overridden per-device)
@@ -76,11 +77,13 @@
     jack.enable = true;
 
     # Base audio config (can be overridden per-device)
+    # Defaults — device modules (e.g. go-xlr.nix, which needs lower latency) may
+    # override these with their own values via mkForce-free plain definitions.
     extraConfig.pipewire = {
       "context.properties" = {
-        "default.clock.rate" = 48000;
-        "default.clock.quantum" = 1024;
-        "default.clock.min-quantum" = 512;
+        "default.clock.rate" = lib.mkDefault 48000;
+        "default.clock.quantum" = lib.mkDefault 1024;
+        "default.clock.min-quantum" = lib.mkDefault 512;
       };
     };
   };
