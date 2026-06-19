@@ -94,5 +94,18 @@ in
     #   file = ../../secrets/wifi-passwords.age;
     #   mode = "0400";
     # };
+
+    # ========================================================================
+    # squid-digest Environment (Gmail creds + recipient + heartbeat URL)
+    # Uncomment once devtower is installed, its host key is added to
+    # secrets/secrets.nix, and secrets/squid-digest-env-devtower.age is created.
+    # Mode 0640 root:sam-desktop so the per-user watch-proxy can read it.
+    # ========================================================================
+    # squid-digest-env = {
+    #   file = ../../secrets/squid-digest-env-devtower.age;
+    #   mode = "0640";
+    #   owner = "root";
+    #   group = "sam-desktop";
+    # };
   };
 }

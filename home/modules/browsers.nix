@@ -55,45 +55,6 @@
         };
       };
 
-      # Bookmarks (from your Ubuntu Firefox profile)
-      bookmarks = {
-        force = true;
-        settings = [
-        {
-          name = "Toolbar";
-          toolbar = true;
-          bookmarks = [
-            # Quick Access
-            { name = "GitHub"; url = "https://github.com/"; }
-            { name = "Personal Gmail"; url = "https://mail.google.com/mail/u/0/#inbox"; }
-            { name = "Personal Drive"; url = "https://drive.google.com/drive/u/0/my-drive"; }
-            { name = "Netflix"; url = "https://www.netflix.com/browse"; }
-            { name = "YouTube"; url = "https://www.youtube.com/"; }
-
-            # Development Tools
-            { name = "Color Contrast Checker"; url = "https://webaim.org/resources/contrastchecker/"; }
-            { name = "Color Picker"; url = "https://imagecolorpicker.com/"; }
-            { name = "JavaScript Validator"; url = "https://jshint.com/"; }
-            { name = "CSS Autoprefixer"; url = "https://autoprefixer.github.io/"; }
-
-            # Learning Resources
-            { name = "PEP 8 Style Guide"; url = "https://peps.python.org/pep-0008/"; }
-            { name = "Regex Python Guide"; url = "https://www.youtube.com/watch?v=F6FW_NMtvNY"; }
-            { name = "Python Import Module"; url = "https://csatlas.com/python-import-file-module/"; }
-            { name = "HTML to WordPress"; url = "https://wpmudev.com/blog/html-to-wordpress-theme-tutorial-step-1-converting-your-html-to-php/"; }
-
-            # Stock Media
-            { name = "Unsplash"; url = "http://www.unsplash.com/"; }
-            { name = "Pexels"; url = "http://www.pexels.com/"; }
-
-            # NixOS (added)
-            { name = "NixOS Search"; url = "https://search.nixos.org"; }
-            { name = "NixOS Options"; url = "https://search.nixos.org/options"; }
-          ];
-        }
-      ];
-      };
-
       # Privacy and security settings (from your Ubuntu Firefox)
       settings = {
         # Enhanced Privacy (matching your current settings)

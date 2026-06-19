@@ -62,6 +62,19 @@ in
     };
 
     # ========================================================================
+    # squid-digest Environment (Gmail creds + recipient + heartbeat URL)
+    # Mode 0640 root:${username} so the per-user `watch-proxy` service can read
+    # it (agenix's 0751 ramfs mount lets the group traverse). Non-secret SD_*
+    # config is rendered separately to /etc/squid-digest/defaults.env.
+    # ========================================================================
+    squid-digest-env = {
+      file = ../../secrets/squid-digest-env-${hostname}.age;
+      mode = "0640";
+      owner = "root";
+      group = username;
+    };
+
+    # ========================================================================
     # Per-Folder Encryption Master Key (gocryptfs recovery)
     # ========================================================================
     vault-master-key = {

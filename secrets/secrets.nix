@@ -107,6 +107,17 @@ in
   # "malware-scanner-quarantine-key-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # ============================================================================
+  # squid-digest Environment (Per-Device)
+  # Accountability digest secrets: Gmail app password, recipient email, and the
+  # off-machine heartbeat URL. Non-secret SD_* config lives in Nix
+  # (/etc/squid-digest/defaults.env), so only these credentials are encrypted.
+  # ============================================================================
+
+  "squid-digest-env-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "squid-digest-env-framework.age".publicKeys = allUsers ++ [ framework ];
+  # "squid-digest-env-devtower.age".publicKeys = allUsers ++ [ devtower ];
+
+  # ============================================================================
   # LUKS Encryption Passphrases (Per-Device Fallback Recovery)
   # These are fallback passphrases when TPM2 auto-unlock fails
   # DevTower has separate passphrases for OS, home, and media drives

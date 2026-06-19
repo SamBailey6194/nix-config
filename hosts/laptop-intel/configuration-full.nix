@@ -49,6 +49,14 @@
     # Malware scanner with real-time protection
     ../../modules/security/malware-scanner.nix
 
+    # Browser accountability posture: locked enterprise policies for Brave,
+    # LibreWolf, Firefox Developer Edition, Zen + a QUIC-blocking nftables rule
+    ../../modules/security/browser-policies
+
+    # Squid accountability proxy + squid-digest (weekly adult-domain digest +
+    # tamper watchers). Reproduces the browser_setup/accountability_script repos.
+    ../../modules/security/squid-digest
+
     # Security tools (Phase 9 - Encryption & Hardening)
     # Uncomment to enable encryption tools suite
     # ../../modules/security/encryption-tools.nix
@@ -69,6 +77,18 @@
 
   # Device identity
   networking.hostName = "laptop-intel";
+
+  # Browser accountability policies (4 locked browsers) + QUIC firewall backstop
+  services.browserPolicies.enable = true;
+
+  # Squid accountability proxy + squid-digest digest/watchers.
+  # Requires the agenix squid-digest-env secret (Gmail creds, recipient,
+  # heartbeat URL) — create it with: agenix -e secrets/squid-digest-env-laptop-intel.age
+  services.squidDigest = {
+    enable = true;
+    user = "sam-laptop";
+    fromName = "Laptop Accountability";
+  };
 
   # Malware scanner with real-time file monitoring
   # NOTE: boot scan and real-time monitoring disabled until malware-scanner

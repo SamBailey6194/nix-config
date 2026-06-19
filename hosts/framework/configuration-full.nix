@@ -57,6 +57,11 @@
     ../../modules/filesystem/btrfs-layouts.nix # BTRFS subvolume management + snapshots
     ../../modules/filesystem/zram.nix          # Compressed swap in RAM
 
+    # Browser accountability posture (locked policies + QUIC backstop)
+    ../../modules/security/browser-policies
+    # Squid accountability proxy + squid-digest (enabled once agenix is wired)
+    ../../modules/security/squid-digest
+
     # User
     ../../modules/users/framework.nix
   ];
@@ -113,6 +118,17 @@
 
   # Zram compressed swap (50% of 64GB RAM, zstd compression)
   filesystem.zram.enable = true;
+  # Browser accountability policies + QUIC firewall backstop (no secrets needed)
+  services.browserPolicies.enable = true;
+
+  # squid-digest needs the agenix squid-digest-env secret. Enable once framework
+  # is installed, its host key is in secrets/secrets.nix, secrets-laptop.nix is
+  # imported, and secrets/squid-digest-env-framework.age is created.
+  # services.squidDigest = {
+  #   enable = true;
+  #   user = "sam-framework";
+  #   fromName = "Framework Accountability";
+  # };
 
   # Boot Loader
   boot.loader.systemd-boot.enable = true;

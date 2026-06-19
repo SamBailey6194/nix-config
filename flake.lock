@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "accountability_script": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781257020,
+        "narHash": "sha256-mP5kNietiRP/dtvq+325GMqsmTDUErXvYsz1ig8tR10=",
+        "ref": "refs/heads/main",
+        "rev": "8de97b16592934deaef782ec27684e66389c5864",
+        "revCount": 4,
+        "type": "git",
+        "url": "ssh://git@github-personal/SamBailey6194/accountability_script.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github-personal/SamBailey6194/accountability_script.git"
+      }
+    },
     "affinity-nix": {
       "inputs": {
         "elemental-wine-source": "elemental-wine-source",
@@ -82,6 +98,22 @@
         "owner": "hyprwm",
         "repo": "aquamarine",
         "type": "github"
+      }
+    },
+    "browser_setup": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781263214,
+        "narHash": "sha256-YREmob75dTRUz7nfLivcifzUqBcsvaxO0/wScvTldqw=",
+        "ref": "refs/heads/main",
+        "rev": "6e9f306f967f3c8bbe68323a931bf42020a26233",
+        "revCount": 6,
+        "type": "git",
+        "url": "ssh://git@github-personal/SamBailey6194/browser_setup.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github-personal/SamBailey6194/browser_setup.git"
       }
     },
     "claude-code-nix": {
@@ -324,6 +356,27 @@
         "owner": "nix-community",
         "repo": "home-manager",
         "rev": "5bd3589390b431a63072868a90c0f24771ff4cbb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "home-manager_3": {
+      "inputs": {
+        "nixpkgs": [
+          "zen-browser",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781497404,
+        "narHash": "sha256-9GAF8sSsnkyCVCWkomXR0T+zdSxyUlfPt6neQidimdg=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "1285cd3d6882a9847f2d56ed5541b3350c8a6162",
         "type": "github"
       },
       "original": {
@@ -799,12 +852,15 @@
     },
     "root": {
       "inputs": {
+        "accountability_script": "accountability_script",
         "affinity-nix": "affinity-nix",
         "agenix": "agenix",
+        "browser_setup": "browser_setup",
         "claude-code-nix": "claude-code-nix",
         "home-manager": "home-manager_2",
         "hyprland": "hyprland",
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": "nixpkgs_4",
+        "zen-browser": "zen-browser"
       }
     },
     "systems": {
@@ -908,6 +964,27 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "zen-browser": {
+      "inputs": {
+        "home-manager": "home-manager_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781820312,
+        "narHash": "sha256-tTFfF/wIXGH9B+m8r0g23UkzkmM3jBgWnqGC4/NFzrs=",
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
+        "rev": "f1b189bea5972ceee02628f913f2f342ce96e21e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
         "type": "github"
       }
     }

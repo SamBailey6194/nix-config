@@ -1,22 +1,24 @@
 { config, pkgs, ... }:
 
 {
-  # Web browsers for different purposes
-  # LibreWolf (privacy), Firefox (dev testing), Chrome (Claude extension)
+  # Web browsers for different purposes.
+  #
+  # The locked accountability browser set (Brave, LibreWolf, Firefox Developer
+  # Edition, Zen) is installed + policy-locked by
+  # modules/security/browser-policies. Brave is now the Chromium/Claude-extension
+  # browser, so Google Chrome is dropped here. This file keeps only non-managed
+  # extras.
 
   environment.systemPackages = with pkgs; [
-    # Privacy-focused browser (personal use)
+    # Privacy-focused browser (personal use). Also installed + locked by the
+    # browser-policies module; kept here for hosts that don't enable that module.
     librewolf
 
     # Development testing browser
     firefox
 
-    # Chromium-based (Claude Chrome extension)
-    google-chrome
-
     # Alternative browsers (optional)
     # chromium         # Open-source Chrome
-    # brave            # Privacy-focused Chromium
     # vivaldi          # Feature-rich browser
   ];
 

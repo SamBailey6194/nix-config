@@ -33,16 +33,47 @@
       url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Browser accountability posture (private repo - locked enterprise policies
+    # + QUIC-blocking nftables rule). flake = false -> consumed as a plain source
+    # tree (policy JSONs, network/*.nft). Auth via the github-personal SSH alias;
+    # pin with: nix flake update browser_setup
+    browser_setup = {
+      url = "git+ssh://git@github-personal/SamBailey6194/browser_setup.git";
+      flake = false;
+    };
+
+    # Accountability script (private repo - the squid-digest Rust tool +
+    # custom-blocklist.txt). flake = false -> built with rustPlatform from its
+    # own subdir Cargo.lock. Pin with: nix flake update accountability_script
+    accountability_script = {
+      url = "git+ssh://git@github-personal/SamBailey6194/accountability_script.git";
+      flake = false;
+    };
+
+    # Zen browser (not packaged in nixpkgs)
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, browser_setup, accountability_script, zen-browser, ... }@inputs:
   let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
     rustTools = import ./rust/nix { inherit pkgs; };
+
+    # squid-digest is built from the accountability_script input's own crate
+    # (separate src + Cargo.lock from the rust/ workspace), so it is defined
+    # standalone rather than via rust/nix/default.nix.
+    squid-digest = pkgs.callPackage ./modules/security/squid-digest/package.nix {
+      accountability_script = inputs.accountability_script;
+    };
   in {
     # Rust CLI tool packages (nix build .#<name>)
     packages.${system} = rustTools // {
+      inherit squid-digest;
       default = pkgs.symlinkJoin {
         name = "nix-config-rust-tools";
         paths = builtins.attrValues rustTools;
