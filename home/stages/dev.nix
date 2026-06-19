@@ -9,6 +9,7 @@
     ../modules/git.nix       # Git multi-account configuration
     ../modules/editor.nix    # Zed editor settings
     ../modules/neovim.nix    # Neovim configuration
+    ../modules/claude.nix    # Claude Code: settings, MCP servers, monitor, Brave link
   ];
 
   # Direnv - auto-load dev environments from .envrc files

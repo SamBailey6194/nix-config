@@ -107,5 +107,15 @@ in
     #   owner = "root";
     #   group = "sam-desktop";
     # };
+
+    # ========================================================================
+    # Claude Code secrets (CLAUDE_MONITOR_TOKEN + CONTEXT7_API_KEY)
+    # Uncomment once devtower is installed and claude-secrets-devtower.age exists.
+    # ========================================================================
+    # claude-secrets = {
+    #   file = ../../secrets/claude-secrets-devtower.age;
+    #   owner = "sam-desktop";
+    #   mode = "0400";
+    # };
   };
 }

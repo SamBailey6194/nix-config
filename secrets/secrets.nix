@@ -118,6 +118,16 @@ in
   # "squid-digest-env-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # ============================================================================
+  # Claude Code Secrets (Per-Device)
+  # Env file consumed by home/modules/claude.nix: CLAUDE_MONITOR_TOKEN (monitor
+  # hook auth) + CONTEXT7_API_KEY (Context7 MCP). Edit per device on first use.
+  # ============================================================================
+
+  "claude-secrets-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "claude-secrets-framework.age".publicKeys = allUsers ++ [ framework ];
+  # "claude-secrets-devtower.age".publicKeys = allUsers ++ [ devtower ];
+
+  # ============================================================================
   # LUKS Encryption Passphrases (Per-Device Fallback Recovery)
   # These are fallback passphrases when TPM2 auto-unlock fails
   # DevTower has separate passphrases for OS, home, and media drives

@@ -75,6 +75,16 @@ in
     };
 
     # ========================================================================
+    # Claude Code secrets (CLAUDE_MONITOR_TOKEN + CONTEXT7_API_KEY)
+    # Env file at /run/agenix/claude-secrets, read by home/modules/claude.nix.
+    # ========================================================================
+    claude-secrets = {
+      file = ../../secrets/claude-secrets-${hostname}.age;
+      owner = username;
+      mode = "0400";
+    };
+
+    # ========================================================================
     # Per-Folder Encryption Master Key (gocryptfs recovery)
     # ========================================================================
     vault-master-key = {
