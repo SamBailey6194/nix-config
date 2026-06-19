@@ -124,11 +124,14 @@
     # Kill switch - KEEP DISABLED until VPN is confirmed working on first boot
     enableKillSwitch = false;
 
-    # Per-app VPN routing via cgroups
+    # Per-app VPN routing via cgroups — every browser goes through the VPN.
+    # These are the launch-command names the vpn-app wrapper wraps; verify the
+    # zen / firefox-devedition binary names if a browser ever escapes the tunnel.
     cgroupApps = [
-      "firefox"
+      "brave"
       "librewolf"
-      "google-chrome"
+      "firefox"
+      "zen"
       "transmission"
     ];
 

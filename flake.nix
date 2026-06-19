@@ -105,6 +105,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-laptop = import ./home/laptop-desktop.nix;
           }
         ];
@@ -120,6 +121,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-laptop = import ./home/laptop-dev.nix;
           }
         ];
@@ -135,6 +137,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-laptop = import ./home/laptop-productivity.nix;
           }
         ];
@@ -151,6 +154,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-laptop = import ./home/laptop-creative.nix;
           }
         ];
@@ -168,6 +172,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-laptop = import ./home/laptop.nix;
           }
         ];
@@ -196,6 +201,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-framework = import ./home/framework-desktop.nix;
           }
         ];
@@ -211,6 +217,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-framework = import ./home/framework-dev.nix;
           }
         ];
@@ -226,6 +233,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-framework = import ./home/framework-productivity.nix;
           }
         ];
@@ -242,6 +250,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-framework = import ./home/framework-creative.nix;
           }
         ];
@@ -259,6 +268,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-framework = import ./home/framework.nix;
           }
         ];
@@ -287,6 +297,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-desktop = import ./home/devtower-desktop.nix;
           }
         ];
@@ -302,6 +313,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-desktop = import ./home/devtower-dev.nix;
           }
         ];
@@ -317,6 +329,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-desktop = import ./home/devtower-productivity.nix;
           }
         ];
@@ -333,6 +346,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-desktop = import ./home/devtower-creative.nix;
           }
         ];
@@ -350,6 +364,7 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "hm-backup";
             home-manager.users.sam-desktop = import ./home/devtower.nix;
           }
         ];
