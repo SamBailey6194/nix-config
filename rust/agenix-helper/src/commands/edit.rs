@@ -15,11 +15,18 @@ pub fn run(repo_root: &Path, secret: &str) -> Result<()> {
 
     crate::print_info(&format!("Editing secret: {}", secret_name));
 
-    // Run agenix -e <secret>
-    let secret_path_str = secret_path
-        .to_str()
-        .context("Secret path contains invalid UTF-8")?;
-    crate::run_agenix(&["-e", secret_path_str])?;
+    // agenix resolves BOTH its rules file (defaults to ./secrets.nix) and the
+    // secret's attribute key relative to the current working directory. Run it
+    // from inside secrets/ and pass the bare filename so it reads
+    // secrets/secrets.nix (not a non-existent root-level secrets.nix) and the
+    // lookup matches the relative keys declared there.
+    std::env::set_current_dir(&secrets_dir).with_context(|| {
+        format!(
+            "Failed to enter secrets directory: {}",
+            secrets_dir.display()
+        )
+    })?;
+    crate::run_agenix(&["-e", &secret_name])?;
 
     crate::print_success("Secret edited successfully");
 
