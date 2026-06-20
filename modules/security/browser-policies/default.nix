@@ -20,6 +20,51 @@ let
   cfg = config.services.browserPolicies;
   system = pkgs.stdenv.hostPlatform.system;
   bs = inputs.browser_setup;
+
+  # Import raw policies from browser_setup so we can merge search/UI additions
+  firefoxBase =
+    (lib.importJSON (bs + "/policies/firefox-developer/policies.json")).policies;
+  librewolfBase =
+    lib.importJSON (bs + "/policies/librewolf/policies.json");
+  zenBase =
+    lib.importJSON (bs + "/policies/zen/policies.json");
+  braveBase =
+    lib.importJSON (bs + "/policies/brave/managed/syntek-accountability.json");
+
+  # Shared search engine definitions (Gecko/Firefox policy format)
+  braveSearchEngine = {
+    Name = "Brave Search";
+    URLTemplate = "https://search.brave.com/search?q={searchTerms}";
+    IconURL = "https://search.brave.com/favicon.ico";
+    Alias = "@brave";
+    Description = "Brave Search";
+  };
+  startpageEngine = {
+    Name = "Startpage";
+    URLTemplate = "https://www.startpage.com/do/search?q={searchTerms}";
+    IconURL = "https://www.startpage.com/favicon.ico";
+    Alias = "@sp";
+    Description = "Startpage - Private search engine";
+  };
+  mojeekEngine = {
+    Name = "Mojeek";
+    URLTemplate = "https://www.mojeek.com/search?q={searchTerms}";
+    IconURL = "https://www.mojeek.com/favicon.ico";
+    Alias = "@mj";
+    Description = "Mojeek - Independent search engine";
+  };
+
+  # Helper: Gecko (Firefox-family) search + UI policy overlay
+  geckoSearchUI = engines: default: {
+    policies = {
+      SearchEngines = {
+        Default = default;
+        Add = engines;
+      };
+      NoDefaultBookmarks = true;
+      DisplayBookmarksToolbar = "never";
+    };
+  };
 in
 {
   options.services.browserPolicies = {
@@ -41,14 +86,22 @@ in
     # LibreWolf / Zen (Gecko forks): read /etc/<app>/policies/policies.json (the
     # Linux system policy location).
     environment.etc = {
-      "brave/policies/managed/syntek-accountability.json".source =
-        bs + "/policies/brave/managed/syntek-accountability.json";
+      "brave/policies/managed/syntek-accountability.json".text =
+        builtins.toJSON (lib.recursiveUpdate braveBase {
+          DefaultSearchProviderEnabled = true;
+          DefaultSearchProviderName = "Brave Search";
+          DefaultSearchProviderSearchURL = "https://search.brave.com/search?q={searchTerms}";
+          DefaultSearchProviderSuggestURL = "https://search.brave.com/api/suggest?q={searchTerms}";
+          BookmarkBarEnabled = false;
+        });
 
-      "librewolf/policies/policies.json".source =
-        bs + "/policies/librewolf/policies.json";
+      "librewolf/policies/policies.json".text =
+        builtins.toJSON (lib.recursiveUpdate librewolfBase
+          (geckoSearchUI [ mojeekEngine ] "Mojeek"));
 
-      "zen/policies/policies.json".source =
-        bs + "/policies/zen/policies.json";
+      "zen/policies/policies.json".text =
+        builtins.toJSON (lib.recursiveUpdate zenBase
+          (geckoSearchUI [ braveSearchEngine startpageEngine ] "Brave Search"));
 
       # QUIC backstop rule, loaded by the service below. Hashed by the watcher.
       "nftables.d/squid-quic-block.nft".source =
@@ -59,7 +112,14 @@ in
     # is delivered through the native option so it merges with the firefox
     # module's own generated /etc/firefox/policies/policies.json (single writer).
     programs.firefox.policies =
-      (lib.importJSON (bs + "/policies/firefox-developer/policies.json")).policies;
+      lib.recursiveUpdate firefoxBase {
+        SearchEngines = {
+          Default = "Brave Search";
+          Add = [ braveSearchEngine startpageEngine ];
+        };
+        NoDefaultBookmarks = true;
+        DisplayBookmarksToolbar = "never";
+      };
 
     # --------------------------------------------------- QUIC firewall backstop
     # Reject outbound UDP/443 so QUIC/HTTP-3 fails fast and every browser falls

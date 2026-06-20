@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   # Nix-specific settings and optimizations
@@ -51,10 +51,19 @@
     };
   };
 
+  # Affinity Apps overlay (makes pkgs.affinity-{designer,photo,publisher} available)
+  nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
+
   # nixpkgs configuration
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = false;
+    # LibreWolf lacks an active nixpkgs committer but remains maintained
+    # upstream — allow it until a new packager adopts it.
+    permittedInsecurePackages = [
+      "librewolf-151.0.2-1"
+      "librewolf-unwrapped-151.0.2-1"
+    ];
   };
 
   # ============================================================================

@@ -55,11 +55,10 @@
     tree
     btop
     fastfetch
-  ] ++ [
-    # Affinity Apps (via Wine - from affinity-nix flake)
-    inputs.affinity-nix.packages.${pkgs.stdenv.hostPlatform.system}.designer
-    inputs.affinity-nix.packages.${pkgs.stdenv.hostPlatform.system}.photo
-    inputs.affinity-nix.packages.${pkgs.stdenv.hostPlatform.system}.publisher
+    # Affinity Apps (via overlay — see nix-settings.nix)
+    affinity-designer
+    affinity-photo
+    affinity-publisher
   ];
 
   # Enable zsh

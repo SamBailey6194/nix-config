@@ -28,6 +28,6 @@
     };
   };
 
-  # Backlight Control
-  programs.light.enable = true;
+  # Backlight Control (brightnessctl installed in home packages)
+  hardware.acpilight.enable = true;
 }

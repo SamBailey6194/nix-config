@@ -6,6 +6,7 @@
 
   programs.firefox = {
     enable = true;
+    configPath = ".mozilla/firefox"; # Keep legacy path (changed in HM 26.05)
 
     profiles.default = {
       id = 0;
@@ -14,22 +15,22 @@
 
       # Search engines
       search = {
-        default = "ddg";
+        default = "brave-search";
         force = true;
 
         engines = {
-          "ddg" = {
-            name = "DuckDuckGo";
-            urls = [{ template = "https://duckduckgo.com/?q={searchTerms}"; }];
-            icon = "https://duckduckgo.com/favicon.ico";
-            definedAliases = [ "@ddg" ];
+          "brave-search" = {
+            name = "Brave Search";
+            urls = [{ template = "https://search.brave.com/search?q={searchTerms}"; }];
+            icon = "https://search.brave.com/favicon.ico";
+            definedAliases = [ "@brave" ];
           };
 
-          "google" = {
-            name = "Google";
-            urls = [{ template = "https://www.google.com/search?q={searchTerms}"; }];
-            icon = "https://www.google.com/favicon.ico";
-            definedAliases = [ "@g" ];
+          "startpage" = {
+            name = "Startpage";
+            urls = [{ template = "https://www.startpage.com/do/search?q={searchTerms}"; }];
+            icon = "https://www.startpage.com/favicon.ico";
+            definedAliases = [ "@sp" ];
           };
 
           "github" = {
@@ -106,6 +107,13 @@
         # HTTPS-Only mode
         "dom.security.https_only_mode" = true;
         "dom.security.https_only_mode_ever_enabled" = true;
+
+        # Vertical tabs (Firefox 136+)
+        "sidebar.verticalTabs" = true;
+        "sidebar.revamp" = true;
+
+        # Hide bookmarks toolbar
+        "browser.toolbars.bookmarks.visibility" = "never";
       };
 
       # Extensions (Note: Some extensions need manual setup after installation)
@@ -136,18 +144,25 @@
       # Downloads
       "browser.download.useDownloadDir" = true;
       "browser.download.folderList" = 1;
+
+      # Vertical tabs (Firefox 136+)
+      "sidebar.verticalTabs" = true;
+      "sidebar.revamp" = true;
+
+      # Hide bookmarks toolbar
+      "browser.toolbars.bookmarks.visibility" = "never";
     };
   };
 
-  # Set default browser (LibreWolf for privacy, Firefox as backup)
+  # Set Zen as default browser
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html" = "librewolf.desktop";
-      "x-scheme-handler/http" = "librewolf.desktop";
-      "x-scheme-handler/https" = "librewolf.desktop";
-      "x-scheme-handler/about" = "librewolf.desktop";
-      "x-scheme-handler/unknown" = "librewolf.desktop";
+      "text/html" = "zen-beta.desktop";
+      "x-scheme-handler/http" = "zen-beta.desktop";
+      "x-scheme-handler/https" = "zen-beta.desktop";
+      "x-scheme-handler/about" = "zen-beta.desktop";
+      "x-scheme-handler/unknown" = "zen-beta.desktop";
     };
   };
 }

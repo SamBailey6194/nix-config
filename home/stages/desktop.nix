@@ -116,6 +116,7 @@
       name = "Adwaita-dark";
       package = pkgs.gnome-themes-extra;
     };
+    gtk4.theme = null; # New default in HM 26.05 — GTK4 apps use libadwaita
     iconTheme = {
       name = "Adwaita";
       package = pkgs.adwaita-icon-theme;
@@ -161,21 +162,21 @@
     XDG_SESSION_TYPE = "wayland";
   };
 
-  # Set LibreWolf as default browser
+  # Set Zen as default browser
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html" = "librewolf.desktop";
-      "x-scheme-handler/http" = "librewolf.desktop";
-      "x-scheme-handler/https" = "librewolf.desktop";
-      "x-scheme-handler/about" = "librewolf.desktop";
-      "x-scheme-handler/unknown" = "librewolf.desktop";
-      "application/x-extension-htm" = "librewolf.desktop";
-      "application/x-extension-html" = "librewolf.desktop";
-      "application/x-extension-shtml" = "librewolf.desktop";
-      "application/xhtml+xml" = "librewolf.desktop";
-      "application/x-extension-xhtml" = "librewolf.desktop";
-      "application/x-extension-xht" = "librewolf.desktop";
+      "text/html" = "zen-beta.desktop";
+      "x-scheme-handler/http" = "zen-beta.desktop";
+      "x-scheme-handler/https" = "zen-beta.desktop";
+      "x-scheme-handler/about" = "zen-beta.desktop";
+      "x-scheme-handler/unknown" = "zen-beta.desktop";
+      "application/x-extension-htm" = "zen-beta.desktop";
+      "application/x-extension-html" = "zen-beta.desktop";
+      "application/x-extension-shtml" = "zen-beta.desktop";
+      "application/xhtml+xml" = "zen-beta.desktop";
+      "application/x-extension-xhtml" = "zen-beta.desktop";
+      "application/x-extension-xht" = "zen-beta.desktop";
     };
   };
 }

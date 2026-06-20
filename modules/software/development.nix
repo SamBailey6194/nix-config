@@ -60,8 +60,8 @@
     # Intelephense LSP is downloaded automatically by Zed's PHP extension
 
     # Language servers (shared by Zed, Neovim, and other editors)
-    nodePackages.typescript-language-server  # TypeScript/JavaScript
-    nodePackages.vscode-langservers-extracted  # HTML, CSS, JSON, ESLint
+    typescript-language-server  # TypeScript/JavaScript
+    vscode-langservers-extracted  # HTML, CSS, JSON, ESLint
     pyright                                    # Python type checking
     # rust-analyzer provided by rustup (rustup component add rust-analyzer)
     nixd                                       # Nix language server (used by Zed)
@@ -71,8 +71,8 @@
 
     # Linters and formatters (shared by all editors)
     ruff                                       # Python linter + formatter (fast!)
-    nodePackages.prettier                      # JS/TS/JSON/YAML/Markdown formatter
-    nodePackages.eslint                        # JavaScript/TypeScript linter
+    prettier                      # JS/TS/JSON/YAML/Markdown formatter
+    eslint                        # JavaScript/TypeScript linter
 
     # Document conversion (markdown/html/docx/... -> PDF and between formats)
     pandoc                                     # universal document converter

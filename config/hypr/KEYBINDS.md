@@ -10,8 +10,10 @@
 | `SUPER + Z`          | Zed editor              |
 | `SUPER + SHIFT + Z`  | Dev layout (Zed + 2 terminals) |
 | `SUPER + F`          | File manager (Thunar)   |
-| `SUPER + W`          | LibreWolf browser       |
-| `SUPER + SHIFT + W`  | Firefox browser         |
+| `SUPER + W`          | Zen browser (default)   |
+| `SUPER + SHIFT + W`  | Brave browser           |
+| `SUPER + ALT + W`    | LibreWolf browser       |
+| `SUPER + CTRL + W`   | Firefox Developer Ed.   |
 | `SUPER + T`          | Teams                   |
 | `SUPER + C`          | Zoom                    |
 | `SUPER + R`          | RustDesk                |

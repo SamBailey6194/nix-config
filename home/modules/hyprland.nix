@@ -14,6 +14,7 @@
 
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "hyprlang"; # Keep hyprlang — our config files use this format
 
     # CRITICAL: Use the Hyprland package from NixOS module, not Home Manager
     # This prevents duplicate systemd services and symlink conflicts

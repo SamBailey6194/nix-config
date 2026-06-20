@@ -47,7 +47,6 @@
     wrk # HTTP benchmarking
     hey # HTTP load generator
     vegeta # constant-rate HTTP load testing
-    siege # HTTP load / stress testing
     hping # custom TCP/IP packet crafting (SYN floods, etc.)
     slowhttptest # slow-HTTP (slowloris) DoS testing
   ];

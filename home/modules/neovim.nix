@@ -11,6 +11,8 @@
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;
+    withRuby = false;    # Not needed — using LSP directly
+    withPython3 = false; # Not needed — using LSP directly
 
     # Neovim plugins
     plugins = with pkgs.vimPlugins; [
