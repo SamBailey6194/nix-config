@@ -62,6 +62,9 @@
 
       # Zed editor (nixpkgs installs as 'zeditor' to avoid name conflict)
       zed = "zeditor";
+
+      # Claude Code Monitor — start the local monitor server in a clean terminal
+      ccm = "cd ${config.home.homeDirectory}/Repos/claude-code-monitor && clear && npm start";
     };
 
     # Session variables
