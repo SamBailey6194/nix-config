@@ -179,20 +179,22 @@ diff:
 # ============================================================================
 
 # Build Rust tools
+# Run via `nix develop` so the C deps reqwest needs (openssl + pkg-config) are
+# present — a bare `cargo build` outside the dev shell fails on openssl-sys.
 build-rust:
-    cd rust && cargo build --release
+    nix develop -c bash -c 'cd rust && cargo build --release'
 
 # Test Rust tools
 test-rust:
-    cd rust && cargo test
+    nix develop -c bash -c 'cd rust && cargo test'
 
 # Lint Rust code
 lint-rust:
-    cd rust && cargo clippy
+    nix develop -c bash -c 'cd rust && cargo clippy'
 
 # Format Rust code
 format-rust:
-    cd rust && cargo fmt
+    nix develop -c bash -c 'cd rust && cargo fmt'
 
 # Enter nix dev shell with Rust tools
 dev:

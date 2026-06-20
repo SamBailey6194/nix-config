@@ -1,0 +1,79 @@
+--- a/src/main.rs	2026-06-20 18:45:36.074040904 +0100
++++ b/src/main.rs	2026-06-20 18:45:36.074890736 +0100
+@@ -629,37 +629,57 @@
+ fn run_watch_proxy(cfg: &Config) -> Result<(), String> {
+     if running_as_root() {
+         return Err(
+-            "watch-proxy must run as the desktop user, not root (the GNOME proxy is per-user). \
++            "watch-proxy must run as the desktop user, not root. \
+              Use `systemctl --user`, not the system service."
+                 .to_string(),
+         );
+     }
+ 
++    // NixOS / Hyprland (Wayland) has no GNOME system proxy — gsettings always
++    // reads 'none', which is NOT a tamper signal here. Enforcement on this fleet
++    // is the LOCKED, nix-deployed browser policy files that pin every browser to
++    // the local squid filter (127.0.0.1:3128). So verify THOSE (the nix
++    // configuration) from the user's session instead of the GNOME proxy.
++    //
++    // We check the browser policy files among SD_PROTECTION_FILES (paths under
++    // ".../policies"); the nftables backstop in that same list is not a browser
++    // policy and is covered by the root watcher's hash check, so it is skipped
++    // here. A missing/unreadable file is likewise a tamper signal already caught
++    // by the root watcher, so we do not double-alert on it.
+     let mut problems: Vec<String> = Vec::new();
+-    match gnome_proxy_mode() {
+-        Some(mode) if mode == "manual" => {
+-            if let Some(host) = gnome_proxy_host() {
+-                if host != "127.0.0.1" && !host.is_empty() {
+-                    problems.push(format!("The system proxy host was changed to '{host}'."));
++    let mut checked = 0u32;
++
++    for path in &cfg.protection_files {
++        if !path.contains("/policies") {
++            continue; // not a browser policy (e.g. the nftables QUIC backstop)
++        }
++        match fs::read_to_string(path) {
++            Ok(content) => {
++                checked += 1;
++                // Both Chromium-family ("ProxyServer":"127.0.0.1:3128") and
++                // Gecko-family ("HTTPProxy"/"SSLProxy":"127.0.0.1:3128") policies
++                // contain this literal when browsing is pinned to the filter.
++                if !content.contains("127.0.0.1:3128") {
++                    problems.push(format!(
++                        "A browser is no longer forced through the local filter \
++                         (proxy 127.0.0.1:3128 missing from its policy): {path}."
++                    ));
+                 }
+             }
++            Err(_) => {} // missing/unreadable -> root watcher's hash check owns this
+         }
+-        Some(mode) => {
+-            problems.push(format!(
+-                "The system proxy setting was changed away from manual (now '{mode}'). \
+-                 Web traffic may no longer go through the filter."
+-            ));
+-        }
+-        None => {
+-            // No reading available (e.g. no desktop session this run). Don't
+-            // alarm on it — a false alert here would erode trust. Just note it.
+-            println!("watch-proxy: note: could not read the proxy setting this run; skipped.");
+-            return Ok(());
+-        }
++    }
++
++    if checked == 0 {
++        // No readable browser policy files this run: a check we couldn't run,
++        // not a detected change. Note it, never alarm (a false alert here would
++        // erode trust).
++        println!("watch-proxy: note: no readable browser policy files this run; skipped.");
++        return Ok(());
+     }
+ 
+     if problems.is_empty() {
+-        println!("watch-proxy: proxy still pointed at the filter");
++        println!("watch-proxy: browsers still forced through the filter");
+         return Ok(());
+     }
+ 

@@ -35,6 +35,15 @@ rustPlatform.buildRustPackage {
   src = accountability_script + "/squid-digest";
   cargoLock.lockFile = accountability_script + "/squid-digest/Cargo.lock";
 
+  # Local fix (not yet upstreamed): the per-user `watch-proxy` checks the GNOME
+  # system proxy, which does not exist on Hyprland/Wayland (gsettings always
+  # reads 'none'), so it false-alarmed an alert email every run. This patch
+  # makes watch-proxy verify the nix-deployed, LOCKED browser policy files (the
+  # actual enforcement on this fleet — they pin every browser to 127.0.0.1:3128)
+  # instead of the GNOME proxy. Authored against accountability_script rev
+  # 8de97b1; if you bump that flake input, re-check / regenerate this patch.
+  patches = [ ./watch-proxy-check-nix-policies.patch ];
+
   # lettre uses rustls (pure Rust) -> NO openssl / pkg-config needed. The only
   # native build is `ring`, which needs a C compiler (provided by stdenv cc).
   nativeBuildInputs = [ makeWrapper ];
