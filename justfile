@@ -131,13 +131,31 @@ vault-status:
 # NixOS System Management
 # ============================================================================
 
-# Rebuild current system configuration
-rebuild:
-    sudo nixos-rebuild switch --flake .
+# Rebuild current system configuration ("just rebuild" switches live; "just rebuild --boot" applies on next boot)
+rebuild *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    action="switch"
+    for a in {{ARGS}}; do
+      case "$a" in
+        --boot|boot) action="boot" ;;
+        *) echo "rebuild: unknown argument '$a' (only --boot is supported)" >&2; exit 1 ;;
+      esac
+    done
+    sudo nixos-rebuild "$action" --flake .
 
-# Rebuild specific host
-rebuild-host HOST:
-    sudo nixos-rebuild switch --flake .#{{HOST}}
+# Rebuild specific host ("just rebuild-host laptop-intel --boot" to apply on next boot)
+rebuild-host HOST *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    action="switch"
+    for a in {{ARGS}}; do
+      case "$a" in
+        --boot|boot) action="boot" ;;
+        *) echo "rebuild-host: unknown argument '$a' (only --boot is supported)" >&2; exit 1 ;;
+      esac
+    done
+    sudo nixos-rebuild "$action" --flake .#{{HOST}}
 
 # Build without switching (test configuration)
 build:
