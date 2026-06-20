@@ -103,23 +103,29 @@ in
         builtins.toJSON (lib.recursiveUpdate zenBase
           (geckoSearchUI [ braveSearchEngine startpageEngine ] "Brave Search"));
 
+      # Firefox Developer Edition reads /etc/firefox/policies/policies.json (the
+      # standard Linux system policy path). Delivered directly here — not via
+      # programs.firefox — so it no longer depends on regular Firefox being
+      # installed (it isn't, on this system). Single writer for this path.
+      "firefox/policies/policies.json".text = builtins.toJSON {
+        policies = lib.recursiveUpdate firefoxBase {
+          SearchEngines = {
+            Default = "Brave Search";
+            Add = [ braveSearchEngine startpageEngine ];
+          };
+          NoDefaultBookmarks = true;
+          DisplayBookmarksToolbar = "never";
+        };
+      };
+
       # QUIC backstop rule, loaded by the service below. Hashed by the watcher.
       "nftables.d/squid-quic-block.nft".source =
         bs + "/network/squid-quic-block.nft";
     };
 
-    # Firefox (incl. Firefox Developer Edition, which shares /etc/firefox/policies)
-    # is delivered through the native option so it merges with the firefox
-    # module's own generated /etc/firefox/policies/policies.json (single writer).
-    programs.firefox.policies =
-      lib.recursiveUpdate firefoxBase {
-        SearchEngines = {
-          Default = "Brave Search";
-          Add = [ braveSearchEngine startpageEngine ];
-        };
-        NoDefaultBookmarks = true;
-        DisplayBookmarksToolbar = "never";
-      };
+    # Firefox Developer Edition's policies are delivered via environment.etc
+    # above ("firefox/policies/policies.json"), NOT via programs.firefox, because
+    # regular Firefox is no longer installed on this system.
 
     # --------------------------------------------------- QUIC firewall backstop
     # Reject outbound UDP/443 so QUIC/HTTP-3 fails fast and every browser falls

@@ -130,7 +130,6 @@
     cgroupApps = [
       "brave"
       "librewolf"
-      "firefox"
       "zen"
       "transmission"
     ];

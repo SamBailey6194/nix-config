@@ -17,7 +17,7 @@
 
   imports = [
     ./fonts.nix                    # System fonts
-    ../software/browsers.nix       # LibreWolf, Firefox, Chrome
+    ../software/browsers.nix       # LibreWolf (managed set via browser-policies)
     ../software/communication.nix  # Discord, Teams, Zoom, Slack, Obsidian
     ../software/media.nix          # VLC, Spotify, image viewers
     ../software/development.nix    # VS Code, Docker, language tools

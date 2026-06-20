@@ -66,8 +66,8 @@
 
     # Session variables
     sessionVariables = {
-      # Browser
-      BROWSER = "${pkgs.google-chrome}/bin/google-chrome-stable";
+      # Browser (Zen is the default browser on this system)
+      BROWSER = "zen-beta";
 
       # UV package manager - use copy mode for cross-filesystem installs
       UV_LINK_MODE = "copy";

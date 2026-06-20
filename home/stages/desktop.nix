@@ -9,7 +9,7 @@
     ./base.nix
     ../modules/hyprland.nix  # Hyprland Wayland compositor
     ../modules/shell.nix     # Zsh + Oh My Zsh
-    ../modules/browsers.nix  # Firefox & LibreWolf with shared settings
+    ../modules/browsers.nix  # LibreWolf profile + Zen default browser
   ];
 
   # Desktop-only packages

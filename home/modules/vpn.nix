@@ -7,22 +7,6 @@
 
   # Override desktop entries to ALWAYS launch browsers through VPN
   xdg.desktopEntries = {
-    firefox = {
-      name = "Firefox";
-      icon = "firefox";
-      exec = "vpn-app firefox %U";
-      categories = [ "Network" "WebBrowser" ];
-      mimeType = [
-        "text/html"
-        "text/xml"
-        "application/xhtml+xml"
-        "application/vnd.mozilla.xul+xml"
-        "x-scheme-handler/http"
-        "x-scheme-handler/https"
-      ];
-      comment = "Browse the Web (via VPN)";
-    };
-
     librewolf = {
       name = "LibreWolf";
       icon = "librewolf";
@@ -39,20 +23,6 @@
       comment = "Browse the Web (via VPN)";
     };
 
-    "google-chrome" = {
-      name = "Google Chrome";
-      icon = "google-chrome";
-      exec = "vpn-app google-chrome %U";
-      categories = [ "Network" "WebBrowser" ];
-      mimeType = [
-        "text/html"
-        "text/xml"
-        "application/xhtml+xml"
-        "x-scheme-handler/http"
-        "x-scheme-handler/https"
-      ];
-      comment = "Browse the Web (via VPN)";
-    };
   };
 
   # Shell aliases for VPN management and direct browser access
@@ -64,13 +34,9 @@
     vpn-status = "sudo systemctl status wg-quick-mullvad0";
 
     # Browsers through VPN (default behavior, but explicit for clarity)
-    firefox-vpn = "vpn-app firefox";
-    chrome-vpn = "vpn-app google-chrome";
     librewolf-vpn = "vpn-app librewolf";
 
     # Direct browser access (bypass VPN if needed for troubleshooting)
-    firefox-direct = "firefox";
-    chrome-direct = "google-chrome";
     librewolf-direct = "librewolf";
 
     # Torrent client always through VPN
@@ -84,12 +50,8 @@
     vpn-restart = "sudo systemctl restart wg-quick-mullvad0";
     vpn-status = "sudo systemctl status wg-quick-mullvad0";
 
-    firefox-vpn = "vpn-app firefox";
-    chrome-vpn = "vpn-app google-chrome";
     librewolf-vpn = "vpn-app librewolf";
 
-    firefox-direct = "firefox";
-    chrome-direct = "google-chrome";
     librewolf-direct = "librewolf";
 
     transmission-vpn = "vpn-app transmission-gtk";

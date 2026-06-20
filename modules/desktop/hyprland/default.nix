@@ -77,9 +77,6 @@
     # PDF viewer
     zathura
 
-    # Web browser
-    firefox
-
     # Network management
     networkmanagerapplet
 

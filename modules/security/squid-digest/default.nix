@@ -43,6 +43,17 @@ let
 
     # Keep full hostnames (don't strip), but drop query terms for privacy.
     strip_query_terms on
+
+    # DNS resilience — make name resolution independent of the VPN.
+    # Squid reads its nameservers once at startup; NetworkManager/wg-quick then
+    # rewrite /etc/resolv.conf afterwards (e.g. when the Mullvad VPN goes up or
+    # down), leaving Squid querying dead servers — so every hostname CONNECT
+    # times out while raw-IP requests still succeed. Pinning explicit public
+    # resolvers makes resolution work whether the VPN is up or down, and on any
+    # network (mobile/multi-homed friendly). dns_v4_first avoids stalls when
+    # IPv6 egress is unavailable.
+    dns_nameservers 1.1.1.1 1.0.0.1 9.9.9.9
+    dns_v4_first on
   '';
   acctSquidConfFile = pkgs.writeText "squid-accountability.conf" acctSquidConf;
 
