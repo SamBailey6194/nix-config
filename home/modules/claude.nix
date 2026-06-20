@@ -18,7 +18,36 @@ let
   claudeBin = lib.getExe pkgs.claude-code;
   nodeBin = "${pkgs.nodejs}/bin/node";
   npmBin = "${pkgs.nodejs}/bin/npm";
-  npxBin = "${pkgs.nodejs}/bin/npx";
+
+  # mcp-mermaid renders diagrams with Playwright-driven Chromium, which is a
+  # poor fit for NixOS in two ways:
+  #   1. Its npm postinstall runs `playwright install --with-deps chromium`, which
+  #      apt/sudo-installs system libs (no tty, no apt on NixOS) → exits 1, aborts
+  #      the install, corrupts the npx cache → JSON-RPC -32000 at connect time.
+  #   2. Playwright pins an exact Chromium *revision* per version; the prebuilt
+  #      binary won't run on NixOS anyway, so we use nixpkgs' browsers bundle.
+  # Fix: install mcp-mermaid into a fixed dir with --ignore-scripts (skips the
+  # failing browser download) and pin Playwright to playwright-driver's version
+  # so its expected Chromium revision matches the nixpkgs bundle. Sourcing the pin
+  # from playwright-driver means `nix flake update` moves the override and the
+  # browser bundle together — no manual revision chasing.
+  playwrightBrowsers = "${pkgs.playwright-driver.browsers}";
+  playwrightVersion = pkgs.playwright-driver.version;
+  mcpMermaidVersion = "0.4.1";
+  mcpMermaidDir = "${homeDir}/.claude/mcp-mermaid";
+  mcpMermaidEntry = "${mcpMermaidDir}/node_modules/mcp-mermaid/build/index.js";
+  mcpMermaidPkgJson = builtins.toJSON {
+    name = "mcp-mermaid-pinned";
+    version = "1.0.0";
+    private = true;
+    dependencies."mcp-mermaid" = mcpMermaidVersion;
+    # Force every transitive Playwright onto the version whose Chromium revision
+    # the nixpkgs browsers bundle actually ships.
+    overrides = {
+      playwright = playwrightVersion;
+      playwright-core = playwrightVersion;
+    };
+  };
 
   monitorRepo = "https://github.com/bruceyxli/claude-code-monitor.git";
   monitorDir = "${homeDir}/Repos/claude-code-monitor";
@@ -161,18 +190,40 @@ in
     fi
   '';
 
+  # Install mcp-mermaid into a fixed dir with Playwright pinned to the nixpkgs
+  # browsers bundle (best-effort; needs network on first run / version bump).
+  # See the playwright notes in the let block above for why this is necessary.
+  home.activation.mcpMermaid = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    mkdir -p "${mcpMermaidDir}"
+    printf '%s' ${lib.escapeShellArg mcpMermaidPkgJson} > "${mcpMermaidDir}/package.json"
+    want='${mcpMermaidVersion}-${playwrightVersion}'
+    if [ ! -f "${mcpMermaidEntry}" ] || [ "$(cat "${mcpMermaidDir}/.pinned" 2>/dev/null)" != "$want" ]; then
+      ( cd "${mcpMermaidDir}" \
+        && rm -rf node_modules package-lock.json \
+        && ${npmBin} install --ignore-scripts --no-audit --no-fund \
+        && printf '%s' "$want" > "${mcpMermaidDir}/.pinned" ) || true
+    fi
+  '';
+
   # Register the MCP servers at user scope, idempotently. ~/.claude.json is owned
   # and rewritten by Claude Code itself, so this uses `claude mcp add` rather than
   # managing that file. Context7's key comes from the agenix secret.
-  home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" "mcpMermaid" ] ''
     CLAUDE='${claudeBin}'
     if [ -r ${secretsFile} ]; then . ${secretsFile}; fi
 
     $CLAUDE mcp get figma >/dev/null 2>&1 || \
       $CLAUDE mcp add --scope user --transport http figma https://mcp.figma.com/mcp || true
 
-    $CLAUDE mcp get mcp-mermaid >/dev/null 2>&1 || \
-      $CLAUDE mcp add --scope user mcp-mermaid -- ${npxBin} -y mcp-mermaid || true
+    # Re-register each activation so the Playwright env (browser path) and the
+    # pinned-install entrypoint stay in sync with this config; a stale entry can't
+    # render diagrams. Runs the locally-installed build, not `npx`, so the pinned
+    # Playwright (see mcpMermaid activation) is used.
+    $CLAUDE mcp remove --scope user mcp-mermaid >/dev/null 2>&1 || true
+    $CLAUDE mcp add --scope user mcp-mermaid \
+      --env PLAYWRIGHT_BROWSERS_PATH=${playwrightBrowsers} \
+      --env PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 \
+      -- ${nodeBin} ${mcpMermaidEntry} || true
 
     if [ -n "''${CONTEXT7_API_KEY:-}" ]; then
       $CLAUDE mcp get context7 >/dev/null 2>&1 || \
