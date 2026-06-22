@@ -97,10 +97,21 @@ pub fn check_agenix_available() -> Result<PathBuf> {
 pub fn run_agenix(args: &[&str]) -> Result<()> {
     let agenix = check_agenix_available()?;
 
-    let status = Command::new(agenix)
-        .args(args)
-        .status()
-        .context("Failed to execute agenix")?;
+    let mut command = Command::new(agenix);
+    command.args(args);
+
+    // agenix only auto-discovers ~/.ssh/id_rsa and ~/.ssh/id_ed25519, but this
+    // repo uses a dedicated per-device key (~/.ssh/id_ed25519_agenix, see
+    // secrets/secrets.nix). Pass it explicitly when present so `edit` and
+    // `rekey` can decrypt; both agenix `-e` and `-r` accept `-i`.
+    if let Ok(home) = std::env::var("HOME") {
+        let identity = PathBuf::from(home).join(".ssh/id_ed25519_agenix");
+        if identity.exists() {
+            command.arg("-i").arg(&identity);
+        }
+    }
+
+    let status = command.status().context("Failed to execute agenix")?;
 
     if !status.success() {
         anyhow::bail!("agenix command failed");
