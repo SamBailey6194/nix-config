@@ -1,5 +1,11 @@
 { config, pkgs, ... }:
 
+let
+  # opengrep is not in nixpkgs (upstream ships only a dev-shell flake), so it is
+  # built from the prebuilt release binary. callPackage keeps it dependent on
+  # `pkgs` only, so it resolves in every stage/host that imports this file.
+  opengrep = pkgs.callPackage ../../pkgs/opengrep.nix { };
+in
 {
   # Stage 3: Development
   # Everything from desktop + Git + Editors + Dev CLI tools
@@ -38,6 +44,14 @@
     tree
     wget
     curl
+
+    # Security / cloud / infra CLIs
+    cosign      # Sigstore container/artifact signing & verification
+    awscli2     # AWS CLI v2
+    stripe-cli  # Stripe CLI (webhooks, API testing)
+    terraform   # IaC (unfree/BSL 1.1 — allowUnfree enabled via nix-settings.nix)
+    opentofu    # IaC — FOSS (MPL 2.0) fork of terraform, `tofu` binary
+    opengrep    # SAST scanner (from ../../pkgs/opengrep.nix; not in nixpkgs)
   ];
 
   # Editor environment variables
