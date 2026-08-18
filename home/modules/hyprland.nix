@@ -1,8 +1,9 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, osConfig ? null, ... }:
 
 {
   # Hyprland Wayland Compositor Configuration
-  # Uses modular .conf files from config/hypr/ for Hyprland settings
+  # Uses modular .lua files from config/hypr/ for Hyprland settings
+  # (Hyprland 0.56 Lua config provider — see hl.meta.lua stubs for the API)
   # Uses Nix for companion programs (waybar, wofi, etc.)
   #
   # NOTE: This Home Manager module ONLY provides user-level configuration.
@@ -14,7 +15,7 @@
 
   wayland.windowManager.hyprland = {
     enable = true;
-    configType = "hyprlang"; # Keep hyprlang — our config files use this format
+    configType = "lua"; # Lua config provider — our config files are .lua modules
 
     # CRITICAL: Use the Hyprland package from NixOS module, not Home Manager
     # This prevents duplicate systemd services and symlink conflicts
@@ -27,23 +28,65 @@
     # or via its own systemd integration
     systemd.enable = false;
 
-    # Source the modular .conf files instead of using Nix settings
-    # This allows easier editing with familiar Hyprland syntax
-    extraConfig = builtins.readFile ../../config/hypr/hyprland.conf;
+    # Modular Lua config files, deployed to ~/.config/hypr/<name>.lua.
+    #
+    # Home Manager generates ~/.config/hypr/hyprland.lua itself: it prepends
+    # ~/.config/hypr to Lua's package.path and then emits one require() per
+    # entry that has autoLoad = true. There is no hand-written manifest any
+    # more — the old config/hypr/hyprland.conf "source = ..." list is gone.
+    #
+    # LOAD ORDER: the generated require() calls are sorted by attribute name
+    # (home-manager .../hyprland/lib.nix, renderLuaFiles: `sort lib.lessThan`).
+    # Every name below is a fixed-width two-digit prefix, so lexicographic
+    # order and numeric order agree — 10 before 20 before ... before 80.
+    # This is why the numeric prefixes exist; do not rename them to bare words.
+    #
+    # Per-device overrides live in the device-specific home/*.nix files and use
+    # a "90-device" prefix so that they are required last and win.
+    extraLuaFiles = {
+      # Shared locals ($mod and friends). Returns a table and is pulled in with
+      # require("00-vars") by 60-keybinds, so it must NOT be auto-required by
+      # hyprland.lua — requiring it at top level would be a no-op at best.
+      "00-vars" = {
+        content = ../../config/hypr/00-vars.lua;
+        autoLoad = false;
+      };
+
+      # Everything below is auto-required, in this order.
+      "10-base" = ../../config/hypr/10-base.lua;
+      "20-monitors" = ../../config/hypr/20-monitors.lua;
+      "30-input" = ../../config/hypr/30-input.lua;
+      "40-appearance" = ../../config/hypr/40-appearance.lua;
+      "50-animations" = ../../config/hypr/50-animations.lua;
+      "60-keybinds" = ../../config/hypr/60-keybinds.lua;
+      "70-windowrules" = ../../config/hypr/70-windowrules.lua;
+      "80-autostart" = ../../config/hypr/80-autostart.lua;
+    };
   };
 
-  # Copy the modular config files to ~/.config/hypr/
-  # This allows Hyprland to source them at runtime
+  # Keybind cheat sheet — read by the Super+Slash keybind and by the laptop
+  # dashboard, so it stays a plain file rather than an extraLuaFiles entry.
   home.file = {
-    ".config/hypr/base.conf".source = ../../config/hypr/base.conf;
-    ".config/hypr/monitors.conf".source = ../../config/hypr/monitors.conf;
-    ".config/hypr/input.conf".source = ../../config/hypr/input.conf;
-    ".config/hypr/appearance.conf".source = ../../config/hypr/appearance.conf;
-    ".config/hypr/animations.conf".source = ../../config/hypr/animations.conf;
-    ".config/hypr/keybinds.conf".source = ../../config/hypr/keybinds.conf;
-    ".config/hypr/windowrules.conf".source = ../../config/hypr/windowrules.conf;
-    ".config/hypr/autostart.conf".source = ../../config/hypr/autostart.conf;
     ".config/hypr/KEYBINDS.md".source = ../../config/hypr/KEYBINDS.md;
+  };
+
+  # LuaLS stubs for editor completion on the hl.* API.
+  #
+  # Home Manager normally writes hypr/.luarc.json itself, but it guards that on
+  # `finalPackage != null` and we deliberately set package = null above (see the
+  # note there — a non-null package would duplicate the systemd services the
+  # NixOS module already provides). So we point at the stubs from the Hyprland
+  # package that the NixOS module installs instead. Mirrors the JSON that
+  # home-manager .../hyprland/default.nix (luaLanguageServerConfig) generates.
+  xdg.configFile."hypr/.luarc.json" = lib.mkIf (osConfig != null) {
+    text = builtins.toJSON {
+      workspace.library = [
+        "${
+          osConfig.programs.hyprland.finalPackage or osConfig.programs.hyprland.package
+        }/share/hypr/stubs"
+      ];
+      diagnostics.globals = [ "hl" ];
+    };
   };
 
   # Hyprpaper configuration (wallpaper daemon)
@@ -63,10 +106,15 @@
   services.hypridle = {
     enable = true;
     settings = {
+      # NOTE: under the Lua config provider, `hyprctl dispatch` wraps its
+      # argument as `hl.dispatch(<text>)`, so the legacy flat form
+      # (`hyprctl dispatch dpms on`) is a Lua syntax error and exits 7.
+      # Verified live on 0.56: the legacy form fails, `hl.dsp.dpms('on')`
+      # returns ok. Getting this wrong means the screen never wakes.
       general = {
         lock_cmd = "pidof hyprlock || hyprlock";
         before_sleep_cmd = "loginctl lock-session";
-        after_sleep_cmd = "hyprctl dispatch dpms on";
+        after_sleep_cmd = "hyprctl dispatch \"hl.dsp.dpms('on')\"";
       };
 
       listener = [
@@ -81,8 +129,8 @@
         }
         {
           timeout = 900; # 15 minutes
-          on-timeout = "hyprctl dispatch dpms off";
-          on-resume = "hyprctl dispatch dpms on";
+          on-timeout = "hyprctl dispatch \"hl.dsp.dpms('off')\"";
+          on-resume = "hyprctl dispatch \"hl.dsp.dpms('on')\"";
         }
       ];
     };

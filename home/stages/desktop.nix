@@ -49,7 +49,7 @@
     blueman
   ];
 
-  # Kitty terminal (launched via Super+Return — see config/hypr/keybinds.conf)
+  # Kitty terminal (launched via Super+Return — see config/hypr/60-keybinds.lua)
   programs.kitty = {
     enable = true;
     themeFile = "tokyo_night_night";  # Using themeFile instead of deprecated theme

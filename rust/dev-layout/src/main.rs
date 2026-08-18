@@ -28,10 +28,16 @@ fn main() -> Result<()> {
         .context("Failed to launch kitty")?;
     thread::sleep(Duration::from_millis(500));
 
-    // Focus left (Zed) and set split ratio
-    hyprctl(&["dispatch", "movefocus", "l"])?;
-    hyprctl(&["dispatch", "movefocus", "l"])?;
-    hyprctl(&["dispatch", "splitratio", "exact", "0.75"])?;
+    // Focus left (Zed) and set split ratio.
+    //
+    // Hyprland 0.56 runs a Lua config provider, under which `hyprctl dispatch`
+    // wraps its argument as `hl.dispatch(<text>)`. The legacy flat forms
+    // (`dispatch movefocus l`, `dispatch splitratio exact 0.75`) are therefore
+    // Lua syntax errors and exit 7, which would make this helper bail. Each
+    // dispatch must be a single argument holding a Lua expression.
+    hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
+    hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
+    hyprctl(&["dispatch", "hl.dsp.layout('splitratio exact 0.75')"])?;
 
     println!("{}", "Dev layout ready.".green());
     Ok(())

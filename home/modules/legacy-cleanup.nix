@@ -84,7 +84,17 @@
       if backup_and_remove ".config/zed/settings.json"; then FOUND_LEGACY=1; fi
       if backup_and_remove ".config/zed/keymap.json"; then FOUND_LEGACY=1; fi
 
-      # Hyprland configuration files
+      # Hyprland configuration files (legacy hyprlang .conf era)
+      #
+      # Hyprland 0.56 introduced the Lua config provider and this repo now
+      # deploys ~/.config/hypr/*.lua (hyprland.lua plus the numbered modules
+      # 00-vars .. 80-autostart and 90-device). The .conf files below are the
+      # superseded hyprlang originals: any left over from an earlier generation
+      # or from a pre-NixOS install would be dead weight at best and confusing
+      # at worst, so they are backed up and removed.
+      #
+      # Do NOT add .lua files here — those are the current, managed files and
+      # removing them would break the live configuration.
       if backup_and_remove ".config/hypr/hyprland.conf"; then FOUND_LEGACY=1; fi
       if backup_and_remove ".config/hypr/base.conf"; then FOUND_LEGACY=1; fi
       if backup_and_remove ".config/hypr/monitors.conf"; then FOUND_LEGACY=1; fi

@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-**Last Updated**: 22/02/2026
-**Version**: 1.4.0
+**Last Updated**: 18/08/2026
+**Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -124,7 +124,9 @@ nix-config/
 │
 ├── config/                 # Dotfiles (Phase 4: integrated with home-manager)
 │   ├── git/, zed/
-│   └── hypr/                  # Modular Hyprland configs (base + per-device)
+│   └── hypr/                  # Modular Hyprland Lua configs (Hyprland 0.56 Lua
+│                              #   config provider): 00-vars .. 80-autostart plus
+│                              #   devices/*.lua, deployed via extraLuaFiles
 │
 └── linters/                # Shared linter configs
 ```
