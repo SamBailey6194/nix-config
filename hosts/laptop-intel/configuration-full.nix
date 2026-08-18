@@ -102,13 +102,18 @@
   };
 
   # Mullvad WireGuard VPN with multi-hop rotation
-  # NOTE: Disabled until agenix secrets are verified decryptable on this host.
+  # STATUS (2026-08-18): DISABLED until the Mullvad subscription is renewed.
+  # While enabled-but-down, wg-quick-mullvad0 starts on every rebuild/boot and
+  # points /etc/resolv.conf at Mullvad's in-tunnel resolver, which is
+  # unreachable without a live tunnel — so all DNS resolution breaks. Flip
+  # `enable = true` to restore once the subscription is paid.
+  #
   # The kill switch (iptables -A OUTPUT -j REJECT) blocks ALL networking if the
   # VPN can't connect, which makes the system unusable. Enable incrementally:
   #   1. First: enable = true, enableKillSwitch = false (test VPN connects)
   #   2. Then: enableKillSwitch = true (once VPN is confirmed working)
   networking.wireguard-mullvad = {
-    enable = true;
+    enable = false;
     device = "laptop-intel";
 
     # Mullvad-assigned addresses for "sharp oyster" (laptop-intel public key).
