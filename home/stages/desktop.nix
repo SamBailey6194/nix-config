@@ -14,8 +14,7 @@
 
   # Desktop-only packages
   home.packages = with pkgs; [
-    # Terminal (kitty is configured in home/common.nix)
-    # kitty is already available via programs.kitty.enable
+    # Terminal: kitty is provided by programs.kitty (below), not as a package here
 
     # System tools
     htop
@@ -50,8 +49,20 @@
     blueman
   ];
 
-  # Kitty terminal is configured in home/common.nix (programs.kitty)
-  # Launched via Super+Return (see config/hypr/keybinds.conf)
+  # Kitty terminal (launched via Super+Return — see config/hypr/keybinds.conf)
+  programs.kitty = {
+    enable = true;
+    themeFile = "tokyo_night_night";  # Using themeFile instead of deprecated theme
+    font = {
+      name = "JetBrainsMono Nerd Font";
+      size = 11;
+    };
+    settings = {
+      confirm_os_window_close = 0;
+      enable_audio_bell = false;
+      window_padding_width = 4;
+    };
+  };
 
   # Dunst notification daemon
   services.dunst = {
