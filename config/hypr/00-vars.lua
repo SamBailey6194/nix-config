@@ -26,6 +26,22 @@ M.mod = "SUPER"
 -- duplicated by hand into the device catch-all's regex, which is exactly the
 -- maintenance trap that made the old rule wrong.
 M.workspaceAssignments = {
+    -- Browsers (workspace 3)
+    --
+    -- These are the only four browsers this config installs; regular Firefox,
+    -- Google Chrome and Chromium were removed. Zen is the default handler
+    -- (see home/modules/browsers.nix).
+    --
+    -- The class strings are each device's StartupWMClass, not the command
+    -- name. Zen, LibreWolf and Firefox Developer Edition pass `--name <x>` in
+    -- their .desktop Exec so class == command, but Brave's binary is `brave`
+    -- while its window class is `brave-browser` — verified live with
+    -- `hyprctl clients`. Get one of these wrong and the rule silently never
+    -- matches, exactly like the old lookahead catch-all did.
+    { class = "zen-beta",          workspace = "3" },
+    { class = "brave-browser",     workspace = "3" },
+    { class = "librewolf",         workspace = "3" },
+    { class = "firefox-devedition", workspace = "3" },
     -- Communication
     { class = "teams-for-linux",   workspace = "9" },
     { class = "zoom",              workspace = "9" },
