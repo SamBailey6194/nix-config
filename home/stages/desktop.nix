@@ -132,7 +132,8 @@
   # Qt theme
   qt = {
     enable = true;
-    platformTheme.name = "gtk";
+    # "gtk" was deprecated; "gtk3" is the modern native Qt GTK3 platform plugin
+    platformTheme.name = "gtk3";
     style.name = "adwaita-dark";
   };
 
@@ -146,6 +147,7 @@
 
   # Cursor theme
   home.pointerCursor = {
+    enable = true;  # explicit; relying on this block to enable is deprecated
     gtk.enable = true;
     x11.enable = true;
     package = pkgs.bibata-cursors;
