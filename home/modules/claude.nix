@@ -121,6 +121,47 @@ let
     enableWorkflows = true;
     skipWorkflowUsageWarning = true;
     skipAutoPermissionPrompt = true;
+
+    # ── Auto mode environment context ───────────────────────────────────
+    #
+    # `/auto-mode-setup` customises auto mode by writing an `autoMode` key
+    # here, of the shape:
+    #
+    #   autoMode = {
+    #     environment = "<prose describing this machine and its repos>";
+    #     rules = [ /* optional rule tweaks */ ];
+    #   };
+    #
+    # It CANNOT write it itself on this machine. The command states that
+    # "--apply-target doesn't change where the config is written — entries
+    # always land in the user settings file", and ~/.claude/settings.json is
+    # a read-only symlink into /nix/store, generated from this very file.
+    #
+    # So use the wizard for its draft, then transcribe it here:
+    #
+    #   claude
+    #   /auto-mode-setup --wizard posture=mixed scope=all depth=both --propose
+    #
+    # posture=mixed reflects this home directory holding personal
+    # (SamBailey6194), syntek work, and missional-gen repos side by side.
+    # The propose step writes a proposal JSON to a temp file and shows it;
+    # copy its `autoMode` object into the attribute below and rebuild. Do
+    # NOT run the second (`--expect-sha256 ... --apply-file ...`) phase — it
+    # will fail on the read-only settings.json, and would be overwritten by
+    # the next rebuild even if it succeeded.
+    #
+    # The scan reads CLAUDE.md files, repo facts and visibility, shell
+    # history (command words only), other git repos under $HOME, and
+    # transcript names. It is also the place to prune any classifier-
+    # bypassing entries it flags in permissions.allow above.
+    #
+    # Verified against claude-code 2.1.234: the key is `autoMode`, with an
+    # `environment` string and a `rules` list. The exact element shape of
+    # `rules` was not confirmed — take it verbatim from the proposal.
+    #
+    # autoMode = {
+    #   environment = "...";
+    # };
   };
 in
 {
