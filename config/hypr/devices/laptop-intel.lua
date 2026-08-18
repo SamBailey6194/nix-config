@@ -53,39 +53,52 @@ hl.window_rule({
 })
 
 -- ── Workspace 1: reserved dashboard ───────────────────────────────────
+--
 -- Workspace 1 is a fixed dashboard: the keybind cheatsheet (left) and a plain
 -- kitty terminal (right), and NOTHING else. The two dashboard terminals are
--- launched with custom classes so they can be pinned here; every other window is
--- pushed to workspace 2 by the catch-all below — so apps default to ws2 instead
--- of opening on whatever workspace is focused.
+-- launched with custom classes so they can be pinned here; every other window
+-- is pushed to workspace 2 by the catch-all below — so apps default to ws2
+-- instead of opening on whatever workspace happens to be focused.
 --
--- !! KNOWN BROKEN — the catch-all below does NOT work, and never has. !!
+-- HOW THE ORDERING WORKS
 --
--- Its pattern uses a PCRE negative lookahead `(?!...)`. Hyprland matches window
--- rules with RE2 (`Desktop::Rule::CRegexMatchEngine` is built on
--- `re2::RE2` + `re2::RE2::FullMatchN`), and RE2 has no lookaround support. The
--- engine's constructor has no error path, so an uncompilable pattern degrades
--- silently to "never matches" — no log line, no warning. Net effect: new
--- windows open on whatever workspace is focused, rather than defaulting to
--- workspace 2.
+-- Window rules are applied in registration order and, where two rules match
+-- the same window and set the same property, THE LAST ONE WINS. (Verified on
+-- 0.56: with a broad rule sending a class to ws8 registered first and a
+-- narrower rule sending it to ws7 registered second, the window landed on
+-- ws7.) So the sequence below is deliberate:
 --
--- This is NOT a regression from the .conf -> .lua migration: RE2 has been the
--- rule engine since at least Hyprland 0.53, so this rule was already inert
--- before the move to Lua. It is translated faithfully here so that the
--- migration changes no behaviour; fixing it is a separate decision.
+--   1. the broad `.*` catch-all              -> everything to ws2
+--   2. the two ws1 dashboard classes         -> back to ws1
+--   3. re-register the shared assignments    -> back to ws9 / ws4
 --
--- To actually fix it, the lookahead has to go. Express it by ordering instead:
--- register a broad `match = { class = ".*" }, workspace = "2 silent"` catch-all
--- BEFORE the specific assignments, and let the later, more specific rules
--- (ws1-keybinds, ws1-term, and the ws9/ws4 rules in 70-windowrules.lua) win.
--- That requires the catch-all to load ahead of 70-windowrules.lua, so it cannot
--- simply stay in this 90-device file. Verify any such change with
--- `hyprctl clients` — a broken pattern produces no error to notice.
+-- Step 3 is required because 70-windowrules.lua registered those assignments
+-- BEFORE this file runs, so the catch-all in step 1 would otherwise override
+-- them. The list is re-applied from vars.workspaceAssignments rather than
+-- retyped, so adding an app there fixes both places at once — no per-device
+-- edit needed.
 --
--- The `workspace` rule value is a plain string in the Lua API, so the hyprlang
--- payload ("1 silent" / "2 silent") carries over verbatim. The catch-all regex
--- is wrapped in a Lua long-bracket string so it is passed through byte-for-byte
--- with no escaping.
+-- This replaces a PCRE negative lookahead that never worked: window rules are
+-- matched with RE2 (Desktop::Rule::CRegexMatchEngine -> re2::RE2::FullMatchN),
+-- which has no lookaround, and whose constructor has no error path — so the
+-- pattern compiled to "never matches" silently, with nothing in the log.
+--
+-- NOTE: this changes real behaviour for the first time. The catch-all has been
+-- inert since at least Hyprland 0.53, so windows have in practice been opening
+-- on the focused workspace. They now land on ws2 instead. To go back to the
+-- old (accidental) behaviour, comment out the catch-all rule alone.
+
+local vars = require("00-vars")
+
+-- 1. Everything defaults to workspace 2.
+hl.window_rule({
+    name      = "ws-default-catch-all",
+    match     = { class = ".*" },
+
+    workspace = "2 silent",
+})
+
+-- 2. The dashboard pair is pinned to workspace 1.
 hl.window_rule({
     name      = "ws1-dashboard-keybinds",
     match     = { class = "^(ws1-keybinds)$" },
@@ -100,12 +113,9 @@ hl.window_rule({
     workspace = "1 silent",
 })
 
-hl.window_rule({
-    name      = "ws1-dashboard-catch-all",
-    match     = { class = [[^(?!ws1-keybinds$|ws1-term$|discord$|teams-for-linux$|zoom$|affinity-designer$|affinity-photo$|affinity-publisher$).*$]] },
+-- 3. Re-assert the shared per-app assignments so they beat the catch-all.
+vars.apply_workspace_assignments("ws-reassert")
 
-    workspace = "2 silent",
-})
 
 -- Laptop-specific autostart
 hl.on("hyprland.start", function()

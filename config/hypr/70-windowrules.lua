@@ -65,49 +65,11 @@ hl.window_rule({
 })
 
 -- ── Workspace Assignments ─────────────────────────────────────────────
+--
+-- Generated from vars.workspaceAssignments so the list lives in exactly one
+-- place. devices/laptop-intel.lua re-registers the same set after its
+-- default-workspace catch-all; see 00-vars.lua for why.
 
--- Communication (workspace 9)
+local vars = require("00-vars")
 
-hl.window_rule({
-    name  = "workspace-teams-for-linux",
-    match = { class = "^(teams-for-linux)$" },
-
-    workspace = "9",
-})
-
-hl.window_rule({
-    name  = "workspace-zoom",
-    match = { class = "^(zoom)$" },
-
-    workspace = "9",
-})
-
-hl.window_rule({
-    name  = "workspace-discord",
-    match = { class = "^(discord)$" },
-
-    workspace = "9",
-})
-
--- Affinity Suite (workspace 4)
-
-hl.window_rule({
-    name  = "workspace-affinity-designer",
-    match = { class = "^(affinity-designer)$" },
-
-    workspace = "4",
-})
-
-hl.window_rule({
-    name  = "workspace-affinity-photo",
-    match = { class = "^(affinity-photo)$" },
-
-    workspace = "4",
-})
-
-hl.window_rule({
-    name  = "workspace-affinity-publisher",
-    match = { class = "^(affinity-publisher)$" },
-
-    workspace = "4",
-})
+vars.apply_workspace_assignments("workspace")

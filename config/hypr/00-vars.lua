@@ -13,4 +13,42 @@ local M = {}
 -- Modifier key (was `$mod = SUPER`)
 M.mod = "SUPER"
 
+-- ── Workspace assignments ─────────────────────────────────────────────
+--
+-- Single source of truth for "this app always opens on that workspace".
+-- 70-windowrules.lua registers these for every device. A device that also
+-- wants a default-workspace catch-all (see devices/laptop-intel.lua) has to
+-- re-register them AFTERWARDS, because window rules are applied in
+-- registration order and the last matching rule wins — so a later catch-all
+-- would otherwise clobber them.
+--
+-- Keeping the list here means it is written once. Under hyprlang it had to be
+-- duplicated by hand into the device catch-all's regex, which is exactly the
+-- maintenance trap that made the old rule wrong.
+M.workspaceAssignments = {
+    -- Communication
+    { class = "teams-for-linux",   workspace = "9" },
+    { class = "zoom",              workspace = "9" },
+    { class = "discord",           workspace = "9" },
+    -- Affinity Suite
+    { class = "affinity-designer",  workspace = "4" },
+    { class = "affinity-photo",     workspace = "4" },
+    { class = "affinity-publisher", workspace = "4" },
+}
+
+-- Register every assignment above as a window rule.
+--
+-- `prefix` disambiguates the rule names, since a device that re-registers the
+-- set would otherwise collide with the names 70-windowrules.lua already used.
+function M.apply_workspace_assignments(prefix)
+    for _, a in ipairs(M.workspaceAssignments) do
+        hl.window_rule({
+            name      = prefix .. "-" .. a.class,
+            match     = { class = "^(" .. a.class .. ")$" },
+
+            workspace = a.workspace,
+        })
+    end
+end
+
 return M
