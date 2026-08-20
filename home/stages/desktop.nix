@@ -55,12 +55,35 @@
     themeFile = "tokyo_night_night";  # Using themeFile instead of deprecated theme
     font = {
       name = "JetBrainsMono Nerd Font";
-      size = 11;
+      size = 14;
     };
     settings = {
       confirm_os_window_close = 0;
       enable_audio_bell = false;
       window_padding_width = 4;
+    };
+
+    # Font size controls.
+    #
+    # kitty's built-in decrease binding is `ctrl+shift+minus`, which does not
+    # fire on every layout: holding Shift turns `-` into `_`, and the key is
+    # then reported as `underscore` rather than `minus`, so the default map
+    # never matches. Increase works because kitty ships both `equal` and
+    # `plus`. Bind every spelling so both directions work on the gb laptop
+    # keyboard and the us HyperX.
+    #
+    # `all` applies the change to every kitty window, not just the focused
+    # one. ctrl+shift+backspace resets to the configured size above — which is
+    # also how to undo a runtime change without restarting, since
+    # change_font_size is not persisted.
+    keybindings = {
+      "ctrl+shift+equal" = "change_font_size all +1.0";
+      "ctrl+shift+plus" = "change_font_size all +1.0";
+      "ctrl+shift+kp_add" = "change_font_size all +1.0";
+      "ctrl+shift+minus" = "change_font_size all -1.0";
+      "ctrl+shift+underscore" = "change_font_size all -1.0";
+      "ctrl+shift+kp_subtract" = "change_font_size all -1.0";
+      "ctrl+shift+backspace" = "change_font_size all 0";
     };
   };
 
