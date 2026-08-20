@@ -37,9 +37,14 @@ hl.window_rule({
     float = true,
 })
 
+-- RustDesk's class is a reverse-DNS string, so the dots are escaped for the
+-- same reason 00-vars.lua escapes them in `dev.zed.Zed`: an unescaped `.` is
+-- an RE2 metacharacter matching any character, so the pattern would also fire
+-- on e.g. `orgxrustdeskxrustdesk`. Written "\\." in a Lua string, which RE2
+-- sees as ^(org\.rustdesk\.rustdesk)$.
 hl.window_rule({
     name  = "float-rustdesk",
-    match = { class = "^(org.rustdesk.rustdesk)$" },
+    match = { class = "^(org\\.rustdesk\\.rustdesk)$" },
 
     float = true,
 })
@@ -50,9 +55,27 @@ hl.window_rule({
 -- parser hyprlang used, so the original "<active> <inactive>" pair is kept
 -- verbatim as a single string rather than split into two Lua fields.
 
+-- Every kitty window gets the same 0.95 opacity, whatever class it was
+-- launched under. The layouts each tag their terminals so the workspace rules
+-- can pin them, and a bare ^(kitty)$ match would have left those tagged
+-- windows fully opaque — making the two dev layouts and the ws1 dashboard look
+-- different from an ordinary terminal for no reason. The alternation therefore
+-- lists them all:
+--
+--   kitty              plain terminal (SUPER + Return, and the pool layout's
+--                      terminals if the launcher stops tagging them)
+--   nixcfg-term        the workspace 2 nix-config layout's two terminals
+--   devpool-term-3..6  the generic dev pool layout's terminals, one class per
+--                      pool workspace, matched with the range [3-6]
+--   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
+--   ws1-term           the dashboard's plain terminal (laptop only)
+--
+-- Kept RE2-compatible: alternation and a character class only, no lookaround
+-- (see devices/laptop-intel.lua for what silently happens when a rule pattern
+-- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty)$" },
+    match = { class = "^(kitty|nixcfg-term|devpool-term-[3-6]|ws1-keybinds|ws1-term)$" },
 
     opacity = "0.95 0.95",
 })

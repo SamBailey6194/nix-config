@@ -1,7 +1,7 @@
 # Hyprland Configuration
 
 **Last Updated**: 18/08/2026
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -81,6 +81,52 @@ defaults. `hl.config()` **merges** rather than replaces: it writes only the leaf
 keys it is given, so a device file can lower `decoration.blur.size` without
 disturbing the rest of `decoration`.
 
+## Workspace Map
+
+Workspaces are not interchangeable — most of them have a fixed purpose, enforced
+by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
+`devices/laptop-intel.lua`:
+
+| Workspace | Contents                        | Assigned by                        |
+|-----------|---------------------------------|------------------------------------|
+| `1`       | Dashboard (keybinds + terminal) | Device file (laptop only)          |
+| `2`       | nix-config dev layout           | Window rules (class + title match) |
+| `3-6`     | Dev pool, allocated as needed   | Window rules registered at launch  |
+| `7`       | Browsers                        | Window rules (class match)         |
+| `8`       | Affinity Suite                  | Window rules (class match)         |
+| `9`       | Comms (Teams, Zoom, Discord)    | Window rules (class match)         |
+| `10`      | Everything else                 | Catch-all rule (laptop only)       |
+
+The "Assigned by" column is the **mechanism**, not the trigger — the two are
+worth keeping apart:
+
+- Workspace 2 is **reserved**, and `SUPER + SHIFT + Z` is only what *launches*
+  the nix-config layout. It does not place it. The windows land on workspace 2
+  because static rules match them there: the editor on class **and** title
+  (Zed has no `--class`, so its title — the folder name `nix-config` — is the
+  only distinguishing feature), the terminals on the class `nixcfg-term`. Rename
+  the repository folder and the editor rule stops firing; see `00-vars.lua`.
+- Static window rules cannot express "the next free workspace", so `SUPER +
+  CTRL + Z` picks the workspace at runtime and then registers the *same kind*
+  of class+title rule workspace 2 uses, via `hyprctl eval`, immediately before
+  launching. It beats the catch-all by being registered later — the last
+  matching rule wins.
+
+  It deliberately does **not** use `hl.exec_cmd(cmd, { workspace = ... })`.
+  Per-launch exec rules attach by matching the spawned PID, and `zeditor` is a
+  single-instance CLI: when Zed is already running it forwards the request over
+  IPC and exits, so the new window belongs to a process Hyprland never spawned
+  and the rule never attaches. The editor would silently land on the catch-all.
+  That registered rule, not the keybind, is what does
+  the placing.
+- The 3-6 dev pool is **laptop-only in practice today**. `60-keybinds.lua` is
+  shared by every device, but `devices/devtower.lua` pins DaVinci Resolve to
+  workspace 5 and OBS to workspace 6, and `devices/framework.lua` pins Resolve
+  to workspace 5 — all inside the pool. On those machines a generic dev layout
+  would be handed a workspace that a creative application already claims. Both
+  device files carry a comment recording this; settle it before enabling the
+  pool there.
+
 ## Usage
 
 ### With Home Manager (Recommended)
@@ -144,7 +190,7 @@ All shared settings live in the numbered files:
 - **40-appearance.lua**: rounding, opacity, blur, shadows
 - **50-animations.lua**: `hl.curve()` bezier definitions and `hl.animation()` leaves
 - **60-keybinds.lua**: all keyboard and mouse bindings
-- **70-windowrules.lua**: float, opacity and workspace rules
+- **70-windowrules.lua**: float, opacity and workspace-assignment rules
 - **80-autostart.lua**: the `hl.on("hyprland.start", …)` handler
 
 ### Device-Specific Overrides
@@ -168,6 +214,7 @@ Highlights:
 - `SUPER + SHIFT + 1-9, 0`: move window to workspace 1-10
 - `SUPER + S`: toggle scratchpad (special workspace)
 - `SUPER + scroll`: cycle workspaces
+- Each workspace has a fixed purpose — see [Workspace Map](#workspace-map)
 
 ### Applications
 - `SUPER + Return`: terminal (kitty)
@@ -175,6 +222,12 @@ Highlights:
 - `SUPER + W`: Zen browser (`SHIFT` Brave, `ALT` LibreWolf, `CTRL` Firefox Developer Edition)
 - `SUPER + F`: file manager (Thunar)
 - `SUPER + Z`: Zed editor
+- `SUPER + SHIFT + Z`: nix-config dev layout on workspace 2
+- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-6).
+  Goes through the `dev-layout-pick` wofi picker (declared in
+  `home/modules/hyprland.nix`), because dev-layout needs a project path and a
+  keybind inherits Hyprland's working directory rather than a project's. From a
+  terminal, `dev-layout --new <path>` skips the picker.
 
 ### Window Management
 - `SUPER + Q`: close window

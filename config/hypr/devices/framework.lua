@@ -7,6 +7,38 @@
 -- This file is required LAST, after 00-vars .. 80-autostart, so every call here
 -- overrides the shared defaults.
 
+-- ══ DEFERRED — KNOWN CLASHES WITH THE SHARED CONFIG ══════════════════════
+--
+-- This hardware is not in use yet and this file has NOT been revisited since
+-- the shared workspace contract changed. It is left untouched on purpose: the
+-- rules below are an untested translation of the old hyprlang config, so
+-- nothing here should be trusted until the machine actually exists.
+--
+-- Two clashes are already known. Whoever picks this device up should settle
+-- them BEFORE the first rebuild — nothing below has been changed to fix them.
+--
+--  1. AFFINITY IS ON THE WRONG WORKSPACE.
+--     The shared table in 00-vars.lua (M.workspaceAssignments) sends all three
+--     Affinity apps to workspace 8, and 70-windowrules.lua registers that for
+--     every device. The three `framework-affinity-*-workspace` rules below
+--     still say workspace 4, from before the contract settled. Because this
+--     file is required LAST and the last matching rule wins, workspace 4 is
+--     what would actually happen here — silently disagreeing with every other
+--     device, KEYBINDS.md and config/hypr/README.md.
+--     Fix: drop these three rules and inherit workspace 8, or change the
+--     shared contract deliberately.
+--
+--  2. DAVINCI RESOLVE SITS INSIDE THE GENERIC DEV POOL.
+--     Workspaces 3-6 are now the generic dev pool: `SUPER + CTRL + Z` hands
+--     out the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua
+--     is shared by EVERY device, so that keybind exists here too. The
+--     `framework-resolve-workspace` rule below pins Resolve to workspace 5,
+--     inside that pool, so a dev layout could be built on top of Resolve or
+--     vice versa — whichever opened first simply keeps the workspace.
+--     Fix: move Resolve out of 3-6, or narrow the pool for this device.
+--
+-- ═════════════════════════════════════════════════════════════════════════
+
 -- Monitor configuration
 -- Framework laptop display with high DPI scaling
 hl.monitor({

@@ -7,6 +7,41 @@
 -- This file is required LAST, after 00-vars .. 80-autostart, so every call here
 -- overrides the shared defaults.
 
+-- ══ DEFERRED — KNOWN CLASHES WITH THE SHARED CONFIG ══════════════════════
+--
+-- This hardware is not in use yet and this file has NOT been revisited since
+-- the shared workspace contract changed. It is left untouched on purpose: the
+-- rules below are an untested translation of the old hyprlang config, so
+-- nothing here should be trusted until the machine actually exists.
+--
+-- Two clashes are already known. Whoever picks this device up should settle
+-- them BEFORE the first rebuild — nothing below has been changed to fix them.
+--
+--  1. AFFINITY IS ON THE WRONG WORKSPACE.
+--     The shared table in 00-vars.lua (M.workspaceAssignments) sends all three
+--     Affinity apps to workspace 8, and 70-windowrules.lua registers that for
+--     every device. The three `devtower-affinity-*-workspace` rules below
+--     still say workspace 4, from before the contract settled. Because this
+--     file is required LAST and the last matching rule wins, workspace 4 is
+--     what would actually happen here — silently disagreeing with every other
+--     device, KEYBINDS.md and config/hypr/README.md.
+--     Fix: drop these three rules and inherit workspace 8, or change the
+--     shared contract deliberately.
+--
+--  2. RESOLVE AND OBS SIT INSIDE THE GENERIC DEV POOL.
+--     Workspaces 3-6 are now the generic dev pool: `SUPER + CTRL + Z` hands
+--     out the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua
+--     is shared by EVERY device, so that keybind exists here too. Below,
+--     `devtower-resolve-workspace` pins DaVinci Resolve to workspace 5 and
+--     `devtower-obs-workspace` pins OBS to workspace 6 — both inside the pool,
+--     leaving it only two free workspaces and letting a dev layout land on top
+--     of a creative application (whichever opened first keeps the workspace).
+--     Fix: move Resolve and OBS out of 3-6, or narrow the pool for this
+--     device. This also needs the three-monitor workspace design that is still
+--     outstanding for devtower.
+--
+-- ═════════════════════════════════════════════════════════════════════════
+
 -- Multi-monitor setup - Based on actual hardware configuration
 -- Current Ubuntu/NVIDIA names: DP-2 (4K left), DP-4 (1440p center primary), HDMI-0 (1080p right vertical)
 -- AMD/Wayland names will differ - update after installation (likely DP-1, DP-2, HDMI-A-1 or similar)

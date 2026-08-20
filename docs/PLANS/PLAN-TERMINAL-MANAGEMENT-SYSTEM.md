@@ -833,17 +833,22 @@ sudo reboot
 #### Tasks
 
 - [ ] Update TOML layout schema (v2)
+
+  Note on the workspace numbers below: workspace 2 is **reserved** for the
+  nix-config dev layout and workspace 1 is the laptop dashboard, so a generic
+  layout must target the 3-6 dev pool instead (see `config/hypr/README.md`).
+
   ```toml
   [layout]
   name = "advanced-dev"
   description = "Advanced development workflow"
-  workspace = 2  # NEW: Auto-assign to workspace 2
+  workspace = 3  # NEW: Auto-assign to workspace 3 (in the 3-6 dev pool)
 
   [[windows]]
   title = "dev"
   directory = "~/Projects/current"
   command = ""
-  workspace = 2  # NEW: Override layout workspace
+  workspace = 3  # NEW: Override layout workspace (3-6 pool only)
   env = { NODE_ENV = "development", DEBUG = "app:*" }  # NEW: Environment variables
 
   [[windows]]

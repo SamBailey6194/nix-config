@@ -22,6 +22,10 @@
     fastfetch
     brightnessctl # Brightness control
     wl-clipboard  # Wayland clipboard utilities
+    libnotify     # notify-send — the client half of dunst (configured below).
+                  #   Required by dev-layout: Hyprland redirects a spawned
+                  #   child's stdout AND stderr to /dev/null, so a keybind
+                  #   launch has no other way to report a failure.
 
     # Fonts
     jetbrains-mono             # JetBrains Mono

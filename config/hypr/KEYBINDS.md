@@ -8,7 +8,8 @@
 | `SUPER + SHIFT + Return` | Terminal with Neovim |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
-| `SUPER + SHIFT + Z`  | Dev layout (Zed + 2 terminals) |
+| `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 2) |
+| `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 3-6) |
 | `SUPER + F`          | File manager (Thunar)   |
 | `SUPER + W`          | Zen browser (default)   |
 | `SUPER + SHIFT + W`  | Brave browser           |
@@ -19,6 +20,13 @@
 | `SUPER + R`          | RustDesk                |
 | `SUPER + M`          | System monitor (htop)   |
 | `SUPER + /`          | This keybinds help      |
+
+`SUPER + CTRL + Z` opens a picker listing every project under `~/Repos`, then
+builds the layout on the lowest free workspace in the 3-6 dev pool. With all
+four already holding windows it raises a notification and stops — close a dev
+space, or switch to one of them and work there.
+
+From a terminal you can skip the picker: `dev-layout --new <path>`.
 
 ## Affinity Suite
 
@@ -65,6 +73,21 @@
 | `SUPER + S`          | Toggle scratchpad       |
 | `SUPER + SHIFT + S`  | Move to scratchpad      |
 | `SUPER + Scroll`     | Cycle workspaces        |
+
+## Workspace Map
+
+| Workspace | Contents                                     |
+|-----------|----------------------------------------------|
+| `1`       | Dashboard (keybinds + terminal) — laptop only |
+| `2`       | nix-config dev layout (reserved)             |
+| `3-6`     | Dev pool (allocated as needed)               |
+| `7`       | Browsers                                     |
+| `8`       | Affinity Suite                               |
+| `9`       | Comms (Teams, Zoom, Discord)                 |
+| `10`      | Everything else (catch-all) — laptop only    |
+
+Workspaces 1 and 10 are set up by `devices/laptop-intel.lua`, so they exist on
+laptop-intel only; the other devices have no dashboard and no catch-all.
 
 ## Screenshots
 

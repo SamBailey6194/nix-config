@@ -70,6 +70,50 @@
     ".config/hypr/KEYBINDS.md".source = ../../config/hypr/KEYBINDS.md;
   };
 
+  # Project picker for the generic dev layout (SUPER + CTRL + Z).
+  #
+  # dev-layout needs a project PATH: the folder name becomes Zed's window
+  # title, which is the only thing the placement rule can match on (Zed has no
+  # --class). A keybind has no useful working directory of its own — it
+  # inherits Hyprland's, which is $HOME — so the path has to be chosen
+  # interactively. This lists every <account>/<project> directory under
+  # ~/Repos and hands the choice to dev-layout.
+  #
+  # `--show dmenu` is explicit rather than `--dmenu` because programs.wofi
+  # below sets `show = "drun"` in the config file, and the explicit mode flag
+  # overrides it.
+  home.packages = [
+    (pkgs.writeShellScriptBin "dev-layout-pick" ''
+      set -euo pipefail
+
+      root="''${DEV_LAYOUT_REPO_ROOT:-$HOME/Repos}"
+
+      if [ ! -d "$root" ]; then
+        notify-send --urgency=critical "dev-layout" "No repo root at $root"
+        exit 1
+      fi
+
+      # <account>/<project>, two levels down: personal/, syntek/, missional-gen/
+      mapfile -t projects < <(
+        find "$root" -mindepth 2 -maxdepth 2 -type d -printf '%P\n' 2>/dev/null | sort
+      )
+
+      if [ "''${#projects[@]}" -eq 0 ]; then
+        notify-send --urgency=critical "dev-layout" "No projects found under $root"
+        exit 1
+      fi
+
+      # wofi exits non-zero when dismissed with Escape — that is a normal
+      # cancel, not a failure, so leave quietly without a notification.
+      choice=$(printf '%s\n' "''${projects[@]}" \
+        | ''${WOFI:-wofi} --show dmenu --prompt "Dev space") || exit 0
+
+      [ -n "$choice" ] || exit 0
+
+      exec dev-layout --new "$root/$choice"
+    '')
+  ];
+
   # LuaLS stubs for editor completion on the hl.* API.
   #
   # Home Manager normally writes hypr/.luarc.json itself, but it guards that on

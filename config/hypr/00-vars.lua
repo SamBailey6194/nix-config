@@ -25,8 +25,27 @@ M.mod = "SUPER"
 -- Keeping the list here means it is written once. Under hyprlang it had to be
 -- duplicated by hand into the device catch-all's regex, which is exactly the
 -- maintenance trap that made the old rule wrong.
+--
+-- SHAPE OF AN ENTRY
+--
+-- Each entry carries a full `match` table, passed straight through to
+-- hl.window_rule, plus its own rule `name`. Earlier versions stored a bare
+-- class string and built "^(" .. class .. ")$" here, which could only ever
+-- express a class match — not enough for the nix-config editor below, which
+-- needs class AND title. Writing the regexes out in full also keeps the
+-- anchoring visible at the point of use.
+--
+-- WORKSPACE MAP (see devices/laptop-intel.lua for the full picture)
+--
+--   1     dashboard (laptop only)
+--   2     nix-config dev layout           (reserved, assigned here)
+--   3-6   generic dev pool                (rule registered at launch, not here)
+--   7     browsers
+--   8     Affinity Suite
+--   9     comms
+--   10    catch-all for everything else   (laptop only)
 M.workspaceAssignments = {
-    -- Browsers (workspace 3)
+    -- Browsers (workspace 7)
     --
     -- These are the only four browsers this config installs; regular Firefox,
     -- Google Chrome and Chromium were removed. Zen is the default handler
@@ -38,18 +57,92 @@ M.workspaceAssignments = {
     -- while its window class is `brave-browser` — verified live with
     -- `hyprctl clients`. Get one of these wrong and the rule silently never
     -- matches, exactly like the old lookahead catch-all did.
-    { class = "zen-beta",          workspace = "3" },
-    { class = "brave-browser",     workspace = "3" },
-    { class = "librewolf",         workspace = "3" },
-    { class = "firefox-devedition", workspace = "3" },
-    -- Communication
-    { class = "teams-for-linux",   workspace = "9" },
-    { class = "zoom",              workspace = "9" },
-    { class = "discord",           workspace = "9" },
-    -- Affinity Suite
-    { class = "affinity-designer",  workspace = "4" },
-    { class = "affinity-photo",     workspace = "4" },
-    { class = "affinity-publisher", workspace = "4" },
+    {
+        name      = "browser-zen",
+        match     = { class = "^(zen-beta)$" },
+        workspace = "7",
+    },
+    {
+        name      = "browser-brave",
+        match     = { class = "^(brave-browser)$" },
+        workspace = "7",
+    },
+    {
+        name      = "browser-librewolf",
+        match     = { class = "^(librewolf)$" },
+        workspace = "7",
+    },
+    {
+        name      = "browser-firefox-devedition",
+        match     = { class = "^(firefox-devedition)$" },
+        workspace = "7",
+    },
+
+    -- Communication (workspace 9)
+    {
+        name      = "comms-teams-for-linux",
+        match     = { class = "^(teams-for-linux)$" },
+        workspace = "9",
+    },
+    {
+        name      = "comms-zoom",
+        match     = { class = "^(zoom)$" },
+        workspace = "9",
+    },
+    {
+        name      = "comms-discord",
+        match     = { class = "^(discord)$" },
+        workspace = "9",
+    },
+
+    -- Affinity Suite (workspace 8)
+    {
+        name      = "affinity-designer",
+        match     = { class = "^(affinity-designer)$" },
+        workspace = "8",
+    },
+    {
+        name      = "affinity-photo",
+        match     = { class = "^(affinity-photo)$" },
+        workspace = "8",
+    },
+    {
+        name      = "affinity-publisher",
+        match     = { class = "^(affinity-publisher)$" },
+        workspace = "8",
+    },
+
+    -- nix-config dev layout (workspace 2, reserved)
+    --
+    -- The editor is matched on class AND title together, which is why entries
+    -- carry a whole `match` table rather than a bare class.
+    --
+    --   * Zed has no --class flag, so EVERY Zed window reports the same class
+    --     `dev.zed.Zed`. A class-only rule would drag every project's editor
+    --     onto ws2, including the generic dev-pool ones.
+    --   * Zed's title is the project folder name, so the nix-config window
+    --     reports the title `nix-config` exactly — verified live with
+    --     `hyprctl clients`. Class + title is therefore the only way to single
+    --     out this one editor.
+    --   * The dots in dev.zed.Zed are RE2 metacharacters (any character), so
+    --     they are escaped as \. — written "\\." in a normal Lua string, which
+    --     RE2 finally sees as ^(dev\.zed\.Zed)$. Unescaped it would also match
+    --     things like `devxzedxZed`; more importantly, escaping is what makes
+    --     the intent obvious to the next reader.
+    --
+    -- The terminals are the easy half: kitty DOES support --class, so the
+    -- nix-config layout launches them with `--class nixcfg-term` and a plain
+    -- class match is enough.
+    {
+        name      = "nixcfg-editor",
+        match     = { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" },
+        workspace = "2",
+    },
+    {
+        name      = "nixcfg-term",
+        match     = { class = "^(nixcfg-term)$" },
+        workspace = "2",
+    },
 }
 
 -- Register every assignment above as a window rule.
@@ -59,8 +152,8 @@ M.workspaceAssignments = {
 function M.apply_workspace_assignments(prefix)
     for _, a in ipairs(M.workspaceAssignments) do
         hl.window_rule({
-            name      = prefix .. "-" .. a.class,
-            match     = { class = "^(" .. a.class .. ")$" },
+            name      = prefix .. "-" .. a.name,
+            match     = a.match,
 
             workspace = a.workspace,
         })

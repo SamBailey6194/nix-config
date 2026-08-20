@@ -17,8 +17,21 @@ hl.bind(mod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("kitty -e nvim"))
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("wofi --show drun"))
 
 -- Editor
-hl.bind(mod .. " + Z",         hl.dsp.exec_cmd("zeditor -n"))
+hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
+
+-- Dev layouts. Two variants, deliberately on separate keybinds:
+--   SHIFT — the reserved nix-config layout, always built on workspace 2, so
+--           this repository is only ever open in one known place.
+--   CTRL  — a generic dev layout, placed on the next free workspace from the
+--           3-6 dev pool, so several unrelated projects can be open at once.
+--
+-- CTRL goes through the `dev-layout-pick` wofi picker rather than calling
+-- dev-layout directly. dev-layout needs a project PATH — the folder name is
+-- Zed's window title, and that title is the only thing the placement rule can
+-- match on. A keybind inherits Hyprland's working directory ($HOME), which is
+-- not a project, so the path has to be chosen interactively.
 hl.bind(mod .. " + SHIFT + Z", hl.dsp.exec_cmd("dev-layout"))
+hl.bind(mod .. " + CTRL + Z",  hl.dsp.exec_cmd("dev-layout-pick"))
 
 -- File manager
 hl.bind(mod .. " + F", hl.dsp.exec_cmd("thunar"))

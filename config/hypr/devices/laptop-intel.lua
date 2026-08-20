@@ -57,8 +57,26 @@ hl.window_rule({
 -- Workspace 1 is a fixed dashboard: the keybind cheatsheet (left) and a plain
 -- kitty terminal (right), and NOTHING else. The two dashboard terminals are
 -- launched with custom classes so they can be pinned here; every other window
--- is pushed to workspace 2 by the catch-all below — so apps default to ws2
+-- is pushed to workspace 10 by the catch-all below — so apps default to ws10
 -- instead of opening on whatever workspace happens to be focused.
+--
+-- THE WORKSPACE MAP
+--
+--   1     dashboard — ws1-keybinds + ws1-term, pinned in step 2 below
+--   2     nix-config dev layout (RESERVED: never allocated to anything else)
+--   3-6   generic dev pool, handed out one workspace at a time when a generic
+--         dev layout is launched. Not covered by a rule in THIS file: a
+--         static rule cannot express "the next free workspace", so the
+--         launcher picks one at runtime and registers a class+title rule for
+--         it through `hyprctl eval` just before launching. That rule beats
+--         this catch-all by being registered later — last match wins.
+--   7     browsers
+--   8     Affinity Suite
+--   9     comms
+--   10    catch-all — every ordinary window, via the rule below
+--
+-- Workspaces 2 and 7-9 come from vars.workspaceAssignments; only ws1 and ws10
+-- are laptop-specific and live here.
 --
 -- HOW THE ORDERING WORKS
 --
@@ -68,9 +86,9 @@ hl.window_rule({
 -- narrower rule sending it to ws7 registered second, the window landed on
 -- ws7.) So the sequence below is deliberate:
 --
---   1. the broad `.*` catch-all              -> everything to ws2
+--   1. the broad `.*` catch-all              -> everything to ws10
 --   2. the two ws1 dashboard classes         -> back to ws1
---   3. re-register the shared assignments    -> back to ws9 / ws4
+--   3. re-register the shared assignments    -> back to ws2 / ws7 / ws8 / ws9
 --
 -- Step 3 is required because 70-windowrules.lua registered those assignments
 -- BEFORE this file runs, so the catch-all in step 1 would otherwise override
@@ -83,19 +101,20 @@ hl.window_rule({
 -- which has no lookaround, and whose constructor has no error path — so the
 -- pattern compiled to "never matches" silently, with nothing in the log.
 --
--- NOTE: this changes real behaviour for the first time. The catch-all has been
--- inert since at least Hyprland 0.53, so windows have in practice been opening
--- on the focused workspace. They now land on ws2 instead. To go back to the
--- old (accidental) behaviour, comment out the catch-all rule alone.
+-- NOTE: the catch-all changes real behaviour. It had been inert since at least
+-- Hyprland 0.53, so windows were in practice opening on the focused workspace;
+-- they now land on ws10 instead (previously ws2, before ws2 was reserved for
+-- the nix-config layout). To go back to the old (accidental) behaviour,
+-- comment out the catch-all rule alone.
 
 local vars = require("00-vars")
 
--- 1. Everything defaults to workspace 2.
+-- 1. Everything defaults to workspace 10.
 hl.window_rule({
     name      = "ws-default-catch-all",
     match     = { class = ".*" },
 
-    workspace = "2 silent",
+    workspace = "10 silent",
 })
 
 -- 2. The dashboard pair is pinned to workspace 1.
