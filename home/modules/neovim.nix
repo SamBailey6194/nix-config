@@ -1,5 +1,10 @@
 { config, pkgs, lib, ... }:
 
+let
+  # Language servers not carried by nixpkgs — see pkgs/*.nix for why.
+  laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
+  django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
+in
 {
   # Neovim configuration with Lua
   # Reuses the same LSP servers and linters as Zed
@@ -147,7 +152,6 @@
       -- Uses system-installed LSP servers from modules/software/development.nix
       -- ============================================================================
 
-      local lspconfig = require('lspconfig')
       local cmp = require('cmp')
       local luasnip = require('luasnip')
 
@@ -195,31 +199,66 @@
         })
       })
 
-      -- LSP keymaps (on attach)
-      local on_attach = function(client, bufnr)
-        local opts = { buffer = bufnr, noremap = true, silent = true }
+      -- LSP keymaps, bound per buffer as each server attaches.
+      vim.api.nvim_create_autocmd('LspAttach', {
+        desc = 'LSP keymaps',
+        callback = function(ev)
+          local opts = { buffer = ev.buf, noremap = true, silent = true }
 
-        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-        vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-        vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
-        vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-        vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
-        vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
-        vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
-        vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, opts)
+          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+          vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+          vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+          vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+          vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+          vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+          vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
+          vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
+          vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
+          -- <leader>e belongs to NvimTreeToggle further down; a buffer-local
+          -- binding here would shadow it in every buffer with a server attached.
+          vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
+        end,
+      })
+
+      -- Capabilities applied to every server: nvim-cmp's completion support, plus
+      -- one correction.
+      --
+      -- `diagnostic.dynamicRegistration = false` is load-bearing. Pyright (and
+      -- other vscode-languageserver-node servers) decide at initialize time how to
+      -- deliver pull diagnostics: if the client claims dynamic registration they
+      -- register `textDocument/diagnostic` afterwards via client/registerCapability
+      -- with a null documentSelector, which Neovim does not match against a buffer
+      -- — so it never pulls, the server never pushes, and Python files show zero
+      -- diagnostics while `pyright <file>` on the CLI reports them fine. Declining
+      -- dynamic registration makes the server advertise diagnosticProvider
+      -- statically in its initialize result, which Neovim does honour.
+      local capabilities = require('cmp_nvim_lsp').default_capabilities()
+      capabilities.textDocument = capabilities.textDocument or {}
+      capabilities.textDocument.diagnostic = {
+        dynamicRegistration = false,
+        relatedDocumentSupport = false,
+      }
+      vim.lsp.config('*', { capabilities = capabilities })
+
+      -- Every server below is pinned to the same /nix/store path that Zed uses
+      -- (home/modules/editor.nix) and that modules/software/development.nix puts
+      -- on PATH, so the two editors run byte-identical servers.
+
+      -- nvim-lspconfig ships each server's defaults as an `lsp/<name>.lua` on the
+      -- runtimepath, which Neovim >= 0.11 reads directly. `vim.lsp.config` merges
+      -- the overrides below onto those defaults and `vim.lsp.enable` arms the
+      -- server; the older `require('lspconfig').<name>.setup{}` path this config
+      -- used is deprecated and goes away in nvim-lspconfig v3.
+      local function lsp(name, opts)
+        if opts then vim.lsp.config(name, opts) end
+        vim.lsp.enable(name)
       end
 
-      -- Capabilities for completion
-      local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-      -- Python: pyright + ruff
-      lspconfig.pyright.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      -- ── Python / Django ──────────────────────────────────────────────
+      lsp('pyright', {
+        cmd = { '${pkgs.pyright}/bin/pyright-langserver', '--stdio' },
         settings = {
           python = {
             analysis = {
@@ -230,22 +269,25 @@
         }
       })
 
-      -- TypeScript/JavaScript
-      lspconfig.ts_ls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      lsp('ruff', { cmd = { '${pkgs.ruff}/bin/ruff', 'server' } })
+
+      -- Django templates: {% %} tags, template/static/url names, context vars.
+      -- Upstream also claims plain 'html'; restricted to htmldjango so a non-Django
+      -- HTML file does not start a server that then reports it cannot find a Django
+      -- project. Neovim's own content heuristic promotes templates containing
+      -- {% %} / {{ }} to htmldjango, which is what real Django templates look like.
+      lsp('djlsp', {
+        cmd = { '${django-template-lsp}/bin/djlsp' },
+        filetypes = { 'htmldjango' },
       })
 
-      -- ESLint
-      lspconfig.eslint.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
-      })
+      -- ── TypeScript / JavaScript / React / React Native ───────────────
+      lsp('ts_ls', { cmd = { '${pkgs.typescript-language-server}/bin/typescript-language-server', '--stdio' } })
+      lsp('eslint', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-eslint-language-server', '--stdio' } })
 
-      -- Rust
-      lspconfig.rust_analyzer.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      -- ── Rust ─────────────────────────────────────────────────────────
+      -- rust-analyzer comes from rustup, so it is left to PATH resolution.
+      lsp('rust_analyzer', {
         settings = {
           ['rust-analyzer'] = {
             check = {
@@ -258,10 +300,90 @@
         }
       })
 
-      -- Lua
-      lspconfig.lua_ls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      -- ── PHP / Laravel / Livewire / Blade ─────────────────────────────
+      -- Blade and Livewire views are served by the same pair: Intelephense for
+      -- the PHP inside the template, laravel-ls for routes/views/config/env.
+      lsp('intelephense', {
+        cmd = { '${pkgs.intelephense}/bin/intelephense', '--stdio' },
+        filetypes = { 'php', 'blade' },
+        settings = {
+          intelephense = {
+            files = { maxSize = 5000000 },       -- Laravel vendor/ trees are large
+            environment = { includePaths = { 'vendor' } },
+          }
+        }
+      })
+      lsp('laravel_ls', { cmd = { '${laravel-ls}/bin/laravel-ls' } })
+
+      -- ── HTML / CSS / JSON / YAML / Tailwind / Emmet ──────────────────
+      lsp('html', {
+        cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-html-language-server', '--stdio' },
+        filetypes = { 'html', 'htmldjango', 'blade' },
+      })
+      lsp('cssls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-css-language-server', '--stdio' } })
+      lsp('jsonls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-json-language-server', '--stdio' } })
+      lsp('yamlls', { cmd = { '${pkgs.yaml-language-server}/bin/yaml-language-server', '--stdio' } })
+      lsp('tailwindcss', {
+        cmd = { '${pkgs.tailwindcss-language-server}/bin/tailwindcss-language-server', '--stdio' },
+        settings = {
+          tailwindCSS = {
+            emmetCompletions = true,
+            -- ':class' and 'x-bind:class' pick up Alpine-bound classes.
+            classAttributes = { 'class', 'className', 'ngClass', ':class', 'x-bind:class' },
+          }
+        }
+      })
+      lsp('emmet_language_server', {
+        cmd = { '${pkgs.emmet-language-server}/bin/emmet-language-server', '--stdio' },
+      })
+
+      -- ── htmx ─────────────────────────────────────────────────────────
+      -- hx-* attribute completion. Upstream advertises ~40 filetypes including the
+      -- whole TS/JS family; narrowed to the markup ones actually written by hand,
+      -- because htmx-lsp is explicitly experimental ("use at your own risk") and
+      -- occasionally emits malformed responses — no reason to run it on every
+      -- TypeScript buffer. (Zed has no htmx extension; this is Neovim-only.)
+      lsp('htmx', {
+        cmd = { '${pkgs.htmx-lsp}/bin/htmx-lsp' },
+        filetypes = { 'html', 'htmldjango', 'blade', 'php', 'twig', 'eruby' },
+      })
+
+      -- ── Slint ────────────────────────────────────────────────────────
+      lsp('slint_lsp', { cmd = { '${pkgs.slint-lsp}/bin/slint-lsp' } })
+
+      -- ── TeX ──────────────────────────────────────────────────────────
+      lsp('texlab', {
+        cmd = { '${pkgs.texlab}/bin/texlab' },
+        settings = {
+          texlab = {
+            build = {
+              executable = 'latexmk',
+              args = { '-pdf', '-interaction=nonstopmode', '-synctex=1', '%f' },
+              onSave = false,
+            },
+            chktex = { onOpenAndSave = true },
+          }
+        }
+      })
+
+      -- ── Shell ────────────────────────────────────────────────────────
+      lsp('bashls', { cmd = { '${pkgs.bash-language-server}/bin/bash-language-server', 'start' } })
+
+      -- ── Terraform / OpenTofu ─────────────────────────────────────────
+      lsp('terraformls', {
+        cmd = { '${pkgs.terraform-ls}/bin/terraform-ls', 'serve' },
+        init_options = {
+          experimentalFeatures = {
+            validateOnSave = true,
+            prefillRequiredFields = true,
+          }
+        }
+      })
+      lsp('tflint', { cmd = { '${pkgs.tflint}/bin/tflint', '--langserver' } })
+
+      -- ── Config / infra languages ─────────────────────────────────────
+      lsp('lua_ls', {
+        cmd = { '${pkgs.lua-language-server}/bin/lua-language-server' },
         settings = {
           Lua = {
             diagnostics = {
@@ -270,26 +392,40 @@
           }
         }
       })
+      lsp('nil_ls', { cmd = { '${pkgs.nil}/bin/nil' } })
+      lsp('taplo', { cmd = { '${pkgs.taplo}/bin/taplo', 'lsp', 'stdio' } })
 
-      -- Nix
-      lspconfig.nil_ls.setup({
-        on_attach = on_attach,
-        capabilities = capabilities,
+      -- ── Filetypes Neovim does not detect on its own ──────────────────
+      -- Slint has no built-in ftplugin, and *.blade.php would otherwise be read
+      -- as plain PHP, losing the blade treesitter grammar and the blade-only
+      -- server attachments above.
+      vim.filetype.add({
+        extension = { slint = 'slint' },
+        pattern = { ['.*%.blade%.php'] = 'blade' },
       })
-
-      -- HTML, CSS, JSON (from vscode-langservers-extracted)
-      lspconfig.html.setup({ on_attach = on_attach, capabilities = capabilities })
-      lspconfig.cssls.setup({ on_attach = on_attach, capabilities = capabilities })
-      lspconfig.jsonls.setup({ on_attach = on_attach, capabilities = capabilities })
 
       -- ============================================================================
       -- TREESITTER
       -- ============================================================================
 
-      require('nvim-treesitter.configs').setup({
-        highlight = { enable = true },
-        indent = { enable = true },
-        ensure_installed = {}, -- Managed by Nix
+      -- nvim-treesitter's `main` branch — which is what nixpkgs now ships —
+      -- removed the `nvim-treesitter.configs` module. The old
+      -- `require('nvim-treesitter.configs').setup{}` call therefore threw at
+      -- startup and took the rest of init.lua down with it: nvim-tree, telescope,
+      -- lualine, bufferline, gitsigns, trouble, which-key and every keymap below
+      -- this point silently never loaded.
+      --
+      -- On main, highlighting and indentation are per-buffer opt-ins. Grammars
+      -- still come from nvim-treesitter.withAllGrammars, so nothing is fetched at
+      -- runtime and `ensure_installed` has no equivalent.
+      vim.api.nvim_create_autocmd('FileType', {
+        desc = 'Enable treesitter highlighting/indent for filetypes with a parser',
+        callback = function(args)
+          local lang = vim.treesitter.language.get_lang(vim.bo[args.buf].filetype)
+          if not lang then return end
+          if not pcall(vim.treesitter.start, args.buf, lang) then return end
+          vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
       })
 
       -- ============================================================================
@@ -448,7 +584,7 @@
 
       -- Format on save (using LSP)
       vim.api.nvim_create_autocmd('BufWritePre', {
-        pattern = { '*.py', '*.rs', '*.ts', '*.tsx', '*.js', '*.jsx', '*.lua', '*.nix' },
+        pattern = { '*.py', '*.rs', '*.ts', '*.tsx', '*.js', '*.jsx', '*.lua', '*.nix', '*.slint' },
         callback = function()
           vim.lsp.buf.format({ async = false })
         end,
