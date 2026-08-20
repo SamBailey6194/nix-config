@@ -823,10 +823,22 @@ fn focus_workspace(workspace: u32) -> Result<()> {
 /// (`dispatch movefocus l`, `dispatch splitratio exact 0.75`) are therefore
 /// Lua syntax errors and exit 7, which would make this helper bail. Each
 /// dispatch must be a single argument holding a Lua expression.
+///
+/// The `splitratio` message itself has two traps, both of which produce a
+/// layout that is silently wrong rather than an obvious one:
+///
+///   * ARGUMENT ORDER. 0.56 parses `ARGS[1]` as the delta and only then tests
+///     `ARGS[2]` for `exact`, so the value comes FIRST. The pre-0.56 spelling
+///     `splitratio exact 0.75` now fails outright with
+///     `failed to parse "exact" as a delta`.
+///   * THE VALUE IS NOT A FRACTION. Dwindle sizes the first child as
+///     `box.w / 2 * splitRatio`, so the ratio that gives the editor 75% of the
+///     width is 1.5; 0.75 would ask for a 37.5% column. The accepted range is
+///     0.1 to 1.9, i.e. 5% to 95%.
 fn arrange_active_workspace() -> Result<()> {
     hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
     hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
-    hyprctl(&["dispatch", "hl.dsp.layout('splitratio exact 0.75')"])?;
+    hyprctl(&["dispatch", "hl.dsp.layout('splitratio 1.5 exact')"])?;
     Ok(())
 }
 
