@@ -1,11 +1,14 @@
 { config, pkgs, ... }:
 
 let
-  # Language servers that nixpkgs does not carry. Both are wired into Zed and
-  # Neovim in home/modules/{editor,neovim}.nix; see the files themselves for why
-  # they are built here rather than pulled from nixpkgs.
+  # Language servers that nixpkgs does not carry, plus one it carries too old to
+  # be usable. All three are wired into Zed and Neovim in
+  # home/modules/{editor,neovim}.nix; see the files themselves for why they are
+  # built here rather than pulled from nixpkgs. These `let` bindings shadow the
+  # `with pkgs;` names in the package list below.
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
+  htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
 in
 {
   # Development tools and environment
@@ -78,7 +81,7 @@ in
     vscode-langservers-extracted  # HTML, CSS, JSON and ESLint servers
     tailwindcss-language-server   # Tailwind class completion + linting
     emmet-language-server         # Emmet abbreviations in HTML/JSX/Blade
-    htmx-lsp                      # hx-* attribute completion
+    htmx-lsp                      # hx-* attribute completion (see pkgs/htmx-lsp.nix)
 
     # Python / Django
     pyright                     # Python type checking
@@ -107,6 +110,8 @@ in
     lua-language-server                        # Lua (for Neovim config)
     taplo                                      # TOML language server + formatter
     yaml-language-server                       # YAML + schema validation
+    nginx-language-server                      # nginx.conf completion + hover
+    systemd-lsp                                # systemd unit files (Neovim only)
 
     # ── Linters and formatters (shared by all editors) ──────────────────
     ruff                        # Python linter + formatter (fast!)

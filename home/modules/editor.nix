@@ -252,6 +252,13 @@ in
           formatter = "prettier";
         };
 
+        # TOML is the one language here with no server on the Zed side. Zed
+        # core has no taplo adapter and the registry's `toml` extension ships a
+        # grammar and queries only — no [language_servers] section — so there is
+        # nothing for an `lsp.taplo` pin to attach to, and prettier has no TOML
+        # parser either. format_on_save was therefore a no-op before this.
+        # taplo's CLI formats over stdin, which is the same escape hatch Blade
+        # and Shell Script use above. Neovim runs the real taplo LSP.
         TOML = {
           format_on_save = "on";
           auto_indent = true;
@@ -259,6 +266,12 @@ in
           show_completions_on_input = true;
           ensure_final_newline_on_save = true;
           colorize_brackets = true;
+          formatter = {
+            external = {
+              command = "${pkgs.taplo}/bin/taplo";
+              arguments = [ "format" "-" ];
+            };
+          };
         };
 
         Rust = {
@@ -399,6 +412,21 @@ in
           ensure_final_newline_on_save = true;
         };
 
+        # nginx site configs. nginx-language-server is completion + hover only:
+        # it advertises no formatting capability and prettier has no nginx parser,
+        # so the global format_on_save = "on" is turned off here rather than left
+        # to fail on every save.
+        Nginx = {
+          language_servers = [ "nginx" "..." ];
+          format_on_save = "off";
+          tab_size = 4;
+          auto_indent = true;
+          auto_indent_on_paste = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+          colorize_brackets = true;
+        };
+
         "Shell Script" = {
           language_servers = [ "bash-language-server" "..." ];
           format_on_save = "on";
@@ -490,6 +518,14 @@ in
           };
         };
 
+        # nginx. Unlike every other pin here this one is belt and braces: the
+        # Zed `nginx` extension resolves its server with
+        # worktree.which("nginx-language-server"), so PATH — i.e.
+        # modules/software/development.nix — is what actually finds it. The pin
+        # only takes effect on Zed versions that let settings override an
+        # extension-provided server, and points at the same store path either way.
+        nginx = bin "${pkgs.nginx-language-server}/bin/nginx-language-server" [ ];
+
         # HTML / CSS / JSON / YAML — one package provides the first three
         vscode-html-language-server =
           bin "${pkgs.vscode-langservers-extracted}/bin/vscode-html-language-server" [ "--stdio" ];
@@ -497,8 +533,28 @@ in
           bin "${pkgs.vscode-langservers-extracted}/bin/vscode-css-language-server" [ "--stdio" ];
         vscode-json-language-server =
           bin "${pkgs.vscode-langservers-extracted}/bin/vscode-json-language-server" [ "--stdio" ];
+        # SchemaStore's catalog covers every YAML shape in these projects —
+        # **/.github/workflows/*.yml, **/docker-compose.*.yml, lefthook.yml and
+        # pnpm-workspace.yaml all have fileMatch entries — so enabling it is
+        # enough and no per-schema mapping needs maintaining here. The catalog
+        # and each schema are fetched over HTTPS on first use and cached; fully
+        # offline, this degrades to plain syntax checking rather than breaking.
         yaml-language-server =
-          bin "${pkgs.yaml-language-server}/bin/yaml-language-server" [ "--stdio" ];
+          (bin "${pkgs.yaml-language-server}/bin/yaml-language-server" [ "--stdio" ]) // {
+            settings = {
+              yaml = {
+                schemaStore = {
+                  enable = true;
+                  url = "https://www.schemastore.org/api/json/catalog.json";
+                };
+                validate = true;
+                hover = true;
+                completion = true;
+              };
+              # Matches the default nvim-lspconfig applies on the Neovim side.
+              redhat = { telemetry = { enabled = false; }; };
+            };
+          };
 
         emmet-language-server =
           bin "${pkgs.emmet-language-server}/bin/emmet-language-server" [ "--stdio" ];
@@ -589,6 +645,8 @@ in
         latex = true;             # LaTeX + BibTeX, texlab
         slint = true;             # Slint UI markup
         terraform = true;         # Terraform / OpenTofu HCL, terraform-ls
+        nginx = true;             # nginx.conf, nginx-language-server
+        toml = true;              # TOML — grammar only, no server exists
         alpinejs-snippets = true; # Alpine.js — snippets only, no LSP exists
       };
 
@@ -603,8 +661,20 @@ in
       };
 
       # File types
+      # The nginx extension only claims paths ending in "nginx.conf", which in
+      # these projects is one file out of six — the rest are docker/nginx/dev.conf,
+      # deployment/nginx/staging.conf and nginx_full/nginx-site.conf. These globs
+      # cover the layouts actually in use and mirror the patterns Neovim's own
+      # filetype detection already applies.
       file_types = {
         Blade = [ "blade.php" ];
+        Nginx = [
+          "nginx.conf"
+          "nginx*.conf"
+          "*.nginx"
+          "**/nginx/*.conf"
+          "**/nginx_full/*.conf"
+        ];
       };
 
       # Indent guides

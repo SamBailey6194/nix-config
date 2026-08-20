@@ -1,9 +1,11 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Language servers not carried by nixpkgs — see pkgs/*.nix for why.
+  # Language servers not carried by nixpkgs, or carried too old — see pkgs/*.nix
+  # for why. Same derivations modules/software/development.nix puts on PATH.
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
+  htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
 in
 {
   # Neovim configuration with Lua
@@ -25,6 +27,7 @@ in
 
       # LSP and completion
       nvim-lspconfig           # LSP configuration
+      conform-nvim             # Formatting (prettier/shfmt/ruff, LSP fallback)
       nvim-cmp                 # Completion engine
       cmp-nvim-lsp             # LSP completion source
       cmp-buffer               # Buffer completion source
@@ -213,7 +216,6 @@ in
           vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
           vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
           vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-          vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
           vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
           vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
           -- <leader>e belongs to NvimTreeToggle further down; a buffer-local
@@ -322,7 +324,25 @@ in
       })
       lsp('cssls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-css-language-server', '--stdio' } })
       lsp('jsonls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-json-language-server', '--stdio' } })
-      lsp('yamlls', { cmd = { '${pkgs.yaml-language-server}/bin/yaml-language-server', '--stdio' } })
+      -- SchemaStore's catalog already has fileMatch entries for every YAML shape
+      -- in these projects (.github/workflows/*.yml, docker-compose.*.yml,
+      -- lefthook.yml, pnpm-workspace.yaml), so enabling it needs no per-schema
+      -- map here. vim.lsp.config deep-merges onto nvim-lspconfig's defaults, so
+      -- its redhat.telemetry and yaml.format.enable settings survive.
+      lsp('yamlls', {
+        cmd = { '${pkgs.yaml-language-server}/bin/yaml-language-server', '--stdio' },
+        settings = {
+          yaml = {
+            schemaStore = {
+              enable = true,
+              url = 'https://www.schemastore.org/api/json/catalog.json',
+            },
+            validate = true,
+            hover = true,
+            completion = true,
+          },
+        },
+      })
       lsp('tailwindcss', {
         cmd = { '${pkgs.tailwindcss-language-server}/bin/tailwindcss-language-server', '--stdio' },
         settings = {
@@ -340,11 +360,16 @@ in
       -- ── htmx ─────────────────────────────────────────────────────────
       -- hx-* attribute completion. Upstream advertises ~40 filetypes including the
       -- whole TS/JS family; narrowed to the markup ones actually written by hand,
-      -- because htmx-lsp is explicitly experimental ("use at your own risk") and
-      -- occasionally emits malformed responses — no reason to run it on every
-      -- TypeScript buffer. (Zed has no htmx extension; this is Neovim-only.)
+      -- because htmx-lsp is explicitly experimental ("use at your own risk") — no
+      -- reason to run it on every TypeScript buffer. (Zed has no htmx extension;
+      -- this is Neovim-only.)
+      --
+      -- Built from pkgs/htmx-lsp.nix rather than pkgs.htmx-lsp: the nixpkgs rev
+      -- predates the upstream fix for answering requests it has no data for with
+      -- a null result *and* a null error, which Neovim rightly rejected as a
+      -- malformed message on every buffer close.
       lsp('htmx', {
-        cmd = { '${pkgs.htmx-lsp}/bin/htmx-lsp' },
+        cmd = { '${htmx-lsp}/bin/htmx-lsp' },
         filetypes = { 'html', 'htmldjango', 'blade', 'php', 'twig', 'eruby' },
       })
 
@@ -394,6 +419,26 @@ in
       })
       lsp('nil_ls', { cmd = { '${pkgs.nil}/bin/nil' } })
       lsp('taplo', { cmd = { '${pkgs.taplo}/bin/taplo', 'lsp', 'stdio' } })
+
+      -- nginx and systemd unit files. Both are completion/hover/diagnostics
+      -- only — neither formats, so neither belongs in the format-on-save list
+      -- at the bottom of this file. Filetypes come from lspconfig's defaults
+      -- ('nginx' and 'systemd'), both of which Neovim detects unaided:
+      -- nginx.conf, nginx*.conf and any */nginx/*.conf for the first, the unit
+      -- file extensions (.service, .timer, .socket...) for the second.
+      lsp('nginx_language_server', {
+        cmd = { '${pkgs.nginx-language-server}/bin/nginx-language-server' },
+      })
+      lsp('systemd_lsp', { cmd = { '${pkgs.systemd-lsp}/bin/systemd-lsp' } })
+
+      -- nginx variables are written $host, $request_uri and so on. Without '$'
+      -- in 'iskeyword' the cursor sees them as the bare name, and completion and
+      -- hover both miss — upstream recommends this exact tweak.
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'nginx',
+        desc = 'Treat $ as part of the word so nginx variables resolve',
+        callback = function() vim.opt_local.iskeyword:append('$') end,
+      })
 
       -- ── Filetypes Neovim does not detect on its own ──────────────────
       -- Slint has no built-in ftplugin, and *.blade.php would otherwise be read
@@ -582,13 +627,82 @@ in
       vim.keymap.set('n', '<S-Tab>', ':bprevious<CR>', { noremap = true })
       vim.keymap.set('n', '<leader>x', ':bdelete<CR>', { noremap = true })
 
-      -- Format on save (using LSP)
-      vim.api.nvim_create_autocmd('BufWritePre', {
-        pattern = { '*.py', '*.rs', '*.ts', '*.tsx', '*.js', '*.jsx', '*.lua', '*.nix', '*.slint' },
-        callback = function()
-          vim.lsp.buf.format({ async = false })
-        end,
+      -- ============================================================================
+      -- FORMATTING: conform
+      -- ============================================================================
+      --
+      -- This replaced a BufWritePre autocmd that matched file globs and called
+      -- vim.lsp.buf.format. Two things were wrong with that. First, '*.php' also
+      -- matches '*.blade.php' and '*.html' also covers Django templates, and in
+      -- both cases the server attached to the plain-language file is attached to
+      -- the template too — Intelephense would have reformatted the PHP inside a
+      -- Blade view, the HTML server would have reflowed {% %} tags. conform keys
+      -- on filetype, which keeps those apart.
+      --
+      -- Second, editor.nix has Zed format CSS, HTML, JSON, JSONC, JS, TS, TSX,
+      -- YAML, GraphQL and Markdown with prettier, while the language servers for
+      -- those languages use formatters of their own. Routing both editors
+      -- through prettier keeps a file byte-identical whichever one saved it.
+      -- Markdown has no language server here at all, so prettier is the only
+      -- thing that formats it.
+      --
+      -- Filetypes not listed fall through to the language server, which is what
+      -- formats Rust, Nix, Lua, TOML, Terraform, PHP, Slint, LaTeX and systemd
+      -- units. nginx is the one server here that advertises no formatting at
+      -- all, so .conf files are left alone.
+      local prettier = { 'prettier' }
+      require('conform').setup({
+        formatters_by_ft = {
+          javascript = prettier,
+          javascriptreact = prettier,
+          typescript = prettier,
+          typescriptreact = prettier,
+          css = prettier,
+          scss = prettier,
+          less = prettier,
+          html = prettier,
+          json = prettier,
+          jsonc = prettier,
+          yaml = prettier,
+          markdown = prettier,
+          graphql = prettier,
+          python = { 'ruff_format' },
+          sh = { 'shfmt' },
+          bash = { 'shfmt' },
+          blade = { 'blade-formatter' },
+        },
+        formatters = {
+          -- prettier and ruff are deliberately left to PATH resolution so a
+          -- project-local copy in node_modules/.bin or a venv wins — the same
+          -- thing Zed does — falling back to the pinned nixpkgs build that
+          -- modules/software/development.nix puts on PATH. shfmt and
+          -- blade-formatter have no project-local convention, so they are
+          -- pinned to the store the way editor.nix pins them.
+          shfmt = {
+            command = '${pkgs.shfmt}/bin/shfmt',
+            -- Zed passes '-i 2 -ci'; conform derives -i from shiftwidth (2).
+            prepend_args = { '-ci' },
+          },
+          ['blade-formatter'] = {
+            command = '${pkgs.blade-formatter}/bin/blade-formatter',
+          },
+        },
+        format_on_save = {
+          timeout_ms = 3000,
+          lsp_format = 'fallback',
+        },
       })
+
+      -- Defined globally rather than in on_attach so it also reaches Markdown
+      -- and Blade, which conform formats but no attached server does.
+      --
+      -- '<leader>cf', not '<leader>f': <leader>f is the Telescope prefix
+      -- (ff/fg/fb/fh further down), and a mapping on the prefix itself makes
+      -- every one of those wait out 'timeoutlen' before firing. This sits with
+      -- <leader>ca (code action) under a 'c' for code instead.
+      vim.keymap.set({ 'n', 'v' }, '<leader>cf', function()
+        require('conform').format({ async = true, lsp_format = 'fallback' })
+      end, { desc = 'Format buffer' })
     '';
   };
 }
