@@ -42,6 +42,7 @@ in
     fzf
     jq
     tree
+    cloc      # Count lines of code by language
     wget
     curl
 
