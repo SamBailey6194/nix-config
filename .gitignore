@@ -26,3 +26,6 @@ rust/fuzz/artifacts/
 
 # .direnv auto generated folder from .envrc
 .direnv/
+
+# Code review graph
+.code-review-graph/
