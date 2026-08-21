@@ -85,6 +85,19 @@ in
     };
 
     # ========================================================================
+    # AWS CLI config (~/.aws/config, used by `aws sso login`)
+    # Decrypted to /run/agenix/aws-config; home/modules/aws.nix symlinks it to
+    # ~/.aws/config. Deliberately NOT placed via agenix's `path` option: agenix
+    # creates a secret's parent directory as root, which would leave ~/.aws
+    # unwritable for the SSO token cache the AWS CLI writes to ~/.aws/sso/cache.
+    # ========================================================================
+    aws-config = {
+      file = ../../secrets/aws-config-${hostname}.age;
+      owner = username;
+      mode = "0400";
+    };
+
+    # ========================================================================
     # Per-Folder Encryption Master Key (gocryptfs recovery)
     # ========================================================================
     vault-master-key = {

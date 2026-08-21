@@ -15,6 +15,7 @@ in
     ../modules/git.nix       # Git multi-account configuration
     ../modules/editor.nix    # Zed editor settings
     ../modules/neovim.nix    # Neovim configuration
+    ../modules/aws.nix       # ~/.aws/config from the agenix aws-config secret
     ../modules/claude.nix    # Claude Code: settings, MCP servers, monitor, Brave link
   ];
 

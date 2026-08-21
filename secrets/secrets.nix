@@ -23,7 +23,10 @@ let
   # Get public key: cat ~/.ssh/id_ed25519_agenix.pub
   # ============================================================================
   sam-laptop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDDdE+EkEkG7BtvLb5mDPC6bPbs0vzw1yq6xcfmv+hao sam@laptop-intel";
-  # sam-ubuntu = "ssh-ed25519 REPLACE_WITH_UBUNTU_PC_USER_KEY sam@ubuntu-pc";
+  # Ubuntu dev PC (SamLinPC) — where this repo is edited. Deliberately NOT in
+  # allUsers: it is a recipient for the aws-config secret only, so the zero-trust
+  # model for GitHub keys, LUKS passphrases, VPN and the rest is unchanged.
+  sam-ubuntu = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHPskJivc4/qcwMb4XCNT4bK7GcIXeQn/rsya5IkKBvO sam-dev@SamLinPC";
 
   # ============================================================================
   # Host keys (machine SSH host keys - extracted after NixOS installation)
@@ -126,6 +129,17 @@ in
   "claude-secrets-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "claude-secrets-framework.age".publicKeys = allUsers ++ [ framework ];
   # "claude-secrets-devtower.age".publicKeys = allUsers ++ [ devtower ];
+
+  # ============================================================================
+  # AWS CLI Config (Per-Device)
+  # ~/.aws/config for `aws sso login`: SSO start URL, session, account IDs, role
+  # names and regions. Not long-lived credentials (SSO tokens are cached under
+  # ~/.aws/sso/cache at login), but the account topology is not repo-public.
+  # ============================================================================
+
+  "aws-config-laptop-intel.age".publicKeys = allUsers ++ [ sam-ubuntu laptop-intel ];
+  # "aws-config-framework.age".publicKeys = allUsers ++ [ framework ];
+  # "aws-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # ============================================================================
   # LUKS Encryption Passphrases (Per-Device Fallback Recovery)

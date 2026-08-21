@@ -117,5 +117,16 @@ in
     #   owner = "sam-desktop";
     #   mode = "0400";
     # };
+
+    # ========================================================================
+    # AWS CLI config (~/.aws/config, used by `aws sso login`)
+    # Uncomment once devtower is installed and aws-config-devtower.age exists.
+    # home/modules/aws.nix symlinks /run/agenix/aws-config to ~/.aws/config.
+    # ========================================================================
+    # aws-config = {
+    #   file = ../../secrets/aws-config-devtower.age;
+    #   owner = "sam-desktop";
+    #   mode = "0400";
+    # };
   };
 }
