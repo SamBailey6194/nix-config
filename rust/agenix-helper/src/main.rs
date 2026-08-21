@@ -111,6 +111,26 @@ pub fn run_agenix(args: &[&str]) -> Result<()> {
         }
     }
 
+    // agenix 0.15 runs under `set -u` but dereferences $EDITOR unguarded
+    // (pkgs/agenix.sh line 169), so `edit` aborts with "EDITOR: unbound
+    // variable" wherever it isn't set: NixOS hosts get EDITOR from
+    // home/stages/dev.nix, machines this repo doesn't manage do not. Fall back
+    // to $VISUAL, then to the first editor actually on PATH. `rekey` sets
+    // EDITOR=: per file internally, so it works either way — nothing to fail on
+    // if no editor is found.
+    if std::env::var_os("EDITOR").is_none() {
+        let fallback = std::env::var_os("VISUAL").or_else(|| {
+            ["nvim", "vim", "nano", "vi"]
+                .into_iter()
+                .find(|editor| which::which(editor).is_ok())
+                .map(std::ffi::OsString::from)
+        });
+
+        if let Some(editor) = fallback {
+            command.env("EDITOR", editor);
+        }
+    }
+
     let status = command.status().context("Failed to execute agenix")?;
 
     if !status.success() {
