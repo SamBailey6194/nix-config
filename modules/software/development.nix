@@ -59,6 +59,7 @@ in
     python313Packages.pip
     python313Packages.virtualenv
     uv                  # Fast Python package installer + version manager
+    copier              # Project scaffolding from templates (copier copy/update)
 
     # Rust toolchain via rustup (provides rustc, cargo, rustfmt, clippy)
     # After install: rustup default stable && rustup component add rust-analyzer
