@@ -253,8 +253,10 @@ in
     CLAUDE='${claudeBin}'
     if [ -r ${secretsFile} ]; then . ${secretsFile}; fi
 
-    $CLAUDE mcp get figma >/dev/null 2>&1 || \
-      $CLAUDE mcp add --scope user --transport http figma https://mcp.figma.com/mcp || true
+    # Figma was registered here until it was dropped; unregister it so devices
+    # that activated an earlier generation lose it too. Safe to delete once
+    # every device has rebuilt at least once past this point.
+    $CLAUDE mcp remove --scope user figma >/dev/null 2>&1 || true
 
     # Re-register each activation so the Playwright env (browser path) and the
     # pinned-install entrypoint stay in sync with this config; a stale entry can't
