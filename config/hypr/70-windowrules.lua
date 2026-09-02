@@ -68,14 +68,14 @@ hl.window_rule({
 --   devpool-term-3..6  the generic dev pool layout's terminals, one class per
 --                      pool workspace, matched with the range [3-6]
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
---   ws1-term           the dashboard's plain terminal (laptop only)
+--   ws1-monitor        the dashboard's htop pane (laptop only)
 --
 -- Kept RE2-compatible: alternation and a character class only, no lookaround
 -- (see devices/laptop-intel.lua for what silently happens when a rule pattern
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|devpool-term-[3-6]|ws1-keybinds|ws1-term)$" },
+    match = { class = "^(kitty|nixcfg-term|devpool-term-[3-6]|ws1-keybinds|ws1-monitor)$" },
 
     opacity = "0.95 0.95",
 })

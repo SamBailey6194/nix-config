@@ -54,15 +54,16 @@ hl.window_rule({
 
 -- ── Workspace 1: reserved dashboard ───────────────────────────────────
 --
--- Workspace 1 is a fixed dashboard: the keybind cheatsheet (left) and a plain
--- kitty terminal (right), and NOTHING else. The two dashboard terminals are
--- launched with custom classes so they can be pinned here; every other window
--- is pushed to workspace 10 by the catch-all below — so apps default to ws10
--- instead of opening on whatever workspace happens to be focused.
+-- Workspace 1 is a fixed dashboard: the keybind cheatsheet (left) and htop
+-- (right, the same system monitor SUPER + M opens), and NOTHING else. The two
+-- dashboard terminals are launched with custom classes so they can be pinned
+-- here; every other window is pushed to workspace 10 by the catch-all below —
+-- so apps default to ws10 instead of opening on whatever workspace happens to
+-- be focused.
 --
 -- THE WORKSPACE MAP
 --
---   1     dashboard — ws1-keybinds + ws1-term, pinned in step 2 below
+--   1     dashboard — ws1-keybinds + ws1-monitor, pinned in step 2 below
 --   2     nix-config dev layout (RESERVED: never allocated to anything else)
 --   3-6   generic dev pool, handed out one workspace at a time when a generic
 --         dev layout is launched. Not covered by a rule in THIS file: a
@@ -126,8 +127,8 @@ hl.window_rule({
 })
 
 hl.window_rule({
-    name      = "ws1-dashboard-term",
-    match     = { class = "^(ws1-term)$" },
+    name      = "ws1-dashboard-monitor",
+    match     = { class = "^(ws1-monitor)$" },
 
     workspace = "1 silent",
 })
@@ -141,8 +142,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("brightnessctl set 50%") -- Set initial brightness to 50%
 
     -- Populate the workspace-1 dashboard at login. The keybind viewer launches first
-    -- (left tile); the half-second delay makes the plain terminal land on the right.
-    hl.exec_cmd([[sh -c 'kitty --class ws1-keybinds -e less ~/.config/hypr/KEYBINDS.md & sleep 0.5 ; kitty --class ws1-term &']])
+    -- (left tile); the half-second delay makes htop land on the right. htop is the
+    -- same system monitor SUPER + M opens, so the tile matches the keybind.
+    hl.exec_cmd([[sh -c 'kitty --class ws1-keybinds -e less ~/.config/hypr/KEYBINDS.md & sleep 0.5 ; kitty --class ws1-monitor -e htop &']])
 end)
 
 -- Dual keyboard layout support

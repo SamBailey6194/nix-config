@@ -78,7 +78,7 @@ From a terminal you can skip the picker: `dev-layout --new <path>`.
 
 | Workspace | Contents                                     |
 |-----------|----------------------------------------------|
-| `1`       | Dashboard (keybinds + terminal) — laptop only |
+| `1`       | Dashboard (keybinds + htop) — laptop only    |
 | `2`       | nix-config dev layout (reserved)             |
 | `3-6`     | Dev pool (allocated as needed)               |
 | `7`       | Browsers                                     |
