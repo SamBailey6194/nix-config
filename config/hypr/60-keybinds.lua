@@ -74,6 +74,32 @@ hl.bind(mod .. " + F11",       hl.dsp.window.fullscreen())
 -- dwindle: toggle split direction (0.55: togglesplit moved under layoutmsg)
 hl.bind(mod .. " + grave", hl.dsp.layout("togglesplit"))
 
+-- ── Session Control ────────────────────────────────────────────
+--
+-- Lock, sleep and log out, all grouped under SUPER + CTRL so the three
+-- session actions share one modifier and none of them sit next to a
+-- destructive neighbour. Every one of them requires the password again:
+--
+--   lock   hyprlock, with grace 0 (the CLI default since 0.9.6)
+--   sleep  locks BEFORE suspending - see the lock-and-suspend wrapper in
+--          home/modules/hyprland.nix, which refuses to suspend if the lock
+--          did not come up
+--   exit   drops to greetd/tuigreet, which asks for the password anyway
+--
+-- Note SUPER + SHIFT + Q above is the pre-existing exit bind and still works.
+-- It is kept for muscle memory, but it lives one SHIFT away from
+-- SUPER + Q (close window), so SUPER + CTRL + Q is the safer one to learn.
+--
+-- Lock is deliberately routed through loginctl rather than calling hyprlock
+-- directly: that is the same D-Bus path suspend uses, so if the keybind works
+-- the suspend path works too, and hypridle stays the single owner of the
+-- "is something already locking?" question (its lock_cmd is
+-- `pidof hyprlock || hyprlock`, so this cannot stack two lock screens).
+
+hl.bind(mod .. " + CTRL + L", hl.dsp.exec_cmd("loginctl lock-session"))
+hl.bind(mod .. " + CTRL + S", hl.dsp.exec_cmd("lock-and-suspend"))
+hl.bind(mod .. " + CTRL + Q", hl.dsp.exit())
+
 -- ── Focus Navigation ──────────────────────────────────────────────────
 
 -- Vim-style

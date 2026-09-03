@@ -46,6 +46,18 @@ From a terminal you can skip the picker: `dev-layout --new <path>`.
 | `SUPER + F11`        | Fullscreen              |
 | `SUPER + `` ` ``     | Toggle split direction  |
 
+## Session Control
+
+All three require your password to get back in.
+
+| Keybind              | Action                  |
+|----------------------|-------------------------|
+| `SUPER + CTRL + L`   | Lock screen             |
+| `SUPER + CTRL + S`   | Lock, then sleep        |
+| `SUPER + CTRL + Q`   | Log out (to login screen) |
+
+Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
+
 ## Focus Navigation
 
 | Keybind              | Action                  |

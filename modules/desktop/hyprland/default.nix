@@ -95,6 +95,22 @@
   # Polkit (for privilege escalation)
   security.polkit.enable = true;
 
+  # PAM stack for hyprlock.
+  #
+  # hyprlock authenticates against the PAM service named "hyprlock". Without an
+  # /etc/pam.d/hyprlock, PAM falls through to /etc/pam.d/other, which on NixOS
+  # is pam_deny for auth - so the lock screen would come up and then reject the
+  # correct password, with no way back into the session except a TTY. An empty
+  # attrset gets the NixOS default stack (pam_unix), matching what the swaylock
+  # module generates.
+  #
+  # Deliberately not programs.hyprlock.enable: that also flips on
+  # services.hypridle, whose system-level user unit would shadow (and be
+  # shadowed by) the one home-manager already writes to ~/.config/systemd/user.
+  # The package is in environment.systemPackages above; PAM is the only piece
+  # that has to come from the system side.
+  security.pam.services.hyprlock = { };
+
   # Enable sound
   security.rtkit.enable = true;
   services.pipewire = {

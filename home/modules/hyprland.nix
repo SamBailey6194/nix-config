@@ -23,10 +23,26 @@
     package = null;
     portalPackage = null;
 
-    # CRITICAL: Disable systemd integration to prevent conflicts with UWSM
-    # The NixOS module handles session management via UWSM (if enabled)
-    # or via its own systemd integration
-    systemd.enable = false;
+    # Bring up graphical-session.target.
+    #
+    # This was previously false, on the theory that the NixOS module handles
+    # session management via UWSM. It does not: modules/desktop/hyprland
+    # sets programs.hyprland.enable without withUWSM, and greetd launches
+    # `start-hyprland` directly, so nothing ever started the target. The
+    # user services home-manager wires to it - hypridle, hyprpaper, waybar -
+    # therefore sat "enabled, inactive (dead)" for the whole session. waybar
+    # and hyprpaper only appeared to work because 80-autostart.lua also
+    # exec'd them by hand; hypridle had no such fallback, which is why the
+    # laptop suspended without ever locking.
+    #
+    # With this true, home-manager defines hyprland-session.target (BindsTo
+    # graphical-session.target, so starting it starts that too) and emits an
+    # hl.exec_cmd into the generated hyprland.lua that runs
+    # dbus-update-activation-environment and then starts the target. That
+    # path is Lua-aware - see home-manager .../hyprland/lib.nix,
+    # startupCommands - so it works under the 0.56 config provider, and it is
+    # not gated on `package`, which stays null below.
+    systemd.enable = true;
 
     # Modular Lua config files, deployed to ~/.config/hypr/<name>.lua.
     #
@@ -83,6 +99,39 @@
   # below sets `show = "drun"` in the config file, and the explicit mode flag
   # overrides it.
   home.packages = [
+    # Lock, verify the lock is really up, then suspend.
+    #
+    # `systemctl suspend` on its own relies on hypridle being alive to catch
+    # PrepareForSleep and run before_sleep_cmd. That is exactly the assumption
+    # that silently failed before graphical-session.target was fixed - the
+    # laptop suspended wide open. So this does not trust it: it locks first,
+    # waits for hyprlock to actually exist, and refuses to suspend if it never
+    # appears. Better to stay awake than to sleep unlocked.
+    (pkgs.writeShellScriptBin "lock-and-suspend" ''
+      set -euo pipefail
+
+      loginctl lock-session
+
+      # hyprlock takes a moment to grab the session lock; poll rather than
+      # guessing a fixed sleep. 5s is far longer than the ~20ms it took in
+      # testing, and only matters when something is wrong.
+      for _ in $(seq 1 50); do
+        if ${pkgs.procps}/bin/pidof hyprlock >/dev/null 2>&1; then
+          break
+        fi
+        sleep 0.1
+      done
+
+      if ! ${pkgs.procps}/bin/pidof hyprlock >/dev/null 2>&1; then
+        notify-send --urgency=critical \
+          "Suspend aborted" \
+          "hyprlock did not start - refusing to suspend an unlocked session."
+        exit 1
+      fi
+
+      systemctl suspend
+    '')
+
     (pkgs.writeShellScriptBin "dev-layout-pick" ''
       set -euo pipefail
 
@@ -184,11 +233,27 @@
   programs.hyprlock = {
     enable = true;
     settings = {
+      # hyprlock 0.9.6 removed three options that used to live in this block,
+      # and they are hard errors now rather than being ignored:
+      #
+      #   disable_loading_bar - gone outright, there is no loading bar any more
+      #   grace               - moved to the CLI as `--grace <seconds>`, which
+      #                         already defaults to 0 (main.cpp: value_or(0)),
+      #                         exactly what we were setting here
+      #   no_fade_in          - superseded by the `animations` section, whose
+      #                         `enabled` defaults to true, matching the old
+      #                         `no_fade_in = false`
+      #
+      # So all three are simply dropped: behaviour is unchanged in every case.
+      # The valid general: keys in 0.9.6 (ConfigManager.cpp) are text_trim,
+      # hide_cursor, ignore_empty_input, immediate_render, fractional_scaling,
+      # screencopy_mode and fail_timeout.
+      #
+      # Note that grace being a CLI flag means hypridle's
+      # `lock_cmd = "pidof hyprlock || hyprlock"` gets grace 0 by default -
+      # a password is required immediately, which is what we want.
       general = {
-        disable_loading_bar = true;
-        grace = 0;
         hide_cursor = true;
-        no_fade_in = false;
       };
 
       background = [

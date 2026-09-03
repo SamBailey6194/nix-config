@@ -318,6 +318,99 @@ clean-rust:
 clean-all: clean-rust clean-generations
 
 # ============================================================================
+# Network
+# ============================================================================
+
+# Pick a saved Wi-Fi profile and connect to it
+wifi:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Exists mainly for the profiles that deliberately do not autoconnect -
+    # see modules/network/wifi-profiles.nix, where PCC-Public is manual-only
+    # because every guest shares its PSK. Joining is meant to be a deliberate
+    # act, so this makes that act cheap rather than encouraging autoconnect.
+    #
+    # Profile names are read one per line and unescaped rather than split on
+    # ":", because nmcli's terse mode escapes colons inside SSIDs and an
+    # `awk -F:` split would silently mangle such a name.
+
+    if ! nmcli -t -f RUNNING general 2>/dev/null | grep -q running; then
+        echo "NetworkManager is not running." >&2
+        exit 1
+    fi
+
+    # Refresh the scan so the "in range" column means something. Harmless if
+    # it fails (radio off, rate limited) - the column just goes blank.
+    nmcli device wifi rescan >/dev/null 2>&1 || true
+
+    unescape() { sed 's/\\:/:/g'; }
+
+    mapfile -t in_range < <(nmcli -g SSID device wifi list 2>/dev/null | unescape | sed '/^$/d' | sort -u)
+    mapfile -t active   < <(nmcli -g NAME connection show --active 2>/dev/null | unescape)
+
+    has() { local n=$1; shift; printf '%s\n' "$@" | grep -qxF "$n"; }
+
+    rows=()
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        [ "$(nmcli -g connection.type connection show "$name" 2>/dev/null)" = "802-11-wireless" ] || continue
+
+        mark=" "
+        if [ "${#active[@]}" -gt 0 ] && has "$name" "${active[@]}"; then mark="*"; fi
+
+        range=""
+        if [ "${#in_range[@]}" -gt 0 ] && has "$name" "${in_range[@]}"; then range="in range"; fi
+
+        rows+=("$(printf '%s\t%s %-30s %s' "$name" "$mark" "$name" "$range")")
+    done < <(nmcli -g NAME connection show | unescape)
+
+    if [ "${#rows[@]}" -eq 0 ]; then
+        echo "No saved Wi-Fi profiles. Add one in modules/network/wifi-profiles.nix." >&2
+        exit 1
+    fi
+
+    if command -v fzf >/dev/null 2>&1; then
+        sel=$(printf '%s\n' "${rows[@]}" \
+            | fzf -d $'\t' --with-nth=2 --height=40% --reverse \
+                  --prompt='Wi-Fi > ' --header='* = connected. ENTER to connect, ESC to cancel.') || exit 0
+    else
+        # fzf lives in home/stages/dev.nix; fall back so this still works
+        # from a shell that does not have the user profile on PATH.
+        printf '%s\n' "${rows[@]}" | cut -f2 | nl -w2 -s') ' >&2
+        read -rp "Number (blank to cancel): " n
+        [ -n "$n" ] || exit 0
+        sel=$(printf '%s\n' "${rows[@]}" | sed -n "${n}p")
+        [ -n "$sel" ] || { echo "No such entry." >&2; exit 1; }
+    fi
+
+    name=${sel%%$'\t'*}
+    echo "Connecting to $name..."
+    nmcli connection up "$name"
+
+# ============================================================================
+# Session Control
+# ============================================================================
+#
+# All three require the password again on the way back in. `sleep` locks
+# before it suspends and aborts rather than suspending an unlocked session -
+# see the lock-and-suspend wrapper in home/modules/hyprland.nix.
+#
+# Keybind equivalents: SUPER + CTRL + L / S / Q.
+
+# Lock the screen (session keeps running, windows stay open)
+lock:
+    loginctl lock-session
+
+# Lock, confirm the lock is up, then suspend
+sleep:
+    lock-and-suspend
+
+# Log out of Hyprland, back to the tuigreet login prompt
+logout:
+    hyprctl dispatch "hl.dsp.exit()"
+
+# ============================================================================
 # Information
 # ============================================================================
 
