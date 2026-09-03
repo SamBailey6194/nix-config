@@ -6,6 +6,7 @@
 
   imports = [
     ./dev.nix
+    ../modules/email.nix # Claws Mail, built without any browser engine
   ];
 
   # Productivity packages

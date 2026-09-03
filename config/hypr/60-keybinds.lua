@@ -23,7 +23,7 @@ hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
 --   SHIFT — the reserved nix-config layout, always built on workspace 2, so
 --           this repository is only ever open in one known place.
 --   CTRL  — a generic dev layout, placed on the next free workspace from the
---           3-6 dev pool, so several unrelated projects can be open at once.
+--           3-5 dev pool, so several unrelated projects can be open at once.
 --
 -- CTRL goes through the `dev-layout-pick` wofi picker rather than calling
 -- dev-layout directly. dev-layout needs a project PATH — the folder name is
@@ -41,6 +41,9 @@ hl.bind(mod .. " + W",         hl.dsp.exec_cmd("zen-beta"))
 hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("brave"))
 hl.bind(mod .. " + ALT + W",   hl.dsp.exec_cmd("librewolf"))
 hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
+
+-- Mail (workspace 6; see 00-vars.lua for the window rule that pins it)
+hl.bind(mod .. " + E", hl.dsp.exec_cmd("claws-mail"))
 
 -- Communication
 hl.bind(mod .. " + T", hl.dsp.exec_cmd("teams-for-linux"))

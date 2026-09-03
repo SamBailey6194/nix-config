@@ -91,7 +91,8 @@ by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
 |-----------|---------------------------------|------------------------------------|
 | `1`       | Dashboard (keybinds + terminal) | Device file (laptop only)          |
 | `2`       | nix-config dev layout           | Window rules (class + title match) |
-| `3-6`     | Dev pool, allocated as needed   | Window rules registered at launch  |
+| `3-5`     | Dev pool, allocated as needed   | Window rules registered at launch  |
+| `6`       | Mail (Claws Mail)               | `00-vars.lua` workspaceAssignments  |
 | `7`       | Browsers                        | Window rules (class match)         |
 | `8`       | Affinity Suite                  | Window rules (class match)         |
 | `9`       | Comms (Teams, Zoom, Discord)    | Window rules (class match)         |
@@ -119,7 +120,7 @@ worth keeping apart:
   and the rule never attaches. The editor would silently land on the catch-all.
   That registered rule, not the keybind, is what does
   the placing.
-- The 3-6 dev pool is **laptop-only in practice today**. `60-keybinds.lua` is
+- The 3-5 dev pool is **laptop-only in practice today**. `60-keybinds.lua` is
   shared by every device, but `devices/devtower.lua` pins DaVinci Resolve to
   workspace 5 and OBS to workspace 6, and `devices/framework.lua` pins Resolve
   to workspace 5 — all inside the pool. On those machines a generic dev layout
@@ -223,7 +224,7 @@ Highlights:
 - `SUPER + F`: file manager (Thunar)
 - `SUPER + Z`: Zed editor
 - `SUPER + SHIFT + Z`: nix-config dev layout on workspace 2
-- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-6).
+- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-5).
   Goes through the `dev-layout-pick` wofi picker (declared in
   `home/modules/hyprland.nix`), because dev-layout needs a project path and a
   keybind inherits Hyprland's working directory rather than a project's. From a

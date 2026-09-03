@@ -65,12 +65,13 @@ hl.window_rule({
 --
 --   1     dashboard — ws1-keybinds + ws1-monitor, pinned in step 2 below
 --   2     nix-config dev layout (RESERVED: never allocated to anything else)
---   3-6   generic dev pool, handed out one workspace at a time when a generic
+--   3-5   generic dev pool, handed out one workspace at a time when a generic
 --         dev layout is launched. Not covered by a rule in THIS file: a
 --         static rule cannot express "the next free workspace", so the
 --         launcher picks one at runtime and registers a class+title rule for
 --         it through `hyprctl eval` just before launching. That rule beats
 --         this catch-all by being registered later — last match wins.
+--   6     mail (Claws Mail)
 --   7     browsers
 --   8     Affinity Suite
 --   9     comms

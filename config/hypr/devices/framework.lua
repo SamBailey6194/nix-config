@@ -29,13 +29,15 @@
 --     shared contract deliberately.
 --
 --  2. DAVINCI RESOLVE SITS INSIDE THE GENERIC DEV POOL.
---     Workspaces 3-6 are now the generic dev pool: `SUPER + CTRL + Z` hands
---     out the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua
---     is shared by EVERY device, so that keybind exists here too. The
+--     Workspaces 3-5 are the generic dev pool: `SUPER + CTRL + Z` hands out
+--     the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua is
+--     shared by EVERY device, so that keybind exists here too. The
 --     `framework-resolve-workspace` rule below pins Resolve to workspace 5,
 --     inside that pool, so a dev layout could be built on top of Resolve or
 --     vice versa — whichever opened first simply keeps the workspace.
---     Fix: move Resolve out of 3-6, or narrow the pool for this device.
+--     Narrowing the pool from 3-6 to 3-5 (workspace 6 is now mail) made this
+--     WORSE, not better: Resolve is now one of only three pool workspaces.
+--     Fix: move Resolve off workspace 5, or set DEV_LAYOUT_POOL_LAST=4 here.
 --
 -- ═════════════════════════════════════════════════════════════════════════
 

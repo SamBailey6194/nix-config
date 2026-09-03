@@ -29,16 +29,19 @@
 --     shared contract deliberately.
 --
 --  2. RESOLVE AND OBS SIT INSIDE THE GENERIC DEV POOL.
---     Workspaces 3-6 are now the generic dev pool: `SUPER + CTRL + Z` hands
---     out the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua
---     is shared by EVERY device, so that keybind exists here too. Below,
---     `devtower-resolve-workspace` pins DaVinci Resolve to workspace 5 and
---     `devtower-obs-workspace` pins OBS to workspace 6 — both inside the pool,
---     leaving it only two free workspaces and letting a dev layout land on top
---     of a creative application (whichever opened first keeps the workspace).
---     Fix: move Resolve and OBS out of 3-6, or narrow the pool for this
---     device. This also needs the three-monitor workspace design that is still
---     outstanding for devtower.
+--     Workspaces 3-5 are the generic dev pool: `SUPER + CTRL + Z` hands out
+--     the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua is
+--     shared by EVERY device, so that keybind exists here too. Below,
+--     `devtower-resolve-workspace` pins DaVinci Resolve to workspace 5, which
+--     is still inside the pool, so a dev layout can land on top of Resolve
+--     (whichever opened first keeps the workspace).
+--
+--     The pool narrowed from 3-6 to 3-5 when workspace 6 became mail, which
+--     also moved OBS's workspace 6 out of the pool but INTO a collision with
+--     Claws Mail instead. Both still need fixing for this device: move
+--     Resolve off 5 and OBS off 6, or set DEV_LAYOUT_POOL_LAST here. This
+--     also needs the three-monitor workspace design still outstanding for
+--     devtower.
 --
 -- ═════════════════════════════════════════════════════════════════════════
 

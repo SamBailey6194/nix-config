@@ -9,12 +9,13 @@
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
 | `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 2) |
-| `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 3-6) |
+| `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 3-5) |
 | `SUPER + F`          | File manager (Thunar)   |
 | `SUPER + W`          | Zen browser (default)   |
 | `SUPER + SHIFT + W`  | Brave browser           |
 | `SUPER + ALT + W`    | LibreWolf browser       |
 | `SUPER + CTRL + W`   | Firefox Developer Ed.   |
+| `SUPER + E`          | Email (Claws Mail)      |
 | `SUPER + T`          | Teams                   |
 | `SUPER + C`          | Zoom                    |
 | `SUPER + R`          | RustDesk                |
@@ -22,7 +23,7 @@
 | `SUPER + /`          | This keybinds help      |
 
 `SUPER + CTRL + Z` opens a picker listing every project under `~/Repos`, then
-builds the layout on the lowest free workspace in the 3-6 dev pool. With all
+builds the layout on the lowest free workspace in the 3-5 dev pool. With all
 four already holding windows it raises a notification and stops — close a dev
 space, or switch to one of them and work there.
 
@@ -92,7 +93,8 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 |-----------|----------------------------------------------|
 | `1`       | Dashboard (keybinds + htop) — laptop only    |
 | `2`       | nix-config dev layout (reserved)             |
-| `3-6`     | Dev pool (allocated as needed)               |
+| `3-5`     | Dev pool (allocated as needed)               |
+| `6`       | Mail (Claws Mail)                            |
 | `7`       | Browsers                                     |
 | `8`       | Affinity Suite                               |
 | `9`       | Comms (Teams, Zoom, Discord)                 |

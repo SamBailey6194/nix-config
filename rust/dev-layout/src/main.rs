@@ -39,16 +39,21 @@ use anyhow::{bail, ensure, Context, Result};
 use colored::Colorize;
 
 /// Default first and last workspace of the generic dev pool. Workspace 1 is the
-/// dashboard, workspace 2 is reserved for the nix-config layout, 7-9 are
-/// browsers/Affinity/comms and 10 is the catch-all, so the pool is 3-6.
+/// dashboard, workspace 2 is reserved for the nix-config layout, 6 is mail
+/// (Claws Mail), 7-9 are browsers/Affinity/comms and 10 is the catch-all, so
+/// the pool is 3-5.
+///
+/// The pool used to run 3-6. Workspace 6 was handed to Claws Mail so that mail
+/// has a fixed home like the browsers and comms do; a dev layout landing on
+/// top of the mail client would defeat the point of pinning it.
 ///
 /// These are only the DEFAULTS. `60-keybinds.lua` is shared by every device,
 /// but `devices/devtower.lua` pins DaVinci Resolve to workspace 5 and OBS to
-/// workspace 6, and `devices/framework.lua` pins Resolve to workspace 5 — all
-/// inside the default pool. Those devices can narrow the pool with the
-/// environment variables below instead of forking the keybind.
+/// workspace 6, and `devices/framework.lua` pins Resolve to workspace 5 — still
+/// inside the narrowed pool in Resolve's case. Those devices can narrow it
+/// further with the environment variables below instead of forking the keybind.
 const DEFAULT_POOL_FIRST: u32 = 3;
-const DEFAULT_POOL_LAST: u32 = 6;
+const DEFAULT_POOL_LAST: u32 = 5;
 
 /// Workspace the nix-config layout is pinned to by the static window rules.
 const NIX_CONFIG_WS: u32 = 2;
