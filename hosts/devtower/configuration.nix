@@ -13,6 +13,10 @@
     # Secrets management
     ../../modules/core/secrets-desktop.nix
 
+    # Declarative Wi-Fi profiles; PSKs come from the wifi-passwords agenix
+    # secret, never the Nix store.
+    ../../modules/network/wifi-profiles.nix
+
     # SSH configuration (per-device keys)
     ../../modules/core/ssh-config.nix
 

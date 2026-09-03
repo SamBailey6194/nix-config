@@ -43,6 +43,10 @@
     ../../modules/software/creative.nix # DaVinci Resolve Studio + Blender
 
     # Network
+    # Declarative Wi-Fi profiles; PSKs come from the wifi-passwords agenix
+    # secret, never the Nix store.
+    ../../modules/network/wifi-profiles.nix
+
     # TODO: Uncomment when Mullvad keypairs are registered for this device
     # ../../modules/network/wireguard-mullvad.nix
 

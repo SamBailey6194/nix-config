@@ -137,7 +137,10 @@ in
   # ~/.aws/sso/cache at login), but the account topology is not repo-public.
   # ============================================================================
 
-  "aws-config-laptop-intel.age".publicKeys = allUsers ++ [ sam-ubuntu laptop-intel ];
+  "aws-config-laptop-intel.age".publicKeys = allUsers ++ [
+    sam-ubuntu
+    laptop-intel
+  ];
   # "aws-config-framework.age".publicKeys = allUsers ++ [ framework ];
   # "aws-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
@@ -186,7 +189,7 @@ in
   # ============================================================================
 
   # Example: Uncomment when needed
-  # "wifi-passwords.age".publicKeys = allKeys;
+  "wifi-passwords.age".publicKeys = allKeys;
   # "api-tokens-read-only.age".publicKeys = allKeys;
   # "restic-backup-password.age".publicKeys = allKeys;
 

@@ -58,7 +58,7 @@ in
 
   # Editor environment variables
   home.sessionVariables = {
-    EDITOR = "zed --wait";
-    VISUAL = "zed --wait";
+    EDITOR = "zeditor --wait";
+    VISUAL = "zeditor --wait";
   };
 }

@@ -14,7 +14,7 @@ in
 
   programs.neovim = {
     enable = true;
-    defaultEditor = false;  # Zed is still the default (EDITOR=zed in common.nix)
+    defaultEditor = false;  # Zed is still the default (EDITOR=zeditor in stages/dev.nix)
     viAlias = true;
     vimAlias = true;
     vimdiffAlias = true;

@@ -88,12 +88,13 @@ in
 
     # ========================================================================
     # Wi-Fi Passwords (shared across all devices)
-    # TODO: Uncomment when wifi-passwords.age is created
+    # EnvironmentFile consumed by NetworkManager-ensure-profiles; see
+    # modules/network/wifi-profiles.nix. root-only - NetworkManager is root.
     # ========================================================================
-    # wifi-passwords = {
-    #   file = ../../secrets/wifi-passwords.age;
-    #   mode = "0400";
-    # };
+    wifi-passwords = {
+      file = ../../secrets/wifi-passwords.age;
+      mode = "0400";
+    };
 
     # ========================================================================
     # squid-digest Environment (Gmail creds + recipient + heartbeat URL)

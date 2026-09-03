@@ -40,6 +40,10 @@
     ../../modules/software/media.nix
 
     # Network
+    # Declarative Wi-Fi profiles; PSKs come from the wifi-passwords agenix
+    # secret, never the Nix store.
+    ../../modules/network/wifi-profiles.nix
+
     # Mullvad VPN with multi-hop rotation via wireguard-helper
     ../../modules/network/wireguard-mullvad.nix
 
