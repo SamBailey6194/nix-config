@@ -1,7 +1,7 @@
 # Version History
 
-**Last Updated**: 22/02/2026
-**Version**: 1.4.0
+**Last Updated**: 16/09/2026
+**Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.5.0 - 16/09/2026](#150---16092026)
 - [1.4.0 - 22/02/2026](#140---22022026)
 - [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
@@ -53,6 +54,52 @@
 
 ### Technical Changes
 - Nothing yet
+
+---
+
+## [1.5.0] - 16/09/2026
+
+### Summary
+Wrapped `uv`/`uvx` so the Python processes they launch can load manylinux wheels and find the nixpkgs Playwright browsers. Fixes `import greenlet` — and therefore all of `playwright` and `scrapling` — which failed on every uv-launched interpreter on this host.
+
+### Features Added
+| Feature | Description | Files |
+|---------|-------------|-------|
+| `uv-manylinux` | `uv` and `uvx` wrapped with `makeWrapper`, installed in place of bare `uv` | `pkgs/uv-manylinux.nix`, `modules/software/development.nix` |
+| manylinux C++ runtime | `--suffix LD_LIBRARY_PATH` with `gcc16.cc.lib`, so a wheel's `dlopen` finds `libstdc++.so.6` | `pkgs/uv-manylinux.nix` |
+| Playwright browser bundle | `--set-default PLAYWRIGHT_BROWSERS_PATH` to `pkgs.playwright-driver.browsers` | `pkgs/uv-manylinux.nix` |
+| No browser downloads | `--set-default PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`; the read-only store makes a download fallback structurally impossible | `pkgs/uv-manylinux.nix` |
+| `just check-playwright` | Reports the PyPI `playwright` pin matching the nixpkgs browser bundle | `justfile` |
+
+### Technical Changes
+| Change | Reason | Files |
+|--------|--------|-------|
+| Scoped to uv, not the session | `LD_LIBRARY_PATH` outranks `DT_RUNPATH`, so a session-wide export shadows every Nix-built binary's linked store paths | `pkgs/uv-manylinux.nix` |
+| One package, not nix-ld's set | Measured: `gcc16.cc.lib` alone suffices for greenlet and all three Playwright browsers, while the full nix-ld set breaks `hyprctl`/`hyprlock` | `pkgs/uv-manylinux.nix` |
+| `gcc16` rather than stdenv's gcc15 | The `hyprland` flake input does not `follows` nixpkgs and is built by gcc 16.2.0; `libstdc++` is backward compatible, so the newer one serves both | `pkgs/uv-manylinux.nix` |
+| Pin derived from nixpkgs | `pkgs.python3Packages.playwright.version` is bumped in the same nixpkgs update-script run as `playwright-driver`, so it cannot drift from the bundle | `justfile` |
+| `passthru` preserved | `symlinkJoin` drops `passthru`; `uv`'s `updateScript`/`tests` are re-attached, plus an `unwrapped` escape hatch | `pkgs/uv-manylinux.nix` |
+
+### Files Changed
+| File | Changes |
+|------|---------|
+| `pkgs/uv-manylinux.nix` | New wrapped-uv derivation (126 lines) |
+| `modules/software/development.nix` | Build and install the wrapper in place of bare `uv` (9 lines) |
+| `justfile` | `check-playwright` recipe (28 lines) |
+
+### Root Cause
+| Symptom | Cause |
+|---------|-------|
+| `ImportError: libstdc++.so.6: cannot open shared object file` | A manylinux wheel's `.so` carries no `DT_RUNPATH` for external libraries; CPython `dlopen`s it at import time and NixOS has no `/etc/ld.so.cache` and no `/usr/lib` |
+| `programs.nix-ld` did not help | nix-ld *is* the loader at `/lib64/ld-linux-x86-64.so.2` and is only entered by an ELF whose `PT_INTERP` points there; the store CPython's does not, so `NIX_LD_LIBRARY_PATH` is never read |
+| `Executable doesn't exist at .../chromium_headless_shell-<rev>` | Playwright pins an exact Chromium revision per release; the consuming project must use the PyPI release whose revisions the nixpkgs bundle ships |
+
+### Compatibility Notes
+- Consuming projects must pin the Python `playwright` release matching the bundle. With the current `flake.lock` that is `playwright==1.61.0`; there is no PyPI 1.61.1 to match driver 1.61.1. Run `just check-playwright` after `nix flake update`.
+- An explicit `playwright install` now fails with `EROFS` against the read-only store rather than downloading. Scripts using it as a pre-flight log a warning and continue.
+- This release records only the change above; commits between 1.4.0 and 1.5.0 were not tracked here at the time.
+
+Version: 1.4.0 → 1.5.0
 
 ---
 

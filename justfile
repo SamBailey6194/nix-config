@@ -200,6 +200,36 @@ format-rust:
 dev:
     nix develop
 
+# `uv`/`uvx` are wrapped (pkgs/uv-manylinux.nix) to point PLAYWRIGHT_BROWSERS_PATH at
+# pkgs.playwright-driver.browsers, and Playwright pins an exact Chromium *revision*
+# per release. A project whose lockfile resolves a different release fails at launch
+# with "Executable doesn't exist at .../chromium_headless_shell-<rev>". Run this
+# after `just update` to see whether the required pin has moved.
+
+# Report which Python playwright release matches the nixpkgs browser bundle
+check-playwright:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    host=laptop-intel
+    browsers=$(nix eval --raw ".#nixosConfigurations.$host.pkgs.playwright-driver.browsers")
+    driver=$(nix eval --raw ".#nixosConfigurations.$host.pkgs.playwright-driver.version")
+    # nixpkgs bumps playwright-driver and python3Packages.playwright in one
+    # update-script run, so this attribute is the PyPI release whose Chromium
+    # revision the bundle above actually ships. Reading it beats hand-deriving it:
+    # there is no PyPI 1.61.1 to match driver 1.61.1.
+    wheel=$(nix eval --raw ".#nixosConfigurations.$host.pkgs.python3Packages.playwright.version")
+    echo "playwright-driver (npm) version : $driver"
+    echo "required PyPI playwright pin    : $wheel"
+    echo "browsers bundle                 : $browsers"
+    echo "revisions shipped               :"
+    ls -1 "$browsers" | sed 's/^/  /'
+    echo
+    echo "Pin consuming projects to playwright==$wheel. In a uv project that means"
+    echo "constraining the transitive dep without adding an edge:"
+    echo
+    echo "  [tool.uv]"
+    echo "  constraint-dependencies = [\"playwright==$wheel\"]"
+
 # ============================================================================
 # Fuzzing (Security Testing)
 # ============================================================================

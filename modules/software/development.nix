@@ -9,6 +9,14 @@ let
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
   htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
+
+  # uv, wrapped so the Python processes it launches can load manylinux wheels and
+  # find the nixpkgs Playwright browsers. Without it, any wheel that dlopens
+  # libstdc++ (greenlet, and so all of playwright and scrapling) fails to import.
+  # See pkgs/uv-manylinux.nix for the full reasoning, and for why this is scoped
+  # to uv rather than exported into the session — the short version is that an
+  # exported LD_LIBRARY_PATH outranks DT_RUNPATH and takes out hyprlock.
+  uv-manylinux = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
 in
 {
   # Development tools and environment
@@ -58,7 +66,8 @@ in
     python313           # For legacy projects
     python313Packages.pip
     python313Packages.virtualenv
-    uv                  # Fast Python package installer + version manager
+    uv-manylinux        # Fast Python package installer + version manager (uv,
+                        #   wrapped — see the let block above)
     copier              # Project scaffolding from templates (copier copy/update)
 
     # Rust toolchain via rustup (provides rustc, cargo, rustfmt, clippy)

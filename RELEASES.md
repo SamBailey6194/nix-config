@@ -1,7 +1,7 @@
 # Release Notes
 
-**Last Updated**: 22/02/2026
-**Version**: 1.4.0
+**Last Updated**: 16/09/2026
+**Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -17,53 +17,39 @@
 
 ## Latest Release
 
-### Version 1.4.0 - 22 February 2026
+### Version 1.5.0 - 16 September 2026
 
 #### What's New
 
-**System-Wide Management Tools**
-All management tools are now available everywhere in your system without any setup:
-- Type `secrets-verify` to check your encrypted secrets are working
-- Use `agenix-helper` to manage encrypted passwords and keys
-- Run `wireguard-helper` to manage your VPN connections
-- Execute `malware-scanner` to scan for security threats
-- Configure backups with `restic-manage`
-- Manage advanced storage with `zfs-manage`, `raid-manage`, `luks-manage`
-- Control security hardware with `tpm-manage`
+**Python Tools That Actually Run**
+Python packages downloaded from the internet expect system libraries that NixOS keeps somewhere else, so anything built on them failed the moment it started. That is now fixed for every tool launched through `uv`:
+- Web scraping with Scrapling works, including its assistant server
+- Browser-based tests run instead of silently reporting that they found nothing to test
+- No setup, no environment variables to remember — it just works from any folder
 
-These tools are automatically available on all your devices - no need to activate developer mode or run special commands.
+**Real Browsers For Testing**
+Automated browser tests now use the browsers your system already manages, rather than downloading copies that cannot run here:
+- Chrome, Firefox and Safari engines all available and verified working
+- Nothing is downloaded, so tests behave the same today as next month
+- Accessibility and visual checks now genuinely render pages
 
-**Real Hardware Configuration**
-Your laptop now has its actual hardware configuration instead of a template:
-- **Encrypted Storage**: Your entire system drive is encrypted for security
-- **Efficient Filesystem**: Uses BTRFS with automatic compression to save space
-- **Smart Organisation**: System files, your documents, and backups are neatly separated
-- **Optimised Boot**: EFI boot partition configured for fast, reliable startup
-- **CPU Updates**: Automatic Intel microcode updates for better performance and security
+#### Behind The Scenes
+The fix is deliberately narrow. Making these libraries available to everything on the computer would have broken your screen lock, so they are supplied only to Python tools and nothing else.
 
-#### How This Helps You
-
-**Simpler Workflow**
-Previously, you needed to enter a special developer environment to use these management tools. Now they're just there whenever you need them - type the command and it works.
-
-**Better Organisation**
-Instead of installing tools separately on each computer, they're configured once and available everywhere. This means:
-- Consistent tools across all your devices
-- Easier to maintain (update in one place, works everywhere)
-- No duplicated configuration
-
-**Production Ready**
-Your laptop configuration is now based on the actual hardware in the device, not a generic template. This means better performance and reliability.
-
-#### Coming Soon
-
-- Complete NixOS installation process
-- Multi-device file synchronisation
-- Enhanced security features
+#### Keeping It Working
+A new `just check-playwright` command tells you which browser-testing version your projects should use, so an update to the system never quietly breaks a test suite.
 
 ---
 
 ## Previous Releases
+
+### Version 1.4.0 - 22 February 2026
+
+#### What's New
+- Management tools (`secrets-verify`, `agenix-helper`, `wireguard-helper`, `malware-scanner`, `restic-manage`, `zfs-manage`, `raid-manage`, `luks-manage`, `tpm-manage`) available system-wide on every device
+- Laptop moved from a template hardware configuration to its real one: encrypted system drive, BTRFS with compression, separated system/documents/backup areas
+
+---
 
 ### Version 0.6.7 - 28 January 2026
 

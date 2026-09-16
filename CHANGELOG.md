@@ -1,7 +1,7 @@
 # Changelog
 
-**Last Updated**: 22/02/2026
-**Version**: 1.4.0
+**Last Updated**: 16/09/2026
+**Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -11,6 +11,7 @@
 ## Table of Contents
 
 - [Unreleased](#unreleased)
+- [1.5.0 - 16/09/2026](#150---16092026)
 - [1.4.0 - 22/02/2026](#140---22022026)
 - [1.3.1 - 22/02/2026](#131---22022026)
 - [1.3.0 - 22/02/2026](#130---22022026)
@@ -48,6 +49,32 @@
 
 ### Added
 - Nothing yet
+
+---
+
+## [1.5.0] - 16/09/2026
+
+### Added
+- **`pkgs/uv-manylinux.nix`**: `uv`/`uvx` wrapped so the Python processes they launch can load manylinux wheels and find the nixpkgs Playwright browsers
+  - `--suffix LD_LIBRARY_PATH` with `gcc16.cc.lib` — a manylinux wheel's `.so` carries no `DT_RUNPATH` for external libraries, so CPython's `dlopen` at import time found nothing and `import greenlet` (and therefore all of `playwright` and `scrapling`) failed with `libstdc++.so.6: cannot open shared object file`
+  - `programs.nix-ld` does not cover this: nix-ld *is* the loader at `/lib64/ld-linux-x86-64.so.2` and is only entered by an ELF whose `PT_INTERP` points there, which the store CPython's does not
+  - Scoped to uv rather than exported into the session: `LD_LIBRARY_PATH` outranks `DT_RUNPATH`, and the Hyprland stack (from the `hyprland` flake input, gcc 16.2.0) breaks against nix-ld's gcc 15.3.0 `libstdc++` with `GLIBCXX_3.4.36 not found` — a session-wide export takes out `hyprlock`
+  - One package, not nix-ld's whole set: measured, `gcc16.cc.lib` alone is enough for greenlet and for all three Playwright browsers, while leaving `hyprctl`/`hyprlock` working
+  - `--set-default PLAYWRIGHT_BROWSERS_PATH` / `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` — Playwright pins an exact Chromium revision per release and its prebuilt browsers do not run on NixOS; same reasoning as the mcp-mermaid pin in `home/modules/claude.nix`
+- **`just check-playwright`**: reports the PyPI `playwright` pin that matches the nixpkgs browser bundle, read from `pkgs.python3Packages.playwright.version` (bumped in the same nixpkgs update-script run as `playwright-driver`, so it cannot drift from the bundle)
+
+### Changed
+- **`modules/software/development.nix`**: `uv` replaced by the wrapped `uv-manylinux`
+
+### Files Changed
+- `pkgs/uv-manylinux.nix` - New wrapped-uv derivation (126 lines)
+- `modules/software/development.nix` - Build and install the wrapper in place of bare `uv` (9 lines)
+- `justfile` - `check-playwright` recipe (28 lines)
+
+### Notes
+- Consumers of the nixpkgs browser bundle must use the Python `playwright` release whose Chromium revision it ships. With the current `flake.lock` that is `playwright==1.61.0` — not derivable by hand from `playwright-driver` 1.61.1, as there is no PyPI 1.61.1. A mismatch fails loudly with `Executable doesn't exist at .../chromium_headless_shell-<rev>`.
+
+Version: 1.4.0 → 1.5.0
 
 ---
 
