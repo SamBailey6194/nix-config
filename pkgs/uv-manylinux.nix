@@ -87,16 +87,86 @@
 # number, and there is no PyPI 1.61.1 to match driver 1.61.1. A mismatch fails
 # loudly with "Executable doesn't exist at .../chromium_headless_shell-<rev>",
 # never silently.
+#
+# ── Holding consumers to that pin: UV_CONSTRAINT ─────────────────────────────
+#
+# PLAYWRIGHT_BROWSERS_PATH only says *where* the browsers are. It cannot make a
+# wheel want the revisions that are actually there, and a resolver left to itself
+# takes the newest release — playwright 1.63.0 and patchright 1.62.3 at the time
+# of writing — which expect revisions this bundle does not ship. So point uv at a
+# constraints file as well.
+#
+# A constraint bounds a version *without adding a dependency edge*, so nothing
+# here drags playwright into an environment that did not already ask for it; it
+# only binds when something in the resolution already depends on one of these.
+#
+# UV_CONSTRAINT is `--constraints` as an environment variable. Measured against
+# uv 0.12.3, it is read by `uv pip install`, `uv pip compile`, `uv pip sync`,
+# `uv tool run` (and so `uvx`), `uv tool install` and `uv add` — which covers the
+# uvx path an MCP server is spawned on, and every ad-hoc `uvx --from ... python`.
+#
+# It is NOT read by `uv run`, `uv sync`, `uv lock` or `uv export`: those resolve
+# from a project's lockfile, so a checkout still needs the pin written into its
+# own pyproject.toml. That is the `[tool.uv] constraint-dependencies` block
+# `just check-playwright` prints, and this variable does not replace it.
+#
+# `--set-default` again, and the variable takes a space-separated list, so a
+# project that needs constraints of its own should append rather than clobber:
+#
+#     UV_CONSTRAINT="$UV_CONSTRAINT /path/to/mine.txt" uv pip install ...
+#
+# ── Why one pin is derived and the other is a literal ────────────────────────
+#
+# playwright comes from python3Packages.playwright.version for the reason the
+# NOTE above gives: nixpkgs moves it in lockstep with the bundle, so a
+# `nix flake update` carries the constraint along with the browsers instead of
+# leaving a stale literal behind.
+#
+# patchright cannot be derived that way. It is a separate fork (Kaliiiiiiiiii-
+# Vinyzu/patchright-python, what Scrapling's StealthyFetcher drives) on its own
+# release cadence, and nixpkgs' python3Packages.patchright — 1.58.0 as of this
+# writing, against a bundle on the 1.61 line — is packaged independently of
+# playwright-driver, so it tracks the bundle only by coincidence. Deriving from
+# it would pin the wrong revisions with a straight face. Hence a hand-maintained
+# literal, to be rechecked whenever `just check-playwright` reports a move.
+#
+# To move it: take the newest patchright whose major.minor matches the required
+# playwright pin, then diff its revisions against the bundle — they must match
+# exactly, name for name.
+#
+#     uv pip install --target /tmp/pr 'patchright==<candidate>'
+#     jq -r '.browsers[] | "\(.name) \(.revision)"' \
+#       /tmp/pr/patchright/driver/package/browsers.json
+#     ls "$(nix eval --raw '.#nixosConfigurations.laptop-intel.pkgs.playwright-driver.browsers')"
+#
+# Verified for the pins below: playwright 1.61.0 and patchright 1.61.2 both ask
+# for chromium 1228, chromium_headless_shell 1228, firefox 1532, webkit 2311 and
+# ffmpeg 1011 — exactly what this bundle ships — and both launch Chromium
+# 149.0.7827.55 headless out of it on this host.
 {
   lib,
   uv,
   symlinkJoin,
   makeWrapper,
+  writeText,
   playwright-driver,
+  # Read for its `version` string only — no build, no closure edge. See "Why one
+  # pin is derived and the other is a literal" above.
+  python3Packages,
   # Newest gcc in this nixpkgs. Must be >= the gcc every other closure on the host
   # was built with — see "Why this list is one package" above.
   gcc16,
 }:
+
+let
+  # Hand-maintained; nixpkgs' own patchright does not track the browser bundle.
+  patchrightVersion = "1.61.2";
+
+  browserConstraints = writeText "uv-browser-constraints.txt" ''
+    playwright==${python3Packages.playwright.version}
+    patchright==${patchrightVersion}
+  '';
+in
 
 symlinkJoin {
   name = "uv-manylinux-${uv.version}";
@@ -111,14 +181,18 @@ symlinkJoin {
       wrapProgram "$out/bin/$prog" \
         --suffix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ gcc16.cc.lib ]}" \
         --set-default PLAYWRIGHT_BROWSERS_PATH "${playwright-driver.browsers}" \
-        --set-default PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD "1"
+        --set-default PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD "1" \
+        --set-default UV_CONSTRAINT "${browserConstraints}"
     done
   '';
 
   # symlinkJoin does not carry passthru across, which would drop uv's updateScript
   # and tests from the wrapped attribute. `unwrapped` is the escape hatch for
   # anything that genuinely needs the bare binary.
-  passthru = (uv.passthru or { }) // { unwrapped = uv; };
+  passthru = (uv.passthru or { }) // {
+    unwrapped = uv;
+    inherit browserConstraints;
+  };
 
   meta = uv.meta // {
     description = "${uv.meta.description}, wrapped for manylinux wheels and the nixpkgs Playwright browsers";
