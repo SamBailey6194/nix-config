@@ -421,13 +421,23 @@
         echo ""
 
         if [ -d rust ]; then
-          echo "Building Rust tools..."
-          cd rust
-          cargo build --release 2>&1 | grep -E "(Compiling|Finished|error)" || true
-          cd ..
-          echo ""
+          # Deliberately does NOT run `cargo build` here.
+          #
+          # A shellHook runs on every shell *evaluation*, not just when a human
+          # types `nix develop`: direnv's `use flake`, Zed's project environment
+          # probe (zsh -l -i -c '... zed --printenv'), and `nix develop -c`.
+          #
+          # Building here meant every flake.lock bump changed the toolchain hash,
+          # invalidated cargo's fingerprints, and kicked off a full from-scratch
+          # rebuild of the workspace in the background. That wedged direnv, so
+          # Zed's env probe never resolved (no terminal, stale git panel), and
+          # Zed's retries stacked up more builds contending on .cargo-lock.
+          #
+          # Build on demand instead:  just build-rust
+          # System-wide tools come from the Rust overlay during nixos-rebuild
+          # (see modules/core/base-configuration.nix).
 
-          # Add Rust tools to PATH
+          # Prefer a locally built dev version when one is present
           export PATH="$PWD/rust/target/release:$PATH"
           echo "✅ Rust tools available:"
           echo "  - secrets-verify, agenix-helper"
@@ -435,6 +445,8 @@
           echo "  - malware-scanner"
           echo "  - restic-manage, zfs-manage, raid-manage"
           echo "  - luks-manage, btrfs-manage, vault-manage, tpm-manage"
+          echo ""
+          echo "  (provided by the overlay; run 'just build-rust' for a local dev build)"
           echo ""
         fi
 

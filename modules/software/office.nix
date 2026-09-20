@@ -6,7 +6,7 @@
 
   environment.systemPackages = with pkgs; [
     # Office suite
-    libreoffice-fresh        # LibreOffice (Writer, Calc, Impress)
+    libreoffice             # LibreOffice (Writer, Calc, Impress)
     # onlyoffice-bin          # ONLY Office (MS Office compatible)
 
     # PDF tools

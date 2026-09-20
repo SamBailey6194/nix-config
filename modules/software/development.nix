@@ -118,15 +118,16 @@ in
     # comment there. Auth: `codex login` (ChatGPT sign-in) or OPENAI_API_KEY.
     codex                       # OpenAI Codex CLI (Apache-2.0)
 
-    # gemini-cli-bin, not gemini-cli: the source build has been frozen at 0.47.0
-    # in both the current pin and nixos-unstable, while the prebuilt variant is
-    # the one actually tracking releases (0.42.0 -> 0.58.0). They both install
-    # bin/gemini, so only ever enable one of the two.
+    # REMOVED 20/09/2026: gemini-cli-bin (and gemini-cli). Google retired Gemini
+    # CLI for unpaid, Pro and Ultra accounts in favour of Antigravity CLI, and
+    # nixpkgs now carries meta.problems.removal on the package — it still builds
+    # but warns on every eval, and will be dropped outright. It was already
+    # unusable here: auth needs an enterprise account or a GEMINI_API_KEY.
     #
-    # NOTE: as of June 2026 Gemini CLI no longer serves individual Pro/Ultra or
-    # free-tier Google accounts — it needs an enterprise account or a
-    # GEMINI_API_KEY. Expect auth to fail on a personal login.
-    gemini-cli-bin              # Google Gemini CLI (Apache-2.0)
+    # The successor is `antigravity-cli` (binary `agy`, not `gemini`). Not added
+    # because it is unfree and a different tool, not a rename — add it
+    # deliberately if you ever want it, rather than as a drop-in swap.
+    # https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/
 
     # Swift
     # NOTE: nixpkgs' Swift on Linux is 5.10.1 and has been static for some time —
