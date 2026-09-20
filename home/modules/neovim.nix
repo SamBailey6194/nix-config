@@ -6,6 +6,103 @@ let
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
   htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
+
+  # ── Keybinds ───────────────────────────────────────────────────────────
+  #
+  # Single source of truth. This list renders BOTH the vim.keymap.set calls in
+  # initLua AND the KEYBINDS.md that the Neovim dev layout shows in its
+  # top-right pane (see rust/dev-layout, NVIM_KEYBINDS_REL). Add a binding here
+  # and both update together, so the on-screen reference cannot drift from the
+  # bindings it claims to document — which is exactly what has happened to the
+  # hand-maintained config/hypr/KEYBINDS.md.
+  #
+  # `docOnly = true` means "documented here, defined elsewhere": the LSP
+  # bindings are buffer-local and set inside on_attach, and the conform one
+  # needs a Lua closure. Generating those from a string would be a lie, but
+  # leaving them out of the reference would be worse.
+  keymaps = [
+    { group = "Panels"; lhs = "<leader>e";  rhs = "<cmd>Neotree toggle filesystem left<CR>"; desc = "Toggle file tree (left)"; }
+    { group = "Panels"; lhs = "<leader>b";  rhs = "<cmd>Neotree toggle buffers left<CR>";    desc = "Toggle buffer list (left)"; }
+    { group = "Panels"; lhs = "<leader>o";  rhs = "<cmd>AerialToggle<CR>";     desc = "Toggle outline (left)"; }
+    { group = "Panels"; lhs = "<leader>t";  rhs = "<cmd>ToggleTerm<CR>";       desc = "Toggle terminal (bottom)"; }
+
+    { group = "Find";   lhs = "<leader>ff"; rhs = "<cmd>Telescope find_files<CR>"; desc = "Find files"; }
+    { group = "Find";   lhs = "<leader>fg"; rhs = "<cmd>Telescope live_grep<CR>";  desc = "Live grep"; }
+    { group = "Find";   lhs = "<leader>fb"; rhs = "<cmd>Telescope buffers<CR>";    desc = "Buffers"; }
+    { group = "Find";   lhs = "<leader>fh"; rhs = "<cmd>Telescope help_tags<CR>";  desc = "Help tags"; }
+
+    { group = "Git";    lhs = "<leader>gs"; rhs = "<cmd>Neotree toggle git_status right<CR>"; desc = "Git status panel (right)"; }
+    { group = "Git";    lhs = "<leader>gg"; rhs = "<cmd>Neogit<CR>";                desc = "Full git UI (Neogit)"; }
+    { group = "Git";    lhs = "<leader>gd"; rhs = "<cmd>DiffviewOpen<CR>";          desc = "Diff view"; }
+    { group = "Git";    lhs = "<leader>gq"; rhs = "<cmd>DiffviewClose<CR>";         desc = "Close diff view"; }
+    { group = "Git";    lhs = "<leader>gh"; rhs = "<cmd>DiffviewFileHistory %<CR>"; desc = "History of this file"; }
+
+    { group = "AI";     lhs = "<leader>cc"; rhs = "<cmd>ClaudeCode<CR>";           desc = "Toggle Claude Code"; }
+    { group = "AI";     lhs = "<leader>cb"; rhs = "<cmd>ClaudeCodeAdd %<CR>";      desc = "Send buffer to Claude"; }
+    { group = "AI";     lhs = "<leader>cs"; rhs = "<cmd>ClaudeCodeSend<CR>";       desc = "Send selection to Claude"; mode = "v"; }
+    { group = "AI";     lhs = "<leader>co"; rhs = "<cmd>CodexToggle<CR>";          desc = "Toggle Codex CLI"; }
+
+    { group = "Code";   lhs = "<leader>ca"; desc = "Code action";        docOnly = true; }
+    { group = "Code";   lhs = "<leader>cf"; desc = "Format buffer";      docOnly = true; }
+    { group = "Code";   lhs = "<leader>rn"; desc = "Rename symbol";      docOnly = true; }
+    { group = "Code";   lhs = "gd";         desc = "Go to definition";   docOnly = true; }
+    { group = "Code";   lhs = "gD";         desc = "Go to declaration";  docOnly = true; }
+    { group = "Code";   lhs = "gi";         desc = "Go to implementation"; docOnly = true; }
+    { group = "Code";   lhs = "gr";         desc = "References";         docOnly = true; }
+    { group = "Code";   lhs = "K";          desc = "Hover docs";         docOnly = true; }
+    { group = "Code";   lhs = "<leader>k";  desc = "Signature help";     docOnly = true; }
+
+    { group = "Diagnostics"; lhs = "<leader>xx"; rhs = "<cmd>Trouble diagnostics toggle<CR>";              desc = "All diagnostics"; }
+    { group = "Diagnostics"; lhs = "<leader>xw"; rhs = "<cmd>Trouble diagnostics toggle filter.buf=0<CR>"; desc = "Buffer diagnostics"; }
+    { group = "Diagnostics"; lhs = "<leader>ld"; desc = "Line diagnostic";     docOnly = true; }
+    { group = "Diagnostics"; lhs = "[d";         desc = "Previous diagnostic"; docOnly = true; }
+    { group = "Diagnostics"; lhs = "]d";         desc = "Next diagnostic";     docOnly = true; }
+
+    { group = "Buffers"; lhs = "<Tab>";      rhs = "<cmd>bnext<CR>";     desc = "Next buffer"; }
+    { group = "Buffers"; lhs = "<S-Tab>";    rhs = "<cmd>bprevious<CR>"; desc = "Previous buffer"; }
+    { group = "Buffers"; lhs = "<leader>x";  rhs = "<cmd>bdelete<CR>";   desc = "Close buffer"; }
+    { group = "Buffers"; lhs = "<C-s>";      rhs = "<cmd>w<CR>";         desc = "Save"; }
+    { group = "Buffers"; lhs = "<C-q>";      rhs = "<cmd>q<CR>";         desc = "Quit"; }
+    { group = "Buffers"; lhs = "<leader>h";  rhs = "<cmd>nohlsearch<CR>"; desc = "Clear search highlight"; }
+
+    { group = "Windows"; lhs = "<C-h>"; rhs = "<C-w>h"; desc = "Window left"; }
+    { group = "Windows"; lhs = "<C-j>"; rhs = "<C-w>j"; desc = "Window down"; }
+    { group = "Windows"; lhs = "<C-k>"; rhs = "<C-w>k"; desc = "Window up"; }
+    { group = "Windows"; lhs = "<C-l>"; rhs = "<C-w>l"; desc = "Window right"; }
+  ];
+
+  # Lua single-quoted string literal. Backslash first, or it would double the
+  # backslashes this very function just inserted for the quotes.
+  luaStr = str: "'" + lib.replaceStrings [ "\\" "'" ] [ "\\\\" "\\'" ] str + "'";
+
+  generated = builtins.filter (k: !(k.docOnly or false)) keymaps;
+
+  renderKeymap = k:
+    let
+      mode = k.mode or "n";
+    in
+    "vim.keymap.set(${luaStr mode}, ${luaStr k.lhs}, ${luaStr k.rhs}, "
+    + "{ desc = ${luaStr k.desc}, noremap = true, silent = true })";
+
+  keymapLua = lib.concatMapStringsSep "\n      " renderKeymap generated;
+
+  keymapGroups = lib.unique (map (k: k.group) keymaps);
+
+  renderGroup = group:
+    let
+      rows = lib.filter (k: k.group == group) keymaps;
+      row = k: "| `${k.lhs}` | ${k.desc} |";
+    in
+    "## ${group}\n\n| Key | Action |\n| --- | --- |\n"
+    + lib.concatMapStringsSep "\n" row rows;
+
+  keybindsMarkdown = ''
+    # Neovim keybinds
+
+    Leader is `<Space>`. Generated from `home/modules/neovim.nix` — do not edit
+    by hand; the file is rewritten on every `nixos-rebuild`.
+
+  '' + lib.concatMapStringsSep "\n\n" renderGroup keymapGroups + "\n";
 in
 {
   # Neovim configuration with Lua
@@ -40,8 +137,12 @@ in
       # Treesitter (better syntax highlighting)
       nvim-treesitter.withAllGrammars
 
-      # File explorer
-      nvim-tree-lua            # File tree
+      # File explorer. neo-tree rather than nvim-tree because each of its
+      # sources (filesystem, buffers, git_status) carries its own `window
+      # .position`, so the panels dock themselves — which is the entire job
+      # edgy.nvim was here to do.
+      neo-tree-nvim            # File tree + git status, as placed panels
+      nui-nvim                 # neo-tree's UI toolkit dependency
       nvim-web-devicons        # Icons
 
       # Fuzzy finder
@@ -67,6 +168,19 @@ in
       toggleterm-nvim          # Terminal integration
       trouble-nvim             # Better diagnostics
       nvim-colorizer-lua       # Color preview
+
+      # Outline — mirrors Zed's outline_panel (left dock, under the file tree)
+      aerial-nvim
+
+      # Git panel — mirrors Zed's git_panel (right dock)
+      neogit
+      diffview-nvim
+      plenary-nvim             # neogit's dependency; telescope pulls it in too
+
+      # Claude Code, as an editor integration rather than a bare shell: it can
+      # take the current buffer or selection as context and review diffs in
+      # place. Codex has no such plugin and runs in a toggleterm instead.
+      claudecode-nvim
 
       # Language-specific
       rust-vim                 # Rust support
@@ -118,6 +232,21 @@ in
       -- Appearance
       vim.opt.termguicolors = true
       vim.opt.background = 'dark'
+
+      -- Kept after edgy.nvim was dropped, because both earn their place
+      -- independently of it:
+      --   laststatus = 3  one global statusline instead of one per window,
+      --                   so a four-panel layout does not spend four lines
+      --                   restating the same thing. lualine is happier too.
+      --   splitkeep       keeps the text in the main window still when a
+      --                   panel opens or closes at an edge, rather than
+      --                   letting the view scroll under the cursor.
+      --   splitright      new vertical splits open to the RIGHT, which is
+      --                   what puts the git_status panel where Zed's
+      --                   git_panel sits.
+      vim.opt.laststatus = 3
+      vim.opt.splitkeep = 'screen'
+      vim.opt.splitright = true
       vim.opt.signcolumn = 'yes'
       vim.opt.cursorline = true
 
@@ -213,13 +342,19 @@ in
           vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
           vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
           vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+          -- <leader>k, not <C-k>: this is buffer-local and was shadowing the
+      -- global <C-k> window-up binding in every buffer with a server
+      -- attached, which made window-up silently dead exactly where it is
+      -- most wanted. Moving the rarer binding is cheaper than losing the
+      -- common one.
+      vim.keymap.set('n', '<leader>k', vim.lsp.buf.signature_help, opts)
           vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
           vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
           vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
           vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
-          -- <leader>e belongs to NvimTreeToggle further down; a buffer-local
-          -- binding here would shadow it in every buffer with a server attached.
+          -- <leader>e belongs to the neo-tree toggle further down; a
+          -- buffer-local binding here would shadow it in every buffer with a
+          -- server attached.
           vim.keymap.set('n', '<leader>ld', vim.diagnostic.open_float, opts)
         end,
       })
@@ -480,23 +615,81 @@ in
       })
 
       -- ============================================================================
-      -- FILE EXPLORER: nvim-tree
+      -- FILE EXPLORER / GIT PANEL: neo-tree (placed panels, no dock manager)
       -- ============================================================================
+      --
+      -- Two of Zed's docks come from this one plugin, because each neo-tree
+      -- source owns its own window position:
+      --
+      --   filesystem  -> left   (Zed's project_panel)
+      --   git_status  -> right  (Zed's git_panel)
+      --
+      -- That is why there is no edgy.nvim here. edgy exists to force windows
+      -- to edges for plugins that cannot place themselves; neo-tree, aerial
+      -- and toggleterm all can, so edgy would only add a second opinion about
+      -- where things belong — and its own README documents neo-tree but not
+      -- nvim-tree, which is the combination we would have been relying on.
+      require('neo-tree').setup({
+        close_if_last_window = true,
+        popup_border_style = 'rounded',
+        enable_git_status = true,
+        enable_diagnostics = true,
+        sources = { 'filesystem', 'buffers', 'git_status' },
 
-      require('nvim-tree').setup({
-        view = {
-          width = 30,
-          side = 'left',
+        -- Native version of the setting every edgy thread ends up recommending:
+        -- never open a file INTO one of these panels, or the file evicts the
+        -- panel it landed in. The default covers terminal/Trouble/qf/edgy; the
+        -- rest are the panels this config adds.
+        open_files_do_not_replace_types = {
+          'terminal', 'Trouble', 'trouble', 'qf', 'aerial', 'toggleterm',
+          'NeogitStatus', 'NeogitPopup', 'DiffviewFiles', 'notify',
         },
-        renderer = {
-          group_empty = true,
+
+        filesystem = {
+          window = { position = 'left', width = 30 },
+          follow_current_file = { enabled = true },
+          -- Watch rather than poll, so a `nixos-rebuild` writing into the tree
+          -- shows up without a manual refresh.
+          use_libuv_file_watcher = true,
+          filtered_items = {
+            visible = true,
+            hide_dotfiles = false,
+            hide_gitignored = true,
+          },
         },
-        filters = {
-          dotfiles = false,
+
+        git_status = {
+          window = { position = 'right', width = 40 },
+        },
+
+        buffers = {
+          window = { position = 'left', width = 30 },
+          follow_current_file = { enabled = true },
         },
       })
 
-      vim.keymap.set('n', '<leader>e', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
+      -- ============================================================================
+      -- AERIAL: symbol outline (mirrors Zed's outline_panel)
+      -- ============================================================================
+
+      require('aerial').setup({
+        layout = {
+          default_direction = 'left',
+          placement = 'edge',
+          max_width = { 30, 0.2 },
+        },
+        -- 'window', NOT 'global'. attach_mode = 'global' is the setting
+        -- behind folke/lazy.nvim#1762, where the main window shrinks every
+        -- time focus leaves the outline. That report involved edgy, which
+        -- this config no longer uses, but the setting is the trigger and
+        -- 'window' is the documented way out — so keep it either way.
+        attach_mode = 'window',
+        close_automatic_events = {},
+        -- LSP first, treesitter as the fallback. Matches how the rest of this
+        -- config resolves symbols, and means filetypes with a parser but no
+        -- server still get an outline.
+        backends = { 'lsp', 'treesitter', 'markdown', 'man' },
+      })
 
       -- ============================================================================
       -- TELESCOPE: fuzzy finder
@@ -509,11 +702,6 @@ in
         }
       })
       telescope.load_extension('fzf')
-
-      vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { noremap = true })
-      vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>', { noremap = true })
-      vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>', { noremap = true })
-      vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>', { noremap = true })
 
       -- ============================================================================
       -- LUALINE: status line
@@ -579,14 +767,34 @@ in
       -- TOGGLETERM: terminal
       -- ============================================================================
 
+      -- A bottom dock rather than a float, so the shape matches Zed's terminal
+      -- dock. `open_mapping` is deliberately unset: every binding in this
+      -- config comes from the keymaps attrset in neovim.nix, and a plugin
+      -- registering its own would be invisible to the generated reference.
       require('toggleterm').setup({
-        direction = 'float',
-        float_opts = {
-          border = 'curved',
-        }
+        direction = 'horizontal',
+        size = 15,
+        start_in_insert = true,
+        persist_size = true,
+        shade_terminals = false,
       })
 
-      vim.keymap.set('n', '<C-`>', ':ToggleTerm<CR>', { noremap = true })
+      -- Codex gets its own toggleterm instance rather than sharing the default
+      -- shell, so toggling it away leaves the session running and does not
+      -- disturb whatever is in the plain terminal. Claude is handled by
+      -- claudecode-nvim below, which is a real editor integration rather than
+      -- a shell, hence the asymmetry between the two.
+      local Terminal = require('toggleterm.terminal').Terminal
+      local codex = Terminal:new({
+        cmd = 'codex',
+        hidden = true,
+        direction = 'horizontal',
+        close_on_exit = false,
+      })
+
+      vim.api.nvim_create_user_command('CodexToggle', function()
+        codex:toggle()
+      end, { desc = 'Toggle the Codex CLI in its own terminal' })
 
       -- ============================================================================
       -- TROUBLE: better diagnostics
@@ -594,14 +802,51 @@ in
 
       require('trouble').setup()
 
-      vim.keymap.set('n', '<leader>xx', ':Trouble diagnostics toggle<CR>', { noremap = true })
-      vim.keymap.set('n', '<leader>xw', ':Trouble diagnostics toggle filter.buf=0<CR>', { noremap = true })
+      -- ============================================================================
+      -- NEOGIT + DIFFVIEW: git panel (mirrors Zed's git_panel)
+      -- ============================================================================
+
+      -- `kind = 'tab'` on purpose: neo-tree's git_status source is already the
+      -- docked, Zed-style git panel on the right. Neogit is the full staging
+      -- and committing UI, so it gets its own tab rather than fighting for an
+      -- edge with the panels that live there.
+      require('neogit').setup({
+        kind = 'tab',
+        integrations = { diffview = true },
+        graph_style = 'unicode',
+      })
+
+      require('diffview').setup({
+        enhanced_diff_hl = true,
+      })
+
+      -- ============================================================================
+      -- CLAUDE CODE
+      -- ============================================================================
+
+      -- terminal_cmd is left nil on purpose: the plugin defaults to `claude`,
+      -- which claude-code-nix already puts on PATH. Pinning a store path here
+      -- would freeze the CLI at whatever revision this rebuild happened to see.
+      require('claudecode').setup({
+        auto_start = true,
+        track_selection = true,
+      })
 
       -- ============================================================================
       -- WHICH-KEY: keybinding hints
       -- ============================================================================
 
-      require('which-key').setup()
+      -- Group labels only. The bindings themselves are generated further down
+      -- from the keymaps attrset in neovim.nix, and each carries its own
+      -- `desc`, which is what which-key actually renders per key.
+      local wk = require('which-key')
+      wk.setup()
+      wk.add({
+        { '<leader>f', group = 'find' },
+        { '<leader>g', group = 'git' },
+        { '<leader>c', group = 'code / AI' },
+        { '<leader>x', group = 'diagnostics' },
+      })
 
       -- ============================================================================
       -- COLORIZER: color preview
@@ -610,28 +855,61 @@ in
       require('colorizer').setup()
 
       -- ============================================================================
-      -- ADDITIONAL KEYMAPS
+      -- KEYMAPS (generated)
       -- ============================================================================
+      --
+      -- Everything below is rendered from the `keymaps` attrset at the top of
+      -- neovim.nix, which also renders ~/.config/nvim/KEYBINDS.md — the file the
+      -- dev layout shows in its top-right pane. Do not add bindings here by
+      -- hand: one added here would work but would be missing from the on-screen
+      -- reference, which is the exact drift this generation exists to prevent.
+      --
+      -- Buffer-local LSP bindings are the deliberate exception. They are set in
+      -- on_attach above because they only make sense where a server is
+      -- attached, and they appear in the reference as `docOnly` entries.
 
-      -- Clear search highlight
-      vim.keymap.set('n', '<leader>h', ':nohlsearch<CR>', { noremap = true })
+      ${keymapLua}
 
-      -- Save file
-      vim.keymap.set('n', '<C-s>', ':w<CR>', { noremap = true })
+      -- ============================================================================
+      -- STARTUP LAYOUT
+      -- ============================================================================
+      --
+      -- Opens the file tree and the terminal dock, which is the shape Zed
+      -- actually starts in: project_panel open, the other docks present but
+      -- toggled on demand. Outline is <leader>o and the git panel <leader>gs;
+      -- each plugin places its own window, so they land on the right edge
+      -- whenever you open them without anything having to manage the layout.
+      --
+      -- Deliberately not opening all four: the dev layout gives Neovim 75% of a
+      -- 1920px screen, and a tree plus an outline plus a git panel would leave
+      -- roughly 60 columns for code.
+      --
+      -- Skipped when nvim was given a file or piped stdin, so `nvim file.rs`,
+      -- `git commit` and `:terminal` editors are unaffected.
+      vim.api.nvim_create_autocmd('VimEnter', {
+        desc = 'Open the default dock layout on a bare start',
+        callback = function()
+          if vim.fn.argc() > 0 or vim.g.started_with_stdin then
+            return
+          end
+          -- Tree first so it claims the left edge before anything else maps.
+          vim.cmd('Neotree show filesystem left')
+          vim.cmd('ToggleTerm')
+          -- Land the cursor back in the editing window rather than the tree or
+          -- the terminal, so typing immediately goes where you expect.
+          vim.schedule(function()
+            pcall(vim.cmd, 'wincmd k')
+            pcall(vim.cmd, 'wincmd l')
+          end)
+        end,
+      })
 
-      -- Quit
-      vim.keymap.set('n', '<C-q>', ':q<CR>', { noremap = true })
-
-      -- Window navigation
-      vim.keymap.set('n', '<C-h>', '<C-w>h', { noremap = true })
-      vim.keymap.set('n', '<C-j>', '<C-w>j', { noremap = true })
-      vim.keymap.set('n', '<C-k>', '<C-w>k', { noremap = true })
-      vim.keymap.set('n', '<C-l>', '<C-w>l', { noremap = true })
-
-      -- Buffer navigation
-      vim.keymap.set('n', '<Tab>', ':bnext<CR>', { noremap = true })
-      vim.keymap.set('n', '<S-Tab>', ':bprevious<CR>', { noremap = true })
-      vim.keymap.set('n', '<leader>x', ':bdelete<CR>', { noremap = true })
+      vim.api.nvim_create_autocmd('StdinReadPre', {
+        desc = 'Remember that stdin was piped in, so VimEnter can skip the layout',
+        callback = function()
+          vim.g.started_with_stdin = true
+        end,
+      })
 
       -- ============================================================================
       -- FORMATTING: conform
@@ -711,4 +989,15 @@ in
       end, { desc = 'Format buffer' })
     '';
   };
+
+  # The keybind reference the Neovim dev layout shows in its top-right pane
+  # (SUPER + SHIFT + RETURN / SUPER + CTRL + RETURN). rust/dev-layout looks for
+  # it at $HOME/.config/nvim/KEYBINDS.md — see NVIM_KEYBINDS_REL there — and
+  # falls back to a plain shell if it is missing, so the two can be changed
+  # independently without breaking the layout.
+  #
+  # Rendered from the same `keymaps` attrset that generates the vim.keymap.set
+  # calls above, which is the whole point: the pane cannot document a binding
+  # that does not exist, or miss one that does.
+  xdg.configFile."nvim/KEYBINDS.md".text = keybindsMarkdown;
 }

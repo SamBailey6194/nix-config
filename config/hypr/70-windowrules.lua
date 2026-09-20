@@ -65,8 +65,10 @@ hl.window_rule({
 --   kitty              plain terminal (SUPER + Return, and the pool layout's
 --                      terminals if the launcher stops tagging them)
 --   nixcfg-term        the workspace 2 nix-config layout's two terminals
+--   nixcfg-nvim        the workspace 2 layout's editor, when it is Neovim
 --   devpool-term-3..5  the generic dev pool layout's terminals, one class per
 --                      pool workspace, matched with the range [3-5]
+--   devpool-nvim-3..5  the same, for a pool layout's Neovim editor window
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's htop pane (laptop only)
 --
@@ -75,7 +77,7 @@ hl.window_rule({
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|devpool-term-[3-5]|ws1-keybinds|ws1-monitor)$" },
+    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor)$" },
 
     opacity = "0.95 0.95",
 })

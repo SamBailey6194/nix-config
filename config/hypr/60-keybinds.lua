@@ -9,9 +9,23 @@ local mod = vars.mod
 
 -- ── Applications ──────────────────────────────────────────────────────
 
--- Terminal
+-- Terminal, and the Neovim dev layouts.
+--
+-- The RETURN family mirrors the Z family below one-for-one, so the modifier
+-- means the same thing in both: SHIFT is the reserved nix-config layout, CTRL
+-- is the wofi picker onto the dev pool. RETURN is Neovim-in-Kitty, Z is Zed.
+--
+--   RETURN        a plain terminal
+--   SHIFT+RETURN  nix-config layout, Neovim  (mirrors SHIFT + Z)
+--   CTRL+RETURN   dev pool picker,  Neovim  (mirrors CTRL  + Z)
+--   ALT+RETURN    a terminal that just runs nvim, with no layout at all
+--
+-- ALT+RETURN is the escape hatch that used to live on SHIFT+RETURN: one nvim,
+-- no windows placed, no workspace claimed.
 hl.bind(mod .. " + RETURN",         hl.dsp.exec_cmd("kitty"))
-hl.bind(mod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("kitty -e nvim"))
+hl.bind(mod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("dev-layout --nvim"))
+hl.bind(mod .. " + CTRL + RETURN",  hl.dsp.exec_cmd("dev-layout-pick --nvim"))
+hl.bind(mod .. " + ALT + RETURN",   hl.dsp.exec_cmd("kitty -e nvim"))
 
 -- Launcher
 hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("wofi --show drun"))
@@ -19,7 +33,10 @@ hl.bind(mod .. " + SPACE", hl.dsp.exec_cmd("wofi --show drun"))
 -- Editor
 hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
 
--- Dev layouts. Two variants, deliberately on separate keybinds:
+-- Dev layouts, Zed variants. The Neovim mirrors are on the RETURN family
+-- above; both go through the same `dev-layout` binary, which takes --nvim.
+--
+-- Two variants, deliberately on separate keybinds:
 --   SHIFT — the reserved nix-config layout, always built on workspace 2, so
 --           this repository is only ever open in one known place.
 --   CTRL  — a generic dev layout, placed on the next free workspace from the

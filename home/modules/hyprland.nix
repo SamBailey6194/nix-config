@@ -152,14 +152,29 @@
         exit 1
       fi
 
+      # Every argument is forwarded verbatim to dev-layout, so
+      # `dev-layout-pick --nvim` picks a project and then builds a Neovim
+      # layout rather than a Zed one. Flag position does not matter: dev-layout
+      # parses options anywhere in argv, so appending after the path is safe.
+      #
+      # The prompt says which editor you are about to get, because the two
+      # keybinds (SUPER + CTRL + Z and SUPER + CTRL + RETURN) open an identical
+      # picker and there would otherwise be nothing on screen to tell them apart.
+      prompt="Dev space (zed)"
+      for arg in "$@"; do
+        if [ "$arg" = "--nvim" ]; then
+          prompt="Dev space (nvim)"
+        fi
+      done
+
       # wofi exits non-zero when dismissed with Escape — that is a normal
       # cancel, not a failure, so leave quietly without a notification.
       choice=$(printf '%s\n' "''${projects[@]}" \
-        | ''${WOFI:-wofi} --show dmenu --prompt "Dev space") || exit 0
+        | ''${WOFI:-wofi} --show dmenu --prompt "$prompt") || exit 0
 
       [ -n "$choice" ] || exit 0
 
-      exec dev-layout --new "$root/$choice"
+      exec dev-layout --new "$root/$choice" "$@"
     '')
   ];
 

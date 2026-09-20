@@ -163,6 +163,19 @@ M.workspaceAssignments = {
         match     = { class = "^(nixcfg-term)$" },
         workspace = "2",
     },
+
+    -- The Neovim variant of the same layout (SUPER + SHIFT + RETURN), which
+    -- shares workspace 2 with the Zed one: dev-layout refuses to build a
+    -- second layout there and focuses the existing one instead.
+    --
+    -- Note how much smaller this rule is than nixcfg-editor above. Neovim runs
+    -- inside Kitty and Kitty supports --class, so there is no title clause and
+    -- no dependency on the checkout still being called "nix-config".
+    {
+        name      = "nixcfg-nvim",
+        match     = { class = "^(nixcfg-nvim)$" },
+        workspace = "2",
+    },
 }
 
 -- Register every assignment above as a window rule.
