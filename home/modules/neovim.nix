@@ -376,6 +376,12 @@ in
       -- ── Slint ────────────────────────────────────────────────────────
       lsp('slint_lsp', { cmd = { '${pkgs.slint-lsp}/bin/slint-lsp' } })
 
+      -- ── Swift ────────────────────────────────────────────────────────
+      lsp('sourcekit', { cmd = { '${pkgs.sourcekit-lsp}/bin/sourcekit-lsp' } })
+
+      -- ── Kotlin ───────────────────────────────────────────────────────
+      lsp('kotlin_language_server', { cmd = { '${pkgs.kotlin-language-server}/bin/kotlin-language-server' } })
+
       -- ── TeX ──────────────────────────────────────────────────────────
       lsp('texlab', {
         cmd = { '${pkgs.texlab}/bin/texlab' },

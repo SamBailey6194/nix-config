@@ -169,6 +169,122 @@ check:
 update:
     nix flake update
 
+# Check for available updates WITHOUT changing anything (the `apt update` +
+# `apt list --upgradable` equivalent for a flake config).
+#
+# There is no package index on NixOS: flake.lock IS the pinned snapshot of the
+# whole package set, so "are there updates?" means "have the inputs moved
+# upstream?". This queries each direct input's remote and compares it to the
+# lock. Nothing is written — flake.lock and the system are left untouched.
+#
+# Flake inputs are compared by commit date; `flake = false` source inputs are
+# compared by `git ls-remote` rev, since a non-flake has no metadata to read.
+#
+# Check for available updates (read-only; the `apt update` equivalent)
+check-updates:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    meta=$(nix flake metadata . --json)
+    printf '%-24s %-12s %-12s %s\n' INPUT PINNED UPSTREAM STATUS
+    printf '%-24s %-12s %-12s %s\n' ------------------------ ------------ ------------ ------
+    stale=0
+    while IFS=$'\t' read -r name node; do
+      pinned=$(jq -r --arg n "$node" '.locks.nodes[$n].locked.lastModified // empty' <<<"$meta")
+      [ -n "$pinned" ] || continue
+      pinned_date=$(date -u -d "@$pinned" +%F)
+      # NB: jq's `//` treats `false` as empty, so `.flake // true` would always
+      # yield true here. Test for the literal false instead.
+      isflake=$(jq -r --arg n "$node" 'if .locks.nodes[$n].flake == false then "false" else "true" end' <<<"$meta")
+      orig=$(jq -r --arg n "$node" '.locks.nodes[$n].original' <<<"$meta")
+
+      if [ "$isflake" = "false" ]; then
+        # Non-flake source tree: compare revs via git ls-remote.
+        url=$(jq -r '.url // empty' <<<"$orig")
+        lockrev=$(jq -r --arg n "$node" '.locks.nodes[$n].locked.rev // empty' <<<"$meta")
+        remote=$(timeout 60 git ls-remote "$url" HEAD 2>/dev/null | awk 'NR==1{print $1}' || true)
+        if [ -z "$remote" ]; then
+          printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "?" "unreachable (auth/network?)"
+        elif [ "$remote" != "$lockrev" ]; then
+          stale=$((stale + 1))
+          printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "${remote:0:7}" "UPDATE AVAILABLE (new rev)"
+        else
+          printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "${remote:0:7}" "up to date"
+        fi
+        continue
+      fi
+
+      url=$(jq -r '
+        if .type == "github" then "github:\(.owner)/\(.repo)" + (if .ref then "/\(.ref)" else "" end)
+        elif .type == "gitlab" then "gitlab:\(.owner)/\(.repo)" + (if .ref then "/\(.ref)" else "" end)
+        elif .type == "git" then "git+\(.url)" + (if .ref then "?ref=\(.ref)" else "" end)
+        else (.url // empty) end' <<<"$orig")
+      if [ -z "$url" ]; then
+        printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "?" "unknown input type"
+        continue
+      fi
+      up=$(timeout 90 nix flake metadata "$url" --json --refresh --no-write-lock-file 2>/dev/null \
+             | jq -r '.lastModified // empty' || true)
+      if [ -z "$up" ]; then
+        printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "?" "unreachable (auth/network?)"
+      elif [ "$up" -gt "$pinned" ]; then
+        stale=$((stale + 1))
+        printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "$(date -u -d "@$up" +%F)" \
+          "UPDATE AVAILABLE ($(( (up - pinned) / 86400 ))d newer)"
+      else
+        printf '%-24s %-12s %-12s %s\n' "$name" "$pinned_date" "$(date -u -d "@$up" +%F)" "up to date"
+      fi
+    done < <(jq -r '.locks.nodes.root.inputs | to_entries[] | "\(.key)\t\(.value)"' <<<"$meta" | sort)
+    echo
+    if [ "$stale" -gt 0 ]; then
+      echo "$stale input(s) behind upstream. To see which PACKAGES would actually change:"
+      echo "    just preview-update     # updates flake.lock, builds, diffs, nothing activated"
+    else
+      echo "All inputs are at their upstream tips."
+    fi
+
+# Show what a `just update` would actually change, package by package, without
+# activating it (the real `apt list --upgradable`). Rewrites flake.lock and
+# builds the new closure into ./result, but never switches the running system.
+# Abort cleanly at any point with:  git checkout flake.lock
+#
+# Show which packages a `just update` would change (the `apt list --upgradable`)
+preview-update:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! git diff --quiet flake.lock 2>/dev/null; then
+      echo "flake.lock already has uncommitted changes — commit or stash first." >&2
+      exit 1
+    fi
+    nix flake update
+    echo
+    echo "=== flake.lock changes ==="
+    git --no-pager diff --stat flake.lock
+    echo
+    echo "=== building new closure (running system untouched) ==="
+    nixos-rebuild build --flake .
+    echo
+    echo "=== package changes vs the running system ==="
+    nix store diff-closures /run/current-system ./result
+    echo
+    echo "Apply with:   just rebuild"
+    echo "Discard with: git checkout flake.lock"
+
+# Scan the RUNNING system's closure for known CVEs (the security half of
+# "do I need to update?"). Advisory only — expect false positives, since it
+# matches package names/versions against the NVD rather than tracking backports.
+#
+# Scan the running system's closure for known CVEs
+audit-cves:
+    nix run nixpkgs#vulnix -- --system
+
+# Compare the running system against a built ./result with nvd (friendlier
+# output than `nix store diff-closures`). Run `just build` first.
+#
+# Diff running system vs ./result using nvd (run `just build` first)
+diff-nvd:
+    nix run nixpkgs#nvd -- diff /run/current-system ./result
+
+
 # Show system configuration changes (diff)
 diff:
     sudo nixos-rebuild build --flake .

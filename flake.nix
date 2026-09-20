@@ -34,6 +34,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # OpenAI Codex CLI. Sourced from a flake rather than nixpkgs for the same
+    # reason as claude-code above: Codex cuts a release every couple of days, so
+    # the nixpkgs attr runs ~30 releases behind (0.142.3 on the current pin vs
+    # 0.155.1 upstream). Same author as claude-code-nix.
+    codex-cli-nix = {
+      url = "github:sadjow/codex-cli-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Browser accountability posture (private repo - locked enterprise policies
     # + QUIC-blocking nftables rule). flake = false -> consumed as a plain source
     # tree (policy JSONs, network/*.nft). Auth via the github-personal SSH alias;
@@ -58,7 +67,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, browser_setup, accountability_script, zen-browser, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, agenix, hyprland, affinity-nix, claude-code-nix, codex-cli-nix, browser_setup, accountability_script, zen-browser, ... }@inputs:
   let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};

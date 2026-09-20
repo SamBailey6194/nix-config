@@ -381,6 +381,34 @@ in
           ensure_final_newline_on_save = true;
         };
 
+        Swift = {
+          language_servers = [ "sourcekit-lsp" "..." ];
+          format_on_save = "on";
+          formatter = {
+            external = {
+              command = "${pkgs.swiftformat}/bin/swiftformat";
+              arguments = [ "--stdinpath" "$ZED_FILE" ];
+            };
+          };
+          auto_indent = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+        };
+
+        Kotlin = {
+          language_servers = [ "kotlin-language-server" "..." ];
+          format_on_save = "on";
+          formatter = {
+            external = {
+              command = "${pkgs.ktlint}/bin/ktlint";
+              arguments = [ "--format" "--stdin" "--log-level=none" ];
+            };
+          };
+          auto_indent = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+        };
+
         Slint = {
           language_servers = [ "slint" "..." ];
           format_on_save = "on";
@@ -504,6 +532,13 @@ in
 
         # Slint
         slint = bin "${pkgs.slint-lsp}/bin/slint-lsp" [ ];
+
+        # Swift — sourcekit-lsp speaks stdio with no subcommand.
+        sourcekit-lsp = bin "${pkgs.sourcekit-lsp}/bin/sourcekit-lsp" [ ];
+
+        # Kotlin — the server binary is `kotlin-language-server`, not `kotlin-ls`.
+        kotlin-language-server =
+          bin "${pkgs.kotlin-language-server}/bin/kotlin-language-server" [ ];
 
         # Shell
         bash-language-server = bin "${pkgs.bash-language-server}/bin/bash-language-server" [ "start" ];
@@ -644,6 +679,8 @@ in
         django = true;            # Django templates
         latex = true;             # LaTeX + BibTeX, texlab
         slint = true;             # Slint UI markup
+        swift = true;             # Swift — grammar + sourcekit-lsp wiring
+        kotlin = true;            # Kotlin — grammar + kotlin-language-server
         terraform = true;         # Terraform / OpenTofu HCL, terraform-ls
         nginx = true;             # nginx.conf, nginx-language-server
         toml = true;              # TOML — grammar only, no server exists

@@ -11,6 +11,14 @@
       claude-code = inputs.claude-code-nix.packages.${prev.stdenv.hostPlatform.system}.default;
     })
 
+    # Codex CLI - same reasoning as claude-code above. This SHADOWS the nixpkgs
+    # `codex` attr, so `environment.systemPackages = [ pkgs.codex ]` in
+    # modules/software/development.nix resolves to the flake build (0.155.1),
+    # not the nixpkgs one (0.142.3). Drop this overlay entry to fall back.
+    (final: prev: {
+      codex = inputs.codex-cli-nix.packages.${prev.stdenv.hostPlatform.system}.default;
+    })
+
     # Rust CLI tools from this repository
     (final: prev: import ../../rust/nix { pkgs = final; })
   ];
