@@ -70,7 +70,7 @@ hl.window_rule({
 --                      pool workspace, matched with the range [3-5]
 --   devpool-nvim-3..5  the same, for a pool layout's Neovim editor window
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
---   ws1-monitor        the dashboard's htop pane (laptop only)
+--   ws1-monitor        the dashboard's btop pane (laptop only)
 --
 -- Kept RE2-compatible: alternation and a character class only, no lookaround
 -- (see devices/laptop-intel.lua for what silently happens when a rule pattern

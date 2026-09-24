@@ -69,8 +69,11 @@ hl.bind(mod .. " + C", hl.dsp.exec_cmd("zoom"))
 -- Remote desktop
 hl.bind(mod .. " + R", hl.dsp.exec_cmd("rustdesk"))
 
--- System monitor
-hl.bind(mod .. " + M", hl.dsp.exec_cmd("kitty -e htop"))
+-- System monitor: btop is the main one, htop the backup (SHIFT) for when btop
+-- cannot draw. Both are installed and btop configured in
+-- home/modules/system-monitor.nix.
+hl.bind(mod .. " + M",         hl.dsp.exec_cmd("kitty -e btop"))
+hl.bind(mod .. " + SHIFT + M", hl.dsp.exec_cmd("kitty -e htop"))
 
 -- Keybinds help
 hl.bind(mod .. " + slash", hl.dsp.exec_cmd("kitty -e less ~/.config/hypr/KEYBINDS.md"))

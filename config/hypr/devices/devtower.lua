@@ -204,10 +204,10 @@ hl.window_rule({
 })
 -- hl.window_rule({ name = "devtower-discord-monitor", match = { class = "^(discord)$" }, monitor = "HDMI-A-1" }) -- Force to vertical monitor
 
--- Terminal/System monitoring: right vertical monitor is great for htop, logs, etc.
+-- Terminal/System monitoring: right vertical monitor is great for btop, logs, etc.
 -- hl.window_rule({
---     name    = "devtower-htop-monitor",
---     match   = { class = "^(kitty)$", title = "^(htop)$" },
+--     name    = "devtower-btop-monitor",
+--     match   = { class = "^(kitty)$", title = "^(btop)$" },
 --     monitor = "HDMI-A-1",
 -- })
 

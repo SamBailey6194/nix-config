@@ -10,15 +10,14 @@
     ../modules/hyprland.nix  # Hyprland Wayland compositor
     ../modules/shell.nix     # Zsh + Oh My Zsh
     ../modules/browsers.nix  # LibreWolf profile + Zen default browser
+    ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
   ];
 
   # Desktop-only packages
   home.packages = with pkgs; [
     # Terminal: kitty is provided by programs.kitty (below), not as a package here
 
-    # System tools
-    htop
-    btop
+    # System tools (btop and htop come from ../modules/system-monitor.nix)
     fastfetch
     brightnessctl # Brightness control
     wl-clipboard  # Wayland clipboard utilities

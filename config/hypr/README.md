@@ -89,7 +89,7 @@ by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
 
 | Workspace | Contents                        | Assigned by                        |
 |-----------|---------------------------------|------------------------------------|
-| `1`       | Dashboard (keybinds + terminal) | Device file (laptop only)          |
+| `1`       | Dashboard (keybinds + btop)     | Device file (laptop only)          |
 | `2`       | nix-config dev layout           | Window rules (class + title match) |
 | `3-5`     | Dev pool, allocated as needed   | Window rules registered at launch  |
 | `6`       | Mail (Claws Mail)               | `00-vars.lua` workspaceAssignments  |

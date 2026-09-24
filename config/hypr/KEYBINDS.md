@@ -19,7 +19,8 @@
 | `SUPER + T`          | Teams                   |
 | `SUPER + C`          | Zoom                    |
 | `SUPER + R`          | RustDesk                |
-| `SUPER + M`          | System monitor (htop)   |
+| `SUPER + M`          | System monitor (btop)   |
+| `SUPER + SHIFT + M`  | Backup monitor (htop)   |
 | `SUPER + /`          | This keybinds help      |
 
 `SUPER + CTRL + Z` opens a picker listing every project under `~/Repos`, then
@@ -86,12 +87,13 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + S`          | Toggle scratchpad       |
 | `SUPER + SHIFT + S`  | Move to scratchpad      |
 | `SUPER + Scroll`     | Cycle workspaces        |
+| `SUPER + Escape`     | Dashboard (ws 1): reopens a closed pane — laptop only |
 
 ## Workspace Map
 
 | Workspace | Contents                                     |
 |-----------|----------------------------------------------|
-| `1`       | Dashboard (keybinds + htop) — laptop only    |
+| `1`       | Dashboard (keybinds + btop) — laptop only    |
 | `2`       | nix-config dev layout (reserved)             |
 | `3-5`     | Dev pool (allocated as needed)               |
 | `6`       | Mail (Claws Mail)                            |
