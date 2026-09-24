@@ -47,6 +47,9 @@ in
     wget
     curl
 
+    # Terminal recording
+    vhs       # Scripted terminal recordings (.tape -> GIF/MP4); wraps its own ttyd + ffmpeg
+
     # Security / cloud / infra CLIs
     cosign      # Sigstore container/artifact signing & verification
     awscli2     # AWS CLI v2
