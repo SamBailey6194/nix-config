@@ -79,6 +79,11 @@ writeShellApplication {
   runtimeEnv = {
     ANDROID_HOME = "${sdk}/libexec/android-sdk";
     ANDROID_SDK_ROOT = "${sdk}/libexec/android-sdk";
+    # The emulator bundles its own Qt with no Wayland plugin — platforms/ holds
+    # xcb, offscreen, minimal, linuxfb and vnc only — and the Hyprland session
+    # exports QT_QPA_PLATFORM=wayland, which it would fail on. xcb runs it
+    # under XWayland.
+    QT_QPA_PLATFORM = "xcb";
   };
 
   text = ''
@@ -131,7 +136,7 @@ writeShellApplication {
 
     adb start-server >/dev/null 2>&1
 
-    if adb devices | grep -q "^$serial[[:space:]]"; then
+    if adb devices | grep -q "^''${serial}[[:space:]]"; then
       if [ "$wipe" = 1 ] || [ ''${#emulator_flags[@]} -gt 0 ]; then
         echo "android-emulator: $serial is already running; close it first to use --wipe or emulator flags" >&2
         exit 1
