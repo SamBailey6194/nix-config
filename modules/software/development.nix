@@ -17,10 +17,19 @@ let
   # to uv rather than exported into the session — the short version is that an
   # exported LD_LIBRARY_PATH outranks DT_RUNPATH and takes out hyprlock.
   uv-manylinux = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
+
+  # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
+  # phone. See pkgs/android-emulator.nix.
+  android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
 in
 {
   # Development tools and environment
   # IDEs, language servers, build tools, version control
+
+  # androidenv (the SDK behind android-emulator) refuses to evaluate until the
+  # Android SDK licence is accepted — this line is that acceptance. Scoped to the
+  # hosts that import this module, which are the ones that get the emulator.
+  nixpkgs.config.android_sdk.accept_license = true;
 
   environment.systemPackages = with pkgs; [
     # Version Control
@@ -144,6 +153,15 @@ in
     kotlin-language-server      # Kotlin LSP
     ktlint                      # Kotlin linter + formatter
     ktfmt                       # Kotlin formatter (Facebook/Meta style)
+
+    # Android
+    # No udev rules or adbusers group needed: systemd 258+ grants the logged-in
+    # user access to Android devices via uaccess, which is why nixpkgs retired
+    # `programs.adb` (its removal notice says to add android-tools instead). The
+    # first connection still needs "Allow USB debugging" accepted on the phone.
+    android-tools               # adb + fastboot (sideload APKs, logcat, flashing)
+    android-emulator            # virtual Pixel 8 Pro: `android-emulator app.apk`
+                                #   (see the let block above; needs KVM)
 
     # TeX
     texlab                      # LaTeX/BibTeX LSP (build, forward search, refs)
