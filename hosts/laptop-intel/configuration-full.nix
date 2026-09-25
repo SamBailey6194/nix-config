@@ -130,9 +130,7 @@
 
     # Production servers that bypass VPN (for audit trail)
     bypassIPs = [
-      # arwyn-1's WireGuard endpoint: without this the wg-arwyn tunnel would be
-      # carried inside mullvad0 (WireGuard-in-WireGuard, outer packets over MTU)
-      "65.109.70.23"
+      # "203.0.113.5"
     ];
 
     # Kill switch - KEEP DISABLED until VPN is confirmed working on first boot
@@ -165,8 +163,10 @@
   # arwyn-1 admin VPN — peer `sam-laptop` in i-had-dad-deployment, public key
   # Aah+npytIS/ylVDcRiV7oFOO0+mNHvNTFELHM69mil0=. The tunnel is left out (with a
   # rebuild warning) if either wireguard-arwyn-laptop-intel-*.age goes missing.
-  # Already allowed by the Mullvad kill switch when that is on: 10.0.0.0/8 is
-  # in its LAN list and UDP 51820 is open outbound.
+  # Outbound only: the module drops new inbound connections on wg-arwyn, ahead
+  # of the Mullvad kill switch's 10.0.0.0/8 INPUT ACCEPT. The kill switch
+  # already allows the outbound side (10.0.0.0/8 and UDP 51820), and wg-arwyn
+  # routes its own endpoint outside mullvad0.
   networking.wireguard-arwyn = {
     enable = true;
     address = "10.100.0.7/24";

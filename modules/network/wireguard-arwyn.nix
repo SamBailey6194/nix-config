@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 
@@ -45,6 +46,19 @@ let
     };
 
   secretsPresent = missingSecrets == [ ];
+
+  # "65.109.70.23:51820" -> "65.109.70.23"; null for hostname/IPv6 endpoints
+  endpointHost =
+    let
+      m = builtins.match "([0-9.]+):[0-9]+" cfg.endpoint;
+    in
+    if m == null then null else head m;
+
+  ip = "${pkgs.iproute2}/bin/ip";
+  endpointRule = "to ${endpointHost} lookup main priority 50";
+
+  # iptables backend only (this host); nftables would need its own rule
+  dropInbound = "INPUT -i ${interface} -m conntrack --ctstate NEW -j DROP";
 in
 {
   options.networking.wireguard-arwyn = {
@@ -110,7 +124,12 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
-      warnings = optional (!secretsPresent) ''
+      warnings =
+        optional (secretsPresent && config.networking.nftables.enable) ''
+          networking.wireguard-arwyn: nftables is enabled, so the iptables rule that
+          drops new inbound connections on ${interface} is not applied.
+        ''
+        ++ optional (!secretsPresent) ''
         networking.wireguard-arwyn: ${interface} is NOT configured — missing or untracked secret(s).
         From the dev shell (agenix reads stdin when it is not a terminal):
           cd secrets
@@ -149,6 +168,41 @@ in
             persistentKeepalive = 25;
           }
         ];
+
+        # Send the handshake to the endpoint via the main table, so a
+        # full-tunnel interface (mullvad0's 0.0.0.0/0 policy routing) never
+        # carries it — WireGuard-in-WireGuard, outer packets over the MTU.
+        # This lives here because mullvad0 uses configFile, which makes wg-quick
+        # ignore that module's postUp (so its bypassIPs rules never run).
+        postUp = optionalString (endpointHost != null) ''
+          ${ip} rule del ${endpointRule} 2>/dev/null || true
+          ${ip} rule add ${endpointRule}
+        '';
+        postDown = optionalString (endpointHost != null) ''
+          ${ip} rule del ${endpointRule} 2>/dev/null || true
+        '';
+      };
+
+      # Unit text only names /run/agenix paths, so re-encrypting a secret would
+      # not otherwise restart the tunnel. Hash the contents: the paths
+      # themselves sit in the whole-flake source, which changes on every commit.
+      systemd.services."wg-quick-${interface}".restartTriggers = map (builtins.hashFile "sha256") [
+        privateKeyFile
+        pskFile
+      ];
+
+      # Outbound only: arwyn-1 must not be able to open connections into this
+      # machine (e.g. its sshd) through the tunnel. Inserted at the top of
+      # INPUT so it also beats the Mullvad kill switch's 10.0.0.0/8 ACCEPT,
+      # which is appended ahead of nixos-fw. Replies stay ESTABLISHED.
+      networking.firewall = mkIf (!config.networking.nftables.enable) {
+        extraCommands = ''
+          iptables -D ${dropInbound} 2>/dev/null || true
+          iptables -I ${dropInbound}
+        '';
+        extraStopCommands = ''
+          iptables -D ${dropInbound} 2>/dev/null || true
+        '';
       };
 
       # Same reason as mullvad0: NetworkManager must not manage (and rewrite
