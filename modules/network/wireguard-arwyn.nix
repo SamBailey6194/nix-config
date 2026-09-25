@@ -159,6 +159,8 @@ in
       # the NixOS-generated ssh_config itself: it does not Include
       # /etc/ssh/ssh_config.d/*. mkAfter keeps this Host block after any
       # top-level Include lines other modules put in extraConfig.
+      # arwyn-1 has no xterm-kitty terminfo, so kitty's TERM breaks clear, less
+      # and friends there; SetEnv TERM needs no AcceptEnv on the server.
       programs.ssh.extraConfig = mkAfter ''
         # arwyn-1 over the ${interface} admin VPN
         Host arwyn-1
@@ -166,6 +168,7 @@ in
           User admin
           IdentityFile ${cfg.sshIdentityFile}
           IdentitiesOnly yes
+          SetEnv TERM=xterm-256color
       '';
 
       programs.ssh.knownHosts.arwyn-1 = {
