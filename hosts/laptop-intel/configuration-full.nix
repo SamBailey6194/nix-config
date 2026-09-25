@@ -47,6 +47,9 @@
     # Mullvad VPN with multi-hop rotation via wireguard-helper
     ../../modules/network/wireguard-mullvad.nix
 
+    # arwyn-1 admin VPN (split tunnel, 10.100.0.0/24 only)
+    ../../modules/network/wireguard-arwyn.nix
+
     # Tailscale: Temporary - will be replaced by Defguard + RustDesk (Syntek Infra repo)
     ../../modules/network/tailscale.nix
     ../../modules/network/remote-desktop.nix
@@ -127,7 +130,9 @@
 
     # Production servers that bypass VPN (for audit trail)
     bypassIPs = [
-      # "203.0.113.5"
+      # arwyn-1's WireGuard endpoint: without this the wg-arwyn tunnel would be
+      # carried inside mullvad0 (WireGuard-in-WireGuard, outer packets over MTU)
+      "65.109.70.23"
     ];
 
     # Kill switch - KEEP DISABLED until VPN is confirmed working on first boot
@@ -155,6 +160,16 @@
       interval = "5min";
       logFile = "/var/log/vpn-logs.txt";
     };
+  };
+
+  # arwyn-1 admin VPN — peer `sam-laptop` in i-had-dad-deployment, public key
+  # Aah+npytIS/ylVDcRiV7oFOO0+mNHvNTFELHM69mil0=. The tunnel is left out (with a
+  # rebuild warning) if either wireguard-arwyn-laptop-intel-*.age goes missing.
+  # Already allowed by the Mullvad kill switch when that is on: 10.0.0.0/8 is
+  # in its LAN list and UDP 51820 is open outbound.
+  networking.wireguard-arwyn = {
+    enable = true;
+    address = "10.100.0.7/24";
   };
 
   # LUKS encryption with TPM2 auto-unlock

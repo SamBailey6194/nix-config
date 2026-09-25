@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Last Updated**: 18/08/2026
+**Last Updated**: 25/09/2026
 **Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
@@ -77,6 +77,7 @@ nix-config/
 │   │
 │   ├── network/            # Network and VPN modules
 │   │   ├── wireguard-mullvad.nix   # Mullvad VPN integration
+│   │   ├── wireguard-arwyn.nix     # arwyn-1 admin VPN (split tunnel)
 │   │   ├── wireguard-firewall.nix  # VPN firewall rules
 │   │   └── wireguard-routes.nix    # Split tunneling
 │   │

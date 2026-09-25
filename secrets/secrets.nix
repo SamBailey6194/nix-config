@@ -99,6 +99,19 @@ in
   # "mullvad-route-history-devtower.age".publicKeys = allUsers ++ [ devtower ];
 
   # ============================================================================
+  # arwyn-1 Admin VPN (Per-Device)
+  # Split-tunnel WireGuard link to arwyn-1 (modules/network/wireguard-arwyn.nix).
+  # The server holds this device's public key and its own copy of the PSK
+  # (i-had-dad-deployment: wireguard-psk-sam-laptop.age — the two must match).
+  # laptop-intel's key pair was generated on SamLinPC into RAM (25/09/2026),
+  # encrypted straight to these recipients and shredded. SamLinPC is not a
+  # recipient, so it cannot read either file back.
+  # ============================================================================
+
+  "wireguard-arwyn-laptop-intel-private.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "wireguard-arwyn-laptop-intel-psk.age".publicKeys = allUsers ++ [ laptop-intel ];
+
+  # ============================================================================
   # Malware Scanner Quarantine Encryption Keys (Per-Device)
   # Phase 7: Malware detection and threat protection
   # Each device has its own encryption key for quarantine storage
