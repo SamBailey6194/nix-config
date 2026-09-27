@@ -1,0 +1,41 @@
+LESSON 04 KATA - search, substitute, registers and macros
+Edit the COPY in /tmp/nvim-practice. Plain text, so saving never reformats it.
+
+== RECIPES (search and substitute) =============================================
+rebuild            switch to the new configuration      needs sudo
+rebuild-host       rebuild another host over SSH        needs sudo
+check              evaluate the flake without building
+update             update every flake input             asks first
+lint               run lint-rust and lint-nix
+lint-rust          cargo clippy on the workspace
+lint-nix           statix on every .nix file
+format             run format-rust and format-nix
+clean-generations  delete old generations               needs sudo
+lock               lock the screen                      asks first
+backup-status      show backup status
+snapshot           create a BTRFS snapshot              needs SUDO
+
+== CHANGE LIST (cgn and dot) ===================================================
+TODO: session-browser lists Claude sessions
+TODO: session-browser lists Codex sessions
+TODO: session-browser lists Kitty sessions
+TODO: just-panel runs recipes
+TODO: just-panel asks before sudo recipes
+
+== MACRO 1: recipe names into a Rust vec! ======================================
+let recipes = vec![
+rebuild
+check
+update
+lint
+lint-rust
+lint-nix
+backup-status
+];
+
+== MACRO 2: the caution table ==================================================
+lock - locks the screen
+sleep - suspends the machine
+logout - ends the Hyprland session
+clean-generations - deletes old generations
+rekey-secrets - re-encrypts every secret

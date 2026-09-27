@@ -1,0 +1,4 @@
+TODO: the third buffer
+
+After the fix, Space x on its own closes nothing:
+it only opens the diagnostics group, which waits for x or w.

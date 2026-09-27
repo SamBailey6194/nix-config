@@ -1,0 +1,25 @@
+# Lesson 28 demo justfile: v1 is committed, v2 is the working copy.
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Build the Rust tools
+build-rust:
+    @echo "demo: cargo build --release"
+
+# Test the Rust tools
+test-rust:
+    @echo "demo: cargo test"
+
+# Lint the Rust code
+lint-rust:
+    @echo "demo: cargo clippy"
+
+# Format the Rust code
+format-rust:
+    @echo "demo: cargo fmt"
+
+# ============================================================================
+# Fuzzing (Security Testing)
+# ============================================================================

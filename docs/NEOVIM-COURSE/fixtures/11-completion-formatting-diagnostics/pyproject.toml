@@ -1,0 +1,7 @@
+# A throwaway project for tapes/11-completion-formatting-diagnostics.tape.
+# It only exists so pyright and ruff find a project root here; there is no
+# venv and nothing to install. kitty_demo.py uses the standard library only.
+[project]
+name = "kitty-demo"
+version = "0.1.0"
+requires-python = ">=3.12"

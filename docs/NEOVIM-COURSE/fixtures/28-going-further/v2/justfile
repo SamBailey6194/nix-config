@@ -1,0 +1,29 @@
+# Lesson 28 demo justfile: v1 is committed, v2 is the working copy.
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Build the Rust tools
+build-rust:
+    @echo "demo: cargo build --release"
+
+# Test every Rust crate in the workspace
+test-rust:
+    @echo "demo: cargo test"
+
+# Format the Rust code
+format-rust:
+    @echo "demo: cargo fmt"
+
+# Validate every Neovim course tape (parse only)
+vhs-validate:
+    @echo "demo: vhs validate tapes/*.tape"
+
+# Render one Neovim course tape (e.g. 07-tree)
+vhs-record TAPE:
+    @echo "demo: vhs tapes/{{TAPE}}.tape"
+
+# ============================================================================
+# Fuzzing (Security Testing)
+# ============================================================================

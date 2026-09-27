@@ -1,0 +1,17 @@
+--- a/justfile
++++ b/justfile
+@@ -346,6 +346,14 @@
+     echo "  [tool.uv]"
+     echo "  constraint-dependencies = [\"playwright==$wheel\"]"
+ 
++# Validate every Neovim course tape (parse only: no browser, nothing rendered)
++vhs-validate:
++    cd docs/NEOVIM-COURSE && vhs validate tapes/_shared/settings.tape tapes/*.tape
++
++# Render one Neovim course tape into docs/NEOVIM-COURSE/media (e.g. 07-tree)
++vhs-record TAPE:
++    cd docs/NEOVIM-COURSE && vhs tapes/{{TAPE}}.tape
++
+ # ============================================================================
+ # Fuzzing (Security Testing)
+ # ============================================================================

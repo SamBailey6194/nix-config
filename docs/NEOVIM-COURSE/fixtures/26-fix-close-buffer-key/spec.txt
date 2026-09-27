@@ -1,0 +1,5 @@
+SPEC: the first of three throwaway buffers
+
+This is spec.txt, copied to /tmp/nvim-course for lesson 26.
+Once lesson 26's fix is in, Space q closes it at once and
+notes.txt takes its place in this window. Nothing here is saved.

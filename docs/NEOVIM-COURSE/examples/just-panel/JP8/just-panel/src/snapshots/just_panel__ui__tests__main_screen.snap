@@ -1,0 +1,28 @@
+---
+source: just-panel/src/ui.rs
+expression: draw(&mut demo()).backend()
+---
+"┌ Recipes ─────────────────┐┌ Recipe ──────────────────────────────────────────┐"
+"│>   default               ││default                                           │"
+"│  Secrets Management      ││Default recipe shows help                         │"
+"│    edit-secret           ││                                                  │"
+"│    rekey-secrets         ││                                                  │"
+"│  NixOS System Management ││@just --justfile {{…}} --list                     │"
+"│    rebuild               ││                                                  │"
+"│    check                 ││                                                  │"
+"│    update                ││                                                  │"
+"│  Development             ││                                                  │"
+"│    fuzz                  ││                                                  │"
+"│    lint                  ││                                                  │"
+"│    lint-rust             ││                                                  │"
+"│    lint-nix              ││                                                  │"
+"│  Cleanup                 ││                                                  │"
+"│    clean-cache           ││                                                  │"
+"│  Session Control         ││                                                  │"
+"│    lock                  ││                                                  │"
+"│  Storage Management / Bac││                                                  │"
+"│    backup-status         ││                                                  │"
+"│  Storage Management / Sna││                                                  │"
+"│    snapshot              ││                                                  │"
+"└──────────────────────────┘└──────────────────────────────────────────────────┘"
+"Enter run · / filter · ? help · q quit                                          "

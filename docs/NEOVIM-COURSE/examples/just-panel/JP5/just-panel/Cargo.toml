@@ -1,0 +1,17 @@
+[package]
+name = "just-panel"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "just-panel"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true, features = ["env"] }
+ratatui = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

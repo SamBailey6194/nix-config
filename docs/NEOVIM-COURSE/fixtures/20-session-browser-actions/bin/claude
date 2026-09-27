@@ -1,0 +1,16 @@
+#!/bin/sh
+# Stand-in for `claude`, used by tapes/20-session-browser-actions.tape.
+# It starts nothing. It shows what the session browser handed it, notes it in
+# $HOME/launches.log, and keeps the terminal until you press Enter, the way the
+# real claude keeps it until you quit.
+#
+# Shell built-ins only: during the recording this folder is the browser's
+# whole PATH, so the real claude cannot be reached even by mistake.
+here=$(pwd)
+printf 'claude %s\n    folder %s\n    TMPDIR %s\n' "$*" "$here" "$TMPDIR" >> "$HOME/launches.log"
+printf '\n  [stub claude]  claude %s\n' "$*"
+printf '  folder:        %s\n' "$here"
+printf '  TMPDIR:        %s\n\n' "$TMPDIR"
+printf '  The real claude would have this terminal now.\n'
+printf '  Press Enter to hand it back to the browser. '
+read -r reply

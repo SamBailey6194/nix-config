@@ -1,0 +1,34 @@
+LESSON 01 KATA - modes and survival
+You are editing the COPY in /tmp/nvim-practice, not the file in the repo.
+Lines in capitals are instructions. Change the lines underneath them.
+
+EXERCISE 1 - i INSERTS BEFORE THE CURSOR, a APPENDS AFTER IT
+Cursor on the s of jst: i u Esc. Then cursor on the l of lst: a i Esc.
+jst --lst
+
+EXERCISE 2 - I INSERTS AT THE START OF THE LINE, . REPEATS THE CHANGE
+On rebuild: I, type "just " (with the space), Esc. Then j . and j . again.
+rebuild
+check
+update
+
+EXERCISE 3 - A APPENDS AT THE END OF THE LINE
+Each session title needs a full stop: A . Esc, then j . and j . again.
+Parse just's JSON dump with serde
+Review the Codex source parser
+Suggest clippy fixes for just-panel
+
+EXERCISE 4 - o OPENS A LINE BELOW, O OPENS A LINE ABOVE
+On the statix line: o, type "deadnix .", Esc. On lint-nix: O, type "# Lint Nix files", Esc.
+lint-nix:
+    statix check .
+
+EXERCISE 5 - UNDO AND REDO
+Press u until exercise 2 shows three bare recipe names again. Then Ctrl-r twice.
+
+EXERCISE 6 - SAVE AND QUIT
+Save with :w Enter, then change something and save with Ctrl-s (Normal mode only).
+Quit with :q, reopen the file, and press u: the undo history survived.
+
+EXERCISE 7 - A WINDOW IS NOT NEOVIM
+:help i Enter opens a help window. Ctrl-q closes that window only; Neovim stays.

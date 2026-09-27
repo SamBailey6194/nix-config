@@ -1,0 +1,118 @@
+# Demo justfile for the Neovim course - the fixture just-panel is built against.
+#
+# It mirrors the shape of the repo's real justfile (banner sections, doc
+# comments, parameters, a shebang recipe, dependencies) but every recipe is
+# harmless: it only echoes, prints the time or sleeps. Nothing here runs sudo,
+# changes the system or needs the network.
+#
+# Try it: just --justfile docs/NEOVIM-COURSE/fixtures/just/justfile --list
+
+# Exported to every recipe, like NIX_CONFIG_SECRETS_DIR in the real justfile
+export SECRETS_DIR := justfile_directory() / "secrets"
+
+# Default recipe shows help
+default:
+    @just --justfile {{justfile()}} --list
+
+# ============================================================================
+# Secrets Management
+# ============================================================================
+
+# Edit an encrypted secret
+edit-secret SECRET:
+    @echo "demo: would open secrets/{{SECRET}}.age in your editor"
+
+# Rekey all secrets (after adding new host keys)
+rekey-secrets:
+    @echo "demo: would re-encrypt every secret in $SECRETS_DIR"
+
+# ============================================================================
+# NixOS System Management
+# ============================================================================
+
+# Rebuild current system configuration ("just rebuild --boot" applies on next boot)
+rebuild *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    action="switch"
+    for a in {{ARGS}}; do
+      case "$a" in
+        --boot|boot) action="boot" ;;
+        *) echo "rebuild: unknown argument '$a' (only --boot is supported)" >&2; exit 1 ;;
+      esac
+    done
+    echo "demo: would run: sudo nixos-rebuild $action --flake ."
+    sleep 1
+    echo "demo: done"
+
+# Test configuration syntax without building
+check:
+    @echo "demo: checking flake outputs..."
+    @sleep 1
+    @echo "demo: all checks passed"
+
+# Update flake inputs (nixpkgs, home-manager, etc.)
+[confirm("Update every flake input? (demo: nothing changes)")]
+update:
+    @echo "demo: would run: nix flake update"
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Run a fuzz target for TIME seconds (Ctrl+C stops it early)
+fuzz TARGET TIME="5":
+    @for i in $(seq 1 {{TIME}}); do echo "demo: fuzzing {{TARGET}}, second $i of {{TIME}}"; sleep 1; done
+
+# Run all linters
+lint: lint-rust lint-nix
+
+# Lint Rust code
+[group('rust')]
+lint-rust:
+    @echo "demo: cargo clippy --all-targets -- -D warnings"
+
+# Lint Nix files
+lint-nix:
+    @echo "demo: statix check ."
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Clean up Rust build artefacts
+clean-cache:
+    @echo "demo: would delete target/ and result"
+
+# ============================================================================
+# Session Control
+# ============================================================================
+#
+# In the real justfile these end or pause your session. Here they only print
+# what they would do, but just-panel still asks before running them.
+
+# Lock the screen (session keeps running, windows stay open)
+lock:
+    @echo "demo: would run: loginctl lock-session"
+
+# ============================================================================
+# Storage Management
+# ============================================================================
+
+# Backups
+# ----------------------------------------------------------------------------
+
+# Show backup status
+backup-status: _stamp
+    @echo "demo: 2 backup jobs, last run OK"
+
+# Print when a recipe ran (private: hidden from --list and from just-panel)
+_stamp:
+    @date '+demo: checked at %H:%M:%S'
+
+# Snapshots
+# ----------------------------------------------------------------------------
+
+# Create BTRFS snapshot
+snapshot SUBVOL NAME="":
+    @echo "demo: would run: sudo btrfs-manage snapshot {{SUBVOL}} --name '{{NAME}}'"

@@ -1,0 +1,14 @@
+# Mini copy of rust/Cargo.toml for the just-panel worked examples: the same
+# [workspace.package], and only the [workspace.dependencies] just-panel uses.
+# In the real file, "just-panel" goes on its own line after "dev-layout".
+[workspace]
+members = [
+    "just-panel",        # TUI control panel for the justfile
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Sam Bailey <sam.bailey@sambailey.dev>"]
+license = "MIT"

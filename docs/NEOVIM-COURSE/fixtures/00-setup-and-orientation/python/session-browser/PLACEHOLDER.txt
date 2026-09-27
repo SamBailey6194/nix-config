@@ -1,0 +1,2 @@
+Placeholder for the lesson 00 tape. The real session-browser project is created
+in python/session-browser from lesson 06 (milestone SB0).

@@ -1,0 +1,7 @@
+# A throwaway project for lesson 25 and tapes/25-fix-pyright-diagnostic-mode.tape.
+# It only exists so pyright finds a project root here; there is no venv and
+# nothing to install. Both Python files use nothing but the language itself.
+[project]
+name = "diagnostic-mode-demo"
+version = "0.1.0"
+requires-python = ">=3.12"
