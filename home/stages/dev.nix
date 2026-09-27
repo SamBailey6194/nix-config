@@ -27,6 +27,9 @@ in
       whitelist = {
         prefix = [ "~/Repos" ];
       };
+      # Skip the long "direnv: export +AR +AS ..." variable diff on every cd;
+      # loading/error messages still show.
+      global.hide_env_diff = true;
     };
   };
 

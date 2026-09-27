@@ -417,9 +417,6 @@
 
       # Auto-build Rust tools when entering dev shell
       shellHook = ''
-        echo "🦀 NixOS Config Dev Shell"
-        echo ""
-
         if [ -d rust ]; then
           # Deliberately does NOT run `cargo build` here.
           #
@@ -439,31 +436,42 @@
 
           # Prefer a locally built dev version when one is present
           export PATH="$PWD/rust/target/release:$PATH"
-          echo "✅ Rust tools available:"
-          echo "  - secrets-verify, agenix-helper"
-          echo "  - wireguard-helper"
-          echo "  - malware-scanner"
-          echo "  - restic-manage, zfs-manage, raid-manage"
-          echo "  - luks-manage, btrfs-manage, vault-manage, tpm-manage"
-          echo ""
-          echo "  (provided by the overlay; run 'just build-rust' for a local dev build)"
-          echo ""
         fi
 
-        echo "Available commands:"
-        echo "  agenix -e <secret>     - Edit an encrypted secret"
-        echo "  agenix -r              - Rekey all secrets"
-        echo "  secrets-verify         - Verify deployed secrets"
-        echo "  agenix-helper          - Helper CLI for secrets management"
-        echo "  wireguard-helper       - Mullvad VPN management"
-        echo "  restic-manage          - Restic backup configuration"
-        echo "  zfs-manage             - ZFS storage management"
-        echo "  raid-manage            - RAID array management"
-        echo "  luks-manage            - LUKS encryption management"
-        echo "  btrfs-manage           - BTRFS filesystem management"
-        echo "  vault-manage           - Per-folder encryption (gocryptfs)"
-        echo "  tpm-manage             - TPM2 management"
-        echo ""
+        # Banner only for a manual `nix develop`. direnv sets DIRENV_IN_ENVRC
+        # while evaluating .envrc, so `use flake` (and Zed's env probe, which
+        # goes through the direnv hook) loads quietly on every cd.
+        if [ -z "''${DIRENV_IN_ENVRC:-}" ]; then
+          echo "🦀 NixOS Config Dev Shell"
+          echo ""
+
+          if [ -d rust ]; then
+            echo "✅ Rust tools available:"
+            echo "  - secrets-verify, agenix-helper"
+            echo "  - wireguard-helper"
+            echo "  - malware-scanner"
+            echo "  - restic-manage, zfs-manage, raid-manage"
+            echo "  - luks-manage, btrfs-manage, vault-manage, tpm-manage"
+            echo ""
+            echo "  (provided by the overlay; run 'just build-rust' for a local dev build)"
+            echo ""
+          fi
+
+          echo "Available commands:"
+          echo "  agenix -e <secret>     - Edit an encrypted secret"
+          echo "  agenix -r              - Rekey all secrets"
+          echo "  secrets-verify         - Verify deployed secrets"
+          echo "  agenix-helper          - Helper CLI for secrets management"
+          echo "  wireguard-helper       - Mullvad VPN management"
+          echo "  restic-manage          - Restic backup configuration"
+          echo "  zfs-manage             - ZFS storage management"
+          echo "  raid-manage            - RAID array management"
+          echo "  luks-manage            - LUKS encryption management"
+          echo "  btrfs-manage           - BTRFS filesystem management"
+          echo "  vault-manage           - Per-folder encryption (gocryptfs)"
+          echo "  tpm-manage             - TPM2 management"
+          echo ""
+        fi
       '';
     };
   };
