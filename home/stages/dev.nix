@@ -48,7 +48,18 @@ in
     curl
 
     # Terminal recording
-    vhs       # Scripted terminal recordings (.tape -> GIF/MP4); wraps its own ttyd + ffmpeg
+    # Scripted terminal recordings (.tape -> GIF/MP4); wraps its own ttyd + ffmpeg.
+    # 0.12.1, not nixpkgs' 0.12.0: 0.12.0 cancels its own render context, so it
+    # plays a tape, exits 0 and writes no GIF, MP4 or PNG (charmbracelet/vhs#787,
+    # fixed by #788). go.mod is unchanged, so the vendorHash carries over. Drop
+    # the override once the pinned nixpkgs has 0.12.1.
+    (vhs.overrideAttrs (old: {
+      version = "0.12.1";
+      src = old.src.override {
+        tag = "v0.12.1";
+        hash = "sha256-9O9f/3B42BhhJ5LWNyHrQtaOKwVnAZR309Dvbpx3d4g=";
+      };
+    }))
 
     # Security / cloud / infra CLIs
     cosign      # Sigstore container/artifact signing & verification
