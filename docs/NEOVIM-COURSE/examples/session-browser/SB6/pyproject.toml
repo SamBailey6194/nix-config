@@ -1,0 +1,43 @@
+[project]
+name = "session-browser"
+version = "0.1.0"
+description = "Browse and resume Claude Code, Codex and Kitty sessions"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "textual>=8.2.8",
+]
+
+[project.scripts]
+session-browser = "session_browser.app:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.4.0",
+    "pytest-textual-snapshot>=1.1",
+    "textual-dev>=1.8.0",
+]
+
+[tool.pytest.ini_options]
+# Textual's Pilot tests are coroutines; "auto" runs every `async def test_*`
+# without a @pytest.mark.asyncio on each one.
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.pyright]
+# Use uv's virtualenv. Without these two lines pyright analyses the code against
+# whichever `python` is first on PATH, and every `import textual` or `import
+# pytest` is reported as "could not be resolved", in Neovim and on the CLI.
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff.lint]
+# The default rules plus import sorting (I), pyupgrade (UP), bugbear (B) and
+# simplify (SIM): they catch real mistakes without burying a small project in
+# style noise.
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]

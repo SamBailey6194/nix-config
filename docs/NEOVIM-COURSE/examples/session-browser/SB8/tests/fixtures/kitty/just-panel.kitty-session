@@ -1,0 +1,11 @@
+# Synthetic kitty session for the Neovim course: the just-panel workspace.
+layout tall
+cd /tmp/nvim-course/nix-config/rust/just-panel
+launch --title "nvim" nvim src/main.rs
+launch --title "tests" --hold cargo test
+launch --title "shell"
+
+new_tab docs
+layout stack
+cd /tmp/nvim-course/nix-config/docs
+launch --title "course" nvim README.md

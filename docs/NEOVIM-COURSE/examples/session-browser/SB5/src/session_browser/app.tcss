@@ -1,0 +1,12 @@
+/* The session list takes two thirds of the width, the preview the rest. */
+
+#sessions {
+    width: 2fr;
+    height: 100%;
+}
+
+#preview-pane {
+    width: 1fr;
+    padding: 0 1;
+    border-left: tall $primary-muted;
+}

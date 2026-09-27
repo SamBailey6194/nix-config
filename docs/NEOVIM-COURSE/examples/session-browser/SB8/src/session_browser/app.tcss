@@ -1,0 +1,26 @@
+/* Two columns: the tabs and the list take two thirds of the width, the
+   search box and the preview the other third. */
+
+#filters {
+    height: auto;
+}
+
+Tabs {
+    width: 2fr;
+}
+
+#search {
+    width: 1fr;
+    margin: 0 0 0 1;
+}
+
+#sessions {
+    width: 2fr;
+    height: 100%;
+}
+
+#preview-pane {
+    width: 1fr;
+    padding: 0 1;
+    border-left: tall $primary-muted;
+}

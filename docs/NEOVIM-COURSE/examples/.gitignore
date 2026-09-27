@@ -1,0 +1,9 @@
+# Left behind when a worked example is built or run in place. check.sh and
+# smoke-all.sh build outside the repository, so normally none of these appear.
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+target/
+*.snap.new
+.python-version
