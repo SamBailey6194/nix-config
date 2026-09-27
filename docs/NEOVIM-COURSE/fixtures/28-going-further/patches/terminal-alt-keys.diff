@@ -1,0 +1,13 @@
+--- a/home/modules/neovim.nix
++++ b/home/modules/neovim.nix
+@@ -69,6 +69,10 @@
+     { group = "Windows"; lhs = "<C-j>"; rhs = "<C-w>j"; desc = "Window down"; }
+     { group = "Windows"; lhs = "<C-k>"; rhs = "<C-w>k"; desc = "Window up"; }
+     { group = "Windows"; lhs = "<C-l>"; rhs = "<C-w>l"; desc = "Window right"; }
++    { group = "Windows"; lhs = "<A-h>"; rhs = "<Cmd>wincmd h<CR>"; desc = "Window left (terminal mode)";  mode = "t"; }
++    { group = "Windows"; lhs = "<A-j>"; rhs = "<Cmd>wincmd j<CR>"; desc = "Window down (terminal mode)";  mode = "t"; }
++    { group = "Windows"; lhs = "<A-k>"; rhs = "<Cmd>wincmd k<CR>"; desc = "Window up (terminal mode)";    mode = "t"; }
++    { group = "Windows"; lhs = "<A-l>"; rhs = "<Cmd>wincmd l<CR>"; desc = "Window right (terminal mode)"; mode = "t"; }
+   ];
+ 
+   # Lua single-quoted string literal. Backslash first, or it would double the

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Stand-in for `kitty`, used by tapes/20-session-browser-actions.tape.
+# The browser starts kitty detached, with no terminal attached, so this stub
+# has nowhere to print: it only notes what it was given in $HOME/launches.log.
+#
+# Shell built-ins only: during the recording this folder is the browser's
+# whole PATH, so the real kitty cannot be reached even by mistake.
+here=$(pwd)
+printf 'kitty %s\n    folder %s\n' "$*" "$here" >> "$HOME/launches.log"

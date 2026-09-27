@@ -1,0 +1,162 @@
+LESSON 02 KATA - motions. Do not type here: move. The drills in lessons/02-MOTIONS.md say where to go.
+This is a justfile-shaped practice text: the recipe names are real, the bodies are not, and nothing runs.
+
+# Exported to every recipe
+export SECRETS_DIR := justfile_directory() / "secrets"
+
+# Default recipe shows help
+default:
+    @just --justfile {{justfile()}} --list
+
+# ============================================================================
+# Secrets Management
+# ============================================================================
+
+# Verify every secret decrypts on this host
+verify-secrets:
+    @echo "demo: 12 secrets, all readable"
+
+# Edit an encrypted secret
+edit-secret SECRET:
+    @echo "demo: would open secrets/{{SECRET}}.age in your editor"
+
+# List all secrets and the keys that can read them
+list-secrets:
+    @echo "demo: 12 secrets, 3 hosts"
+
+# Rekey all secrets (after adding new host keys)
+rekey-secrets:
+    @echo "demo: would re-encrypt every secret in $SECRETS_DIR"
+
+# ============================================================================
+# NixOS System Management
+# ============================================================================
+
+# Rebuild current system configuration ("just rebuild --boot" applies on next boot)
+rebuild *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    action="switch"
+    for a in {{ARGS}}; do
+      case "$a" in
+        --boot|boot) action="boot" ;;
+        *) echo "rebuild: unknown argument '$a'" >&2; exit 1 ;;
+      esac
+    done
+    echo "demo: would run: sudo nixos-rebuild $action --flake ."
+
+# Rebuild another host over SSH
+rebuild-host HOST *ARGS:
+    @echo "demo: would run: nixos-rebuild switch --flake .#{{HOST}} {{ARGS}}"
+
+# Test configuration syntax without building
+check:
+    @echo "demo: checking flake outputs..."
+
+# Update flake inputs (nixpkgs, home-manager, etc.)
+update:
+    @echo "demo: would run: nix flake update"
+
+# Show what the next rebuild would change
+diff:
+    @echo "demo: would compare /run/current-system with ./result"
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Build the Rust tools
+build-rust:
+    @echo "demo: cargo build --release"
+
+# Test the Rust tools
+test-rust:
+    @echo "demo: cargo test --workspace"
+
+# Lint Rust code
+lint-rust:
+    @echo "demo: cargo clippy --all-targets -- -D warnings"
+
+# Format Rust code
+format-rust:
+    @echo "demo: cargo fmt --all"
+
+# Run a fuzz target for TIME seconds (Ctrl+C stops it early)
+fuzz TARGET TIME="5":
+    @for i in $(seq 1 {{TIME}}); do echo "demo: fuzzing {{TARGET}}, second $i of {{TIME}}"; sleep 1; done
+
+# Run all linters
+lint: lint-rust lint-nix
+
+# Lint Nix files
+lint-nix:
+    @echo "demo: statix check ."
+
+# Format all code
+format: format-rust format-nix
+
+# Format Nix files
+format-nix:
+    @echo "demo: nixfmt ."
+
+# ============================================================================
+# Git
+# ============================================================================
+
+# Stage everything and commit with MESSAGE
+commit MESSAGE:
+    @echo "demo: would run: git add -A && git commit -m '{{MESSAGE}}'"
+
+# Create and switch to a new branch
+branch NAME:
+    @echo "demo: would run: git switch -c {{NAME}}"
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+
+# Remove old generations
+clean-generations:
+    @echo "demo: would run: sudo nix-collect-garbage --delete-older-than 14d"
+
+# Clean up Rust build artefacts
+clean-rust:
+    @echo "demo: would delete rust/target"
+
+# ============================================================================
+# Session Control
+# ============================================================================
+
+# Lock the screen (session keeps running, windows stay open)
+lock:
+    @echo "demo: would run: loginctl lock-session"
+
+# Lock the screen and suspend
+sleep:
+    @echo "demo: would lock the screen, then suspend"
+
+# Log out of Hyprland
+logout:
+    @echo "demo: would end the Hyprland session"
+
+# ============================================================================
+# Storage Management
+# ============================================================================
+
+# Show backup status
+backup-status:
+    @echo "demo: 2 backup jobs, last run OK"
+
+# Run one backup job now
+backup-now NAME:
+    @echo "demo: would run backup job {{NAME}}"
+
+# Show the state of every RAID array
+raid-status:
+    @echo "demo: md0 [UU] clean"
+
+# Show ZFS pool health
+zfs-status:
+    @echo "demo: tank ONLINE"
+
+# END OF KATA

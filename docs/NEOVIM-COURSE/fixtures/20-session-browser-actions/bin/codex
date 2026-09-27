@@ -1,0 +1,15 @@
+#!/bin/sh
+# Stand-in for `codex`, used by tapes/20-session-browser-actions.tape.
+# It starts nothing. It shows what the session browser handed it, notes it in
+# $HOME/launches.log, and keeps the terminal until you press Enter, the way the
+# real codex keeps it until you quit.
+#
+# Shell built-ins only: during the recording this folder is the browser's
+# whole PATH, so the real codex cannot be reached even by mistake.
+here=$(pwd)
+printf 'codex %s\n    folder %s\n' "$*" "$here" >> "$HOME/launches.log"
+printf '\n  [stub codex]  codex %s\n' "$*"
+printf '  folder:       %s\n\n' "$here"
+printf '  The real codex would have this terminal now.\n'
+printf '  Press Enter to hand it back to the browser. '
+read -r reply

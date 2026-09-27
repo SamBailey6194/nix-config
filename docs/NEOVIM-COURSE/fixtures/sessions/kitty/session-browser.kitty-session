@@ -1,0 +1,7 @@
+# Synthetic kitty session for the Neovim course: the session-browser workspace.
+new_tab session-browser
+layout splits
+cd /tmp/nvim-course/nix-config/python/session-browser
+launch --title "editor" nvim src/session_browser/app.py
+launch --location=vsplit --title "console" uv run textual console
+launch --location=hsplit --bias=40 --title "app" uv run textual run --dev -c session-browser

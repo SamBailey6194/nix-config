@@ -1,0 +1,4 @@
+NOTES: the second buffer
+
+spec.txt has been closed, so this window now shows notes.txt.
+:e # brings spec.txt back.

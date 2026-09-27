@@ -1,0 +1,2 @@
+Placeholder for the lesson 00 tape. The real just-panel crate is created in
+rust/just-panel from lesson 06 (milestone JP0).
