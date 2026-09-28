@@ -36,8 +36,9 @@
 
     # OpenAI Codex CLI. Sourced from a flake rather than nixpkgs for the same
     # reason as claude-code above: Codex cuts a release every couple of days, so
-    # the nixpkgs attr runs ~30 releases behind (0.142.3 on the current pin vs
-    # 0.155.1 upstream). Same author as claude-code-nix.
+    # the nixpkgs attr lags upstream, at times by dozens of releases. Same
+    # author as claude-code-nix. Only the full configs get it (see the overlay
+    # in modules/core/base-configuration.nix).
     codex-cli-nix = {
       url = "github:sadjow/codex-cli-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -79,6 +80,36 @@
     squid-digest = pkgs.callPackage ./modules/security/squid-digest/package.nix {
       accountability_script = inputs.accountability_script;
     };
+
+    # devtower-intel = a devtower stage with ./hosts/devtower-intel layered on
+    # top (swaps the AMD hardware for Intel + NVIDIA), so the real devtower
+    # stage files are tested unmodified on the current PC.
+    mkDevtowerIntel = { stage, home ? null, extraModules ? [ ] }:
+      nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules =
+          [
+            { nixpkgs.hostPlatform = system; }
+            ./hosts/devtower/configuration-${stage}.nix
+            ./hosts/devtower-intel
+          ]
+          # llama.cpp (CUDA + OpenBLAS), with the rest of the dev tooling: an
+          # allow-list, so a stage added later does not get the local CUDA build
+          ++ nixpkgs.lib.optional (builtins.elem stage [ "dev" "productivity" "creative" "full" ]) ./hosts/devtower-intel/local-llm.nix
+          ++ extraModules
+          ++ nixpkgs.lib.optionals (home != null) [
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "hm-backup";
+              home-manager.users.sam-desktop.imports = [
+                (import ./home/${home}.nix)
+                ./home/devtower-intel.nix
+              ];
+            }
+          ];
+      };
   in {
     # Rust CLI tool packages (nix build .#<name>)
     packages.${system} = rustTools // {
@@ -377,6 +408,22 @@
             home-manager.users.sam-desktop = import ./home/devtower.nix;
           }
         ];
+      };
+
+      # ============================================================================
+      # DEVTOWER-INTEL (i9-9900K + RTX 2080 Ti, 32GB RAM, Go XLR Mini)
+      # Stand-in for devtower on the current PC until the AMD tower arrives
+      # ============================================================================
+
+      devtower-intel-minimal = mkDevtowerIntel { stage = "minimal"; };
+      devtower-intel-desktop = mkDevtowerIntel { stage = "desktop"; home = "devtower-desktop"; };
+      devtower-intel-dev = mkDevtowerIntel { stage = "dev"; home = "devtower-dev"; };
+      devtower-intel-productivity = mkDevtowerIntel { stage = "productivity"; home = "devtower-productivity"; };
+      devtower-intel-creative = mkDevtowerIntel { stage = "creative"; home = "devtower-creative"; };
+      devtower-intel = mkDevtowerIntel {
+        stage = "full";
+        home = "devtower";
+        extraModules = [ agenix.nixosModules.default ./hosts/devtower-intel/full.nix ];
       };
     };
 

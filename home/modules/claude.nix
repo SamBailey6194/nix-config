@@ -16,6 +16,7 @@
 let
   homeDir = config.home.homeDirectory;
   claudeBin = lib.getExe pkgs.claude-code;
+  mcp = import ./mcp-servers.nix; # MCP servers shared with Codex, Antigravity and OpenCode
   nodeBin = "${pkgs.nodejs}/bin/node";
   npmBin = "${pkgs.nodejs}/bin/npm";
 
@@ -273,5 +274,17 @@ in
         $CLAUDE mcp add --scope user --transport http context7 https://mcp.context7.com/mcp \
           --header "CONTEXT7_API_KEY: ''${CONTEXT7_API_KEY}" || true
     fi
+
+    # Perplexity Computer (./mcp-servers.nix): OAuth on first use via /mcp, so
+    # no secret to wait for. Added only when missing from user scope (the
+    # top-level mcpServers of .claude.json), checked offline with jq. Not
+    # `claude mcp get`: that health-checks the server over the network (up to
+    # 30 s when it hangs) and re-runs OAuth discovery, rewriting
+    # ~/.claude/.credentials.json — the file that also holds the Claude login —
+    # on every activation. `add` does neither and never starts a login.
+    ${pkgs.jq}/bin/jq -e '.mcpServers["perplexity-computer"]' \
+      "''${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json" >/dev/null 2>&1 || \
+      $CLAUDE mcp add --scope user --transport http perplexity-computer \
+        ${lib.escapeShellArg mcp.perplexity-computer.url} || true
   '';
 }

@@ -17,6 +17,9 @@ in
     ../modules/neovim.nix    # Neovim configuration
     ../modules/aws.nix       # ~/.aws/config from the agenix aws-config secret
     ../modules/claude.nix    # Claude Code: settings, MCP servers, monitor, Brave link
+    ../modules/codex.nix     # Codex CLI: shared MCP servers in ~/.codex/config.toml
+    ../modules/antigravity.nix # Antigravity CLI: shared MCP servers in ~/.gemini/config
+    ../modules/opencode.nix  # OpenCode: shared MCP servers (+ local llama.cpp provider)
   ];
 
   # Direnv - auto-load dev environments from .envrc files

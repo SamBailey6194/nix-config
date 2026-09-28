@@ -21,10 +21,29 @@ let
   # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
+
+  # AI agent CLIs. antigravity-cli is nixpkgs' derivation bumped to the release
+  # Google currently serves, wrapped with its auto-updater off; perplexity-cli is
+  # not in nixpkgs at all. See the files for why. A callPackage here rather than
+  # an overlay beside codex's in modules/core/base-configuration.nix: that file is
+  # only imported by the full configs, so an overlay would leave stages 3–5 on
+  # 1.2.3 with the updater live. home/modules/antigravity.nix calls the same file
+  # for its MCP registration, so both resolve to one store path in every stage.
+  antigravity-cli = pkgs.callPackage ../../pkgs/antigravity-cli.nix { };
+  perplexity-cli = pkgs.callPackage ../../pkgs/perplexity-cli.nix { };
+
+  # OpenCode v2 (2.0.18); nixpkgs is still on the 1.x line. Prebuilt npm binary,
+  # self-updater off — see the file.
+  opencode = pkgs.callPackage ../../pkgs/opencode.nix { };
 in
 {
   # Development tools and environment
   # IDEs, language servers, build tools, version control
+
+  # services.localLlm.* options: llama.cpp with CUDA + OpenBLAS for NVIDIA
+  # hosts. Off unless a host enables it, so importing it here only makes the
+  # option available from the dev stage upward (devtower-intel turns it on).
+  imports = [ ./local-llm.nix ];
 
   # androidenv (the SDK behind android-emulator) refuses to evaluate until the
   # Android SDK licence is accepted — this line is that acceptance. Scoped to the
@@ -49,6 +68,8 @@ in
     docker
     docker-compose
     ddev              # Docker-based local PHP+Node.js dev environments
+    bubblewrap        # bwrap: unprivileged sandboxing. syntek-evaluation's
+                      #   Antigravity catalog runs `agy --version` inside it
 
     # Database tools
     postgresql
@@ -119,13 +140,30 @@ in
 
     # ── AI coding agents ─────────────────────────────────────────────────────
     # claude-code is added per-host (hosts/*/configuration-full.nix) alongside
-    # its home-manager module; these two are plain CLIs with no such module, so
-    # they live here and land from stage 3 (dev) upward.
+    # its home-manager module; these are plain CLIs, so they live here and land
+    # from stage 3 (dev) upward. codex, agy and opencode do have small
+    # home-manager modules (home/modules/{codex,antigravity,opencode}.nix), but
+    # those only register the MCP servers shared with Claude Code
+    # (home/modules/mcp-servers.nix) — plus, for opencode, the local llama.cpp
+    # provider on hosts that run one.
     #
     # codex resolves to the codex-cli-nix overlay in
     # modules/core/base-configuration.nix, NOT the nixpkgs attr — see the
-    # comment there. Auth: `codex login` (ChatGPT sign-in) or OPENAI_API_KEY.
+    # comment there — on the full configs, which are the only ones importing
+    # that file; stages 3–5 get nixpkgs' codex. Auth: `codex login` (ChatGPT
+    # sign-in) or OPENAI_API_KEY.
     codex                       # OpenAI Codex CLI (Apache-2.0)
+    antigravity-cli             # Google Antigravity CLI, binary `agy` (unfree;
+                                #   1.2.12, see the let block above). Auth:
+                                #   Google sign-in on first `agy` run (tokens in
+                                #   the Secret Service keyring) or GEMINI_API_KEY.
+    perplexity-cli              # Perplexity Search API CLI, binary `pplx` (unfree,
+                                #   binary-only). Auth: `pplx auth login` or
+                                #   PERPLEXITY_API_KEY.
+    opencode                    # OpenCode v2 agent CLI (MIT; 2.0.18, see the let
+                                #   block above). Local Qwen via llama-server on
+                                #   devtower-intel; hosted providers: `opencode
+                                #   auth login` (credentials in its SQLite db).
 
     # REMOVED 20/09/2026: gemini-cli-bin (and gemini-cli). Google retired Gemini
     # CLI for unpaid, Pro and Ultra accounts in favour of Antigravity CLI, and
@@ -133,9 +171,10 @@ in
     # but warns on every eval, and will be dropped outright. It was already
     # unusable here: auth needs an enterprise account or a GEMINI_API_KEY.
     #
-    # The successor is `antigravity-cli` (binary `agy`, not `gemini`). Not added
-    # because it is unfree and a different tool, not a rename — add it
-    # deliberately if you ever want it, rather than as a drop-in swap.
+    # The successor is `antigravity-cli` above (binary `agy`, not `gemini`) — a
+    # different tool, not a rename, added deliberately on 27/09/2026 rather than
+    # as a drop-in swap. It shares ~/.gemini with the old CLI (settings in
+    # ~/.gemini/config, state in ~/.gemini/antigravity-cli).
     # https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/
 
     # Swift

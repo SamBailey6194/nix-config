@@ -92,6 +92,7 @@ let
   # interface names are known (`ip -br link`).
   netIfaceByHost = {
     laptop-intel = "wlp6s0";
+    devtower-intel = "eno1";
   };
   # "" rather than null: `set.${null}` is an evaluation error even with `or`.
   hostName = if osConfig != null then osConfig.networking.hostName else "";
