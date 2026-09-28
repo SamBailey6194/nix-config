@@ -161,9 +161,58 @@ rebuild-host HOST *ARGS:
 build:
     sudo nixos-rebuild build --flake .
 
-# Test configuration syntax without building
-check:
-    nix flake check
+# Test configuration syntax without building ("just check laptop-intel-dev" for
+# some configurations only).
+#
+# Not `nix flake check`: that evaluates all 24 configurations in one process,
+# which once reached 23 GB and was OOM-killed on the 32 GB desktop, taking the
+# whole GNOME session with it. Here each configuration is evaluated in its own
+# process (about 2 GB), one after another, each capped at 12 GB in a systemd
+# user scope so that a runaway evaluation is killed on its own.
+check *HOSTS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cap=()
+    if systemctl --user show-environment >/dev/null 2>&1; then
+      cap=(systemd-run --user --scope -q -p MemoryMax=12G -p MemorySwapMax=0 --)
+    else
+      echo "check: no systemd user manager; evaluating uncapped (still one configuration per process)" >&2
+    fi
+    hosts="{{HOSTS}}"
+    if [ -z "$hosts" ]; then
+      hosts=$("${cap[@]}" nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]')
+    fi
+    err=$(mktemp)
+    trap 'rm -f "$err"' EXIT
+    failed=()
+    for host in $hosts; do
+      printf '%-32s ' "$host"
+      if "${cap[@]}" nix eval --raw ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" >/dev/null 2>"$err"; then
+        echo ok
+        grep -i 'warning' "$err" | sed 's/^/    /' || true
+      else
+        echo FAILED
+        tail -n 20 "$err" | sed 's/^/    /'
+        failed+=("$host")
+      fi
+    done
+    # The rest of what `nix flake check` covered: packages and the dev shell
+    if [ -z "{{HOSTS}}" ]; then
+      for out in packages devShells; do
+        printf '%-32s ' "$out"
+        if "${cap[@]}" nix eval --json ".#$out.x86_64-linux" --apply 'builtins.mapAttrs (_: p: p.drvPath)' >/dev/null 2>"$err"; then
+          echo ok
+        else
+          echo FAILED
+          tail -n 20 "$err" | sed 's/^/    /'
+          failed+=("$out")
+        fi
+      done
+    fi
+    if [ "${#failed[@]}" -gt 0 ]; then
+      echo "check: failed: ${failed[*]}" >&2
+      exit 1
+    fi
 
 # Update flake inputs (nixpkgs, home-manager, etc.)
 update:
