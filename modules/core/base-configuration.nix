@@ -12,9 +12,11 @@
     })
 
     # Codex CLI - same reasoning as claude-code above. This SHADOWS the nixpkgs
-    # `codex` attr, so `environment.systemPackages = [ pkgs.codex ]` in
-    # modules/software/development.nix resolves to the flake build (0.155.1),
-    # not the nixpkgs one (0.142.3). Drop this overlay entry to fall back.
+    # `codex` attr, so on the full configs (hosts/*/configuration-full.nix, the
+    # only ones that import this file) `pkgs.codex` in
+    # modules/software/development.nix resolves to the flake build, not the
+    # nixpkgs one; stages 3–5 get nixpkgs' codex. Drop this overlay entry to
+    # fall back.
     (final: prev: {
       codex = inputs.codex-cli-nix.packages.${prev.stdenv.hostPlatform.system}.default;
     })

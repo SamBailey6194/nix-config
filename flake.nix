@@ -93,6 +93,9 @@
             ./hosts/devtower/configuration-${stage}.nix
             ./hosts/devtower-intel
           ]
+          # llama.cpp (CUDA + OpenBLAS), with the rest of the dev tooling: an
+          # allow-list, so a stage added later does not get the local CUDA build
+          ++ nixpkgs.lib.optional (builtins.elem stage [ "dev" "productivity" "creative" "full" ]) ./hosts/devtower-intel/local-llm.nix
           ++ extraModules
           ++ nixpkgs.lib.optionals (home != null) [
             home-manager.nixosModules.home-manager

@@ -1,7 +1,7 @@
 # Software Modules Organization
 
-**Last Updated**: 29/01/2026
-**Version**: 0.7.0
+**Last Updated**: 28/09/2026
+**Version**: 1.5.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -19,6 +19,7 @@ This directory contains purpose-specific software modules that can be mixed and 
 | `development.nix` | Dev tools & IDEs | VS Code, Docker, language servers | base-configuration |
 | `office.nix` | Office productivity | LibreOffice, PDF tools | base-configuration |
 | `creative.nix` | Creative suite | DaVinci Resolve, Blender, Reaper | Framework & DevTower only |
+| `local-llm.nix` | Local LLM inference (`services.localLlm.*`, off by default) | llama.cpp with CUDA + OpenBLAS, per-host CUDA architectures | `development.nix`; enabled on devtower-intel (dev stage and up) |
 
 ## Currently Installed on All Devices
 
