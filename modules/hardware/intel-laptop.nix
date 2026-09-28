@@ -30,4 +30,7 @@
 
   # Backlight Control (brightnessctl installed in home packages)
   hardware.acpilight.enable = true;
+
+  # GPU monitoring: nvtop's Intel build (i915/Xe usage via DRM fdinfo)
+  environment.systemPackages = [ pkgs.nvtopPackages.intel ];
 }

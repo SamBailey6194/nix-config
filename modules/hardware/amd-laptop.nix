@@ -39,6 +39,9 @@
   # Backlight Control (brightnessctl installed in home packages)
   hardware.acpilight.enable = true;
 
+  # GPU monitoring: nvtop's AMD build (amdgpu)
+  environment.systemPackages = [ pkgs.nvtopPackages.amd ];
+
   # Note: hardware.opengl options have been removed as they are deprecated.
   # DRI support is now automatically enabled when hardware.graphics.enable = true.
   # The hardware.graphics block at the top handles all graphics configuration.

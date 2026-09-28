@@ -39,6 +39,8 @@
   };
 
   # System monitoring
+  # AI-02: switch to nvtopPackages.full (AMD + NVIDIA in one) once its NVIDIA
+  # card (RTX PRO 6000 Blackwell) is added; .amd cannot see NVIDIA GPUs.
   environment.systemPackages = with pkgs; [
     nvtopPackages.amd # GPU monitoring (nvtop was renamed to nvtopPackages.*)
   ];
