@@ -16,8 +16,8 @@
 # ~/.local/share/opencode. Switching a session's model does not rewrite the
 # config.
 #
-# So, like codex.nix and antigravity.nix, every key below is added once, only if
-# it is missing, and never touched again: edits stick, and so does disabling a
+# Shared MCP transports follow the catalog on activation; other keys are added
+# only when missing. Explicit permission rules stick, and so does disabling a
 # server (`"disabled": true` in its entry). Removing a server or the provider
 # does not — it comes back on the next rebuild, like Context7 in claude.nix. An
 # entry counts as present in either shape (v1 `mcp.<name>` / `provider.<id>`, or
@@ -43,71 +43,59 @@
 # Changing services.localLlm.host/port later does not rewrite an existing
 # provider entry: update its settings.baseURL, or delete the entry and rebuild.
 #
-# The model entry mirrors the server's command line (modules/software/
-# local-llm.nix): -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-IQ4_XS -c 32768 --jinja
-# (tool calls need --jinja). Keep `limit.context` equal to -c.
+# Model IDs and context limits come from the same catalog as llama-swap.
+# Missing models are added to an existing provider; the old generated 32K
+# Qwen entry is upgraded to native context. Other custom entries are preserved.
 
 let
   jqBin = "${pkgs.jq}/bin/jq";
-  mcp = import ./mcp-servers.nix;
+  mcp = import ./mcp-servers.nix { inherit pkgs lib; };
 
   llm = if osConfig != null then osConfig.services.localLlm or null else null;
 
   # An IPv6 address (a WireGuard one, say) needs brackets in a URL
   llmHost = if lib.hasInfix ":" llm.host then "[${llm.host}]" else llm.host;
 
-  localProvider = lib.optionalAttrs (llm != null && llm.enable) {
+  localProvider = lib.optionalAttrs (llm != null && llm.enable && llm.serverEnable) {
     id = "llama-cpp";
-    model = "llama-cpp/qwen3.6-35b-a3b";
+    model = "llama-cpp/${llm.defaultModel}";
     value = {
-      name = "llama.cpp (local llama-server)";
+      name = "llama.cpp (local, one model at a time)";
       package = "@opencode/ai/providers/openai-compatible";
       settings.baseURL = "http://${llmHost}:${toString llm.port}/v1";
-      models."qwen3.6-35b-a3b" = {
-        modelID = "unsloth/Qwen3.6-35B-A3B-GGUF:UD-IQ4_XS";
-        name = "Qwen3.6 35B-A3B (UD-IQ4_XS, local)";
+      models = lib.mapAttrs (id: model: {
+        modelID = id;
+        inherit (model) name;
         capabilities = {
           tools = true;
           input = [ "text" ];
           output = [ "text" ];
         };
         limit = {
-          context = 32768;
+          context = model.contextSize;
           output = 8192;
         };
-      };
+      }) llm.models;
     };
   };
 
   defaults = {
     schema = "https://opencode.ai/config.json";
-    # Every shared server is remote (OAuth on first use: `opencode mcp auth <name>`
-    # or /mcps in the TUI)
-    servers = lib.mapAttrs (_: server: {
-      type = "remote";
-      inherit (server) url;
-    }) mcp;
+    servers = lib.mapAttrs (_: server:
+      if server ? url then { type = "remote"; inherit (server) url; }
+      else { type = "local"; inherit (server) command; timeout = 120000; }
+    ) mcp;
     provider = if localProvider == { } then null else localProvider;
+    # OpenCode v2 ordered permission rules. Its edit permission covers writing
+    # files and patches; the external-directory policy still applies.
+    permissions = [ { action = "edit"; resource = "*"; effect = "allow"; } ];
   };
 
   # Input (jq -s): every JSON document in the file, so none for a missing or
   # blank file, which starts from {}. Anything but a single object (several
   # documents, an array, null, …) is an error. $d: `defaults` above. Output: the
   # merged config.
-  mergeFilter = ''
-    (if length == 0 then {}
-     elif length == 1 and (.[0] | type) == "object" then .[0]
-     else error("not a single JSON object") end)
-    | (if has("$schema") then . else {"$schema": $d.schema} + . end)
-    | reduce ($d.servers | to_entries[]) as $s (.;
-        if (.mcp.servers[$s.key]? // .mcp[$s.key]?) != null then .
-        else .mcp.servers[$s.key] = $s.value end)
-    | if $d.provider == null then .
-      elif (.providers[$d.provider.id]? // .provider[$d.provider.id]?) != null then .
-      else .providers[$d.provider.id] = $d.provider.value
-        | if has("model") then . else .model = $d.provider.model end
-      end
-  '';
+  mergeFilter = builtins.readFile ./opencode-merge.jq;
 in
 {
   # Best-effort throughout, like codex.nix: activation runs under

@@ -915,3 +915,41 @@ gen-hardware:
     sudo nixos-generate-config --show-hardware-config > hardware-configuration.nix
     @echo "Hardware configuration saved to hardware-configuration.nix"
     @echo "Review and move to hosts/<hostname>/hardware-configuration.nix"
+
+# ============================================================================
+# Local llama.cpp models (NixOS development stage and above)
+# ============================================================================
+
+# Show model IDs, names and full native context sizes
+llama-models:
+    @local-llm-control models
+
+# Select/load one model; append llama.cpp tuning flags (same OpenCode endpoint)
+[positional-arguments]
+llama-start MODEL="qwen3.6-35b-a3b" *FLAGS:
+    @local-llm-control start "$@"
+
+# Inspect the model's complete command without starting or downloading anything
+[positional-arguments]
+llama-plan MODEL="qwen3.6-35b-a3b" *FLAGS:
+    @local-llm-control plan "$@"
+
+# Stop the router and its model, clearing runtime tuning
+llama-stop:
+    @local-llm-control stop
+
+# Restore the declarative catalogue and automatic on-demand switching
+llama-auto:
+    @local-llm-control auto
+
+# Show service status and currently loaded models
+llama-status:
+    @local-llm-control status
+
+# Follow llama.cpp/model-router logs
+llama-logs:
+    @sudo journalctl -u llama-swap -f
+
+# Show the flags supported by the installed CUDA/OpenBLAS build
+llama-flags:
+    @llama-server --help

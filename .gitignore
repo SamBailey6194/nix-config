@@ -29,3 +29,7 @@ rust/fuzz/artifacts/
 
 # Code review graph
 .code-review-graph/
+
+# Python bytecode from configuration tests/helpers
+__pycache__/
+*.pyc

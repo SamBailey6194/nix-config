@@ -14,6 +14,7 @@
       "docker"         # docker (when enabled)
       "libvirtd"       # virtualization (when enabled)
       "render"         # GPU access (AMD Radeon)
+      "input"          # WhisperFlow global hotkeys under Wayland
     ];
     shell = pkgs.zsh;
 

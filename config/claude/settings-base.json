@@ -1,0 +1,52 @@
+{
+  "feedbackDrafts": "off",
+  "effortLevel": "xhigh",
+  "ultracode": true,
+  "promptSuggestionEnabled": false,
+  "tui": "fullscreen",
+  "autoMemoryEnabled": false,
+  "skipWorkflowUsageWarning": true,
+  "editorMode": "normal",
+  "verbose": false,
+  "switchModelsOnFlag": false,
+  "skipAutoPermissionPrompt": true,
+  "enableWorkflows": true,
+  "disableBundledSkills": true,
+  "disableArtifact": true,
+  "disableClaudeAiConnectors": true,
+  "disableRemoteControl": true,
+  "autoCompactEnabled": false,
+  "permissions": {
+    "allow": [
+      "mcp__claude-in-chrome__*"
+    ],
+    "ask": [
+      "mcp__elevenlabs__text_to_speech",
+      "mcp__elevenlabs__speech_to_text",
+      "mcp__elevenlabs__compose_music",
+      "mcp__elevenlabs__text_to_sound_effects",
+      "mcp__elevenlabs__speech_to_speech",
+      "mcp__elevenlabs__voice_clone",
+      "mcp__elevenlabs__isolate_audio",
+      "mcp__elevenlabs__text_to_voice",
+      "mcp__elevenlabs__create_voice_from_preview"
+    ]
+  },
+  "enabledPlugins": {
+    "syntek-dev-suite@syntek-marketplace": false,
+    "syntek-doc-writer@syntek-marketplace": false,
+    "syntek-rust-security@syntek-marketplace": false,
+    "syntek-infra@syntek-marketplace": false,
+    "plugin-dev@claude-code-plugins": false,
+    "dnd-dm-planner@dnd-dm-planner": false,
+    "codex@openai-codex": true
+  },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    }
+  }
+}

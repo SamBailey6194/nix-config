@@ -64,6 +64,34 @@ in
     options = [ "nofail" "noatime" ];
   };
 
+  # Keep the old store and Docker data intact for recovery. The new /nix and
+  # Docker directories live inside the encrypted NixOS root, not on these
+  # plaintext partitions. Do not start a second daemon against old Docker data.
+  fileSystems."/mnt/ubuntu-nix" = {
+    device = "/dev/disk/by-uuid/${disks.ubuntuNixUuid}";
+    fsType = "ext4";
+    options = [ "ro" "nofail" "noatime" ];
+  };
+  fileSystems."/mnt/ubuntu-docker" = {
+    device = "/dev/disk/by-uuid/${disks.ubuntuDockerUuid}";
+    fsType = "ext4";
+    options = [ "ro" "nofail" "noatime" ];
+  };
+
+  # Shared media/project files: retain NTFS so Windows can access this drive.
+  # Never force a mount of a hibernated/dirty Windows volume.
+  fileSystems."/mnt/davinci" = {
+    device = "/dev/disk/by-uuid/${disks.davinciUuid}";
+    fsType = "ntfs-3g";
+    options = [ "nofail" "noatime" "uid=1000" "gid=100" "fmask=0133" "dmask=0022" "windows_names" "x-systemd.automount" "x-systemd.device-timeout=10s" ];
+  };
+
+  fileSystems."/mnt/backup" = {
+    device = "/dev/disk/by-uuid/${disks.backupUuid}";
+    fsType = "ext4";
+    options = [ "nofail" "noatime" "x-systemd.automount" "x-systemd.device-timeout=10s" ];
+  };
+
   # No swap partition (zram replaces it)
   swapDevices = [ ];
 

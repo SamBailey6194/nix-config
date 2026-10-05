@@ -1,18 +1,21 @@
-# Remote MCP servers registered with every AI coding agent this config installs
-# (Claude Code, Codex, Antigravity, OpenCode). Defined once here so they stay in
-# step.
-#
-# Plain data, not a Home Manager module: `import ./mcp-servers.nix` from
-# claude.nix, codex.nix, antigravity.nix and opencode.nix — do not list it in
-# `imports`. opencode.nix registers every entry here (as a remote server); the
-# others name theirs one by one.
-#
-# These authenticate with OAuth on first use, so nothing secret lives here and
-# each tool keeps its own token. Servers that need an API key (Context7) stay in
-# the tool's own module, where the agenix secret is sourced.
-{
-  # Perplexity Computer. First use: /mcp in Claude Code, `codex mcp login
-  # perplexity-computer`, /mcp in Antigravity, or `opencode mcp auth
-  # perplexity-computer` (/mcps in its TUI).
+# Shared inventory from the reference Ubuntu Claude Code configuration.
+# Credentials are resolved at runtime, never by Nix evaluation.
+{ pkgs, lib }:
+let
+  uv = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
+  launch = pkgs.writeShellScript "ai-mcp-launch" ''
+    if [ -r /run/agenix/claude-secrets ]; then
+      set -a
+      . /run/agenix/claude-secrets
+      set +a
+    fi
+    export LD_LIBRARY_PATH=${lib.makeLibraryPath [ pkgs.portaudio pkgs.libsndfile ]}:"''${LD_LIBRARY_PATH:-}"
+    exec ${pkgs.python3}/bin/python ${./mcp-launch.py} "$@"
+  '';
+in {
+  mcp-mermaid.command = [ (toString launch) "mermaid" "${pkgs.nodejs}/bin/node" "${pkgs.playwright-driver.browsers}" ];
+  context7.command = [ (toString launch) "context7" "${pkgs.nodejs}/bin/npx" ];
+  elevenlabs.command = [ (toString launch) "elevenlabs" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" ];
   perplexity-computer.url = "https://www.perplexity.ai/rest/computer/mcp";
+  claude-design.url = "https://api.anthropic.com/v1/design/mcp";
 }

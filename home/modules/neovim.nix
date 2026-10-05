@@ -41,6 +41,8 @@ let
     { group = "AI";     lhs = "<leader>cb"; rhs = "<cmd>ClaudeCodeAdd %<CR>";      desc = "Send buffer to Claude"; }
     { group = "AI";     lhs = "<leader>cs"; rhs = "<cmd>ClaudeCodeSend<CR>";       desc = "Send selection to Claude"; mode = "v"; }
     { group = "AI";     lhs = "<leader>co"; rhs = "<cmd>CodexToggle<CR>";          desc = "Toggle Codex CLI"; }
+    { group = "AI";     lhs = "<leader>cp"; rhs = "<cmd>OpenCodeToggle<CR>";       desc = "Toggle OpenCode (local / hosted models)"; }
+    { group = "AI";     lhs = "<leader>cg"; rhs = "<cmd>AntigravityToggle<CR>";    desc = "Toggle Antigravity CLI"; }
 
     { group = "Code";   lhs = "<leader>ca"; desc = "Code action";        docOnly = true; }
     { group = "Code";   lhs = "<leader>cf"; desc = "Format buffer";      docOnly = true; }
@@ -795,6 +797,37 @@ in
       vim.api.nvim_create_user_command('CodexToggle', function()
         codex:toggle()
       end, { desc = 'Toggle the Codex CLI in its own terminal' })
+
+      -- Each agent keeps its own terminal/session. Capture the project cwd
+      -- on first launch so filesystem tools work in the opened coding repo.
+      for _, agent in ipairs({
+        { command = 'OpenCodeToggle', executable = 'opencode' },
+        { command = 'AntigravityToggle', executable = 'agy' },
+      }) do
+        local term
+        vim.api.nvim_create_user_command(agent.command, function()
+          if not term then
+            term = Terminal:new({
+              cmd = agent.executable,
+              dir = vim.fn.getcwd(),
+              hidden = true,
+              direction = 'horizontal',
+              close_on_exit = false,
+            })
+          end
+          term:toggle()
+        end, { desc = 'Toggle ' .. agent.executable .. ' in its own terminal' })
+      end
+
+      -- Notice agent edits on returning to the editor. checktime preserves
+      -- unsaved buffers and reports a conflict instead of overwriting them.
+      vim.opt.autoread = true
+      vim.api.nvim_create_autocmd({ 'FocusGained', 'TermLeave', 'BufEnter' }, {
+        group = vim.api.nvim_create_augroup('AgentFileChanges', { clear = true }),
+        callback = function()
+          if vim.fn.getcmdwintype() == "" then vim.cmd('checktime') end
+        end,
+      })
 
       -- ============================================================================
       -- TROUBLE: better diagnostics

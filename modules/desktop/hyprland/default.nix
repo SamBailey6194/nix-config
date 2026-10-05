@@ -1,6 +1,8 @@
 { config, pkgs, inputs, ... }:
 
 {
+  imports = [ ../../software/transcription.nix ../../software/browsers.nix ];
+
   # Hyprland Wayland Compositor Configuration
 
   # Enable Hyprland

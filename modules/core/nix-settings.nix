@@ -1,6 +1,11 @@
 { config, pkgs, inputs, ... }:
 
 {
+  imports = [
+    ./resource-control.nix
+    ../software/media-jobs.nix
+  ];
+
   # Nix-specific settings and optimizations
 
   nix = {

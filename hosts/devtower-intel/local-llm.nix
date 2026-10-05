@@ -16,6 +16,8 @@
     # CPU-side matrix multiplications away from GPU offload (OPENBLAS in
     # local-llm.nix); the MoE setup served today is unaffected. false = CUDA only.
     blas = true;
+    serverEnable = true;
+    models = import ../../modules/software/local-llm-models.nix;
   };
 
   # Backstop for builds that run inside nix-daemon.service (started as a user:
@@ -33,5 +35,23 @@
     MemoryMax = "16G";
     MemorySwapMax = "0";
     OOMPolicy = "continue";
+    Slice = "compute.slice";
   };
+
+  # Inference and Nix builds share a parent ceiling: their individual maxima
+  # are not additive. Reserve RAM for the desktop and separately limited media.
+  systemd.slices.compute.sliceConfig = {
+    MemoryHigh = "20G";
+    MemoryMax = "22G";
+    MemorySwapMax = "0";
+    CPUQuota = "1200%";
+    CPUWeight = 25;
+    IOWeight = 25;
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "60%";
+  };
+  systemd.services.llama-swap.serviceConfig.Slice = "compute.slice";
+  workloads.memoryHigh = lib.mkForce "3G";
+  workloads.memoryMax = lib.mkForce "4G";
+  workloads.memorySwapMax = "0";
 }

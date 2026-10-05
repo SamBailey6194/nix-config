@@ -92,6 +92,7 @@
             { nixpkgs.hostPlatform = system; }
             ./hosts/devtower/configuration-${stage}.nix
             ./hosts/devtower-intel
+            agenix.nixosModules.default
           ]
           # llama.cpp (CUDA + OpenBLAS), with the rest of the dev tooling: an
           # allow-list, so a stage added later does not get the local CUDA build

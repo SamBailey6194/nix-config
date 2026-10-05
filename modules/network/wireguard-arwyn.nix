@@ -45,7 +45,8 @@ let
       source = "psk.key";
     };
 
-  secretsPresent = missingSecrets == [ ];
+  runtimeKeys = cfg.privateKeyFile != null && cfg.presharedKeyFile != null;
+  secretsPresent = runtimeKeys || missingSecrets == [ ];
 
   # "65.109.70.23:51820" -> "65.109.70.23"; null for hostname/IPv6 endpoints
   endpointHost =
@@ -69,6 +70,17 @@ in
       default = config.networking.hostName;
       defaultText = literalExpression "config.networking.hostName";
       description = "Device name used in the secret file names";
+    };
+
+    privateKeyFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional root-only runtime private key on encrypted storage; overrides agenix.";
+    };
+    presharedKeyFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional root-only runtime PSK; must accompany privateKeyFile.";
     };
 
     address = mkOption {
@@ -124,6 +136,10 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
+      assertions = [{
+        assertion = (cfg.privateKeyFile == null) == (cfg.presharedKeyFile == null);
+        message = "wireguard-arwyn: specify both runtime key files or neither.";
+      }];
       warnings =
         optional (secretsPresent && config.networking.nftables.enable) ''
           networking.wireguard-arwyn: nftables is enabled, so the iptables rule that
@@ -139,7 +155,7 @@ in
     }
 
     (mkIf secretsPresent {
-      age.secrets = {
+      age.secrets = mkIf (!runtimeKeys) {
         wireguard-arwyn-private = {
           file = privateKeyFile;
           mode = "0400";
@@ -156,13 +172,13 @@ in
       # the tunnel is down. Reach the server by IP or the SSH alias below.
       networking.wg-quick.interfaces.${interface} = {
         address = [ cfg.address ];
-        privateKeyFile = config.age.secrets.wireguard-arwyn-private.path;
+        privateKeyFile = if runtimeKeys then cfg.privateKeyFile else config.age.secrets.wireguard-arwyn-private.path;
         inherit (cfg) autostart;
 
         peers = [
           {
             publicKey = cfg.serverPublicKey;
-            presharedKeyFile = config.age.secrets.wireguard-arwyn-psk.path;
+            presharedKeyFile = if runtimeKeys then cfg.presharedKeyFile else config.age.secrets.wireguard-arwyn-psk.path;
             inherit (cfg) allowedIPs endpoint;
             # Required behind NAT — keeps the mapping open for the server.
             persistentKeepalive = 25;
@@ -186,10 +202,12 @@ in
       # Unit text only names /run/agenix paths, so re-encrypting a secret would
       # not otherwise restart the tunnel. Hash the contents: the paths
       # themselves sit in the whole-flake source, which changes on every commit.
-      systemd.services."wg-quick-${interface}".restartTriggers = map (builtins.hashFile "sha256") [
-        privateKeyFile
-        pskFile
-      ];
+      systemd.services."wg-quick-${interface}" = {
+        restartTriggers = optionals (!runtimeKeys) (map (builtins.hashFile "sha256") [
+          privateKeyFile pskFile
+        ]);
+        unitConfig.ConditionPathExists = optionals runtimeKeys [ cfg.privateKeyFile cfg.presharedKeyFile ];
+      };
 
       # Outbound only: arwyn-1 must not be able to open connections into this
       # machine (e.g. its sshd) through the tunnel. Inserted at the top of

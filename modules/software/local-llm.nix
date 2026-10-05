@@ -94,31 +94,19 @@
 # runs on OpenBLAS: 2.2-2.5× slower than without the BLAS backend, measured
 # with a small F32 test model on the RTX 2080 Ti, and likely worse with
 # quantised weights, which BLAS first converts to F32. Generation (one token at
-# a time) never qualifies. The current Qwen3.6-35B-A3B setup is unaffected:
+# a time) never qualifies. An alternative Qwen3.6-35B-A3B tuning strategy
+# avoids this:
 # -ngl 99 puts every dense weight on the GPU, and the experts that --n-cpu-moe
 # keeps on the CPU run through MUL_MAT_ID, which the BLAS backend does not
-# take, so they are handled exactly as in a CUDA-only build. llama.cpp has no
+# take, so they are handled exactly as in a CUDA-only build. That placement
+# is an optional tuning example, not the full-context configuration here:
+# automatic fitting requires leaving explicit placement overrides unset.
+# llama.cpp has no
 # runtime switch for this; `blas = false` builds CUDA only.
 #
-# LATER: A SERVICE (designed for, not implemented)
-#
-# Today llama-server is started by hand, as on Ubuntu:
-#   llama-server -hf unsloth/Qwen3.6-35B-A3B-GGUF:UD-IQ4_XS -ngl 99 \
-#     --n-cpu-moe 30 -c 32768 -fa on --jinja --host 127.0.0.1 --port 8080
-# `host` and `port` below record where it listens, and home/modules/opencode.nix
-# builds the OpenCode provider's baseURL from them. The service should not be a
-# hand-written unit: nixpkgs has services.llama-cpp (settings.host/port) and
-# services.llama-swap (listenAddress/port, several models behind one port).
-# Enable one of them here with `package = cfg.package` and host/port taken from
-# this module: 127.0.0.1 by default, so nothing off the machine can reach it.
-# To serve the laptops:
-#   - set `host` to this machine's WireGuard address (never 0.0.0.0);
-#   - leave the service's own openFirewall off (it opens the port on every
-#     interface) and use networking.firewall.interfaces.<wg>.allowedTCPPorts;
-#   - order the unit after the tunnel (after/requires wg-quick-<wg>.service),
-#     or binding to an address that does not exist yet fails at boot;
-#   - point the laptops' OpenCode provider at that address over the tunnel
-#     instead of 127.0.0.1 (opencode.nix brackets an IPv6 address in the URL).
+# SERVING: llama-swap loads one model on demand behind the loopback endpoint.
+# Model weights are runtime cache data, not part of a Nix rebuild. See
+# docs/LOCAL-LLM.md for memory estimates, migration and full-context validation.
 
 let
   cfg = config.services.localLlm;
@@ -202,9 +190,8 @@ in
       type = lib.types.str;
       default = "127.0.0.1";
       description = ''
-        Address llama-server listens on. Started by hand for now; read by
-        home/modules/opencode.nix for the OpenCode provider, and by a future
-        service. Loopback by default; a WireGuard address to serve other hosts.
+        Address llama-swap listens on, also used by OpenCode. Loopback by
+        default. Binding a WireGuard address requires ordering after its tunnel.
       '';
     };
 
@@ -213,6 +200,33 @@ in
       default = 8080;
       description = "Port llama-server listens on (its own default is 8080).";
     };
+
+    serverEnable = lib.mkEnableOption "on-demand local models through llama-swap";
+
+    models = lib.mkOption {
+      default = { };
+      description = "GGUF models offered to OpenCode through llama-swap.";
+      type = lib.types.attrsOf (lib.types.submodule {
+        options = {
+          name = lib.mkOption { type = lib.types.str; };
+          repo = lib.mkOption { type = lib.types.str; };
+          file = lib.mkOption { type = lib.types.str; };
+          contextSize = lib.mkOption { type = lib.types.ints.positive; };
+          cacheType = lib.mkOption { type = lib.types.str; default = "q8_0"; };
+          aliases = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ ]; };
+          extraArgs = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ ]; };
+        };
+      });
+    };
+
+    defaultModel = lib.mkOption {
+      type = lib.types.str;
+      default = "qwen3.6-35b-a3b";
+      description = "Default local model key for OpenCode.";
+    };
+
+    memoryHigh = lib.mkOption { type = lib.types.str; default = "18G"; };
+    memoryMax = lib.mkOption { type = lib.types.str; default = "20G"; };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -233,8 +247,78 @@ in
         assertion = unsupportedCudaCapabilities == [ ];
         message = "services.localLlm.cudaCapabilities: ${lib.concatStringsSep ", " unsupportedCudaCapabilities} not supported by CUDA ${pkgs.cudaPackages.cudaMajorMinorVersion} (supported: ${lib.concatStringsSep ", " supportedCudaCapabilities}).";
       }
+      {
+        assertion = !cfg.serverEnable || builtins.hasAttr cfg.defaultModel cfg.models;
+        message = "services.localLlm.defaultModel must name a configured model when serverEnable is true.";
+      }
     ];
 
-    environment.systemPackages = [ cfg.package ];
+    environment.systemPackages = [ cfg.package ] ++ lib.optional cfg.serverEnable (pkgs.writeShellApplication {
+      name = "local-llm-control";
+      runtimeInputs = [ pkgs.python3 pkgs.systemd pkgs.sudo ];
+      text = ''
+        exec ${pkgs.python3}/bin/python ${../../scripts/local-llm-control.py} "$@"
+      '';
+    });
+    environment.etc."local-llm/control.json" = lib.mkIf cfg.serverEnable {
+      text = builtins.toJSON {
+        defaultModel = cfg.defaultModel;
+        catalog = cfg.models;
+        settings = config.services.llama-swap.settings;
+        swapBinary = lib.getExe config.services.llama-swap.package;
+        listen = "${cfg.host}:${toString cfg.port}";
+        url = "http://${cfg.host}:${toString cfg.port}";
+      };
+    };
+
+    services.llama-swap = lib.mkIf cfg.serverEnable {
+      enable = true;
+      listenAddress = cfg.host;
+      port = cfg.port;
+      openFirewall = false;
+      settings = {
+        # Loading a 15-20GB GGUF on the CPU can be slow. Downloads may need
+        # longer still: pre-populate the cache if the first request times out.
+        healthCheckTimeout = 1800;
+        globalTTL = 300;
+        logToStdout = "both";
+        # The default group router unloads the old model before loading another.
+        models = lib.mapAttrs (id: model: {
+          cmd = lib.escapeShellArgs ([
+            "${cfg.package}/bin/llama-server"
+            "--host" "127.0.0.1" "--port" "\${PORT}"
+            "--hf-repo" model.repo "--hf-file" model.file
+            "--alias" id
+            "--ctx-size" (toString model.contextSize)
+            # --fit must not silently shrink the requested context.
+            "--fit-ctx" (toString model.contextSize)
+            "--fit" "on" "--fit-target" "2048"
+            "--parallel" "1" "--threads" "8" "--threads-batch" "8"
+            "--batch-size" "256" "--ubatch-size" "128"
+            "--flash-attn" "on" "--jinja"
+            # Host KV avoids consuming all of the 2080 Ti's VRAM at full ctx.
+            "--no-kv-offload"
+            "--cache-type-k" model.cacheType "--cache-type-v" model.cacheType
+          ] ++ model.extraArgs);
+          proxy = "http://127.0.0.1:\${PORT}";
+          concurrencyLimit = 1;
+          inherit (model) aliases;
+        }) cfg.models;
+      };
+    };
+
+    systemd.services.llama-swap = lib.mkIf cfg.serverEnable {
+      serviceConfig = {
+        MemoryHigh = cfg.memoryHigh;
+        MemoryMax = cfg.memoryMax;
+        MemorySwapMax = "0";
+        MemoryOOMGroup = true;
+        OOMPolicy = "kill";
+        # Stop after OOM/failure rather than repeatedly reloading a failing model.
+        Restart = lib.mkForce "no";
+        CPUWeight = 25;
+        IOWeight = 25;
+      };
+    };
   };
 }

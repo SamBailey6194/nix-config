@@ -13,13 +13,6 @@
     enable = true;
 
     settings = {
-      # Restore session on startup
-      "browser.startup.page" = 3; # 1=home, 2=blank, 3=restore session
-
-      # Downloads
-      "browser.download.useDownloadDir" = true;
-      "browser.download.folderList" = 1;
-
       # Vertical tabs (Firefox 136+)
       "sidebar.verticalTabs" = true;
       "sidebar.revamp" = true;

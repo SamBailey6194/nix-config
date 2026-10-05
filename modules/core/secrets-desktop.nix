@@ -48,7 +48,9 @@ in
     # LUKS Passphrase (fallback when TPM2 auto-unlock fails)
     # ========================================================================
     luks-passphrase = {
-      file = ../../secrets/luks-passphrase-${hostname}.age;
+      file = if hostname == "devtower-intel"
+        then ../../secrets/luks-passphrase-devtower-intel-os.age
+        else ../../secrets/luks-passphrase-${hostname}.age;
       mode = "0400";
     };
 

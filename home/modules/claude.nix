@@ -16,7 +16,6 @@
 let
   homeDir = config.home.homeDirectory;
   claudeBin = lib.getExe pkgs.claude-code;
-  mcp = import ./mcp-servers.nix; # MCP servers shared with Codex, Antigravity and OpenCode
   nodeBin = "${pkgs.nodejs}/bin/node";
   npmBin = "${pkgs.nodejs}/bin/npm";
 
@@ -68,10 +67,11 @@ let
     }];
   }];
 
-  settings = {
+  settings = (lib.importJSON ../../config/claude/settings-base.json) // {
     env."ENABLE_LSP_TOOL" = "1";
-    permissions.allow = [ "mcp__claude-in-chrome__*" ];
+    env."MCP_TIMEOUT" = "120000"; # Allow first-launch runtime package downloads.
     model = "opus";
+    outputStyle = "Concise";
 
     hooks = {
       SessionStart = monitorHook "SessionStart" 5000;
@@ -94,26 +94,6 @@ let
     statusLine = {
       type = "command";
       command = "bash ${homeDir}/.claude/statusline-command.sh";
-    };
-
-    enabledPlugins = {
-      "syntek-dev-suite@syntek-marketplace" = true;
-      "syntek-infra@syntek-marketplace" = true;
-      "syntek-rust-security@syntek-marketplace" = true;
-      "dnd-dm-planner@dnd-dm-planner" = true;
-      "plugin-dev@claude-code-plugins" = true;
-      "syntek-doc-writer@syntek-marketplace" = true;
-    };
-
-    extraKnownMarketplaces = {
-      dnd-dm-planner.source = {
-        source = "git";
-        url = "git@github-personal:SamBailey6194/dnd-dm-planner.git";
-      };
-      claude-code-plugins.source = {
-        source = "github";
-        repo = "anthropics/claude-code";
-      };
     };
 
     # Ultracode + xhigh effort + dynamic workflows, default model opus.
@@ -175,6 +155,16 @@ in
     # Declarative settings.json (no secrets — the monitor token is sourced at
     # hook runtime from the agenix env file by claude-monitor-hook).
     ".claude/settings.json".text = builtins.toJSON settings;
+
+    ".claude/output-styles/Concise.md".text = ''
+      ---
+      name: Concise
+      description: Clear, brief answers with the outcome first.
+      keep-coding-instructions: true
+      ---
+      State the outcome first. Use plain language and concise paragraphs.
+      Include relevant validation and limitations. Avoid repeating progress logs.
+    '';
 
     ".claude/statusline-command.sh" = {
       source = ../../config/claude/statusline-command.sh;
@@ -247,44 +237,8 @@ in
     fi
   '';
 
-  # Register the MCP servers at user scope, idempotently. ~/.claude.json is owned
-  # and rewritten by Claude Code itself, so this uses `claude mcp add` rather than
-  # managing that file. Context7's key comes from the agenix secret.
-  home.activation.claudeMcpServers = lib.hm.dag.entryAfter [ "writeBoundary" "mcpMermaid" ] ''
-    CLAUDE='${claudeBin}'
-    if [ -r ${secretsFile} ]; then . ${secretsFile}; fi
-
-    # Figma was registered here until it was dropped; unregister it so devices
-    # that activated an earlier generation lose it too. Safe to delete once
-    # every device has rebuilt at least once past this point.
-    $CLAUDE mcp remove --scope user figma >/dev/null 2>&1 || true
-
-    # Re-register each activation so the Playwright env (browser path) and the
-    # pinned-install entrypoint stay in sync with this config; a stale entry can't
-    # render diagrams. Runs the locally-installed build, not `npx`, so the pinned
-    # Playwright (see mcpMermaid activation) is used.
-    $CLAUDE mcp remove --scope user mcp-mermaid >/dev/null 2>&1 || true
-    $CLAUDE mcp add --scope user mcp-mermaid \
-      --env PLAYWRIGHT_BROWSERS_PATH=${playwrightBrowsers} \
-      --env PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 \
-      -- ${nodeBin} ${mcpMermaidEntry} || true
-
-    if [ -n "''${CONTEXT7_API_KEY:-}" ]; then
-      $CLAUDE mcp get context7 >/dev/null 2>&1 || \
-        $CLAUDE mcp add --scope user --transport http context7 https://mcp.context7.com/mcp \
-          --header "CONTEXT7_API_KEY: ''${CONTEXT7_API_KEY}" || true
-    fi
-
-    # Perplexity Computer (./mcp-servers.nix): OAuth on first use via /mcp, so
-    # no secret to wait for. Added only when missing from user scope (the
-    # top-level mcpServers of .claude.json), checked offline with jq. Not
-    # `claude mcp get`: that health-checks the server over the network (up to
-    # 30 s when it hangs) and re-runs OAuth discovery, rewriting
-    # ~/.claude/.credentials.json — the file that also holds the Claude login —
-    # on every activation. `add` does neither and never starts a login.
-    ${pkgs.jq}/bin/jq -e '.mcpServers["perplexity-computer"]' \
-      "''${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json" >/dev/null 2>&1 || \
-      $CLAUDE mcp add --scope user --transport http perplexity-computer \
-        ${lib.escapeShellArg mcp.perplexity-computer.url} || true
-  '';
+  home.activation.claudeMcpServers = import ./mcp-activation.nix {
+    inherit pkgs lib;
+    client = "claude";
+  };
 }

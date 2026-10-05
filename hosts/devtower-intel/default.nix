@@ -20,6 +20,7 @@ in
 
   imports = [
     ./hardware-configuration.nix
+    ./connectivity.nix
     ../../modules/hardware/intel-nvidia-desktop.nix
     ../../modules/filesystem/zram.nix # deduplicated with the full stage's own import
   ];
@@ -28,8 +29,19 @@ in
   # real devtower's (per-device secrets model)
   networking.hostName = lib.mkForce "devtower-intel";
 
-  # Stages 1-5 have no swap at all (zram is only in the full stage)
+  # Use the existing zram policy for every stage on this machine.
   filesystem.zram.enable = true;
+
+  # Reserve room on the 32GB PC for the existing 16GB Nix build budget, the
+  # desktop and up to 1GB of workload swap. Limits apply to all media jobs
+  # together, rather than allowing each concurrent job this much RAM.
+  workloads.memoryHigh = "10G";
+  workloads.memoryMax = "12G";
+
+  # Let Nix reclaim unreferenced store data before a build fills this SSD.
+  # Rooted profiles/generations remain protected by the garbage collector.
+  nix.settings.min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);
+  nix.settings.max-free = lib.mkDefault (15 * 1024 * 1024 * 1024);
 
   # Same uid as Ubuntu's sam-dev, so /mnt/ubuntu-home and /mnt/archive ownership lines up
   users.users.sam-desktop.uid = 1000;

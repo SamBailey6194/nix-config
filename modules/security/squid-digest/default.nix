@@ -50,10 +50,8 @@ let
     # down), leaving Squid querying dead servers — so every hostname CONNECT
     # times out while raw-IP requests still succeed. Pinning explicit public
     # resolvers makes resolution work whether the VPN is up or down, and on any
-    # network (mobile/multi-homed friendly). dns_v4_first avoids stalls when
-    # IPv6 egress is unavailable.
+    # network (mobile/multi-homed friendly).
     dns_nameservers 1.1.1.1 1.0.0.1 9.9.9.9
-    dns_v4_first on
   '';
   acctSquidConfFile = pkgs.writeText "squid-accountability.conf" acctSquidConf;
 
@@ -73,7 +71,8 @@ let
 
   # The secret EnvironmentFile lives wherever agenix decrypts it. Declared by the
   # host secrets module as age.secrets.squid-digest-env.
-  secretEnv = config.age.secrets.squid-digest-env.path;
+  secretEnv = if cfg.secretEnvironmentFile != null then cfg.secretEnvironmentFile
+    else config.age.secrets.squid-digest-env.path;
   defaultsEnv = "/etc/squid-digest/defaults.env";
 
   # Order matters: systemd lets a later EnvironmentFile override an earlier one
@@ -87,6 +86,12 @@ in
 {
   options.services.squidDigest = {
     enable = lib.mkEnableOption "Squid accountability proxy + squid-digest watchers";
+
+    secretEnvironmentFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Optional runtime EnvironmentFile on encrypted storage; otherwise use agenix.";
+    };
 
     user = lib.mkOption {
       type = lib.types.str;
@@ -117,7 +122,27 @@ in
     services.squid = {
       enable = true;
       proxyPort = 3128;
-      extraConfig = acctSquidConf;
+      # One log stream in the format understood by squid-digest. Appending an
+      # access_log to the generic module's default logs each request twice.
+      configText = ''
+        http_port 127.0.0.1:3128
+        acl localhost src 127.0.0.1/32 ::1
+        acl to_localhost dst 127.0.0.0/8 ::1
+        acl SSL_ports port 443
+        acl Safe_ports port 80 443 1025-65535
+        acl CONNECT method CONNECT
+        http_access deny !Safe_ports
+        http_access deny CONNECT !SSL_ports
+        http_access deny to_localhost
+        http_access allow localhost
+        http_access deny all
+        pid_filename /run/squid.pid
+        cache_effective_user squid squid
+        cache_log stdio:/var/log/squid/cache.log
+        cache_store_log none
+        coredump_dir /var/cache/squid
+        ${acctSquidConf}
+      '';
     };
 
     # Keep >= 8 days of rotations (incl. .gz) so the weekly digest sees a full
@@ -185,8 +210,9 @@ in
     # ----------------------------------------------------- Weekly digest (root)
     systemd.services.squid-digest-weekly = {
       description = "Weekly accountability digest email";
+      unitConfig.ConditionPathExists = secretEnv;
       after = [ "network-online.target" "squid-digest-blocklist.service" ];
-      wants = [ "network-online.target" ];
+      wants = [ "network-online.target" "squid-digest-blocklist.service" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${squid-digest}/bin/squid-digest weekly";
@@ -207,6 +233,7 @@ in
     # ------------------------------------------------------ Tamper watch (root)
     systemd.services.squid-digest-watch = {
       description = "Accountability tamper watcher (squid/config/policies)";
+      unitConfig.ConditionPathExists = secretEnv;
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ]; # the watch pings the off-machine heartbeat
       serviceConfig = {
@@ -230,7 +257,8 @@ in
     # The GNOME proxy is per-user; root can't read it correctly, so this runs as
     # the desktop user via systemctl --user.
     systemd.user.services.squid-digest-watch-proxy = {
-      description = "Per-user GNOME proxy watcher (still -> squid)";
+      description = "Per-user managed browser proxy watcher";
+      unitConfig.ConditionPathExists = secretEnv;
       after = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
       serviceConfig = {
