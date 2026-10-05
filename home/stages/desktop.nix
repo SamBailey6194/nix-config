@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # Stage 2: Desktop
@@ -7,11 +7,15 @@
 
   imports = [
     ./base.nix
+    ../modules/download-sorter.nix # Optional download routing with per-machine rules
     ../modules/hyprland.nix  # Hyprland Wayland compositor
     ../modules/shell.nix     # Zsh + Oh My Zsh
     ../modules/browsers.nix  # LibreWolf profile + Zen default browser
     ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
   ];
+
+  # Normalise completed download names; routing remains opt-in until rules are set.
+  services.downloadSorter.enable = lib.mkDefault true;
 
   # Desktop-only packages
   home.packages = with pkgs; [

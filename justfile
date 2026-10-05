@@ -953,3 +953,36 @@ llama-logs:
 # Show the flags supported by the installed CUDA/OpenBLAS build
 llama-flags:
     @llama-server --help
+
+# ============================================================================
+# Download automation (ClamAV + deterministic rules + SQLite)
+# ============================================================================
+
+# Preview scan/name/routing decisions without changing any files
+downloads-preview:
+    @download-sorter --dry-run
+
+# Preview filename changes without routing to another folder
+downloads-preview-names:
+    @download-sorter --rename-only --dry-run
+
+# Show the last 50 scan, rename, move and human-choice events
+downloads-history:
+    @download-sorter --history
+
+# Show download issues requiring attention
+downloads-issues:
+    @download-sorter --issues
+
+# Scan and rename settled downloads now; routing stays disabled
+downloads-check:
+    @download-sorter --rename-only
+
+# Retry ClamAV scans after resolving a scanner or signature problem
+downloads-retry:
+    @download-sorter --rename-only --retry
+
+# Record where you manually filed a scanned download; quote globs and paths
+[positional-arguments]
+downloads-record-choice PATTERN FILE:
+    @download-sorter --pattern "$1" --record-choice "$2"

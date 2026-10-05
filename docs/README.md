@@ -1,5 +1,7 @@
 # Documentation Index
 
+- [Download automation](DOWNLOAD-SORTER.md) — ClamAV scanning, kebab-case names,
+  SQLite history, deterministic routing and desktop alerts.
 - [Media tools and resource limits](MEDIA-WORKLOADS.md) — FFmpeg/ffprobe,
   WhisperX, WhisperFlow, Rhubarb, and systemd workload safeguards.
 - [Local models](LOCAL-LLM.md) — CUDA/OpenBLAS, full-context feasibility and OpenCode.

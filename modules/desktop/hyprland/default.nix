@@ -1,7 +1,11 @@
 { config, pkgs, inputs, ... }:
 
 {
-  imports = [ ../../software/transcription.nix ../../software/browsers.nix ];
+  imports = [
+    ../../software/transcription.nix
+    ../../software/browsers.nix
+    ../../security/download-antivirus.nix
+  ];
 
   # Hyprland Wayland Compositor Configuration
 
