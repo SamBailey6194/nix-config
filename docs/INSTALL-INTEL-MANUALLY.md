@@ -91,7 +91,7 @@ restic snapshots
 restic check --read-data
 restic ls latest /media/ubuntu-home/sam-dev/Repos/personal/nix-config
 mkdir -p /tmp/restore-check
-restic restore latest --target /tmp/restore-check --include /media/ubuntu-home/sam-dev/.claude.json --include /media/ubuntu-root/etc/fstab --include /media/ubuntu-root/etc/nixos-migration
+restic restore latest --target /tmp/restore-check --include /media/ubuntu-home/sam-dev/.claude.json --include /media/ubuntu-root/etc/fstab --include /media/ubuntu-root/etc/nixos-migration --include /media/ubuntu-home/sam-dev/.config/wireguard/sam-desktop
 cmp /media/ubuntu-home/sam-dev/.claude.json /tmp/restore-check/media/ubuntu-home/sam-dev/.claude.json
 cmp /media/ubuntu-root/etc/fstab /tmp/restore-check/media/ubuntu-root/etc/fstab
 for file in arwyn-private.key arwyn-psk.key squid-digest.env; do
@@ -189,10 +189,14 @@ changes require an updated header backup.
 
 ## 5. Copy the config and enter new UUIDs
 
+Use the new `sam-desktop` keys for `10.100.0.8`, deployed on arwyn-1. The
+older `/etc/nixos-migration` WireGuard keys belong to Ubuntu at `.2` and must
+not be paired with the new address. Accountability still uses that export.
+
 ```sh
 install -d -m 0700 /mnt/var/lib/desktop-secrets
-install -m 0400 /tmp/restore-check/media/ubuntu-root/etc/nixos-migration/arwyn-private.key /mnt/var/lib/desktop-secrets/arwyn-private.key
-install -m 0400 /tmp/restore-check/media/ubuntu-root/etc/nixos-migration/arwyn-psk.key /mnt/var/lib/desktop-secrets/arwyn-psk.key
+install -m 0400 /tmp/restore-check/media/ubuntu-home/sam-dev/.config/wireguard/sam-desktop/private.key /mnt/var/lib/desktop-secrets/arwyn-private.key
+install -m 0400 /tmp/restore-check/media/ubuntu-home/sam-dev/.config/wireguard/sam-desktop/preshared.key /mnt/var/lib/desktop-secrets/arwyn-psk.key
 install -m 0600 /tmp/restore-check/media/ubuntu-root/etc/nixos-migration/squid-digest.env /mnt/var/lib/desktop-secrets/squid-digest.env
 install -d -m 0700 /mnt/home/sam-desktop/.ssh
 install -m 0600 /media/ubuntu-home/sam-dev/.ssh/id_ed25519_admin /mnt/home/sam-desktop/.ssh/id_ed25519_admin

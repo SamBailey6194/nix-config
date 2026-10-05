@@ -73,6 +73,12 @@ restored=/tmp/restore-check/media/ubuntu-root/etc
 install -d -m 0700 "$restored"
 test -d "$copy/filesystems/root/etc/nixos-migration" || exit 1
 cp -a "$copy/filesystems/root/etc/nixos-migration" "$restored/"
+new_keys=/tmp/restore-check/media/ubuntu-home/sam-dev/.config/wireguard
+install -d -m 0700 "$new_keys"
+cp -a "$copy/filesystems/home/sam-dev/.config/wireguard/sam-desktop" "$new_keys/"
+for file in private.key public.key preshared.key; do
+  cmp "$copy/filesystems/home/sam-dev/.config/wireguard/sam-desktop/$file" "$new_keys/sam-desktop/$file" || exit 1
+done
 for file in arwyn-private.key arwyn-psk.key squid-digest.env; do
   cmp "$copy/filesystems/root/etc/nixos-migration/$file" "$restored/nixos-migration/$file" || exit 1
 done

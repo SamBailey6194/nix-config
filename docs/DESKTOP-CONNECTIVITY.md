@@ -1,27 +1,20 @@
 # Desktop VPN, SSH and accountability
 
 The Intel configuration imports `hosts/devtower-intel/connectivity.nix` in all
-stages. Its WireGuard link uses the existing Ubuntu desktop peer:
+stages. Its WireGuard link uses the separate NixOS desktop peer:
 
-- Desktop address: `10.100.0.2/32`; server SSH address: `10.100.0.1`.
+- Desktop address: `10.100.0.8/32`; server SSH address: `10.100.0.1`.
 - Server endpoint: `65.109.70.23:51820`; pinned server public key and SSH host key
   come from the existing arwyn module and local deployment configuration.
 - SSH alias: `arwyn-1`, user `admin`, identity `~/.ssh/id_ed25519_admin`.
 - Only `10.100.0.1/32` is routed into the admin tunnel. This does not route
   ordinary Internet traffic to arwyn-1.
 
-The local deployment repo identifies this peer as `sam-ubuntu-pc`. This migration
-preserves its key pair and PSK; no remote peer changes are required if those
-existing keys remain correct. Do not run Ubuntu and NixOS with that identity at
-the same time. A later new key pair needs a corresponding server-side change
-performed from another working admin connection.
+Ubuntu retains its `sam-ubuntu-pc` peer at `10.100.0.2/32`. NixOS uses
+`sam-desktop` at `10.100.0.8/32`, with public key
+`03zo6BzI/IyaWxna57fisYJ3HbrWvlSNF07tCIX42Ac=`. The user confirmed deployment
+of the new server peer on arwyn-1; its handshake has not yet been tested here.
 
-### Prepared replacement desktop peer
-
-A separate `sam-desktop` key pair and PSK have now been generated. Its public
-key is `03zo6BzI/IyaWxna57fisYJ3HbrWvlSNF07tCIX42Ac=`; the proposed address is
-`10.100.0.8/32`, unused in the checked arwyn-1 configuration. Add it alongside
-`sam-ubuntu-pc` so Ubuntu retains its working connection during migration.
 The server needs that public key and `wireguard-psk-sam-desktop.age`, encrypted
 from the same PSK as this repository's
 `wireguard-arwyn-devtower-intel-psk.age`. The private key belongs only on the
@@ -31,10 +24,9 @@ These new secrets currently target the laptop agenix editor key. After installin
 NixOS, add the verified desktop SSH host public key to `devtowerIntelKeys` in
 `secrets/secrets.nix`, and re-encrypt the desktop secrets using an existing
 recipient identity. WireGuard public keys cannot serve as age recipients.
-The checked-in connectivity configuration still uses the exported Ubuntu keys
-at `.2`: the new peer is not active merely because its `.age` files exist.
-Switch to `.8` and the new credentials only after the server peer is deployed;
-keep a working laptop admin connection while checking the new handshake and SSH.
+The configuration uses `.8` with runtime keys restored from the new pair.
+Do not use the earlier Ubuntu WireGuard export with this address. Keep a working
+laptop admin connection while checking the new handshake and SSH.
 
 ## Before shutting down Ubuntu
 
@@ -69,8 +61,9 @@ Restore into a private temporary directory, then install the resulting files:
 sudo install -d -m 0750 -o root -g sam-desktop /var/lib/desktop-secrets
 # Set this to the directory restored by Restic, not the repository itself.
 read -r -p 'Restored nixos-migration directory: ' restored_secrets
-sudo install -m 0400 -o root -g root "$restored_secrets/arwyn-private.key" /var/lib/desktop-secrets/arwyn-private.key
-sudo install -m 0400 -o root -g root "$restored_secrets/arwyn-psk.key" /var/lib/desktop-secrets/arwyn-psk.key
+read -r -p 'Restored sam-desktop WireGuard key directory: ' new_desktop_keys
+sudo install -m 0400 -o root -g root "$new_desktop_keys/private.key" /var/lib/desktop-secrets/arwyn-private.key
+sudo install -m 0400 -o root -g root "$new_desktop_keys/preshared.key" /var/lib/desktop-secrets/arwyn-psk.key
 sudo install -m 0640 -o root -g sam-desktop "$restored_secrets/squid-digest.env" /var/lib/desktop-secrets/squid-digest.env
 install -d -m 0700 ~/.ssh
 install -m 0600 /mnt/ubuntu-home/sam-dev/.ssh/id_ed25519_admin ~/.ssh/id_ed25519_admin

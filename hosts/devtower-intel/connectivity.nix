@@ -1,4 +1,4 @@
-# Preserve this physical desktop's Ubuntu admin VPN and accountability setup.
+# Desktop admin VPN and migrated Ubuntu accountability setup.
 { config, lib, pkgs, ... }:
 let
   secrets = "/var/lib/desktop-secrets";
@@ -20,7 +20,7 @@ in {
 
   networking.wireguard-arwyn = {
     enable = true;
-    address = "10.100.0.2/32"; # Existing sam-ubuntu-pc server peer: reuse its keys.
+    address = "10.100.0.8/32"; # Separate sam-desktop peer deployed on arwyn-1.
     allowedIPs = [ "10.100.0.1/32" ];
     sshIdentityFile = "~/.ssh/id_ed25519_admin"; # Ubuntu's authorised SSH identity.
     privateKeyFile = "${secrets}/arwyn-private.key";
