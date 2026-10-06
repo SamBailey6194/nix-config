@@ -28,6 +28,14 @@
     };
   };
 
+  # Secret Service for the session, so agy, Codex, gh and Brave keep sign-ins
+  # in the keyring rather than plaintext fallback files. The module enables
+  # pam_gnome_keyring for `login`, which greetd's PAM stack includes, so the
+  # keyring unlocks with the login password. Its gcr SSH agent stays off:
+  # modules/core/ssh-config.nix already runs the OpenSSH agent.
+  services.gnome.gnome-keyring.enable = true;
+  services.gnome.gcr-ssh-agent.enable = false;
+
   # XDG Portal configuration
   # NOTE: programs.hyprland.enable already sets up xdg-desktop-portal-hyprland
   # We just need to add GTK portal and configure the portal selection
