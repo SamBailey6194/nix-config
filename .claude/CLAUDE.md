@@ -39,7 +39,7 @@ Personal NixOS configuration with Hyprland, dotfiles, and Rust tooling for multi
 - ✅ Enhanced secrets.nix for per-device granularity (zero-trust model)
 - ✅ Created Rust workspace (secrets-verify, agenix-helper)
 - ✅ Auto-generated SSH config per device (modules/core/ssh-config.nix)
-- ✅ Comprehensive documentation (PER-DEVICE-SECRETS.md)
+- ✅ Comprehensive documentation (docs/SECRETS.md)
 - ✅ Task automation (justfile)
 - ✅ Two-tier security (GitHub: no passphrase, Servers: with passphrase)
 
@@ -102,7 +102,7 @@ nix-config/
 │
 ├── secrets/                # Agenix encrypted secrets (Phase 2)
 │   ├── secrets.nix            # Defines which keys decrypt which secrets
-│   ├── PER-DEVICE-SECRETS.md  # Per-device secrets architecture guide
+│   ├── README.md              # Secrets overview (procedure: docs/SECRETS.md)
 │   └── *.age                  # Encrypted secrets (safe to commit)
 │
 ├── rust/                   # Rust tooling workspace
@@ -132,7 +132,7 @@ nix-config/
 └── linters/                # Shared linter configs
 ```
 
-See `ARCHITECTURE.md` for detailed explanation of the modular design.
+See `docs/ARCHITECTURE.md` for detailed explanation of the modular design.
 
 ## Commands
 
@@ -195,7 +195,7 @@ Directory-based conditional includes auto-switch GitHub accounts:
 |-----------|---------|----------|
 | `~/Repos/personal/` | SamBailey6194 | github-personal |
 | `~/Repos/syntek/` | syntek-studio | github-syntek |
-| `~/Repos/missional-gen/` | sam-missionalgen | github-missionalgen |
+| `~/Repos/missional-gen/` | sam-missional-gen | github-missionalgen |
 
 Verify with: `git config user.email` in each directory.
 
@@ -231,7 +231,7 @@ We use a **6-stage progressive installation** to:
 - Isolate problems to specific software groups
 - Get a bootable system quickly to test hardware
 
-**Complete guide**: See `docs/STAGED-INSTALLATION-GUIDE.md`
+**Complete guide**: See `docs/INSTALLATION.md` (devtower-intel: `docs/INSTALL-INTEL-MANUALLY.md`)
 
 **Quick reference**:
 ```bash
@@ -248,7 +248,7 @@ sudo nixos-rebuild switch --flake .#laptop-intel-creative      # Stage 5
 sudo nixos-rebuild switch --flake .#laptop-intel
 ```
 
-**Disk setup**: See `MINIMAL-INSTALL-GUIDE.md` for partitioning and formatting
+**Disk setup**: See `docs/INSTALLATION.md` (Pre-Installation) for partitioning and formatting
 
 ### Legacy Dotfiles Installation (Pre-NixOS)
 
@@ -286,7 +286,7 @@ After NixOS is running:
 
 4. **Generate per-device GitHub keys:**
    ```bash
-   # Follow PHASE-2-SECRETS-SETUP.md Step 3
+   # Follow docs/SECRETS.md Step 4
    # Generate keys for THIS specific device (not shared!)
    ```
 
@@ -302,13 +302,12 @@ After NixOS is running:
    secrets-verify --test-github
    ```
 
-See `PHASE-2-SECRETS-SETUP.md` for complete guide.
+See `docs/SECRETS.md` for the complete guide.
 
 ## Key Documentation
 
 - **Installation**: `CLAUDE.md` (this file) - Quick start guide
-- **Secrets Setup**: `PHASE-2-SECRETS-SETUP.md` - Step-by-step secrets configuration
-- **Per-Device Architecture**: `secrets/PER-DEVICE-SECRETS.md` - Zero-trust secrets model
+- **Secrets Setup**: `docs/SECRETS.md` - Step-by-step secrets configuration and the per-device (zero-trust) model
 - **Rust Tools**: `rust/README.md` - Rust tooling overview
-- **Phase 2 Summary**: `PHASE-2-IMPLEMENTATION-SUMMARY.md` - What was implemented
+- **Phase 2 Summary**: `docs/archive/PHASE-2-IMPLEMENTATION-SUMMARY.md` - What was implemented
 - **Task Automation**: `justfile` - All available commands (`just --list`)

@@ -124,7 +124,7 @@
         name = sam-missional-gen
         email = sam@missionalgen.co.uk
 
-    [url "git@github-mg:"]
+    [url "git@github-missionalgen:"]
         insteadOf = git@github.com:
   '';
 

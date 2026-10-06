@@ -47,7 +47,7 @@ Auto-configured SSH client
 - Per-device keys (unique per device)
 - No passphrases (automatic git pull/push)
 - Lower risk: GitHub has 2FA and key revocation
-- Deployed to: `~/.ssh/github-<account>`
+- Deployed to: `~/.ssh/github-<host>-<account>`
 
 **Naming**: `github-ssh-<account>-<device>.age`
 
@@ -117,7 +117,7 @@ Examples:
                            ▼
           ┌────────────────────────────────────┐
           │   Symlinks to User Home            │
-          │   ~/.ssh/github-personal           │
+          │   ~/.ssh/github-<host>-personal    │
           │   ~/.ssh/server-acme-laptop-key    │
           └────────────────────────────────────┘
                            │
@@ -276,7 +276,7 @@ ssh-keygen -t ed25519 -C "$HOSTNAME@github-personal" -f /tmp/github-personal-$HO
 # Syntek GitHub account (syntek-studio)
 ssh-keygen -t ed25519 -C "$HOSTNAME@github-syntek" -f /tmp/github-syntek-$HOSTNAME -N ""
 
-# Missional Gen GitHub account (sam-missionalgen)
+# Missional Gen GitHub account (sam-missional-gen)
 ssh-keygen -t ed25519 -C "$HOSTNAME@github-missionalgen" -f /tmp/github-missionalgen-$HOSTNAME -N ""
 ```
 
@@ -351,9 +351,9 @@ Add the **public keys** (`.pub` files) to your GitHub accounts:
 5. Key: Paste contents of `/tmp/github-syntek-$HOSTNAME.pub`
 6. Click "Add SSH key"
 
-#### Missional Gen Account (sam-missionalgen)
+#### Missional Gen Account (sam-missional-gen)
 
-1. Switch to sam-missionalgen account
+1. Switch to sam-missional-gen account
 2. Go to: https://github.com/settings/keys
 3. Click "New SSH key"
 4. Title: `laptop-intel` (or current hostname)
@@ -422,7 +422,7 @@ Examples:
 - github-ssh-missionalgen-devtower.age
 ```
 
-Deployed to: `~/.ssh/github-<account>`
+Deployed to: `~/.ssh/github-<host>-<account>`
 
 ### Server Keys (With Passphrases)
 
@@ -504,17 +504,17 @@ let
 in
 {
   # GitHub SSH keys (per-device, no passphrases)
-  age.secrets."github-${hostname}-personal" = {
+  age.secrets.github-ssh-personal = {
     file = ../../secrets/github-ssh-personal-${hostname}.age;
-    path = "/home/${username}/.ssh/github-personal";
+    path = "/home/${username}/.ssh/github-${hostname}-personal";
     owner = username;
     group = "users";
     mode = "0600";
   };
 
-  age.secrets."github-${hostname}-syntek" = {
+  age.secrets.github-ssh-syntek = {
     file = ../../secrets/github-ssh-syntek-${hostname}.age;
-    path = "/home/${username}/.ssh/github-syntek";
+    path = "/home/${username}/.ssh/github-${hostname}-syntek";
     owner = username;
     group = "users";
     mode = "0600";
@@ -601,17 +601,17 @@ sudo cat /etc/ssh/ssh_host_ed25519_key.pub
 
 **Solution**:
 ```bash
-# Verify SSH key is deployed
-ls -la ~/.ssh/github-personal
+# Verify SSH key is deployed (a symlink into /run/agenix)
+ls -la ~/.ssh/github-$(hostname)-personal
 
-# Test SSH connection
-ssh -i ~/.ssh/github-personal -T git@github.com
+# Test SSH connection through the host alias
+ssh -T github-personal
 
-# Check SSH config
-cat ~/.ssh/config | grep -A 5 github-personal
+# Check the generated SSH config (NixOS writes it to /etc/ssh/ssh_config)
+grep -A 6 'Host github-personal' /etc/ssh/ssh_config
 
-# Verify public key is added to GitHub
-curl https://api.github.com/user/keys | jq
+# Verify the public key is on the GitHub account (public endpoint)
+curl -s https://github.com/SamBailey6194.keys
 ```
 
 ---
@@ -643,7 +643,7 @@ agenix-helper check-keys      # Verify host keys
 | `/etc/ssh/ssh_host_ed25519_key.pub` | Host public key |
 | `/run/agenix/` | Decrypted secrets at boot |
 | `~/.ssh/github-*` | Symlinked SSH keys |
-| `~/.ssh/config` | Auto-generated SSH config |
+| `/etc/ssh/ssh_config` | Generated SSH config with the GitHub host aliases (`modules/core/ssh-config.nix`) |
 
 ### Common Commands
 
@@ -651,11 +651,11 @@ agenix-helper check-keys      # Verify host keys
 # Create/edit a secret
 agenix -e secrets/github-ssh-personal-laptop-intel.age
 
-# View encryption status
-agenix list
+# List secrets and their recipients
+just list-secrets
 
 # Rekey after adding a new host
-agenix rekey
+just rekey-secrets
 
 # Verify deployment
 secrets-verify
@@ -663,19 +663,21 @@ secrets-verify
 
 ### SSH Config Auto-Generation
 
-SSH config is automatically generated at `/home/user/.ssh/config` with entries like:
+SSH config is generated into `/etc/ssh/ssh_config` by `programs.ssh.extraConfig`
+in `modules/core/ssh-config.nix` (NixOS does not read `/etc/ssh/ssh_config.d/`),
+with GitHub's host keys pinned, and entries like (on laptop-intel):
 
 ```
 Host github-personal
   HostName github.com
   User git
-  IdentityFile ~/.ssh/github-personal
+  IdentityFile ~/.ssh/github-laptop-intel-personal
   IdentitiesOnly yes
 
-Host github-syntek
+Host github-missionalgen github-mg
   HostName github.com
   User git
-  IdentityFile ~/.ssh/github-syntek
+  IdentityFile ~/.ssh/github-laptop-intel-missionalgen
   IdentitiesOnly yes
 ```
 
