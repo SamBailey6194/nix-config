@@ -32,9 +32,15 @@ the shared MCP servers described in [SHARED-MCP.md](SHARED-MCP.md).
 The status line, monitor lifecycle hooks and memory-write guard remain. Monitor
 hooks use the new home directory and read credentials at runtime from
 `/run/agenix/claude-secrets`; the Ubuntu inline token is not embedded in the Nix
-configuration. Preserve the monitor token separately in the encrypted backup and
-configure `CLAUDE_MONITOR_TOKEN` in the age secret before expecting monitoring to
-work. The hook is optional when the monitor repository is absent.
+configuration. devtower-intel starts the monitor with fresh server state, which
+creates a new API token on first start; copy it into the age secret's
+`CLAUDE_MONITOR_TOKEN` line (docs/INSTALL-INTEL-MANUALLY.md, section 8 step 5)
+before expecting monitoring to work. The hook is optional when the monitor
+repository is absent.
+
+Ubuntu's global Context7 instruction (`~/.claude/rules/context7.md`) and the
+`context7-mcp` skill are reproduced from `config/claude/rules` and
+`config/claude/skills`.
 
 After the development-stage rebuild, start Claude inside `syntek-base` and verify
 `/config`, `/plugin`, `/mcp` and `/skills`. Confirm the project's skills appear,
