@@ -19,7 +19,7 @@ verify-secrets:
 
 # Edit an encrypted secret
 edit-secret SECRET:
-    agenix-helper edit {{SECRET}}
+    bash {{quote(justfile_directory() / "scripts/edit-secret.sh")}} {{quote(SECRET)}}
 
 # List all secrets and their authorized keys
 list-secrets:

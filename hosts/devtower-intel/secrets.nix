@@ -31,6 +31,8 @@ let
   };
 in
 {
+  imports = [ ../../modules/core/typesafe-secret.nix ];
+
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   # agenix installs secrets before users are created and makes a missing parent
@@ -54,6 +56,7 @@ in
     #   CONTEXT7_API_KEY          Context7 MCP          (all clients, via the
     #   ELEVENLABS_API_KEY        ElevenLabs MCP         shared launcher in
     #   ELEVENLABS_MCP_BASE_PATH  ElevenLabs file root   mcp-servers.nix)
+    #   TYPESAFE_API_KEY         TypeSafe/Jev SDK (with-typesafe command)
     # ========================================================================
     claude-secrets = {
       file = ../../secrets/claude-secrets-${hostname}.age;

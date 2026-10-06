@@ -112,6 +112,13 @@
           ];
       };
   in {
+    # Lightweight secret editing on machines without the Rust helper. Keep
+    # agenix's nixpkgs follows relationship when running it from this flake.
+    apps.${system}.agenix = {
+      type = "app";
+      program = "${agenix.packages.${system}.default}/bin/agenix";
+    };
+
     # Rust CLI tool packages (nix build .#<name>)
     packages.${system} = rustTools // {
       inherit squid-digest;
@@ -465,6 +472,8 @@
 
       # Auto-build Rust tools when entering dev shell
       shellHook = ''
+        # Also protect cloud/Ubuntu sessions that do not use Home Manager.
+        export CARGO_TARGET_DIR="''${CARGO_TARGET_DIR:-''${XDG_CACHE_HOME:-$HOME/.cache}/cargo-target}"
         if [ -d rust ]; then
           # Deliberately does NOT run `cargo build` here.
           #
@@ -483,7 +492,7 @@
           # (see modules/core/base-configuration.nix).
 
           # Prefer a locally built dev version when one is present
-          export PATH="$PWD/rust/target/release:$PATH"
+          export PATH="$CARGO_TARGET_DIR/release:$PATH"
         fi
 
         # Banner only for a manual `nix develop`. direnv sets DIRENV_IN_ENVRC

@@ -12,6 +12,7 @@
 #     CONTEXT7_API_KEY=...           # Context7 MCP auth
 #     ELEVENLABS_API_KEY=...         # ElevenLabs MCP auth
 #     ELEVENLABS_MCP_BASE_PATH=/     # ElevenLabs MCP file root
+#     TYPESAFE_API_KEY=...           # TypeSafe/Jev SDK (with-typesafe command)
 # The MCP keys are read by the shared launcher (mcp-servers.nix) for Claude,
 # Codex and Antigravity alike, so no client config file holds them.
 # settings.json itself is non-secret (the monitor token is read at hook runtime
@@ -85,6 +86,13 @@ let
       SessionEnd = monitorHook "SessionEnd" 5;
       UserPromptSubmit = monitorHook "UserPromptSubmit" 5;
       PreToolUse = (monitorHook "PreToolUse" 185) ++ [{
+        matcher = "Bash";
+        hooks = [{
+          type = "command";
+          command = "${pkgs.python3}/bin/python3 ${../../scripts/nix-source-guard.py}";
+          timeout = 5;
+        }];
+      } {
         matcher = "Write";
         hooks = [{
           type = "command";

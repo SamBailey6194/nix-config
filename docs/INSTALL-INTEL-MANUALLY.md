@@ -316,6 +316,7 @@ The full stage (`.#devtower-intel`) declares these agenix secrets in
 |---|---|
 | `github-ssh-personal`, `-syntek`, `-missionalgen` | `~/.ssh/github-devtower-intel-<account>` |
 | `claude-secrets` (monitor token, Context7 + ElevenLabs keys) | `/run/agenix/claude-secrets` |
+| `typesafe-api-key` (TypeSafe/Jev key, after provisioning) | `/run/agenix/typesafe-api-key` |
 | `aws-config` | `/run/agenix/aws-config`, linked to `~/.aws/config` |
 | `aws-credentials` (static IAM keys) | `/run/agenix/aws-credentials`, linked to `~/.aws/credentials` |
 

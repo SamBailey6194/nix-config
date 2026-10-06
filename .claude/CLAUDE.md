@@ -9,6 +9,8 @@
 ---
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Read `AGENTS.md` for the shared Nix source policy and TypeSafe/Jev skill setup.
+
 ## Purpose
 
 Personal NixOS configuration with Hyprland, dotfiles, and Rust tooling for multi-device deployment. This repository manages:

@@ -13,6 +13,8 @@ let
   hostname = config.networking.hostName;
 in
 {
+  imports = [ ./typesafe-secret.nix ];
+
   # Configure agenix to use the system SSH host key
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
@@ -76,9 +78,10 @@ in
 
     # ========================================================================
     # Claude Code secrets (CLAUDE_MONITOR_TOKEN, CONTEXT7_API_KEY,
-    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH)
+    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH, TYPESAFE_API_KEY)
     # Env file at /run/agenix/claude-secrets, read by home/modules/claude.nix
     # and the shared MCP launcher (home/modules/mcp-servers.nix).
+    # with-typesafe reads only TYPESAFE_API_KEY for TypeSafe/Jev SDK commands.
     # ========================================================================
     claude-secrets = {
       file = ../../secrets/claude-secrets-${hostname}.age;

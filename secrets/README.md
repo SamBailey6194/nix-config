@@ -8,6 +8,16 @@
 
 ---
 This directory contains encrypted secrets managed by [agenix](https://github.com/ryantm/agenix).
+For TypeSafe/Jev, run `python3 scripts/set-typesafe-api-key.py` and paste the key
+once at the hidden prompt. This creates dedicated `typesafe-api-key-<host>.age`
+files using public recipients, including from Ubuntu; no decryption identity
+is required. See [the editing and runtime instructions](../docs/DISK-PREVENTION.md#typesafejev-skill-and-api-key).
+
+`just edit-secret <name>` works without an installed `agenix-helper`: it uses
+agenix on PATH, or runs the repository's locked agenix input through Nix.
+It uses `~/.ssh/id_ed25519_agenix` when present. Override the identity with
+`AGENIX_IDENTITY=/path/to/recovery-key just edit-secret <name>`.
+The identity must be a recipient already authorised for the encrypted file.
 Secrets are per device: each file is named `<secret>-<host>.age` and is encrypted
 only to the keys listed for it in `secrets.nix`.
 

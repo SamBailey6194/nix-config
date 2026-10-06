@@ -20,6 +20,7 @@ in
     ../modules/codex.nix     # Codex CLI: shared MCP servers in ~/.codex/config.toml
     ../modules/antigravity.nix # Antigravity CLI: shared MCP servers in ~/.gemini/config
     ../modules/opencode.nix  # OpenCode: shared MCP servers (+ local llama.cpp provider)
+    ../modules/agent-skills.nix # Shared TypeSafe/Jev skill, independent of provider
   ];
 
   # Direnv - auto-load dev environments from .envrc files

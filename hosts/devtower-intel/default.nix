@@ -21,6 +21,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./connectivity.nix
+    ./disk-prevention.nix
     ../../modules/hardware/intel-nvidia-desktop.nix
     ../../modules/filesystem/zram.nix # deduplicated with the full stage's own import
   ];
@@ -37,11 +38,6 @@ in
   # together, rather than allowing each concurrent job this much RAM.
   workloads.memoryHigh = "10G";
   workloads.memoryMax = "12G";
-
-  # Let Nix reclaim unreferenced store data before a build fills this SSD.
-  # Rooted profiles/generations remain protected by the garbage collector.
-  nix.settings.min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);
-  nix.settings.max-free = lib.mkDefault (15 * 1024 * 1024 * 1024);
 
   # Same uid as Ubuntu's sam-dev, so /mnt/ubuntu-home and /mnt/archive ownership lines up
   users.users.sam-desktop.uid = 1000;

@@ -159,6 +159,7 @@ in
   # Env file consumed by home/modules/claude.nix and the shared MCP launcher:
   # CLAUDE_MONITOR_TOKEN (monitor hook auth), CONTEXT7_API_KEY (Context7 MCP),
   # ELEVENLABS_API_KEY + ELEVENLABS_MCP_BASE_PATH (ElevenLabs MCP).
+  # TYPESAFE_API_KEY (TypeSafe/Jev SDK via the with-typesafe command).
   # Edit per device on first use.
   # ============================================================================
 
@@ -166,6 +167,11 @@ in
   # "claude-secrets-framework.age".publicKeys = allUsers ++ [ framework ];
   # "claude-secrets-devtower.age".publicKeys = allUsers ++ [ devtower ];
   "claude-secrets-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # Dedicated TypeSafe/Jev keys can be provisioned from Ubuntu using these
+  # public recipients, without decrypting the existing Claude/MCP bundles.
+  "typesafe-api-key-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "typesafe-api-key-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
   # AWS CLI Config (Per-Device)
