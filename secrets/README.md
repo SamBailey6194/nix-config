@@ -1,28 +1,30 @@
 # Secrets Management
 
-**Last Updated**: 29/01/2026
-**Version**: 0.7.0
+**Last Updated**: 06/10/2026
+**Version**: 0.8.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
 
 ---
 This directory contains encrypted secrets managed by [agenix](https://github.com/ryantm/agenix).
+Secrets are per device: each file is named `<secret>-<host>.age` and is encrypted
+only to the keys listed for it in `secrets.nix`.
 
 ## Quick Reference
 
 ```bash
-# Enter dev shell (provides agenix CLI)
+# Enter dev shell (provides agenix and agenix-helper)
 nix develop
 
-# Create/edit a secret
-agenix -e secrets/github-ssh-personal.age
+# Create/edit a secret (uses ~/.ssh/id_ed25519_agenix)
+just edit-secret github-ssh-personal-laptop-intel
 
-# Rekey all secrets (after adding new host keys to secrets.nix)
-agenix -r
+# Re-encrypt all secrets (after adding a host key to secrets.nix)
+just rekey-secrets
 
-# List all secrets
-ls -la secrets/*.age
+# List all secrets and their recipients
+just list-secrets
 ```
 
 ## Files
@@ -33,10 +35,14 @@ ls -la secrets/*.age
 ## Important
 
 ✅ **SAFE to commit:** `*.age` files (encrypted)
-❌ **NEVER commit:** `*.key`, `*.pem`, decrypted files
+❌ **NEVER commit:** `*.key`, `*.pem`, private keys, decrypted files
 
-Decrypted secrets are automatically placed at boot by NixOS into:
-- `/run/agenix/<secret-name>` (root owned, symlinked to final destination)
-- User home directories (e.g., `~/.ssh/github-personal`)
+Decrypted secrets are placed at activation by NixOS into:
+- `/run/agenix/<secret-name>` (e.g. `claude-secrets`, `aws-config`)
+- Per-device GitHub keys at `~/.ssh/github-<host>-<account>`
 
-See `PHASE-2-SECRETS-SETUP.md` in the repo root for full setup instructions.
+The host modules that declare them are `modules/core/secrets-laptop.nix`,
+`modules/core/secrets-desktop.nix` and `hosts/devtower-intel/secrets.nix`.
+See [docs/SECRETS.md](../docs/SECRETS.md) for the full procedure, and
+[docs/INSTALL-INTEL-MANUALLY.md](../docs/INSTALL-INTEL-MANUALLY.md) section 8 for
+enabling a newly installed host.

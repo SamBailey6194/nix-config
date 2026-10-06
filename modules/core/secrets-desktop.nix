@@ -112,18 +112,21 @@ in
     # };
 
     # ========================================================================
-    # Claude Code secrets (CLAUDE_MONITOR_TOKEN + CONTEXT7_API_KEY)
+    # Claude Code secrets (CLAUDE_MONITOR_TOKEN, CONTEXT7_API_KEY,
+    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH)
     # Uncomment once devtower is installed and claude-secrets-devtower.age exists.
+    # devtower-intel declares its own copy in hosts/devtower-intel/secrets.nix.
     # ========================================================================
     # claude-secrets = {
-    #   file = ../../secrets/claude-secrets-devtower.age;
-    #   owner = "sam-desktop";
+    #   file = ../../secrets/claude-secrets-${hostname}.age;
+    #   owner = username;
     #   mode = "0400";
     # };
 
     # ========================================================================
     # AWS CLI config (~/.aws/config, used by `aws sso login`)
     # Uncomment once devtower is installed and aws-config-devtower.age exists.
+    # devtower-intel declares its own copy in hosts/devtower-intel/secrets.nix.
     # home/modules/aws.nix symlinks /run/agenix/aws-config to ~/.aws/config.
     # ========================================================================
     # aws-config = {

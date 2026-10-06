@@ -4,6 +4,8 @@ let
   disks = import ./disks.nix;
 in
 {
+  imports = [ ./secrets.nix ];
+
   # Full stage only: configuration-full.nix hard-codes REPLACE-* placeholders
   # for the LUKS device and btrfs root at normal priority, so override them
   security.luksEncryption.devices.cryptroot.device = lib.mkForce "/dev/disk/by-uuid/${disks.luksUuid}";
