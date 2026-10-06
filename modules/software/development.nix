@@ -27,8 +27,10 @@ let
   # not in nixpkgs at all. See the files for why. A callPackage here rather than
   # an overlay beside codex's in modules/core/base-configuration.nix: that file is
   # only imported by the full configs, so an overlay would leave stages 3–5 on
-  # 1.2.3 with the updater live. home/modules/antigravity.nix calls the same file
-  # for its MCP registration, so both resolve to one store path in every stage.
+  # 1.2.3 with the updater live. This is the only consumer of
+  # pkgs/antigravity-cli.nix: home/modules/antigravity.nix does not call it, it
+  # only imports home/modules/mcp-activation.nix with client = "antigravity",
+  # which writes the shared MCP server list to ~/.gemini/config/mcp_config.json.
   antigravity-cli = pkgs.callPackage ../../pkgs/antigravity-cli.nix { };
   perplexity-cli = pkgs.callPackage ../../pkgs/perplexity-cli.nix { };
 
@@ -154,7 +156,7 @@ in
     # sign-in) or OPENAI_API_KEY.
     codex                       # OpenAI Codex CLI (Apache-2.0)
     antigravity-cli             # Google Antigravity CLI, binary `agy` (unfree;
-                                #   1.2.12, see the let block above). Auth:
+                                #   1.3.0, see the let block above). Auth:
                                 #   Google sign-in on first `agy` run (tokens in
                                 #   the Secret Service keyring) or GEMINI_API_KEY.
     perplexity-cli              # Perplexity Search API CLI, binary `pplx` (unfree,
