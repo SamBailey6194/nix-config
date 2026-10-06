@@ -7,6 +7,10 @@
   programs.git = {
     enable = true;
 
+    # Git LFS: installs git-lfs and writes the [filter "lfs"] config, so repos
+    # that track files with LFS check out real content rather than pointer files.
+    lfs.enable = true;
+
     # Git settings (unified config)
     settings = {
       # No default [user] block here — identity is handled entirely by
