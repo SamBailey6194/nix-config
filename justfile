@@ -9,6 +9,11 @@ export NIX_CONFIG_SECRETS_DIR := justfile_directory() / "secrets"
 default:
     @just --list
 
+# Build a Jev request with guided prompts and send it using the Python SDK
+[positional-arguments]
+jev *ARGS:
+    @uv run --script {{quote(justfile_directory() / "scripts/jev.py")}} "$@"
+
 # ============================================================================
 # Secrets Management (Phase 2)
 # ============================================================================

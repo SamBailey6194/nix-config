@@ -115,3 +115,57 @@ only to the command without printing it. An already injected `TYPESAFE_API_KEY`
 takes priority. For Ubuntu or cloud environments, inject the key through the
 local process environment or the provider's secret settings; local agenix
 files do not deploy a credential into a remote account.
+
+### Interactive Jev requests
+
+Run `just jev` for a guided request builder using the
+[TypeSafe Python SDK](https://docs.typesafe.ai/sdk/python). It asks for the state
+(multiline text, JSON or a file), a question type, a question ID and instructions.
+Finish multiline input with a line containing only `.`. JSON state files are
+parsed when their extension is `.json`; other files are read as text.
+
+Choice asks for named options and optional descriptions. Noul asks a yes/no
+question with optional definitions of true and false. Score asks for 2–10
+descriptive levels, ordered from lowest to highest. Question IDs identify the
+answers in code, so put the complete judgment in the instructions.
+
+Review the generated JSON, then choose `s` to send, `a` to add another question,
+`t` to change the state, `e` to edit the full JSON or `q` to quit. Several question
+types can share the same state in one request. Responses show a readable answer
+summary and formatted JSON, including probabilities, confidence where applicable,
+and token usage. The SDK supplies typed question objects and handles retries.
+
+The helper loads the API key through `with-typesafe` only when sending (using
+the repository's equivalent wrapper if the installed command is unavailable).
+It removes `TYPESAFE_API_KEY` from the editor's environment.
+
+```sh
+just jev                              # Guided state and question-type selection
+just jev --choice                     # Guide for selecting one option
+just jev --noul                       # Guide for a yes/no question
+just jev --score                      # Guide for an ordered rating question
+just jev --request /tmp/my-jev.json    # Keep/reuse a request draft
+just jev --dry-run                    # Build and print one question without sending
+just jev --json --editor nvim         # Start with an editable JSON template
+just jev --json --choice              # JSON template with just a Choice question
+```
+
+Without `--request`, the draft lives in a private temporary directory and is
+removed when the session ends. Use `--request` to keep your work; existing drafts
+open at the review menu without replacing their content. `--json` or an explicit
+`--editor` starts in the editor instead. It uses `$VISUAL` or `$EDITOR`, falling
+back to an installed terminal editor. Zed and VS Code automatically receive
+`--wait` so the script waits for the editor.
+
+The recipe uses `uv run --script`, which installs the pinned `typesafe-sdk==0.7.2`
+dependency into uv's cache on first use. The development packages already provide
+uv with the NixOS library support needed by Python wheels. Elsewhere, install uv
+before running the recipe. You can also run `uv run scripts/jev.py` directly.
+`--model NAME` changes the model for a new request (default: `jev-latest`); saved
+drafts keep their own model. Neither a key nor an API call is needed for dry runs.
+
+Verify the guided flow and SDK serialization without making live API calls:
+
+```sh
+uv run --no-project --with typesafe-sdk==0.7.2 python -m unittest discover -s scripts/tests -p test_jev.py
+```
