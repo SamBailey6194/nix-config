@@ -16,6 +16,24 @@ result-*
 id_ed25519*
 !*.pub
 
+# Plaintext credentials and agent configs that hold keys: encrypt with agenix
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+auth.json
+.claude.json
+mcp_config.json
+
+# Only encrypted files and their definitions belong in secrets/
+secrets/*
+!secrets/*.age
+!secrets/secrets.nix
+!secrets/README.md
+!secrets/.gitkeep
+
 # Rust build artifacts
 rust/target/
 target/

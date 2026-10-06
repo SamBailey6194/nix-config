@@ -10,6 +10,9 @@
      else ["mcp", "servers", $s.key] end) as $sp
     | (getpath($sp) // {}) as $old
     | setpath($sp; (($old | del(.command, .args, .url, .type)) + $s.value)))
+| reduce ($d.remove // [])[] as $n (.;
+    (if (.mcp.servers? | type) == "object" then del(.mcp.servers[$n]) else . end)
+    | (if (.mcp? | type) == "object" then del(.mcp[$n]) else . end))
 | if $d.provider == null then . else
     (if .providers[$d.provider.id]? != null then ["providers", $d.provider.id]
      elif .provider[$d.provider.id]? != null then ["provider", $d.provider.id]

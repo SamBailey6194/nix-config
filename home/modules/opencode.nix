@@ -49,7 +49,10 @@
 
 let
   jqBin = "${pkgs.jq}/bin/jq";
-  mcp = import ./mcp-servers.nix { inherit pkgs lib; };
+  mcp = import ./mcp-servers.nix { inherit pkgs lib; client = "opencode"; };
+  # Managed names OpenCode does not get (e.g. claude-design), removed if present.
+  retiredMcp = lib.subtractLists (builtins.attrNames mcp)
+    (builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; browsers = true; }));
 
   llm = if osConfig != null then osConfig.services.localLlm or null else null;
 
@@ -85,6 +88,7 @@ let
       if server ? url then { type = "remote"; inherit (server) url; }
       else { type = "local"; inherit (server) command; timeout = 120000; }
     ) mcp;
+    remove = retiredMcp;
     provider = if localProvider == { } then null else localProvider;
     # OpenCode v2 ordered permission rules. Its edit permission covers writing
     # files and patches; the external-directory policy still applies.

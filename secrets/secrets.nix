@@ -40,7 +40,7 @@ let
 
   # Bootstrap the Intel desktop secrets with the existing recovery/editor key.
   # After installation, add its real host key above and append devtower-intel
-  # here, then re-encrypt these secrets. Until then the desktop cannot decrypt
+  # here, then re-encrypt these secrets (docs/INSTALL-INTEL-MANUALLY.md, section 8). Until then the desktop cannot decrypt
   # them automatically. WireGuard public keys are NOT age recipients.
   devtowerIntelKeys = [ sam-laptop ];
 
@@ -72,7 +72,7 @@ in
   # "github-ssh-syntek-devtower.age".publicKeys = allUsers ++ [ devtower ];
   "github-ssh-syntek-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
-  # Missional Gen GitHub (sam-missionalgen)
+  # Missional Gen GitHub (sam-missional-gen)
   "github-ssh-missionalgen-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   # "github-ssh-missionalgen-framework.age".publicKeys = allUsers ++ [ framework ];
   # "github-ssh-missionalgen-devtower.age".publicKeys = allUsers ++ [ devtower ];
@@ -156,8 +156,10 @@ in
 
   # ============================================================================
   # Claude Code Secrets (Per-Device)
-  # Env file consumed by home/modules/claude.nix: CLAUDE_MONITOR_TOKEN (monitor
-  # hook auth) + CONTEXT7_API_KEY (Context7 MCP). Edit per device on first use.
+  # Env file consumed by home/modules/claude.nix and the shared MCP launcher:
+  # CLAUDE_MONITOR_TOKEN (monitor hook auth), CONTEXT7_API_KEY (Context7 MCP),
+  # ELEVENLABS_API_KEY + ELEVENLABS_MCP_BASE_PATH (ElevenLabs MCP).
+  # Edit per device on first use.
   # ============================================================================
 
   "claude-secrets-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
@@ -179,6 +181,10 @@ in
   # "aws-config-framework.age".publicKeys = allUsers ++ [ framework ];
   # "aws-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
   "aws-config-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # ~/.aws/credentials: static IAM access keys ([default], [mg]), carried over
+  # from Ubuntu. Long-lived credentials — rotate them after the migration.
+  "aws-credentials-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
   # LUKS Encryption Passphrases (Per-Device Fallback Recovery)

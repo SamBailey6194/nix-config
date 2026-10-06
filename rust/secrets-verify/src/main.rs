@@ -21,6 +21,11 @@ struct Cli {
     /// Custom secrets directory (defaults to ~/.ssh)
     #[arg(long)]
     secrets_dir: Option<PathBuf>,
+
+    /// Device name in the key file names, github-<hostname>-<account>
+    /// (defaults to this machine's hostname)
+    #[arg(long)]
+    hostname: Option<String>,
 }
 
 struct SecretCheck {
@@ -47,13 +52,23 @@ fn main() -> Result<()> {
         println!();
     }
 
+    // agenix deploys the keys as ~/.ssh/github-<hostname>-<account>
+    // (modules/core/secrets-*.nix, hosts/devtower-intel/secrets.nix).
+    let hostname = match cli.hostname {
+        Some(name) => name,
+        None => fs::read_to_string("/proc/sys/kernel/hostname")
+            .context("Could not read the hostname; pass --hostname")?
+            .trim()
+            .to_string(),
+    };
+
     // Check GitHub SSH keys
     let github_accounts = vec!["personal", "syntek", "missionalgen"];
     let mut all_valid = true;
 
     println!("{}", "GitHub SSH Keys:".bold());
     for account in &github_accounts {
-        let check = verify_secret(&secrets_dir, &format!("github-{}", account))?;
+        let check = verify_secret(&secrets_dir, &format!("github-{}-{}", hostname, account))?;
         print_check_result(&check);
         all_valid = all_valid && check.is_valid;
     }

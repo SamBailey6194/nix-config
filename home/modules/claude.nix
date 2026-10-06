@@ -4,11 +4,16 @@
 # reference machine. Applies to every device that imports it.
 #
 # Secrets are NOT stored in the repo. The agenix secret `claude-secrets`
-# (declared per host in modules/core/secrets-*.nix, editable with
+# (declared per host in modules/core/secrets-*.nix, or
+# hosts/devtower-intel/secrets.nix for devtower-intel; editable with
 # `agenix -e secrets/claude-secrets-<host>.age`) provides, as an env file at
 # /run/agenix/claude-secrets:
-#     CLAUDE_MONITOR_TOKEN=...   # claude-code-monitor hook auth
-#     CONTEXT7_API_KEY=...       # Context7 MCP auth
+#     CLAUDE_MONITOR_TOKEN=...       # claude-code-monitor hook auth
+#     CONTEXT7_API_KEY=...           # Context7 MCP auth
+#     ELEVENLABS_API_KEY=...         # ElevenLabs MCP auth
+#     ELEVENLABS_MCP_BASE_PATH=/     # ElevenLabs MCP file root
+# The MCP keys are read by the shared launcher (mcp-servers.nix) for Claude,
+# Codex and Antigravity alike, so no client config file holds them.
 # settings.json itself is non-secret (the monitor token is read at hook runtime
 # from that file), so it is managed declaratively here. On a new device, edit the
 # agenix secret on first use; everything else is reproduced automatically.
@@ -73,22 +78,24 @@ let
     model = "opus";
     outputStyle = "Concise";
 
+    # Hook timeouts are in seconds. hook-handler.js exits by itself after 5s,
+    # or 180s for PreToolUse (remote approval), so allow just over that.
     hooks = {
-      SessionStart = monitorHook "SessionStart" 5000;
-      SessionEnd = monitorHook "SessionEnd" 5000;
-      UserPromptSubmit = monitorHook "UserPromptSubmit" 5000;
-      PreToolUse = (monitorHook "PreToolUse" 300000) ++ [{
+      SessionStart = monitorHook "SessionStart" 5;
+      SessionEnd = monitorHook "SessionEnd" 5;
+      UserPromptSubmit = monitorHook "UserPromptSubmit" 5;
+      PreToolUse = (monitorHook "PreToolUse" 185) ++ [{
         matcher = "Write";
         hooks = [{
           type = "command";
           command = "bash ${homeDir}/.claude/hooks/block-auto-memory-write.sh";
         }];
       }];
-      PostToolUse = monitorHook "PostToolUse" 5000;
-      Notification = monitorHook "Notification" 5000;
-      Stop = monitorHook "Stop" 5000;
-      SubagentStart = monitorHook "SubagentStart" 5000;
-      SubagentStop = monitorHook "SubagentStop" 5000;
+      PostToolUse = monitorHook "PostToolUse" 5;
+      Notification = monitorHook "Notification" 5;
+      Stop = monitorHook "Stop" 5;
+      SubagentStart = monitorHook "SubagentStart" 5;
+      SubagentStop = monitorHook "SubagentStop" 5;
     };
 
     statusLine = {
@@ -109,8 +116,8 @@ let
     # here, of the shape:
     #
     #   autoMode = {
-    #     environment = "<prose describing this machine and its repos>";
-    #     rules = [ /* optional rule tweaks */ ];
+    #     environment = [ "<lines describing this machine and its repos>" ];
+    #     soft_deny = [ "$defaults" /* plus any tweaks */ ];
     #   };
     #
     # It CANNOT write it itself on this machine. The command states that
@@ -136,9 +143,10 @@ let
     # transcript names. It is also the place to prune any classifier-
     # bypassing entries it flags in permissions.allow above.
     #
-    # Verified against claude-code 2.1.234: the key is `autoMode`, with an
-    # `environment` string and a `rules` list. The exact element shape of
-    # `rules` was not confirmed — take it verbatim from the proposal.
+    # The key is `autoMode`. A proposal written on Ubuntu (claude-code 2.1.291)
+    # had `environment` as a list of lines and `soft_deny` as a rule list that
+    # starts with "$defaults"; other rule lists may appear — take the whole
+    # object verbatim from the proposal.
     #
     # autoMode = {
     #   environment = "...";
@@ -166,6 +174,10 @@ in
       Include relevant validation and limitations. Avoid repeating progress logs.
     '';
 
+    # Global instruction + skill: use the Context7 MCP for library docs.
+    ".claude/rules/context7.md".source = ../../config/claude/rules/context7.md;
+    ".claude/skills/context7-mcp/SKILL.md".source = ../../config/claude/skills/context7-mcp/SKILL.md;
+
     ".claude/statusline-command.sh" = {
       source = ../../config/claude/statusline-command.sh;
       executable = true;
@@ -176,16 +188,20 @@ in
       executable = true;
     };
 
-    # Monitor hook wrapper: sources the agenix secret for CLAUDE_MONITOR_TOKEN
-    # and runs the handler. No-ops silently if the monitor repo or secret is
-    # absent (e.g. a host without the secret), so hooks never error.
+    # Monitor hook wrapper: reads only CLAUDE_MONITOR_TOKEN from the agenix
+    # secret (the MCP keys in the same file stay out of the handler's
+    # environment) and runs the handler. No-ops silently if the monitor repo is
+    # absent, so hooks never error.
     ".claude/hooks/claude-monitor-hook" = {
       executable = true;
       text = ''
         #!/bin/sh
         HANDLER="${monitorDir}/hook-handler.js"
         [ -f "$HANDLER" ] || exit 0
-        if [ -r ${secretsFile} ]; then set -a; . ${secretsFile}; set +a; fi
+        if [ -r ${secretsFile} ]; then
+          CLAUDE_MONITOR_TOKEN=$(${pkgs.gnused}/bin/sed -n 's/^CLAUDE_MONITOR_TOKEN=//p' ${secretsFile})
+          export CLAUDE_MONITOR_TOKEN
+        fi
         exec ${nodeBin} "$HANDLER" "$1"
       '';
     };

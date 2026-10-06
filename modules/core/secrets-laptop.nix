@@ -75,8 +75,10 @@ in
     };
 
     # ========================================================================
-    # Claude Code secrets (CLAUDE_MONITOR_TOKEN + CONTEXT7_API_KEY)
-    # Env file at /run/agenix/claude-secrets, read by home/modules/claude.nix.
+    # Claude Code secrets (CLAUDE_MONITOR_TOKEN, CONTEXT7_API_KEY,
+    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH)
+    # Env file at /run/agenix/claude-secrets, read by home/modules/claude.nix
+    # and the shared MCP launcher (home/modules/mcp-servers.nix).
     # ========================================================================
     claude-secrets = {
       file = ../../secrets/claude-secrets-${hostname}.age;

@@ -267,7 +267,13 @@ sudo cryptsetup status cryptroot
 ```
 
 Keep the backup and retained files. Copy only selected files into encrypted
-home; your old home is too large to copy in full. Preserve SSH and age identities
+home; your old home is too large to copy in full. Do not copy the agent configs
+or histories that hold API keys in plaintext: `~/.claude.json`,
+`~/.claude/{settings.json,projects,backups,file-history}`, `~/.codex`,
+`~/.gemini`, `~/.config/ai-mcp`, `~/.zsh_history`, `~/.zshenv` (exports the
+Context7 key) and `~/.aws` (static IAM keys). The declarative config recreates
+the configs, and the keys arrive through agenix with the full stage (section 8);
+until then use `aws sso login` for AWS. Preserve SSH and age identities
 before enabling any host secrets. An Ubuntu venv, system `/etc`, Nix database,
 or Docker directory should not be copied wholesale onto the new active paths.
 Ubuntu-owned files have UID 1000, matching the new user, but names and config
@@ -299,6 +305,117 @@ into the new encrypted home without logging them. Restore other app credentials
 selectively. Add productivity/creative/full only after the dev stage works and
 there is sufficient disk space. Full stage's TPM, snapshots and security settings
 need their own validation; they are not prerequisites for this first install.
+Enable host secrets (section 8) before switching to the full stage.
+
+## 8. Enable host secrets, then the full stage
+
+The full stage (`.#devtower-intel`) declares these agenix secrets in
+`hosts/devtower-intel/secrets.nix`:
+
+| Secret | Decrypted to |
+|---|---|
+| `github-ssh-personal`, `-syntek`, `-missionalgen` | `~/.ssh/github-devtower-intel-<account>` |
+| `claude-secrets` (monitor token, Context7 + ElevenLabs keys) | `/run/agenix/claude-secrets` |
+| `aws-config` | `/run/agenix/aws-config`, linked to `~/.aws/config` |
+| `aws-credentials` (static IAM keys) | `/run/agenix/aws-credentials`, linked to `~/.aws/credentials` |
+
+They are encrypted to the laptop's agenix key only, so this PC cannot decrypt
+them until its own host key is a recipient. Switching to the full stage before
+that only logs agenix decryption errors and leaves those files missing; finish
+the steps below, then switch again.
+
+**1. On devtower-intel, create and print the host key.** sshd is enabled only
+in the full stage, so the key does not exist yet. sshd keeps an existing key,
+so the one created here stays the host's identity:
+
+```sh
+sudo test -s /etc/ssh/ssh_host_ed25519_key || sudo ssh-keygen -q -t ed25519 -N '' -C root@devtower-intel -f /etc/ssh/ssh_host_ed25519_key
+cat /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+The `.pub` line is public; copy it to the laptop by any means.
+
+**2. On the laptop, add it as a recipient and re-encrypt.** The laptop must
+first have this repository's devtower-intel secrets work (including
+`hosts/devtower-intel/secrets.nix`). If it was not pushed from Ubuntu, commit and
+push it from devtower-intel using the command in step 3 with `git push`.
+
+```sh
+cd ~/Repos/personal/nix-config
+git pull
+$EDITOR secrets/secrets.nix
+#   devtower-intel = "ssh-ed25519 AAAA... root@devtower-intel";   (uncomment, paste the line)
+#   devtowerIntelKeys = [ sam-laptop devtower-intel ];
+nix develop -c just rekey-secrets   # agenix -r with ~/.ssh/id_ed25519_agenix
+git add secrets
+git commit -m "feat(secrets): add devtower-intel host key"
+git push
+```
+
+**3. On devtower-intel, pull the re-encrypted secrets.** Git rewrites this
+repository's remote to the `github-personal` alias, whose key is one of the
+secrets not yet decrypted. Pulls here use `--autostash` because pulls rebase
+and your `disks.nix` UUID edits are uncommitted. Use the same private key from the retained Ubuntu
+home for this one command (never copy it into the repository). GitHub's host
+keys are pinned by `modules/core/ssh-config.nix`, so there is no prompt; a
+host key warning here means something is wrong, so stop.
+
+```sh
+cd ~/Repos/personal/nix-config
+GIT_SSH_COMMAND='ssh -i /mnt/ubuntu-home/sam-dev/.ssh/id_ed25519_devtower_intel_personal -o IdentitiesOnly=yes' git pull --autostash
+rg 'REPLACE-' hosts/devtower-intel/disks.nix   # must return nothing
+```
+
+**4. Build and switch to the full stage, then verify.**
+
+```sh
+rm -rf /tmp/nix-config-full    # the script needs an empty destination
+python3 scripts/prepare-nix-source.py /tmp/nix-config-full
+nix build --impure --no-link --max-jobs 1 'path:/tmp/nix-config-full#nixosConfigurations.devtower-intel.config.system.build.toplevel'
+sudo systemd-run --scope -p MemoryMax=16G -p MemorySwapMax=0 -- nixos-rebuild switch --flake 'path:/tmp/nix-config-full#devtower-intel' --max-jobs 1
+sudo ls -l /run/agenix/                # aws-config, aws-credentials, claude-secrets, github-ssh-*
+ls -ld ~/.ssh                          # drwx------ sam-desktop users
+ls -l ~/.ssh/github-devtower-intel-* ~/.aws/config ~/.aws/credentials
+ssh -T github-personal                 # Hi SamBailey6194!
+ssh -T github-syntek                   # Hi Syntek-Studio!
+ssh -T github-missionalgen             # Hi sam-missional-gen!
+git pull --autostash                   # no GIT_SSH_COMMAND needed any more
+```
+
+`ssh -T` exits with status 1 even on success; the greeting is what matters.
+From now on the shared MCP launcher reads `/run/agenix/claude-secrets` in
+preference to the keys imported from the Ubuntu home.
+
+**5. Give the fresh claude-code-monitor its token.** The monitor starts with new
+server state on this PC, and creates its own API token on first start. The
+hooks send `CLAUDE_MONITOR_TOKEN` from the agenix secret, so the two must match:
+
+```sh
+ccm                                    # start it once, then stop it (Ctrl+C)
+jq -r .apiToken ~/Repos/claude-code-monitor/data/config.json
+```
+
+On the laptop, replace the `CLAUDE_MONITOR_TOKEN=` line with that value
+(`nix develop -c just edit-secret claude-secrets-devtower-intel`), commit, push,
+then here `git pull --autostash` and rerun the step 4 block (it starts from a
+fresh `/tmp/nix-config-full`). Keep the other three lines.
+
+**6. Remove the temporary plaintext copies.** Once everything above works, the
+bridge copies are no longer needed:
+
+```sh
+rm -f ~/.config/ai-mcp/credentials.json ~/.zshenv.hm-backup ~/.aws/config.hm-backup ~/.aws/credentials.hm-backup
+rm /mnt/ubuntu-home/sam-dev/.ssh/id_ed25519_devtower_intel_{personal,syntek,missionalgen}
+```
+
+The encrypted Restic backup still holds them. Sign in to each client's remote
+MCP servers on this PC as described in [SHARED-MCP.md](SHARED-MCP.md), and run
+`gh auth login` once per GitHub account (gnome-keyring keeps the tokens).
+
+Plaintext copies of the Context7 and ElevenLabs keys, the AWS IAM access keys
+and the old monitor token remain on the Ubuntu home partition, in configs,
+backups and transcripts. Once this PC works, rotate those keys and update the
+agenix secrets on the laptop.
 
 ## Recovery
 

@@ -1,10 +1,11 @@
-{ config, lib, ... }:
+{ config, lib, osConfig ? { }, ... }:
 
 # AWS CLI configuration (~/.aws/config)
 #
 # The AWS config holds the SSO topology — start URL, session, account IDs, role
 # names — so it lives in agenix rather than in the repo. The system module
-# (modules/core/secrets-laptop.nix) decrypts it to /run/agenix/aws-config owned
+# (modules/core/secrets-laptop.nix, or hosts/devtower-intel/secrets.nix)
+# decrypts it to /run/agenix/aws-config owned
 # by this user; this module links it into the default location every AWS CLI and
 # SDK looks for.
 #
@@ -36,6 +37,13 @@ in
   # exists at runtime, so it must not be copied into the Nix store).
   home.file.".aws/config".source =
     config.lib.file.mkOutOfStoreSymlink awsConfigSecret;
+
+  # ~/.aws/credentials -> /run/agenix/aws-credentials, only on hosts that
+  # declare that secret (static IAM keys; hosts/devtower-intel/secrets.nix).
+  # `aws configure` cannot write to it either — edit the secret instead.
+  home.file.".aws/credentials" = lib.mkIf (osConfig.age.secrets or { } ? aws-credentials) {
+    source = config.lib.file.mkOutOfStoreSymlink "/run/agenix/aws-credentials";
+  };
 
   # ~/.aws also holds the SSO token cache written at login (~/.aws/sso/cache)
   # and the CLI cache (~/.aws/cli/cache), both of which contain short-lived
