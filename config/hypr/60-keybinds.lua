@@ -20,8 +20,17 @@ local mod = vars.mod
 --   CTRL+RETURN   dev pool picker,  Neovim  (mirrors CTRL  + Z)
 --   ALT+RETURN    a terminal that just runs nvim, with no layout at all
 --
+-- The mirror is in WHERE the layout goes, not in its shape. A Zed layout is
+-- Zed at 75% plus two Kitty terminals; a Neovim layout is ONE Kitty window
+-- that fills the workspace, because the keybind reference, file tree, git
+-- panel and shell all live inside Neovim (home/modules/neovim.nix builds them
+-- on a bare start). See rust/dev-layout for the launcher.
+--
 -- ALT+RETURN is the escape hatch that used to live on SHIFT+RETURN: one nvim,
--- no windows placed, no workspace claimed.
+-- no workspace claimed, no window rule, so it lands wherever an ordinary
+-- window would. "No layout" means no COMPOSITOR layout: it is still a bare
+-- start, so Neovim builds its own panes inside the window just the same (the
+-- git panel among them only inside a git work tree).
 hl.bind(mod .. " + RETURN",         hl.dsp.exec_cmd("kitty"))
 hl.bind(mod .. " + SHIFT + RETURN", hl.dsp.exec_cmd("dev-layout --nvim"))
 hl.bind(mod .. " + CTRL + RETURN",  hl.dsp.exec_cmd("dev-layout-pick --nvim"))

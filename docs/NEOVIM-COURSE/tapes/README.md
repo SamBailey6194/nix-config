@@ -82,6 +82,8 @@ unaffected.
   claudecode.nvim never writes to `~/.claude/ide`. The live tapes must not, or Claude starts logged out.
   [Appendix B](../appendices/B-RECORDING-WITH-VHS.md#privacy-guards) has a `grep` that audits both
   guards.
+- **Neovim's state folder:** `:checkhealth vim.lsp` prints the LSP log path under your home directory. A
+  tape that opens a health report sets `Env XDG_STATE_HOME` to a folder under `/tmp/nvim-course/` (tape 10).
 - **Data:** session-browser tapes read only copies of `fixtures/sessions/` (synthetic). Tapes 13 and 27
   are **LIVE**: they use your real, signed-in Claude Code (and, in 13, Codex), and tape 27 submits one
   short prompt. Record both by hand

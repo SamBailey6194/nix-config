@@ -442,6 +442,11 @@
         git
         vim
 
+        # Interactive bash ahead of stdenv's readline-less one: VHS starts
+        # `bash` from PATH, and without readline its prompt prints as `[]> []`,
+        # so every course tape times out at its first `Wait`
+        bashInteractive
+
         # Agenix for secrets management
         agenix.packages.${system}.default
 

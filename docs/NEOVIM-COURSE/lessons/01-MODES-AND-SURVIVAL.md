@@ -181,6 +181,12 @@ lint-nix:
 
 ![Exercise 4 done: the comment above lint-nix and deadnix below statix, both indented to match](../media/01-modes-and-survival/open-lines.png)
 
+> **Gotcha:** While you type, a small menu may pop up under the cursor offering a word that is already in the
+> file, such as `deadnix` or `files`, marked `Text`. That is nvim-cmp suggesting words from the buffer
+> (neovim.nix:329). Ignore it and keep typing: `<Esc>` closes it as it leaves Insert mode. Do not press `<CR>`
+> while it is open, because Enter accepts the top suggestion instead of starting a new line.
+> [Lesson 11](11-COMPLETION-FORMATTING-DIAGNOSTICS.md) covers completion properly.
+
 ### 6. Undo and redo
 
 `u` undoes the last change and `<C-r>` redoes it. Each Insert session (from `i`/`A`/`o`… to `<Esc>`) is one

@@ -1327,7 +1327,9 @@ cargo run -p just-panel -- -f ../docs/NEOVIM-COURSE/fixtures/just/justfile
    Now `Enter` (the prompt again), type `--boot`, `Enter`, `y`: it runs and prints
    `demo: would run: sudo nixos-rebuild boot --flake .`. `Enter` to come back.
 7. **A `[confirm]` recipe.** `Esc`, `/update`, `Enter`, `Enter`. The dialog shows the justfile's own
-   question. `y` runs `just --yes update`, and `just` does not ask again. `Enter` at the pause.
+   question. `y` runs `just --yes update`, and `just` does not ask again. The normal screen prints
+   `$ just update`: the `$` line shows the run the way you would type it and leaves the `--yes` out, and no
+   question appears before `demo: would run: nix flake update`. `Enter` at the pause.
 
    ![The Run this? dialog for update, showing the justfile's own question: Update every flake input? (demo: nothing changes)](../media/16-just-panel-running-recipes/confirm-attribute.png)
 

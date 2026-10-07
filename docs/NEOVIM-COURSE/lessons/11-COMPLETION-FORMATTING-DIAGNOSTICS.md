@@ -316,9 +316,10 @@ and its `try:` hint. `<leader>xx` may show more: rust-analyzer checks the **whol
 warnings in the repository's other crates appear too. Outside the dev shell that can include `openssl-sys` errors
 (lesson 10, step 2). `gb` or `<leader>xw` narrows the list to the file you are working on.
 
-The recording shows Trouble on the Python file: ruff's unused import, pyright's error and pyright's hint.
+The recording shows Trouble on the Python file: pyright's `str + int` error and two ruff warnings, the unused import
+(`F401`) and `Call startswith once with a tuple` (`PIE810`), each followed by ruff's `help:` line.
 
-![Trouble at the bottom: ruff's unused import, pyright's str plus int error and a hint, grouped under the file](../media/11-completion-formatting-diagnostics/trouble.png)
+![Trouble at the bottom: pyright's str plus int error and ruff's two warnings, the unused import and PIE810's startswith, grouped under the file](../media/11-completion-formatting-diagnostics/trouble.png)
 
 ### 7. Apply clippy's fix with a code action
 
@@ -414,7 +415,7 @@ def test_updated_is_the_last_activity_not_the_index_time(
 
 The recording shows the same thing on a small draft file: quotes and a 100-column line, before and after `<C-s>`.
 
-![Before saving: single quotes, a 100-column line, and an E and a W in the sign column](../media/11-completion-formatting-diagnostics/start.png)
+![Before saving: single quotes, a 100-column line, and an E and two Ws in the sign column](../media/11-completion-formatting-diagnostics/start.png)
 
 ![After saving with Ctrl-s: double quotes, and the long line split over several lines](../media/11-completion-formatting-diagnostics/formatted.png)
 
@@ -1371,11 +1372,11 @@ Stuck? Compare with [examples/just-panel/JP4](../examples/just-panel/JP4/) and
 - **Fixture:** `fixtures/11-completion-formatting-diagnostics/`, copied to
   `/tmp/nvim-course/11-completion-formatting-diagnostics` by the hidden setup. It is a standard-library-only Python
   project: `pyproject.toml` (so pyright and ruff find a root), `kitty_demo.py` (deliberately untidy: single quotes,
-  one 100-column line, an unused `import sys`, and a `str + int` that pyright rejects), and
-  `wait-for-diagnostics.lua`, which the setup runs so the recording starts only once ruff and pyright have both
-  reported. The tape saves only that `/tmp` copy. No capstone file, real repository or personal data is on screen.
-  It points `CLAUDE_CONFIG_DIR` at a throwaway folder, so claudecode.nvim's lock file never lands in your real
-  `~/.claude/ide`.
+  one 100-column line whose two `or`-ed `startswith` calls ruff also flags as `PIE810`, an unused `import sys`, and
+  a `str + int` that pyright rejects), and `wait-for-diagnostics.lua`, which the setup runs so the recording starts
+  only once ruff and pyright have both reported. The tape saves only that `/tmp` copy. No capstone file, real
+  repository or personal data is on screen. It points `CLAUDE_CONFIG_DIR` at a throwaway folder, so claudecode.nvim's
+  lock file never lands in your real `~/.claude/ide`.
 - **Needs:** `ruff` on `PATH` (the tape's `Require ruff`), and pyright from the config. No venv.
 - **Outputs:** `media/11-completion-formatting-diagnostics/11-completion-formatting-diagnostics.gif` and
   `media/11-completion-formatting-diagnostics/11-completion-formatting-diagnostics.mp4`.
@@ -1385,7 +1386,7 @@ Stuck? Compare with [examples/just-panel/JP4](../examples/just-panel/JP4/) and
 | `media/11-completion-formatting-diagnostics/start.png` | `kitty_demo.py` before saving: single quotes, the 100-column line, signs but no messages | step 8 |
 | `media/11-completion-formatting-diagnostics/completion.png` | the menu after `path.read_`: `read_text` and `read_bytes` (Method) | step 1 |
 | `media/11-completion-formatting-diagnostics/formatted.png` | after `<C-s>`: double quotes, the long line split | step 8 |
-| `media/11-completion-formatting-diagnostics/trouble.png` | `<leader>xx`: ruff's `imported but unused`, pyright's operator error and its hint, under `kitty_demo.py` | step 6 |
+| `media/11-completion-formatting-diagnostics/trouble.png` | `<leader>xx`: pyright's operator error, ruff's `imported but unused` and `Call startswith once with a tuple`, under `kitty_demo.py` | step 6 |
 
 - **Manual steps:** none. Park the mouse pointer away from the window, and do not type while it runs.
 - **Timing that must not change:** Space x x is typed as one string at 60 ms per key. Slower, and `<leader>x` closes

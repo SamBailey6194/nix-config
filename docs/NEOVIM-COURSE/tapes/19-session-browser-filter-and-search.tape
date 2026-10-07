@@ -5,6 +5,9 @@ Require nvim
 Require uv
 # The app shows times in local time; pin the zone lesson 18's table uses.
 Env TZ "Europe/London"
+# ...and say where that zone lives: uv's Python looks in /usr/share/zoneinfo,
+# which NixOS does not have, and silently shows UTC without TZDIR (see tape 18).
+Env TZDIR "/etc/zoneinfo"
 # claudecode.nvim writes an IDE lock file under $CLAUDE_CONFIG_DIR/ide when
 # Neovim starts. Keep it in a throwaway sibling of the copy, never in your
 # ~/.claude. The app's command line sets CLAUDE_CONFIG_DIR to the fixture
@@ -12,10 +15,11 @@ Env TZ "Europe/London"
 Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/19-session-browser-filter-and-search.claude"
 
 # tapes/19-session-browser-filter-and-search.tape - Lesson 19: session-browser
-# SB6. gd from SessionTable's base class into Textual's DataTable to read the
-# action names it reuses, then the app at full size: l/h through the source
-# tabs (wrapping both ways), j/k/G/g on the list, / and a live search, Esc back
-# to the list.
+# SB6. As step 2 does, gd from DataTable in the handler's signature
+# (DataTable.RowHighlighted) into Textual's DataTable to read the action names
+# SessionTable reuses, then the app at full size: l/h through the source tabs
+# (wrapping both ways), j/k/G/g on the list, / and a live search, Esc back to
+# the list.
 #
 # Records examples/session-browser/SB6 - no tags or course progress needed.
 #
@@ -41,8 +45,12 @@ Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/19-session-browser-filter-and-search.cla
 #
 # Counts the anchors rely on (fixtures/sessions/): All 9, Claude 4, Codex 3,
 # Kitty 2; the search "panel" on All leaves 3. Other anchors:
-# "RECENT_MESSAGES = " (app.py line 19), "_data_table" (the file gd opens),
-# "scroll_bottom" (in DataTable's BINDINGS), "class SessionTable" (app.py).
+# "RECENT_MESSAGES = " (app.py line 19), "class DataTable" (Textual's class
+# line, where gd lands; not "_data_table", which app.py's handler name
+# on_data_table_row_highlighted also contains, on screen before gd),
+# "scroll_bottom" (in DataTable's BINDINGS), "def on_data_table_row_highlighted"
+# (app.py line 146, where <C-o> returns; Textual's file only names it in a
+# docstring far below the BINDINGS in view).
 
 # --- Setup (hidden: Hide is the first non-Set command, so none of this is
 # recorded). Everything that uses a relative path runs before the cd.
@@ -70,23 +78,29 @@ Show
 
 Sleep 1.5s
 
-# Onto DataTable in "class SessionTable(DataTable):", then into Textual.
-Type "/DataTable):"
+# Onto DataTable in the handler's "event: DataTable.RowHighlighted" (step 2's
+# "Try it"), then into Textual.
+Type "/DataTable.RowHighlighted"
 Sleep 400ms
 Enter
 Sleep 1s
 Type "gd"
-Wait+Screen@60s /_data_table/
+Wait+Screen@60s /class DataTable/
 Sleep 800ms
 # zt puts the class line at the top, so BINDINGS is in view below it.
 Type "zt"
 Wait+Screen /scroll_bottom/
-Sleep 2s
+Sleep 1s
+# Clear the search and its [1/1] count, left over from app.py, off the command
+# line (":" then Escape, over in a frame) so the shot shows only Textual's file.
+Type ":"
+Escape
+Sleep 1s
 Screenshot media/19-session-browser-filter-and-search/datatable-bindings.png
 Sleep 200ms
-# Back to app.py.
+# Back to app.py, on the handler's line.
 Ctrl+o
-Wait+Screen /class SessionTable/
+Wait+Screen /def on_data_table_row_highlighted/
 Sleep 1.5s
 
 # --- Leave Neovim (hidden), cleanly, so claudecode.nvim removes its lock.

@@ -431,6 +431,9 @@ buffer is in Normal mode: press `i` and your keys go to the panel.
 
 [MP4](../media/14-just-panel-tui-skeleton/14-just-panel-tui-skeleton.mp4)
 
+The recording runs the same `cargo run` command in a plain full-size shell instead of inside Neovim, so the whole
+list fits on screen; the panel and its keys are the same as in your terminal.
+
 **What you should see:** the panel, drawn inside Neovim's terminal. On the left, a box titled ` Recipes ` lists
 the demo justfile's 14 public recipes in source order, from `default` to `snapshot`; the private `_stamp` is not
 among them. The selected recipe is reversed and marked `> `. On the right, ` Recipe ` shows the selected recipe:

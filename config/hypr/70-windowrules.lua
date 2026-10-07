@@ -56,19 +56,21 @@ hl.window_rule({
 -- verbatim as a single string rather than split into two Lua fields.
 
 -- Every kitty window gets the same 0.95 opacity, whatever class it was
--- launched under. The layouts each tag their terminals so the workspace rules
--- can pin them, and a bare ^(kitty)$ match would have left those tagged
--- windows fully opaque — making the two dev layouts and the ws1 dashboard look
--- different from an ordinary terminal for no reason. The alternation therefore
--- lists them all:
+-- launched under. The layouts each tag their Kitty windows (Zed's terminals,
+-- or the single Neovim window) so the workspace rules can pin them, and a
+-- bare ^(kitty)$ match would have left those tagged windows fully opaque —
+-- making the two dev layouts and the ws1 dashboard look different from an
+-- ordinary terminal for no reason. The alternation therefore lists them all:
 --
 --   kitty              plain terminal (SUPER + Return, and the pool layout's
 --                      terminals if the launcher stops tagging them)
---   nixcfg-term        the workspace 2 nix-config layout's two terminals
---   nixcfg-nvim        the workspace 2 layout's editor, when it is Neovim
---   devpool-term-3..5  the generic dev pool layout's terminals, one class per
---                      pool workspace, matched with the range [3-5]
---   devpool-nvim-3..5  the same, for a pool layout's Neovim editor window
+--   nixcfg-term        the workspace 2 Zed layout's two terminals (a Neovim
+--                      layout has none)
+--   nixcfg-nvim        the workspace 2 Neovim layout: its one and only window,
+--                      filling the workspace
+--   devpool-term-3..5  a Zed pool layout's terminals, one class per pool
+--                      workspace, matched with the range [3-5]
+--   devpool-nvim-3..5  the same, for a pool Neovim layout's single window
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's btop pane (laptop only)
 --

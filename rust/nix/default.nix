@@ -98,6 +98,6 @@ in {
 
   dev-layout = buildWorkspaceCrate {
     pname = "dev-layout";
-    description = "Hyprland dev layout launcher (Zed + 2 terminals)";
+    description = "Hyprland dev layout launcher (Zed + 2 terminals, or Neovim alone)";
   };
 }

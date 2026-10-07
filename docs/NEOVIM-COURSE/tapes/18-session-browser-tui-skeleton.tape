@@ -9,6 +9,14 @@ Require uv
 Env SHELL "/bin/sh"
 # The app shows times in local time; pin the zone the lesson's table uses.
 Env TZ "Europe/London"
+# ...and say where that zone lives. uv's Python runs on a glibc that looks
+# for zones in /usr/share/zoneinfo, which NixOS does not have (its zones are
+# in /etc/zoneinfo). Without TZDIR it cannot find Europe/London and silently
+# shows UTC, an hour behind the lesson. VHS's bash reads no profile, so it
+# cannot rely on TZDIR being exported. (With TZ unset, as in your own shell,
+# glibc reads /etc/localtime and needs no TZDIR.) Neovim and its terminal
+# inherit both lines.
+Env TZDIR "/etc/zoneinfo"
 # claudecode.nvim writes an IDE lock file under $CLAUDE_CONFIG_DIR/ide when
 # Neovim starts. Keep it in a throwaway sibling of the copy, never in your
 # ~/.claude. The app's own command lines set CLAUDE_CONFIG_DIR to the fixture
@@ -16,7 +24,8 @@ Env TZ "Europe/London"
 Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/18-session-browser-tui-skeleton.claude"
 
 # tapes/18-session-browser-tui-skeleton.tape - Lesson 18: session-browser SB5.
-# app.py and app.tcss side by side (:vsplit, :set syntax=css), K on DataTable,
+# app.py and app.tcss side by side (:vsplit, then the lesson's command for a
+# reopened .tcss, `:setlocal filetype= syntax=css`), K on DataTable,
 # the app in Neovim's bottom terminal via :TermExec ... go_back=0, then the app
 # at full size: the list, the preview following the cursor, and "[/bold]"
 # shown as text.
@@ -74,14 +83,16 @@ Show
 Sleep 1.5s
 
 # The stylesheet in a vertical split: splitright puts it on the right. .tcss
-# has no filetype of its own (Neovim guesses conf from the "#sessions" line),
-# so borrow CSS colours with :set syntax=css. Nothing is typed into it.
+# has no filetype of its own, and this file is already saved, so Neovim
+# guesses conf from the "#sessions" line. Step 3's gotcha for a reopened file:
+# clear the filetype and borrow CSS colours, so the status line shows no
+# filetype, as in the learner's new buffer. Nothing is typed into it.
 Type ":vsplit src/session_browser/app.tcss"
 Sleep 400ms
 Enter
 Wait+Screen /border-left/
 Sleep 800ms
-Type ":set syntax=css"
+Type ":setlocal filetype= syntax=css"
 Sleep 400ms
 Enter
 Sleep 1s

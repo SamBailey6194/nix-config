@@ -1,7 +1,7 @@
 # Hyprland Configuration
 
-**Last Updated**: 18/08/2026
-**Version**: 1.1.0
+**Last Updated**: 28/09/2026
+**Version**: 1.2.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -87,16 +87,16 @@ Workspaces are not interchangeable — most of them have a fixed purpose, enforc
 by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
 `devices/laptop-intel.lua`:
 
-| Workspace | Contents                        | Assigned by                        |
-|-----------|---------------------------------|------------------------------------|
-| `1`       | Dashboard (keybinds + btop)     | Device file (laptop only)          |
-| `2`       | nix-config dev layout           | Window rules (class + title match) |
-| `3-5`     | Dev pool, allocated as needed   | Window rules registered at launch  |
-| `6`       | Mail (Claws Mail)               | `00-vars.lua` workspaceAssignments  |
-| `7`       | Browsers                        | Window rules (class match)         |
-| `8`       | Affinity Suite                  | Window rules (class match)         |
-| `9`       | Comms (Teams, Zoom, Discord)    | Window rules (class match)         |
-| `10`      | Everything else                 | Catch-all rule (laptop only)       |
+| Workspace | Contents                      | Assigned by                                                 |
+|-----------|-------------------------------|-------------------------------------------------------------|
+| `1`       | Dashboard (keybinds + btop)   | Device file (laptop only)                                   |
+| `2`       | nix-config dev layout         | Window rules (class + title for Zed, class only for Neovim) |
+| `3-5`     | Dev pool, allocated as needed | Window rules registered at launch                           |
+| `6`       | Mail (Claws Mail)             | `00-vars.lua` workspaceAssignments                          |
+| `7`       | Browsers                      | Window rules (class match)                                  |
+| `8`       | Affinity Suite                | Window rules (class match)                                  |
+| `9`       | Comms (Teams, Zoom, Discord)  | Window rules (class match)                                  |
+| `10`      | Everything else               | Catch-all rule (laptop only)                                |
 
 The "Assigned by" column is the **mechanism**, not the trigger — the two are
 worth keeping apart:
@@ -107,11 +107,16 @@ worth keeping apart:
   (Zed has no `--class`, so its title — the folder name `nix-config` — is the
   only distinguishing feature), the terminals on the class `nixcfg-term`. Rename
   the repository folder and the editor rule stops firing; see `00-vars.lua`.
+  The Neovim variant, `SUPER + SHIFT + Return`, is a single Kitty window matched
+  on the class `nixcfg-nvim` alone, so it does not depend on the folder name.
+  It launches no terminals: the keybind reference, file tree, git panel and
+  shell are panes and tabs inside Neovim, and the window fills the workspace.
 - Static window rules cannot express "the next free workspace", so `SUPER +
   CTRL + Z` picks the workspace at runtime and then registers the *same kind*
   of class+title rule workspace 2 uses, via `hyprctl eval`, immediately before
   launching. It beats the catch-all by being registered later — the last
-  matching rule wins.
+  matching rule wins. `SUPER + CTRL + Return` does the same for Neovim with a
+  single class-only rule, on the per-workspace class `devpool-nvim-N`.
 
   It deliberately does **not** use `hl.exec_cmd(cmd, { workspace = ... })`.
   Per-launch exec rules attach by matching the spawned PID, and `zeditor` is a
@@ -228,7 +233,17 @@ Highlights:
   Goes through the `dev-layout-pick` wofi picker (declared in
   `home/modules/hyprland.nix`), because dev-layout needs a project path and a
   keybind inherits Hyprland's working directory rather than a project's. From a
-  terminal, `dev-layout --new <path>` skips the picker.
+  terminal, `dev-layout --new [--nvim] <path>` skips the picker.
+- `SUPER + SHIFT + Return`: nix-config layout, Neovim alone, on workspace 2
+- `SUPER + CTRL + Return`: dev layout, Neovim alone, on the next free workspace
+  (3-5), through the same picker
+- `SUPER + ALT + Return`: Neovim in a plain Kitty window. No dev-layout rule
+  claims it, so it lands wherever an ordinary window would: on the laptop the
+  catch-all sends it, silently, to workspace 10, not the workspace you pressed
+  the key on. A bare `nvim` builds the same in-editor layout (keybind
+  reference, file tree, terminal tab, and the git panel inside a git work tree)
+  wherever it starts, as far as the window's width allows; the RETURN layouts
+  only add the workspace placement and the full width.
 
 ### Window Management
 - `SUPER + Q`: close window

@@ -1015,7 +1015,7 @@ Stuck? Compare with [examples/session-browser/SB7](../examples/session-browser/S
   | `suspended.png` | The stand-in `claude` holding the terminal: arguments, folder and `TMPDIR` | Step 5.1 |
   | `copied.png` | The "Copied" notification for the textual-prototype session (`cd` to the throwaway home) | Step 5.5 |
   | `behind.png` | After `q`: what the stand-ins printed, left on the normal screen | Step 5.6 |
-  | `launches.png` | `cat home/launches.log`: the Claude, Codex and Kitty launches | Step 5.6 |
+  | `launches.png` | `cat home/launches.log`: the Claude, Codex and Kitty launches, then Claude in the throwaway home | Step 5.6 |
 
 - **How it stays harmless.** The hidden setup copies `fixtures/sessions/` and the stand-in scripts from
   `fixtures/20-session-browser-actions/bin/` next to the copied project, gives the Kitty files the fixed
@@ -1024,7 +1024,7 @@ Stuck? Compare with [examples/session-browser/SB7](../examples/session-browser/S
   runs with `HOME` set to a throwaway folder and `PATH` set to the stand-ins alone, so the real `claude`,
   `codex` and `kitty` cannot start. `CLAUDE_CONFIG_DIR` points at the copied Claude store for the whole tape,
   so claudecode.nvim's lock file also stays out of your real `~/.claude/ide`. `TZ=Europe/London` keeps the
-  times as in lessons 18 and 19. The browser
+  times as in lessons 18 and 19, and `TZDIR=/etc/zoneinfo` lets uv's Python find that zone on NixOS. The browser
   is started through a shell function called `session-browser`, which is why the typed command is shorter
   than step 5's.
 - **Manual steps:** none. A failed copy or `uv sync` stops the tape at its setup `Wait`. Afterwards

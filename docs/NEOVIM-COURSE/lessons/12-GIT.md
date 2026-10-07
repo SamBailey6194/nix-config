@@ -241,7 +241,9 @@ with `]q` / `[q` (Neovim 0.12 defaults), the way you walked search results in
 
 **You should see** line 10's `+` turn into the staged `┃` while lines 3 and 16 keep their unstaged signs. Note
 that `nav_hunk` skips staged hunks: its default target is unstaged changes only. The blame float names
-`Course Demo` and `docs: first draft`.
+`Course Demo` and `docs: first draft`. The `+1 ~1 -1` in the statusline is lualine's count of unstaged lines,
+not gitsigns': it refreshes only when you enter the buffer again or save it, so it still shows `+1` straight
+after `stage_hunk`.
 
 ![Line 10 staged: its sign changes style, the other two hunks do not](../media/12-git/staged-sign.png)
 
@@ -350,8 +352,9 @@ to leave Neogit) line 10's sign has gone: it is committed.
 ### 9. Review before you commit: Diffview
 
 `<leader>gd` runs `:DiffviewOpen` (neovim.nix:36) in a new tab. With no revision it compares the working tree
-with the index, and the file panel on the left has two lists: **Changes** (not yet staged, untracked files
-included) and **Staged changes** (what the next commit will contain). Each file opens as a side-by-side diff
+with the index, and the file panel on the left lists **Changes** (not yet staged, untracked files included)
+and **Staged changes** (what the next commit will contain). Staged changes appears only when something is
+staged, so after the commit in step 8 the panel shows Changes alone. Each file opens as a side-by-side diff
 (`enhanced_diff_hl = true`, neovim.nix:819-821).
 
 | Key | What it does |

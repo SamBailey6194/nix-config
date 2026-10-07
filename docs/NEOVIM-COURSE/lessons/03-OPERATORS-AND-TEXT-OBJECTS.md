@@ -163,7 +163,8 @@ first bracket pair. Tags do not do this (Gotcha 7).
 **Try it (words and quotes).**
 
 1. `15G0fC` (onto `Codex`), `ciw`, type `Kitty`, `<Esc>`: `"Review the Kitty source parser",`.
-2. `14G` from anywhere on the line, `ci"`, type `Parse the just dump`, `<Esc>`. The whole title is replaced.
+2. `14G0` (the start of the line, before the string), `ci"`, type `Parse the just dump`, `<Esc>`. The whole
+   title is replaced.
 3. `vi"` on the same line selects the string without the quotes, so you can see what `i"` covers. `<Esc>`.
 4. `daw` on a word removes it and one space. `diw` leaves the space behind.
 
@@ -209,7 +210,8 @@ it. The other lines fill in when you press `<Esc>`. `$` stretches a block to eac
 1. `29G0f"l` (the `r` of `rebuild`), `<C-v>`, `2j` (three lines), `I`, type `just` and a space, `<Esc>`:
    `"just rebuild"`, `"just check"`, `"just update"`.
 2. `37G0`, `<C-v>`, `2j`, `$`, `A`, type a space and `= None`, `<Esc>`: all three `Filter` fields get a
-   default, although the lines have different lengths.
+   default, although the lines have different lengths. A red `E` may flash beside the lower two for a moment:
+   pyright checked the file while only the first line had its default, and the error clears when it rechecks.
 
 ![Block I: just typed once, inserted into three list entries](../media/03-operators-and-text-objects/block-insert.png)
 
@@ -256,7 +258,7 @@ The config loads Comment.nvim with its defaults (neovim.nix:758). Its maps repla
 2. `54G`, `gcc`, then `gcc` again: on, then off.
 3. `57G`, `3gcc`: the three lines of the `if`/`return`/`return` body. `u`.
 4. `53G`, `gco`, type `show the project path`, `<Esc>`: a comment line inside `project()`. `u`.
-5. `44G`, `gcc`, then `j` and `.`: two fields commented with one command and one dot. `u` `u`.
+5. `37G`, `gcc`, then `j` and `.`: two `Filter` fields commented with one command and one dot. `u` `u`.
 
 ![gcip on the Filter class: five lines commented](../media/03-operators-and-text-objects/gcip.png)
 
@@ -329,8 +331,9 @@ the original. Every answer was checked on this file.
 
    <details><summary>Answer</summary>
 
-   `15G`, then `ci"` and type the new title, `<Esc>`. From before the string, `i"` finds the first quoted
-   string on the line.
+   `15G0`, then `ci"` and type the new title, `<Esc>`. From before the string, `i"` finds the first quoted
+   string on the line. The `0` matters: `15G` alone keeps your column, which can be past the closing quote,
+   where `ci"` finds nothing.
    </details>
 
 3. On line 58, `return ["claude", "--resume", self.id]`, turn the list into `["claude", "--continue"]` with one

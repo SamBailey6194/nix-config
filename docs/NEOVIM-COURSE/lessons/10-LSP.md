@@ -114,7 +114,8 @@ Steps 1 and 2 look at the servers themselves. Steps 3 to 9 build **JP3** with ru
 to 12 build **SB3** with pyright's. The finished files are in the [Milestone](#milestone-jp3--sb3) section: when a
 step says "type", that is where the text is. Keep this page open next to Neovim.
 
-The recording shows steps 1, 4, 6, 8 and 9 on the finished JP3 code:
+The recording shows steps 1, 4, 6, 8 and 9 on a copy of the finished JP3 code in `/tmp/nvim-course/10-lsp/rust`, so
+its root directory reads that rather than `~/Repos/personal/nix-config/rust`:
 
 ![rust-analyzer in just-panel: checkhealth, hover, go to definition and back, references, and a diagnostic read from its float](../media/10-lsp/10-lsp.gif)
 
@@ -158,7 +159,8 @@ How they are wired:
    take a minute or more. Later starts are quicker.
 3. Run `:checkhealth vim.lsp`. The report opens in a new tab page. Search for the client with `/Version:`, then
    read the block around it.
-4. Press `q` to close the report.
+4. Press `q` to close the report. `q` closes only its tab page: the report's buffer (`health://`) stays in the
+   bufferline as a tab with no name, as in the recording. `:bd` instead of `q` closes both.
 
 **What you should see**
 
@@ -174,7 +176,10 @@ Under **vim.lsp: Active Clients** there is one block for rust-analyzer, roughly:
 ```
 
 (The settings are printed over several lines. `lens`, the code-lens options, comes from nvim-lspconfig's
-defaults for rust-analyzer, which your settings are merged onto.) Three things to notice:
+defaults for rust-analyzer, which your settings are merged onto.) The **Version** is the binary's own: the dev
+shell's rust-analyzer, built by nixpkgs, reports its release date (`2026-08-03` in the recording), while rustup's
+reports the Rust release it belongs to, such as `1.94.0` (the kind of number steps 3 and 5 quote). Three things to
+notice:
 
 - **The root is `rust/`, not `rust/just-panel/`.** nvim-lspconfig asks cargo for the *workspace* root, so the crate
   only gets analysed because it is listed in `members` in `rust/Cargo.toml`, which `cargo new` did in lesson 06.
@@ -303,9 +308,14 @@ message), and `q` to leave.
   compiler's own message, via clippy.
 
 The recording shows the same thing for a different error (a match arm deleted from the finished JP3 code, as in
-step 7): one `E` in the sign column and an underline, then the float that `]d` opens.
+step 7): one `E` in the sign column and an underline under `self.kind`, then the float that `]d` opens.
 
-![Virtual text off: the only marks of the error are the E in the sign column and an underline](../media/10-lsp/sign.png)
+Not every underline is a diagnostic. indent-blankline (neovim.nix:750-752) draws the thin vertical indent guides, and
+it also underlines the first line of the block the cursor is in: `match self.kind {` while the cursor is on a match
+arm, the whole `fn fmt(…)` line in the second screenshot. That is why the recording presses `{` (up to the blank line
+above the `impl`'s comment) before the first screenshot: outside every block, only the error's underline is left.
+
+![Virtual text off: the only marks of the error are the E in the sign column and an underline under self.kind](../media/10-lsp/sign.png)
 
 ![The next-diagnostic key jumped to the error and opened its float: missing match arm](../media/10-lsp/diagnostic-float.png)
 
@@ -354,7 +364,9 @@ Neovim's own `<C-s>` does the same while you type the arguments.
 
 **What you should see:** for `Value`, a float headed `serde_json::value`, then `pub enum Value {` with its variants
 (`Null`, `Bool`, `Number`, `String`, `Array`, …) and below a rule the documentation, starting "Represents any valid
-JSON value." For `Deserialize`, serde's documentation of the trait.
+JSON value." For `Deserialize`, serde's documentation of the trait. The float only gets the rows on one side of the
+cursor line. If it is cut short (`@@@` at its last line), press `K` again to go in and scroll, or first move the line
+out of the middle of the window with `zb` or `zt`: the recording presses `zb`.
 
 ![K on Value: serde_json's enum and its documentation in a float](../media/10-lsp/hover.png)
 
@@ -461,9 +473,9 @@ it. Enter jumps to an entry; from the file, `]q` and `[q` step through the list,
 1. In `struct Dependency`, put the cursor on `recipe` in `pub recipe: String,`.
 2. Type `gr` and wait. Then `:cclose` and try `grr`.
 
-**What you should see:** a quickfix window titled `References` with two entries: the field itself and
-`.map(|d| d.recipe)` in the test `reads_dependencies_and_attributes`. `gr` takes about a third of a second longer
-than `grr`: your `gr` is a prefix of Neovim's `grn`, `gra`, `grr`, `gri`, `grt` and `grx`, so Neovim waits
+**What you should see:** a quickfix window at the bottom (its statusline says `qf`) with two entries: the field
+itself and `.map(|d| d.recipe)` in the test `reads_dependencies_and_attributes`. `gr` takes about a third of a second
+longer than `grr`: your `gr` is a prefix of Neovim's `grn`, `gra`, `grr`, `gri`, `grt` and `grx`, so Neovim waits
 `timeoutlen` (300 ms, neovim.nix:270) to see whether you meant one of them.
 
 ![grr on the recipe field: two references in the quickfix list](../media/10-lsp/references.png)
@@ -1627,7 +1639,9 @@ Stuck? Compare with [examples/session-browser/SB3](../examples/session-browser/S
   opens `just-panel/src/justfile.rs` there. It never opens your capstone and never writes to the repository: it
   deletes one line in the buffer, undoes it, and quits with `:qa!`. rust-analyzer's own `cargo clippy` builds
   into `/tmp/nvim-course/cargo-target`, the target directory every capstone tape shares, and claudecode.nvim's
-  lock file goes to the throwaway `/tmp/nvim-course/10-lsp.claude`.
+  lock file goes to the throwaway `/tmp/nvim-course/10-lsp.claude`. The tape also points Neovim's state folder
+  (`XDG_STATE_HOME`) at `/tmp/nvim-course/10-lsp/state`, so the LSP log that `:checkhealth vim.lsp` names is
+  written there and not under your home directory.
 - **VHS:** after `just rebuild`, `vhs --version` must print `0.12.1`; 0.12.0 exits 0 and writes nothing
   ([Appendix B](../appendices/B-RECORDING-WITH-VHS.md#first-make-sure-vhs-is-0121)).
 - **Fixture:** `fixtures/10-lsp/wait-for-rust-analyzer.lua`, a helper that the hidden setup copies to
@@ -1641,7 +1655,7 @@ Stuck? Compare with [examples/session-browser/SB3](../examples/session-browser/S
 | `media/10-lsp/hover.png` | `K` on `Value`: `pub enum Value` and "Represents any valid JSON value." | step 6 |
 | `media/10-lsp/definition.png` | after `gd`: serde_json's `value/mod.rs` at `pub enum Value` | step 8 |
 | `media/10-lsp/references.png` | `grr` on `recipe`: two entries in the quickfix list | step 9 |
-| `media/10-lsp/sign.png` | a deleted match arm: `E` in the sign column, an underline, no message | step 4 |
+| `media/10-lsp/sign.png` | a deleted match arm: `E` in the sign column, an underline under `self.kind`, no message; the cursor on the blank line above, outside every block | step 4 |
 | `media/10-lsp/diagnostic-float.png` | `]d` from the top: the float saying `missing match arm` | step 4 |
 
 - **Manual steps:** none. Park the mouse pointer away from the window, and do not type while it runs.
@@ -1653,11 +1667,14 @@ Stuck? Compare with [examples/session-browser/SB3](../examples/session-browser/S
     means VHS 0.12.0 did the rendering.
   - `checkhealth.png` shows a `Version` line, and the root is `/tmp/nvim-course/10-lsp/rust`, not
     `…/rust/just-panel`.
-  - The first frames of the health report show the LSP log path, which includes your user name. That name already
-    appears in the repository (`modules/users/`), but check you are happy with it before publishing.
+  - The first frames of the health report (in the GIF and the MP4, before `/Version:` scrolls) show the LSP log
+    path. It must read `/tmp/nvim-course/10-lsp/state/nvim/lsp.log`, never a path under `/home`. If it shows your
+    home directory, the tape's `Env XDG_STATE_HOME` line is missing: do not publish that recording.
   - `definition.png` is serde_json's source, not a quickfix list. If it is a list, rust-analyzer found two
     definitions: update step 8.
   - `sign.png` shows no message text in the buffer. If it does, something turned virtual text on: fix that before
-    publishing, because this lesson depends on it being off.
+    publishing, because this lesson depends on it being off. Its only underline is under `self.kind`, and the `E`
+    is on the `match self.kind {` line.
+  - `hover.png` shows the whole float, with no `@@@` at its last line.
   - `diagnostic-float.png` says `missing match arm`. If rust-analyzer's wording has changed on laptop-intel, update
     step 4, drill 4 and the tape's anchor together.

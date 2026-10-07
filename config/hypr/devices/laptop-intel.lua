@@ -69,9 +69,11 @@ hl.window_rule({
 --   3-5   generic dev pool, handed out one workspace at a time when a generic
 --         dev layout is launched. Not covered by a rule in THIS file: a
 --         static rule cannot express "the next free workspace", so the
---         launcher picks one at runtime and registers a class+title rule for
---         it through `hyprctl eval` just before launching. That rule beats
---         this catch-all by being registered later — last match wins.
+--         launcher picks one at runtime and registers a rule for it
+--         through `hyprctl eval` just before launching: class+title for Zed,
+--         class-only for Neovim (its Kitty window has a class of its own).
+--         That rule beats this catch-all by being registered later — last
+--         match wins.
 --   6     mail (Claws Mail)
 --   7     browsers
 --   8     Affinity Suite

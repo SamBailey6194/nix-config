@@ -956,7 +956,7 @@ Stuck? Compare with [examples/session-browser/SB6](../examples/session-browser/S
 
 - **Privacy:** the app only sees a copy of `fixtures/sessions/` (synthetic), through `CLAUDE_CONFIG_DIR`,
   `CODEX_HOME` and `--kitty-sessions-dir` on the visible command line. `TZ=Europe/London` keeps the times as
-  in lesson 18's table. Neovim's terminal is not used in this tape, and Neovim's own `CLAUDE_CONFIG_DIR`
+  in lesson 18's table, and `TZDIR=/etc/zoneinfo` lets uv's Python find that zone on NixOS. Neovim's terminal is not used in this tape, and Neovim's own `CLAUDE_CONFIG_DIR`
   points at a throwaway folder, so claudecode.nvim's lock file never lands in your real `~/.claude/ide`.
 - **Manual steps:** none. As in lesson 18, a failed copy or `uv sync` stops the tape at its setup `Wait`. If
   `datatable-bindings.png` shows `app.py` instead of Textual's source, pyright had not finished starting:

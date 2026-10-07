@@ -348,7 +348,10 @@ The **quickfix list** is Neovim's list of locations: file, line, column and a li
 picker with `<C-q>`, then work through it.
 
 - `<C-q>` in a picker sends every result to a **new** quickfix list and opens the quickfix window at the bottom
-  (`botright copen`), cursor inside. Its title is the picker and your prompt, e.g. `Live Grep (^# =+)`.
+  (`botright copen`), cursor inside. Its title is the picker and your prompt, e.g. `Live Grep (^# =+)`, but this
+  config's statusline does not show it: lualine names the quickfix window `[No Name] [-]` (filetype `qf`). While
+  the window is open, the bufferline also has a `[No Name]` tab for it. That tab is the quickfix list, not a stray
+  empty buffer, and it goes with `:cclose`. `:chistory` prints the title.
 - `<CR>` on an entry jumps there, in the window above.
 - `]q` / `[q` go to the next / previous entry from anywhere; `[Q` / `]Q` to the first / last (Neovim 0.11+
   defaults).

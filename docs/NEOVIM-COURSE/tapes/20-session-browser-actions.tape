@@ -9,12 +9,18 @@ Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/20-session-browser-actions/stores/claude
 Env CODEX_HOME "/tmp/nvim-course/20-session-browser-actions/stores/codex"
 # The app shows times in local time; pin the zone lessons 18 and 19 use.
 Env TZ "Europe/London"
+# ...and say where that zone lives: uv's Python looks in /usr/share/zoneinfo,
+# which NixOS does not have, and silently shows UTC without TZDIR (see tape 18).
+Env TZDIR "/etc/zoneinfo"
 
 # tapes/20-session-browser-actions.tape - Lesson 20: session-browser SB7.
 # build_launch() and run() in Neovim, then the browser on synthetic sessions:
 # Enter hands the terminal to a stand-in claude and codex and gets it back,
-# Enter on a Kitty row starts a stand-in kitty detached, and c copies the
-# command. Finally the stand-ins' output behind the app, and their log.
+# Enter on a Kitty row starts a stand-in kitty detached, Enter on the session
+# whose folder has gone starts claude in the throwaway home and comes back
+# with the "no longer exists" warning, and c copies that session's command.
+# Finally the stand-ins' output behind the app, and their log (lesson 20
+# step 5, items 1 to 6).
 #
 # Records examples/session-browser/SB7 - no tags or course progress needed.
 #
@@ -57,8 +63,18 @@ Env TZ "Europe/London"
 # Anchors: "READY" (the setup's own echo), "class Launch" (actions.py, line
 # 16), "9 of 9 sessions" / "3 of 9" / "2 of 9" (the browser's header after
 # loading, per tab), "stub claude" / "stub codex" (the stand-ins' output on
-# the normal screen), "Copied" (the notification title) and "kitty --session"
-# (the log). None of them appears in a caption or a typed line.
+# the normal screen), "folder: <throwaway home>" (the third stand-in's folder
+# line: the earlier blocks show /tmp/nvim-course/nix-config, and only the
+# first block's TMPDIR line mentions the home), "starting in ~" (the warning
+# toast: the toast is narrower than the message and may break the line
+# inside "no longer exists", but not inside this short tail), "Copied" (the
+# notification title) and "kitty --session" (the log).
+# None of them appears in a caption or a typed line.
+#
+# Timing: the warning is raised before the stand-in starts and Textual's
+# 5-second notification clock keeps running while the stand-in has the
+# terminal, so Enter goes back after 1 s, and c waits 5 s after the warning
+# appears, until it has gone, so that copied.png shows only "Copied".
 
 # --- Setup (hidden: Hide is the first non-Set command, so none of this is
 # recorded). Everything that uses a relative path runs before the cd.
@@ -163,12 +179,22 @@ Sleep 1.5s
 Enter
 Sleep 2s
 
-# l: back to All. G: the last row (its folder is missing). c: copy.
+# l: back to All. G: the last row (its folder is missing). Enter: the
+# stand-in claude starts in the throwaway home instead.
 Type "l"
 Wait+Screen /9 of 9 sessions/
 Sleep 1s
 Type "G"
 Sleep 1.5s
+Enter
+Wait+Screen /folder: +.tmp.nvim-course.20-session-browser-actions.home/
+Sleep 1s
+# Back within the warning's 5 seconds: it is still showing.
+Enter
+Wait+Screen /starting in ~/
+Sleep 5s
+
+# c on the same row: copy its command.
 Type "c"
 Wait+Screen /Copied/
 Sleep 2s

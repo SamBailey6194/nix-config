@@ -86,14 +86,18 @@
     ".config/hypr/KEYBINDS.md".source = ../../config/hypr/KEYBINDS.md;
   };
 
-  # Project picker for the generic dev layout (SUPER + CTRL + Z).
+  # Project picker for the generic dev layouts (SUPER + CTRL + Z for Zed,
+  # SUPER + CTRL + RETURN for Neovim).
   #
-  # dev-layout needs a project PATH: the folder name becomes Zed's window
-  # title, which is the only thing the placement rule can match on (Zed has no
-  # --class). A keybind has no useful working directory of its own — it
-  # inherits Hyprland's, which is $HOME — so the path has to be chosen
-  # interactively. This lists every <account>/<project> directory under
-  # ~/Repos and hands the choice to dev-layout.
+  # dev-layout needs a project PATH. For Zed the folder name becomes the
+  # window title, which is the only thing the placement rule can match on (Zed
+  # has no --class). For Neovim, placed by its Kitty --class instead, the path
+  # is the working directory its single full-workspace window opens in, and so
+  # where its file tree and terminal buffers start. A keybind has no useful
+  # working directory of its own — it inherits Hyprland's, which is $HOME — so
+  # the path has to be chosen interactively. This lists every
+  # <account>/<project> directory under ~/Repos and hands the choice to
+  # dev-layout.
   #
   # `--show dmenu` is explicit rather than `--dmenu` because programs.wofi
   # below sets `show = "drun"` in the config file, and the explicit mode flag

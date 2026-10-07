@@ -14,8 +14,11 @@ Require nvim
 # (plain text has none) and the lesson is about Python-shaped brackets and
 # quotes. pyright and ruff attach to it (neovim.nix:397-409), so:
 #   - the fixture (a copy of practice/03-text-objects.py) passes ruff check,
-#     ruff format --check and pyright, and every edit below keeps it valid, so
-#     no diagnostic signs appear;
+#     ruff format --check and pyright, and every finished edit below keeps it
+#     valid, so no diagnostic signs appear (gcc and . comment Filter fields,
+#     which nothing reads);
+#   - block $A's Insert mode is the one invalid moment (only line 37 has its
+#     default yet), so its <Esc> and pyright's recheck after it run hidden;
 #   - the setup waits 3 s after the file opens for the servers to settle;
 #   - the file is NEVER saved: saving would run ruff format (format on save).
 #
@@ -66,8 +69,10 @@ Sleep 400ms
 Escape
 Sleep 900ms
 
-# ci" works from anywhere on the line: it finds the string first.
-Type "14G"
+# ci" from the start of the line, before the string: i" looks forward to the
+# first string on the line. The 0 matters: 14G alone keeps the column
+# (Neovim's default nostartofline), which after Kitty is inside the string.
+Type "14G0"
 Sleep 700ms
 Type 'ci"'
 Sleep 700ms
@@ -118,8 +123,10 @@ Sleep 1.2s
 Type "u"
 Sleep 1s
 
-# Visual block I: the same text in front of three lines.
-Type '29G0f"l'
+# Visual block I: the same text in front of three lines. zz (lesson 02) only
+# centres the view: coming up from line 51, 29G alone scrolls line 29 to the
+# top row and hides the COMMANDS = [ line above it.
+Type '29Gzz0f"l'
 Sleep 800ms
 Ctrl+V
 Sleep 600ms
@@ -134,7 +141,12 @@ Sleep 1.2s
 Screenshot media/03-operators-and-text-objects/block-insert.png
 Sleep 200ms
 
-# Visual block $A: the same text after three ragged line ends.
+# Visual block $A: the same text after three ragged line ends. In Insert mode
+# only line 37 has its default, so pyright flags lines 38-39 (no default after
+# a default) and shows those E signs the moment <Esc> lands, for about 0.4 s
+# until it rechecks. The <Esc> and that settle run hidden: the recording cuts
+# from Insert mode on line 37 to all three lines filled in. Lesson section 5
+# warns readers about the flash.
 Type "37G0"
 Sleep 700ms
 Ctrl+V
@@ -144,14 +156,19 @@ Sleep 900ms
 Type "A"
 Sleep 400ms
 Type " = None"
-Sleep 400ms
+Sleep 700ms
+Hide
 Escape
-Sleep 1.2s
+Sleep 1.5s
+Show
+Sleep 500ms
 Screenshot media/03-operators-and-text-objects/block-append.png
 Sleep 200ms
 
 # Comment.nvim: gcip comments the paragraph (the Filter class); u undoes it.
-# gcc comments one line and . repeats it on the next.
+# gcc comments one line and . repeats it on the next: Filter's query and
+# source, which nothing reads (Session's source and id would break label()
+# and resume_command() and show E signs); u u undoes both.
 Type "36G"
 Sleep 700ms
 Type "gcip"
@@ -160,7 +177,7 @@ Screenshot media/03-operators-and-text-objects/gcip.png
 Sleep 200ms
 Type "u"
 Sleep 900ms
-Type "44G"
+Type "37G"
 Sleep 700ms
 Type "gcc"
 Sleep 900ms

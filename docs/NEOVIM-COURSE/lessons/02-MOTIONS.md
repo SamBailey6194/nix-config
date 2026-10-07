@@ -186,7 +186,7 @@ Neovim's default `scrolloff` is 0, so `H` and `L` land on the very first and las
 **Try it.**
 
 1. `gg`, `<C-d>` twice, `<C-u>` once. Then `<C-f>` and `<C-b>`.
-2. `L`, `M`, `H`: the cursor moves, the text does not.
+2. `H`, `M`, `L`: the cursor moves, the text does not.
 3. `85G` then `zt`, `zz`, `zb`: the text moves, and the cursor stays on `fuzz TARGET TIME="5":`.
 
 ### 8. Marks
@@ -203,7 +203,9 @@ pops up. Press the letter to jump, or `<Esc>` to cancel.
 1. `36G`, then `mr` (a mark named `r`, for `rebuild`).
 2. `G` to go to the end.
 3. `'`: the marks list appears at the bottom, with a row `r ➜ 36 rebuild *ARGS:` (mark, line number, line
-   text). Press `r` and you are back on line 36.
+   text). The thin bar in the list (just before `36` in the screenshot below) is not text: it is your cursor,
+   still on the last line behind the list, drawn as an underline while Neovim waits for the letter. Press `r` and
+   you are back on line 36.
 4. `''` takes you back to the end of the file, and `''` again brings you back to line 36.
 
 ![The which-key marks list after pressing ': mark r points at line 36, rebuild *ARGS:](../media/02-motions/marks-popup.png)

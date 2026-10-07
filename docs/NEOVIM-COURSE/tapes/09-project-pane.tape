@@ -6,7 +6,8 @@ Require nvim
 # tapes/09-project-pane.tape - Lesson 09: <leader>ff finds the justfile
 # (fzf suffix syntax), <leader>fg live-greps the banner rulers with the
 # regex ^# =+, <C-q> sends the results to a quickfix list, <CR> and ]q ]q
-# walk it, then <leader>o opens the Aerial outline of models.py.
+# walk it, then :cclose and :b models go back to models.py (the command line
+# is cleared afterwards), where <leader>o opens the Aerial outline.
 #
 # Records examples/session-browser/SB2's models.py and a read-only copy of the
 # repository's justfile - no tags or course progress needed.
@@ -121,6 +122,13 @@ Sleep 500ms
 Enter
 Wait+Screen /Plain data types shared/
 Sleep 1s
+# Neovim leaves ":b models" on the command line until something overwrites
+# it, so it would sit under the outline (and in aerial.png) to the end. ":"
+# then <Esc> abandons an empty command, which blanks the line; the ":" shows
+# for a frame or two at most.
+Type ":"
+Escape
+Sleep 800ms
 # <leader>o = :AerialToggle (neovim.nix:26): far left, cursor moves in.
 Type " o"
 Sleep 3s

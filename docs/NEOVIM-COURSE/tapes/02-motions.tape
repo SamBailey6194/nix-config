@@ -104,7 +104,9 @@ Sleep 700ms
 Type "{"
 Sleep 1s
 
-# Scrolling: half pages, whole pages, then H M L inside the window.
+# Scrolling: half pages, whole pages, then H M L inside the window. <C-b>
+# leaves the cursor on the bottom visible line, so H goes first: L straight
+# after <C-b> would not move at all.
 Type "gg"
 Sleep 900ms
 Ctrl+D
@@ -117,7 +119,7 @@ Ctrl+F
 Sleep 1s
 Ctrl+B
 Sleep 1s
-Type@800ms "LMH"
+Type@800ms "HML"
 Sleep 1s
 
 # zt zz zb move the view, not the cursor.

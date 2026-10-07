@@ -273,6 +273,7 @@ let recipes = vec![
 ```
 
 A macro is just text in a register. `:reg a` `<CR>` shows `I    "^[A",^[j`, where `^[` is `<Esc>`.
+The colour scheme draws both `^[` very dim (its `SpecialKey` colour): look between `"` and `A`, and between `,` and `j`.
 
 ![:reg a shows the recorded keys: I, four spaces and a quote, Esc, A, quote and comma, Esc, j](../media/04-search-registers-macros/reg-a.png)
 
@@ -432,7 +433,7 @@ inspect any of them, before the capstones start in lesson 06.
   | `cgn.png` | lines 19-21 and 23 changed to `DONE`, line 22 skipped |
   | `recording.png` | `recording @a` with line 27 done and the cursor on `check` |
   | `macro-vec.png` | the seven `vec!` entries after `6@a` |
-  | `reg-a.png` | `:reg a` showing `I    "^[A",^[j` |
+  | `reg-a.png` | `:reg a` showing `I    "^[A",^[j` (the two `^[` are drawn dim) |
   | `macro-caution.png` | the five caution-table entries after `4@b` |
 
 - **Privacy:** the tape never presses `"` in Normal or Visual mode or `<C-r>` anywhere, and it shows only

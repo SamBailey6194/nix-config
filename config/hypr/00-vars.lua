@@ -150,9 +150,10 @@ M.workspaceAssignments = {
     --     things like `devxzedxZed`; more importantly, escaping is what makes
     --     the intent obvious to the next reader.
     --
-    -- The terminals are the easy half: kitty DOES support --class, so the
-    -- nix-config layout launches them with `--class nixcfg-term` and a plain
-    -- class match is enough.
+    -- The Zed layout's two terminals are the easy half: kitty DOES support
+    -- --class, so the nix-config layout launches them with
+    -- `--class nixcfg-term` and a plain class match is enough. Only the Zed
+    -- layout has them; the Neovim one below is a single window.
     {
         name      = "nixcfg-editor",
         match     = { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" },
@@ -167,6 +168,11 @@ M.workspaceAssignments = {
     -- The Neovim variant of the same layout (SUPER + SHIFT + RETURN), which
     -- shares workspace 2 with the Zed one: dev-layout refuses to build a
     -- second layout there and focuses the existing one instead.
+    --
+    -- This one rule places the WHOLE Neovim layout: it is a single Kitty
+    -- window filling the workspace, with the keybind reference, file tree,
+    -- git panel and shell as panes and tabs inside Neovim, so there are no
+    -- nixcfg-term windows to go with it.
     --
     -- Note how much smaller this rule is than nixcfg-editor above. Neovim runs
     -- inside Kitty and Kitty supports --class, so there is no title clause and

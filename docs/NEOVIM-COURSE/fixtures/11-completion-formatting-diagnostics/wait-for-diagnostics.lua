@@ -12,6 +12,9 @@
 --   ruff server:  "`sys` imported but unused"             (rule F401)
 --   pyright:      'Operator "+" not supported for types'  (str + int)
 --
+-- ruff also reports PIE810 ("Call `startswith` once with a `tuple`") on the
+-- long line; the tape does not wait on it, but it shows as a second W sign.
+--
 -- Matching on the messages rather than on each server's `source` name keeps
 -- this independent of how either server labels itself. Nothing is written.
 

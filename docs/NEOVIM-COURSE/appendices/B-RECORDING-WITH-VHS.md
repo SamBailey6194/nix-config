@@ -1,7 +1,7 @@
 # Appendix B — Recording with VHS
 
 **Last Updated**: 27/09/2026
-**Version**: 1.1.0
+**Version**: 1.1.1
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -78,7 +78,7 @@ milestone of **your own** code. They are local; do not push them.
 ## Privacy guards
 
 VHS records its own headless terminal, never your screen, so notifications and other windows cannot
-leak in. What can leak is whatever the tape itself shows. Four guards cover the known leaks:
+leak in. What can leak is whatever the tape itself shows. Five guards cover the known leaks:
 
 - **Registers show your clipboard.** which-key's registers plugin lists every register, including
   `"+` and `"*` (your clipboard and your primary selection), the moment `"` is pressed in Normal or
@@ -99,6 +99,10 @@ leak in. What can leak is whatever the tape itself shows. Four guards cover the 
   point `CLAUDE_CONFIG_DIR` at a throwaway folder (tape 00's pattern:
   `Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/NN-slug.claude"`), so not even an aborted run can leave a
   lock in your real `~/.claude`. The live tapes must not do this, or Claude would start logged out.
+- **Neovim's state folder.** `:checkhealth vim.lsp` prints the LSP log path, `$XDG_STATE_HOME/nvim/lsp.log`,
+  which by default is under your home directory and so shows your user name. A tape that opens a health
+  report sets `Env XDG_STATE_HOME "/tmp/nvim-course/NN-slug/state"` (tape 10 does, and tape 01 for its
+  persistent-undo demo), which also keeps the tape's logs and undo files out of `~/.local/state`.
 - **Real data stays out.** No tape reads your real `~/.claude`, `~/.codex` or Kitty sessions. The
   session-browser tapes point `CLAUDE_CONFIG_DIR`, `CODEX_HOME` and `--kitty-sessions-dir` at copies
   of `fixtures/sessions/`, which are synthetic, and tape 20 also sets a throwaway `HOME` and stand-in
@@ -433,6 +437,8 @@ Tick these off for each `media/NN-slug/` folder before `git add`:
 |---|---|---|
 | `vhs` prints `Creating …gif...` and exits 0, but `media/NN-slug/` is empty | VHS 0.12.0 cancels its own render step (charmbracelet/vhs#787) | `vhs --version` must print 0.12.1; if not, `just rebuild`: [the first section](#first-make-sure-vhs-is-0121) |
 | Icons are empty boxes, or letters look badly spaced | The font family in `settings.tape` does not match the installed name, so a fallback font was used. The exact family name on NixOS is unverified | Run `fc-list \| grep -i jetbrainsmono` and put the family it prints first in the `FontFamily` line of `tapes/_shared/settings.tape` |
+| The first `Wait` times out with `last value was: \[\]> \[\]`, on every tape | VHS starts whichever `bash` is first on `PATH`. The repository's `.envrc` loads the dev shell when you `cd` in, and a dev shell without `bashInteractive` puts stdenv's bash first. That bash has no readline, so the prompt prints as `[]> []` and never matches `>$` | `bash -c 'type bind'` must print "bind is a shell builtin". The flake's dev shell includes `bashInteractive`, so run `direnv reload` after pulling it. Outside the dev shell: `PATH=/run/current-system/sw/bin:$PATH vhs tapes/NN-slug.tape` |
+| A tape pins `Env TZ "Europe/London"`, but a program still shows UTC | VHS's bash reads no profile, so NixOS's `TZDIR` never reaches the tape, and runtimes not built by Nix (uv's standalone Python, through nix-ld) look for zones only in `/usr/share/zoneinfo`, which NixOS does not have | Add `Env TZDIR "/etc/zoneinfo"` next to `Env TZ`, as tapes 18 to 20 do |
 | `browser exited unexpectedly`, or Chromium complains about its sandbox | Headless Chromium could not start its sandbox | `VHS_NO_SANDBOX=1 vhs tapes/NN-slug.tape` |
 | The error mentions `Socket path too long` | `TMPDIR` is a very long path, and Chromium's socket path overflows | `TMPDIR=/tmp vhs tapes/NN-slug.tape` |
 | VHS starts downloading Chromium into `~/.cache/rod` | This `vhs` is not the Nix-wrapped one, so it cannot find a browser | `command -v vhs`, then remove the other copy from `PATH` |

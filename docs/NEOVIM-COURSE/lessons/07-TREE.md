@@ -124,9 +124,12 @@ after a bare start the tree is open and you reach it with `<C-h>`. It is 30 colu
 [MP4](../media/07-tree/07-tree.mp4)
 
 The top line is the root, `/tmp/nvim-course/07-tree`. Below it come the folders (`.git` first, because dotfiles
-are shown, then `docs`, `notes` and `target`), then the files (`.gitignore`, `README.md`). `target` is dimmed, and
-the other entries carry a git mark: steps 7 and 8 explain both. (The recording opened `docs/plan.md` first, so
-in it `docs` is already expanded.)
+are shown, then `docs`, `notes` and `target`), then the files (`.gitignore`, `README.md`). (The recording opened
+`docs/plan.md` first, so in it `docs` is already expanded.) `target` is greyed out, with the ignored mark (a box
+with a slash through it) on the right. Everything else in the fresh repository is untracked: drawn in orange,
+with an orange `?` on the right. Two folders have no mark: `.git`, which git never reports on (so it keeps the
+theme's plain grey folder colour), and, in the recording, `docs`, because neo-tree hides a folder's mark while
+it is expanded and leaves it to the files inside. Steps 7 and 8 explain the marks.
 
 ![The tree open on the left, docs expanded and the cursor on plan.md](../media/07-tree/tree.png)
 
@@ -329,7 +332,7 @@ default.
 | --- | --- |
 | `close_if_last_window = true` (:633) | the tree never stays behind as the only window in a tab |
 | `popup_border_style = 'rounded'` (:634) | the rounded prompts of steps 3 to 5 |
-| `enable_git_status = true` (:635) | git marks: untracked, modified, staged and ignored entries look different, and a folder shows that something inside it changed |
+| `enable_git_status = true` (:635) | git marks: untracked, modified, staged and ignored entries look different, and a collapsed folder shows that something inside it changed |
 | `enable_diagnostics = true` (:636) | files with language-server errors or warnings get a diagnostic mark |
 | `sources = { 'filesystem', 'buffers', 'git_status' }` (:637) | the three things `<` / `>` cycle through in the same window |
 | `open_files_do_not_replace_types = { … }` (:643-646) | `<CR>` never opens a file into the terminal, the outline, Trouble, quickfix or a git panel |
@@ -950,8 +953,9 @@ types typed side by side with the spec.
   deleting the wrong file on camera.
 - **Check each recording:**
   - `media/07-tree/` actually contains the GIF, the MP4 and all seven PNGs.
-  - `tree.png` shows `target` dimmed and git marks on the other entries. If there are no marks, `git init` did
-    not run.
+  - `tree.png` shows `target` greyed out with the ignored mark, and orange `?` marks on `notes`, `keys.md`,
+    `plan.md`, `.gitignore` and `README.md` (`.git` and the expanded `docs` have none). If there are no `?`
+    marks, `git init` did not run.
   - `added.png` has the cursor on `ideas.md` inside `docs`.
   - `delete-confirm.png` names `drafts.md`.
   - `hidden-toggled.png` has no `target` entry; the GIF shows it coming back after the second `H`.

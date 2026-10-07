@@ -192,6 +192,9 @@ when you saved.
 
 ![app.py on the left, app.tcss on the right](../media/18-session-browser-tui-skeleton/split.png)
 
+The recording opens the finished, saved file, so it runs the command for a reopened `app.tcss` from the
+gotcha below. The result is the same as in your new buffer: CSS colours and no filetype in the status line.
+
 What it says: `#sessions` and `#preview-pane` are the `id`s you give two widgets in step 4. `2fr` and `1fr`
 share the width left over two to one, so the list gets two thirds. `padding: 0 1` is no padding above and
 below and one cell left and right. `border-left: tall $primary-muted` draws a line down the preview's left
@@ -1130,7 +1133,7 @@ Stuck? Compare with [examples/session-browser/SB5](../examples/session-browser/S
 
   | File | Shows | Step |
   |---|---|---|
-  | `split.png` | `app.py` and `app.tcss` side by side, the stylesheet coloured with `:set syntax=css` | 3 |
+  | `split.png` | `app.py` and `app.tcss` side by side, the saved stylesheet reopened and coloured with `:setlocal filetype= syntax=css` | 3 |
   | `hover.png` | `K` on `DataTable`: the class signature from Textual's source | 4 |
   | `termexec.png` | The app in Neovim's bottom terminal after `:TermExec … go_back=0` | 10 |
   | `list.png` | The app at full size: nine sessions and the preview of the newest | 10 |
@@ -1141,8 +1144,9 @@ Stuck? Compare with [examples/session-browser/SB5](../examples/session-browser/S
   `CODEX_HOME` and `--kitty-sessions-dir`, all set on the visible command lines. The tape sets `SHELL=/bin/sh`, so
   the terminal inside Neovim runs a plain `sh`: no zsh prompt and no shell history
   ([Appendix B](../appendices/B-RECORDING-WITH-VHS.md#privacy-guards)). It sets `TZ=Europe/London` so the times
-  match the table in step 10. It also points `CLAUDE_CONFIG_DIR` at a throwaway folder for Neovim itself, so
-  claudecode.nvim's lock file never lands in your real `~/.claude/ide`.
+  match the table in step 10, and `TZDIR=/etc/zoneinfo` so that uv's Python can find that zone on NixOS
+  (without it, the app silently shows UTC, an hour behind the table). It also points `CLAUDE_CONFIG_DIR` at a
+  throwaway folder for Neovim itself, so claudecode.nvim's lock file never lands in your real `~/.claude/ide`.
 - **Manual steps:** none, but the first run may take a while if `uv sync` has to download packages; the tape
   allows three minutes for the setup. If the copy or `uv sync` fails, the setup never prints its ready marker
   and VHS stops with a `Wait` timeout.

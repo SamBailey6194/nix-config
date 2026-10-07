@@ -26,8 +26,10 @@ Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/11-completion-formatting-diagnostics.cla
 # copied to /tmp/nvim-course/11-completion-formatting-diagnostics and edited
 # THERE. It is a tiny standard-library-only Python project: pyproject.toml
 # marks the root for pyright and ruff, and kitty_demo.py is deliberately
-# untidy (single quotes, one 100-column line), imports `sys` without using it
-# (ruff F401) and adds an int to a str (a pyright error). Saving that copy is
+# untidy (single quotes, one 100-column line whose two `or`-ed startswith
+# calls ruff also flags as PIE810), imports `sys` without using it (ruff
+# F401) and adds an int to a str (a pyright error). So Trouble lists one
+# pyright error and two ruff warnings, and no hint. Saving that copy is
 # the formatting demo; no file in the repo is written. It never reads the
 # capstones or the worked examples either, so it records the same at any
 # point in the course.
@@ -73,6 +75,10 @@ Sleep 200ms
 Type "/lines = path"
 Enter
 Sleep 800ms
+# Space h: clear the search highlight (<leader>h) before the menu opens, so
+# completion.png shows the menu and not a highlighted `lines = path`.
+Type " h"
+Sleep 800ms
 Type "o"
 Sleep 400ms
 Type "path.read_"
@@ -90,12 +96,10 @@ Ctrl+E
 Sleep 1.5s
 Escape
 Sleep 300ms
-# u removes the whole line opened with o.
+# u removes the whole line opened with o. The pause gives pyright time to
+# re-check the restored file before the save.
 Type "u"
-Sleep 1s
-# Space h: clear the search highlight (<leader>h).
-Type " h"
-Sleep 800ms
+Sleep 1.8s
 
 # --- 2. Format on save --------------------------------------------------------
 # <C-s> is the config's Normal-mode save (:w). conform runs ruff format first.

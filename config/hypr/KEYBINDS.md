@@ -5,7 +5,9 @@
 | Keybind              | Action                  |
 |----------------------|-------------------------|
 | `SUPER + Return`     | Terminal (kitty)        |
-| `SUPER + SHIFT + Return` | Terminal with Neovim |
+| `SUPER + SHIFT + Return` | nix-config layout: Neovim alone (ws 2) |
+| `SUPER + CTRL + Return`  | Dev layout: Neovim alone (next free ws 3-5) |
+| `SUPER + ALT + Return`   | Neovim in plain Kitty (not placed; laptop: ws 10) |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
 | `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 2) |
@@ -23,12 +25,18 @@
 | `SUPER + SHIFT + M`  | Backup monitor (htop)   |
 | `SUPER + /`          | This keybinds help      |
 
-`SUPER + CTRL + Z` opens a picker listing every project under `~/Repos`, then
-builds the layout on the lowest free workspace in the 3-5 dev pool. With all
-four already holding windows it raises a notification and stops — close a dev
-space, or switch to one of them and work there.
+`SUPER + CTRL + Z` and `SUPER + CTRL + Return` open a picker listing every
+project under `~/Repos`, then build the layout on the lowest free workspace in
+the 3-5 dev pool. With all three already holding windows it raises a
+notification and stops — close a dev space, or switch to one of them and work
+there.
 
-From a terminal you can skip the picker: `dev-layout --new <path>`.
+From a terminal you can skip the picker: `dev-layout --new [--nvim] <path>`.
+
+A Zed layout is Zed at 75% with two terminals stacked on the right. A Neovim
+layout is a single Kitty window filling the workspace: the keybind reference,
+file tree, git panel and shell are panes and tabs inside Neovim, and its own
+bindings are listed in `~/.config/nvim/KEYBINDS.md`.
 
 ## Affinity Suite
 

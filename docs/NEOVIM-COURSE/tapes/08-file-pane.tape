@@ -33,6 +33,8 @@ Require nvim
 #   - In the buffers panel, /spec is plain Vim search (neo-tree maps / only in
 #     the filesystem source), so the cursor lands on spec.md whatever order
 #     the panel lists the buffers in.
+#   - After the vsplit screenshot, ":" then Escape clears the ":b mod" left on
+#     the command line, so the later shots do not show a stale command.
 Env CLAUDE_CONFIG_DIR "/tmp/nvim-course/08-file-pane.claude"
 # claudecode.nvim starts its server on every Neovim start (auto_start = true,
 # neovim.nix:830-833) and writes an IDE lock file under $CLAUDE_CONFIG_DIR/ide.
@@ -113,6 +115,11 @@ Wait+Screen /class Source/
 Sleep 1.5s
 Screenshot media/08-file-pane/vsplit.png
 Sleep 200ms
+# Clear the stale ":b mod" off the command line (":" then Escape, over in a
+# frame), so it is not in three-windows.png or buffers-panel.png.
+Type ":"
+Escape
+Sleep 300ms
 
 # --- Step 5: <C-h> / <C-l> move between the two windows (neovim.nix:68-71).
 Ctrl+H

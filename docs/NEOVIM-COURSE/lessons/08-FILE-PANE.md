@@ -267,7 +267,11 @@ knowing: `<C-w>w` cycles through every window in turn, and `<C-w>p` jumps back t
 **Try it:** in the right-hand window press `<C-w>s`. Then `<C-w>_`, then `<C-w>=`. Finally `<C-q>`.
 
 **You should see** three windows (the right half split in two, both showing `models.py`), the lower one grow to
-nearly full height, all three even out, then the lower one close.
+nearly full height, all three even out, then the lower one close. The new lower window does not start at line 1:
+it starts at the line that was already on that part of the screen (line 15 in the recording), and the cursor
+moves there. That is `splitkeep = 'screen'` (neovim.nix:248) keeping the text still (step 9). If two lines turn
+up underlined (in the recording, `class Source(StrEnum):` and `KITTY = "kitty"`), they are not errors:
+indent-blankline (neovim.nix:750-752) underlines the first and last line of the block the cursor has landed in.
 
 ![Three windows after <C-w>s and <C-w>=](../media/08-file-pane/three-windows.png)
 

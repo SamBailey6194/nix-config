@@ -162,7 +162,9 @@ Wait+Screen /rebuild: exit 0/
 Sleep 1s
 
 # --- 5. A [confirm] recipe. The panel shows the justfile's own question, and
-# y runs `just --yes update`, so just does not ask a second time.
+# y runs `just --yes update`, so just does not ask a second time. The
+# hand-over's `$` line still reads `just update`: Run's Display writes the run
+# the way you would type it and leaves --yes out.
 Escape
 Sleep 800ms
 Type "/update"
