@@ -15,6 +15,9 @@ let
     pref("sidebar.verticalTabs", true);
     pref("sidebar.revamp", true);
     pref("browser.toolbars.bookmarks.visibility", "never");
+    // Collapsed launcher, as on Ubuntu. With vertical tabs on, Firefox expands
+    // the launcher unless sidebar.backupState says otherwise.
+    pref("sidebar.backupState", "{\"launcherExpanded\":false,\"launcherVisible\":true}");
   '';
   # Zen loads policies beside its actual binary, not the Firefox wrapper.
   zenUnwrapped = inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta-unwrapped.override {
@@ -25,7 +28,14 @@ let
     pname = "zen-beta";
     icon = "zen-browser";
     extraPolicies = zenPolicies;
-    extraPrefs = ''pref("zen.view.sidebar-expanded", false);'';
+    # Ubuntu's layout: collapsed left sidebar with the URL bar in a top toolbar.
+    # Zen ships use-single-toolbar = true, which moves the URL bar into the
+    # sidebar; Firefox's default nav-bar springs then centre it at the top.
+    extraPrefs = ''
+      pref("zen.view.sidebar-expanded", false);
+      pref("zen.view.use-single-toolbar", false);
+      pref("zen.view.compact.enable-at-startup", false);
+    '';
   };
 in {
   options.services.browserPolicies.enable = lib.mkEnableOption "shared managed browser policies and local proxy";
