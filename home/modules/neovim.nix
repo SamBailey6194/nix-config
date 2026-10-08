@@ -621,6 +621,25 @@ in
       })
       lsp('systemd_lsp', { cmd = { '${pkgs.systemd-lsp}/bin/systemd-lsp' } })
 
+      -- Docker, GraphQL and Prisma — the servers Zed's dockerfile,
+      -- docker-compose, graphql and prisma extensions bring. The compose server
+      -- only attaches to the 'yaml.docker-compose' filetype set further down;
+      -- yamlls lists that filetype too, so schema validation keeps working.
+      -- GitHub Actions has no packaged server in nixpkgs, so workflows stay on
+      -- yamlls + SchemaStore here.
+      lsp('dockerls', {
+        cmd = { '${pkgs.dockerfile-language-server}/bin/docker-langserver', '--stdio' },
+      })
+      lsp('docker_compose_language_service', {
+        cmd = { '${pkgs.docker-compose-language-service}/bin/docker-compose-langserver', '--stdio' },
+      })
+      lsp('graphql', {
+        cmd = { '${pkgs.graphql-language-service-cli}/bin/graphql-lsp', 'server', '-m', 'stream' },
+      })
+      lsp('prismals', {
+        cmd = { '${pkgs.prisma-language-server}/bin/prisma-language-server', '--stdio' },
+      })
+
       -- nginx variables are written $host, $request_uri and so on. Without '$'
       -- in 'iskeyword' the cursor sees them as the bare name, and completion and
       -- hover both miss — upstream recommends this exact tweak.
@@ -636,8 +655,14 @@ in
       -- server attachments above.
       vim.filetype.add({
         extension = { slint = 'slint' },
-        pattern = { ['.*%.blade%.php'] = 'blade' },
+        pattern = {
+          ['.*%.blade%.php'] = 'blade',
+          ['.*/docker%-compose[^/]*%.ya?ml'] = 'yaml.docker-compose',
+          ['.*/compose[^/]*%.ya?ml'] = 'yaml.docker-compose',
+        },
       })
+      -- Compound filetype: parse it with the yaml grammar.
+      vim.treesitter.language.register('yaml', 'yaml.docker-compose')
 
       -- ============================================================================
       -- TREESITTER

@@ -220,6 +220,10 @@ in
     yaml-language-server                       # YAML + schema validation
     nginx-language-server                      # nginx.conf completion + hover
     systemd-lsp                                # systemd unit files (Neovim only)
+    dockerfile-language-server                 # Dockerfile (docker-langserver)
+    docker-compose-language-service            # docker-compose*.yml
+    graphql-language-service-cli               # GraphQL (graphql-lsp)
+    prisma-language-server                     # Prisma schema
 
     # ── Linters and formatters (shared by all editors) ──────────────────
     ruff                        # Python linter + formatter (fast!)

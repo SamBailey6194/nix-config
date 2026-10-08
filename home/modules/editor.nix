@@ -304,6 +304,10 @@ in
         };
 
         Dockerfile = {
+          # The dockerfile extension registers two servers; run the pinned one
+          # (the same docker-langserver Neovim uses) rather than downloading
+          # Docker's docker-language-server alongside it.
+          language_servers = [ "dockerfile-language-server" "!docker-language-server" "..." ];
           format_on_save = "on";
           auto_indent = true;
           auto_indent_on_paste = true;
@@ -470,6 +474,26 @@ in
             };
           };
         };
+
+        # The nix extension registers both nil and nixd. Zed runs nixd only;
+        # nil stays on PATH for Neovim (modules/software/development.nix).
+        Nix = {
+          language_servers = [ "nixd" "!nil" "..." ];
+          auto_indent = true;
+          auto_indent_on_paste = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+          colorize_brackets = true;
+        };
+
+        Lua = {
+          language_servers = [ "lua-language-server" "..." ];
+          auto_indent = true;
+          auto_indent_on_paste = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+          colorize_brackets = true;
+        };
       };
 
       # LSP settings.
@@ -594,6 +618,21 @@ in
         emmet-language-server =
           bin "${pkgs.emmet-language-server}/bin/emmet-language-server" [ "--stdio" ];
 
+        # Docker / GraphQL / Prisma — same store paths Neovim runs.
+        dockerfile-language-server =
+          bin "${pkgs.dockerfile-language-server}/bin/docker-langserver" [ "--stdio" ];
+        docker-compose =
+          bin "${pkgs.docker-compose-language-service}/bin/docker-compose-langserver" [ "--stdio" ];
+        graphql =
+          bin "${pkgs.graphql-language-service-cli}/bin/graphql-lsp" [ "server" "-m" "stream" ];
+        prisma-language-server =
+          bin "${pkgs.prisma-language-server}/bin/prisma-language-server" [ "--stdio" ];
+
+        # Nix / Lua — without a pin the lua extension downloads its own
+        # lua-language-server release into ~/.local/share/zed.
+        nixd = bin "${pkgs.nixd}/bin/nixd" [ ];
+        lua-language-server = bin "${pkgs.lua-language-server}/bin/lua-language-server" [ ];
+
         rust-analyzer = {
           # rust-analyzer found via PATH (~/.cargo/bin from rustup)
           initialization_options = {
@@ -663,8 +702,13 @@ in
       # servers for a language once its extension is present, so this list is what
       # actually turns the `languages` blocks above from inert config into working
       # support. Extensions are fetched from Zed's registry at runtime — the one
-      # part of this setup Nix cannot pin — but every server they launch is pinned
-      # to a store path by the `lsp` block above.
+      # part of this setup Nix cannot pin. Servers with an `lsp` pin above run from
+      # the store; github-actions (no nixpkgs package) and Docker's own
+      # docker-language-server are downloaded by their extension, like eslint.
+      #
+      # The list mirrors the extensions installed on the Ubuntu desktop, plus the
+      # Laravel/Swift/Kotlin/nginx/Slint additions. Ubuntu's `pylsp` is left out on
+      # purpose: Python runs ["pyright" "ruff"] only, so it would never start.
       #
       # No Alpine.js language server exists for Zed (the registry carries only
       # `alpinejs-snippets`), and there is no htmx extension at all; Alpine's
@@ -685,6 +729,24 @@ in
         nginx = true;             # nginx.conf, nginx-language-server
         toml = true;              # TOML — grammar only, no server exists
         alpinejs-snippets = true; # Alpine.js — snippets only, no LSP exists
+        emmet = true;             # Emmet — the server Blade's list above names
+        nix = true;               # Nix — grammar + nixd
+        lua = true;               # Lua — grammar + lua-language-server
+        dockerfile = true;        # Dockerfile — grammar + docker language servers
+        docker-compose = true;    # docker-compose.yml language server
+        github-actions = true;    # .github/workflows language server
+        graphql = true;           # GraphQL — grammar + graphql-lsp
+        prisma = true;            # Prisma schema — grammar + prisma server
+        sql = true;               # SQL — grammar only
+        xml = true;               # XML — grammar only
+        json5 = true;             # JSON5 — grammar only
+        make = true;              # Makefile — grammar only
+        editorconfig = true;      # .editorconfig — grammar only
+        codeowners = true;        # CODEOWNERS — grammar only
+        git-firefly = true;       # .gitignore / .gitattributes / git config / rebase
+        python-requirements = true; # requirements*.txt / constraints*.txt
+        python-snippets = true;   # Python snippets
+        pbxproj = true;           # Xcode project files (Swift work)
       };
 
       # Node used for Zed's own npm-installed language servers (eslint,
