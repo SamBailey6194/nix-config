@@ -31,8 +31,8 @@ The existing QUIC firewall rule is shared from `browser_setup` too.
 ## Preserve personal browser data
 
 Policies do not include bookmarks, passwords, tabs, extension preferences or
-browser-specific workspaces. The retained Ubuntu home and encrypted backup must
-include these directories. Close every browser before the final backup/copy.
+browser-specific workspaces. The old Ubuntu home (until its drive is encrypted)
+and the backup must include these directories. Close every browser before the final backup/copy.
 Do not copy a profile while another process is using it.
 
 | Browser | Ubuntu directory under `/home/sam-dev` | NixOS directory under `/home/sam-desktop` |

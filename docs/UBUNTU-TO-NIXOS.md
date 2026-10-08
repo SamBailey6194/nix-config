@@ -80,7 +80,7 @@ Still to do before erasing anything:
    from the live installer, after a clean Ubuntu shutdown. `COPY FINISHED`
    alone is not verification. Expect it to flag the database files (re-copy
    them from the cleanly shut-down root) and store paths added to `/nix` since
-   the copy (`/nix` is retained, not erased, so those are harmless).
+   the copy (harmless: NixOS never reuses Ubuntu's store).
 3. Test restoring representative files: documents, the repository, credentials
    and the database dumps.
 4. In the **same live session**, before the guide's section 3, stage the
@@ -151,7 +151,8 @@ archive ESPs. Secure Boot is currently disabled (Setup Mode).
 
 **Space.** The Intel disk cannot hold all your existing data: Ubuntu home alone
 (282GiB) is larger than its entire capacity. The new encrypted `/home`, `/nix`
-and Docker subvolumes start fresh. Retained data stays reachable on the old
+and Docker subvolumes start fresh on it, and move to the larger drives as those
+are encrypted. Retained data stays reachable on the old
 drives. Download only the models you use: the seven candidates in
 [LOCAL-LLM.md](LOCAL-LLM.md) total roughly 100GiB, and builds need free space
 too. The configuration starts automatic store garbage collection below 5GiB
@@ -188,8 +189,8 @@ done
 - Then copy `~/.ssh/id_ed25519_agenix` to offline storage (and its passphrase,
   if it has one).
 - Losing it would not lose the secrets themselves: their plaintext sources are
-  still on the retained Ubuntu home and in the backup. But you would have to
-  re-encrypt every one of them by hand.
+  in the backup (and on the old Ubuntu home until that drive is encrypted). But
+  you would have to re-encrypt every one of them by hand.
 
 **On install day:** follow the guide's section 8. In short:
 
@@ -223,7 +224,9 @@ Every devtower-intel stage, minimal included, mounts:
 | `/mnt/davinci` | DavinciProj, NTFS (ntfs-3g) | read-write for `sam-desktop`; mounted at boot with `norecover`. See [its page](DAVINCI-SHARED-DRIVE.md) |
 | `/mnt/backup` | BackupDrive, ext4 | read-write, on demand when attached |
 
-All use `nofail`, so a missing drive never blocks boot.
+All use `nofail`, so a missing drive never blocks boot. The first four are the
+old Ubuntu filesystems, and they change as each Linux data drive is encrypted
+(below).
 
 - **Not reused:** the configuration doesn't reuse the Ubuntu store, and doesn't
   start Docker against the old data directory.
@@ -236,12 +239,22 @@ All use `nofail`, so a missing drive never blocks boot.
 LUKS on the OS drive encrypts only files stored within that encrypted device.
 Plaintext home, archive, Docker partitions and backups remain readable if their
 drives are removed, and mounting them from encrypted NixOS does not encrypt
-them. For full coverage, back up a data drive, create an encrypted replacement,
-restore and verify it, then repeat one drive at a time. Each data device then
-needs its own unlock/mount plan and new UUIDs. In-place conversion is a separate
-risky operation, unsuitable as a shortcut to a same-day migration with
-irreplaceable data. DavinciProj stays plain NTFS while Windows needs native
-access to it.
+them.
+
+**The plan: once NixOS works, wipe and encrypt every Linux data drive, one at a
+time.** Each gets its own LUKS2 container and its own passphrase, and the TPM2
+unlocks them all at boot:
+
+- **Samsung 512GB** becomes `/home`.
+- **Samsung 870 EVO** becomes `/nix` and Docker.
+- **Seagate archive** becomes `/mnt/archive`.
+
+`hosts/devtower-intel/data-drives.nix` switches each drive over as soon as its
+two new UUIDs are filled in. The step-by-step procedure (order: archive, store,
+home) is in
+[BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
+In-place conversion is not used. DavinciProj stays plain NTFS while Windows
+needs native access to it.
 
 For now, retain the data drives and protect new credentials in the encrypted
 NixOS home. The EFI partition remains unencrypted; verified boot is a separate

@@ -499,6 +499,13 @@ and the old monitor token remain on the Ubuntu home partition, in configs,
 backups and transcripts. Once this PC works, rotate those keys and update the
 agenix secrets on the laptop.
 
+**Next:** encrypt the Linux data drives one at a time (archive, store, then
+home), each with its own LUKS2 passphrase and a TPM2 token:
+[BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
+Erasing the old home drive as that procedure does (overwriting it through the
+new encrypted container) also removes the plaintext keys above from it. They remain in the plaintext backup on
+BackupDrive, so rotating them is still necessary.
+
 ## Recovery
 
 For a failed NixOS rebuild, choose an earlier NixOS generation at boot or run

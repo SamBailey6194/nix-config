@@ -1,7 +1,9 @@
 # devtower-intel disk prevention and agent skills
 
 The NixOS migration creates fresh encrypted `@nix` and `@docker` subvolumes.
-Ubuntu's cleaned store and Docker data remain read-only recovery mounts.
+Ubuntu's cleaned store and Docker data remain read-only recovery mounts until
+the 870 EVO is itself encrypted and takes over `/nix` and Docker
+([BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time)).
 
 ## Nix and Cargo
 
