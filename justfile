@@ -14,6 +14,11 @@ default:
 jev *ARGS:
     @uv run --script {{quote(justfile_directory() / "scripts/jev.py")}} "$@"
 
+# AWS SSO login: pick a profile from ~/.aws/config (or pass one); opens in Brave
+[positional-arguments]
+aws *PROFILE:
+    @bash {{quote(justfile_directory() / "scripts/aws-sso-login.sh")}} "$@"
+
 # ============================================================================
 # Secrets Management (Phase 2)
 # ============================================================================

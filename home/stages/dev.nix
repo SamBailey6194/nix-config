@@ -70,7 +70,7 @@ in
 
     # Security / cloud / infra CLIs
     cosign      # Sigstore container/artifact signing & verification
-    awscli2     # AWS CLI v2
+    # AWS CLI v2: installed by ../modules/aws.nix, wrapped to log in via Brave
     stripe-cli  # Stripe CLI (webhooks, API testing)
     terraform   # IaC (unfree/BSL 1.1 — allowUnfree enabled via nix-settings.nix)
     opentofu    # IaC — FOSS (MPL 2.0) fork of terraform, `tofu` binary
