@@ -44,7 +44,8 @@ M.mod = "SUPER"
 --   7     browsers
 --   8     Affinity Suite
 --   9     comms
---   10    catch-all for everything else   (laptop only)
+--   10    file managers (assigned here); catch-all for everything else
+--         on laptop-intel and devtower-intel
 M.workspaceAssignments = {
     -- Browsers (workspace 7)
     --
@@ -130,6 +131,46 @@ M.workspaceAssignments = {
         name      = "affinity-publisher",
         match     = { class = "^(affinity-publisher)$" },
         workspace = "8",
+    },
+
+    -- File managers (workspace 10)
+    --
+    -- SUPER + F opens Yazi in kitty with the `yazi` class; SUPER + SHIFT + F
+    -- opens Thunar. On laptop-intel and devtower-intel the catch-all already
+    -- sends them to 10, but the laptop's is "10 silent" — the window would
+    -- open out of sight. These rules are not silent, so you follow it there.
+    -- udiskie's "browse" action launches the same `yazi` class.
+    --
+    -- Files opened FROM a file manager need nothing here: each app's window
+    -- is placed by its own rule (browsers to 7, mail to 6, ...) or, with
+    -- none, by the device catch-all — i.e. 10, next to the file manager.
+    {
+        name      = "files-yazi",
+        match     = { class = "^(yazi)$" },
+        workspace = "10",
+    },
+    {
+        name      = "files-thunar",
+        match     = { class = "^(thunar)$" },
+        workspace = "10",
+    },
+
+    -- Popups that belong to whatever you are doing: the Yazi file picker
+    -- (xdg-desktop-portal-termfilechooser's kitty) and ripdrag's drag window.
+    -- "unset" cancels any earlier workspace rule, so they open on the CURRENT
+    -- workspace, over the app that asked for them, instead of being thrown
+    -- to 10 by the catch-all. Hyprland 0.56 handles the literal "unset" in
+    -- Window.cpp (requestedWorkspace = ""). Floating and size are in
+    -- 70-windowrules.lua.
+    {
+        name      = "popup-file-picker",
+        match     = { class = "^(termfilechooser)$" },
+        workspace = "unset",
+    },
+    {
+        name      = "popup-ripdrag",
+        match     = { class = "^(it\\.catboy\\.ripdrag)$" },
+        workspace = "unset",
     },
 
     -- nix-config dev layout (workspace 2, reserved)

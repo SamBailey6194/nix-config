@@ -59,8 +59,13 @@ hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
 hl.bind(mod .. " + SHIFT + Z", hl.dsp.exec_cmd("dev-layout"))
 hl.bind(mod .. " + CTRL + Z",  hl.dsp.exec_cmd("dev-layout-pick"))
 
--- File manager
-hl.bind(mod .. " + F", hl.dsp.exec_cmd("thunar"))
+-- File managers: Yazi is the main one, Thunar the backup (SHIFT). Both land on
+-- workspace 10 and take you there (vars.workspaceAssignments in 00-vars.lua).
+-- Yazi runs in kitty with its own `yazi` class so the rule can tell it apart
+-- from an ordinary terminal; inside it, F1 opens its keybind sheet. Configured
+-- in home/modules/file-manager.nix.
+hl.bind(mod .. " + F",         hl.dsp.exec_cmd("kitty --class yazi yazi"))
+hl.bind(mod .. " + SHIFT + F", hl.dsp.exec_cmd("thunar"))
 
 -- Web browsers
 hl.bind(mod .. " + W",         hl.dsp.exec_cmd("zen-beta"))

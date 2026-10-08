@@ -39,13 +39,42 @@
   # XDG Portal configuration
   # NOTE: programs.hyprland.enable already sets up xdg-desktop-portal-hyprland
   # We just need to add GTK portal and configure the portal selection
+  #
+  # FILE CHOOSER: Yazi via termfilechooser, GTK as the fallback.
+  #
+  # The list is a preference order that xdg-desktop-portal resolves when IT
+  # starts: gtk is used only if termfilechooser is not installed or does not
+  # offer FileChooser. It is NOT a runtime fallback — if the Yazi picker
+  # fails, the request fails; nothing retries with GTK. To get the GTK
+  # dialog back without a rebuild, create
+  # ~/.config/xdg-desktop-portal/hyprland-portals.conf containing
+  #   [preferred]
+  #   default=*
+  #   org.freedesktop.impl.portal.FileChooser=gtk
+  # then `systemctl --user restart xdg-desktop-portal.service`; delete the
+  # file and restart again to undo. For good: drop termfilechooser below.
+  #
+  # The picker's own config (terminal, start dir) is user-level, in
+  # home/modules/file-manager.nix — termfilechooser never reads /etc/xdg.
+  #
+  # `default = "*"` stays: it is what currently routes Secret to the
+  # gnome-keyring portal, which hyprland-portals.conf (hyprland;gtk) would not.
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
       xdg-desktop-portal-gtk
+      xdg-desktop-portal-termfilechooser
     ];
-    config.common.default = "*";
+    config.common = {
+      default = "*";
+      "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" "gtk" ];
+    };
   };
+
+  # xfconf daemon, so Home Manager's xfconf.settings can write Thunar's
+  # preferences (home/modules/file-manager.nix turns off its volume
+  # management, now that udiskie automounts).
+  programs.xfconf.enable = true;
 
   # Required packages for Hyprland ecosystem
   environment.systemPackages = with pkgs; [
@@ -82,7 +111,7 @@
     # Terminal emulator
     kitty
 
-    # File manager
+    # File manager (backup to Yazi, which is per-user: home/modules/file-manager.nix)
     thunar
 
     # Image viewer
@@ -150,5 +179,13 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1"; # Hint electron apps to use Wayland
     WLR_NO_HARDWARE_CURSORS = "1"; # Fix cursor rendering on some hardware
+
+    # GTK 3 apps only use the portal file chooser (Yazi, via termfilechooser
+    # above) when this is set; GTK 4, Firefox 149+, Chromium/Brave and
+    # Electron use the portal by default. It has to be system-wide:
+    # greetd starts Hyprland through /bin/sh sourcing /etc/profile, so Home
+    # Manager's sessionVariables (sourced only by zsh) never reach apps
+    # launched from keybinds or wofi.
+    GTK_USE_PORTAL = "1";
   };
 }

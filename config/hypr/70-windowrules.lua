@@ -73,13 +73,15 @@ hl.window_rule({
 --   devpool-nvim-3..5  the same, for a pool Neovim layout's single window
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's btop pane (laptop only)
+--   yazi               Yazi, the file manager (SUPER + F)
+--   termfilechooser    Yazi as an app's Open / Save dialog (the portal's kitty)
 --
 -- Kept RE2-compatible: alternation and a character class only, no lookaround
 -- (see devices/laptop-intel.lua for what silently happens when a rule pattern
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor)$" },
+    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor|yazi|termfilechooser)$" },
 
     opacity = "0.95 0.95",
 })
@@ -89,6 +91,36 @@ hl.window_rule({
     match = { class = "^(thunar)$" },
 
     opacity = "0.95 0.95",
+})
+
+-- ── File picker and drag popups ───────────────────────────────────────
+--
+-- Both open on the current workspace (their "unset" workspace rules live in
+-- vars.workspaceAssignments, so they are re-asserted after a device
+-- catch-all). Here they are only made to float.
+--
+-- termfilechooser: the Yazi "Open / Save file" dialog, a kitty window that
+-- xdg-desktop-portal-termfilechooser starts with this class
+-- (home/modules/file-manager.nix). Floated and centred over the app that
+-- asked, at a size that still shows Yazi's three columns. `center` must come
+-- with `size`: it positions against the final size.
+hl.window_rule({
+    name  = "float-file-picker",
+    match = { class = "^(termfilechooser)$" },
+
+    float  = true,
+    size   = { "monitor_w*0.6", "monitor_h*0.65" },
+    center = true,
+})
+
+-- ripdrag (ALT + d in Yazi): a small GTK 4 window holding the files to drag.
+-- Pinned so it stays visible while you switch workspace to the drop target.
+hl.window_rule({
+    name  = "float-ripdrag",
+    match = { class = "^(it\\.catboy\\.ripdrag)$" },
+
+    float = true,
+    pin   = true,
 })
 
 -- ── Workspace Assignments ─────────────────────────────────────────────

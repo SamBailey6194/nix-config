@@ -12,6 +12,7 @@
     ../modules/shell.nix     # Zsh + Oh My Zsh
     ../modules/browsers.nix  # LibreWolf profile + Zen default browser
     ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
+    ../modules/file-manager.nix    # Yazi (main) + Thunar (backup), udiskie, file picker
   ];
 
   # Normalise completed download names; routing remains opt-in until rules are set.
@@ -33,9 +34,10 @@
     # Fonts
     jetbrains-mono             # JetBrains Mono
 
-    # File managers
+    # File managers: Yazi (main) is programs.yazi in ../modules/file-manager.nix.
+    # Thunar is the backup on SUPER + SHIFT + F. thunar-volman is gone: udiskie
+    # (same module) does the automounting now.
     thunar
-    thunar-volman
     thunar-archive-plugin
 
     # Image viewers

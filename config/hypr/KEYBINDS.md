@@ -12,7 +12,8 @@
 | `SUPER + Z`          | Zed editor              |
 | `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 2) |
 | `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 3-5) |
-| `SUPER + F`          | File manager (Thunar)   |
+| `SUPER + F`          | File manager: Yazi (ws 10; F1 inside = its keys) |
+| `SUPER + SHIFT + F`  | Backup file manager: Thunar (ws 10) |
 | `SUPER + W`          | Zen browser (default)   |
 | `SUPER + SHIFT + W`  | Brave browser           |
 | `SUPER + ALT + W`    | LibreWolf browser       |
@@ -108,10 +109,17 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `7`       | Browsers                                     |
 | `8`       | Affinity Suite                               |
 | `9`       | Comms (Teams, Zoom, Discord)                 |
-| `10`      | Everything else (catch-all) — laptop only    |
+| `10`      | File managers; everything else (catch-all) — laptop, devtower-intel |
 
-Workspaces 1 and 10 are set up by `devices/laptop-intel.lua`, so they exist on
-laptop-intel only; the other devices have no dashboard and no catch-all.
+The workspace-10 catch-all exists on laptop-intel (`devices/laptop-intel.lua`)
+and devtower-intel (`devices/devtower-intel.lua`); framework and devtower have
+none. The ws1 dashboard above is laptop-intel's. The file managers go to 10 on
+every device.
+
+Files opened from Yazi or Thunar go to that app's usual workspace (a browser
+to 7, and so on); apps with no workspace of their own stay on 10. An app's
+"Open / Save file" dialog is Yazi too: it floats over the app, on the current
+workspace.
 
 ## Screenshots
 
