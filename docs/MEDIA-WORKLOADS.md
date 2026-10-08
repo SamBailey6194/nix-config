@@ -6,6 +6,12 @@ All devices and stages include `ffmpeg`, `ffprobe` and Rhubarb Lip Sync
 `whisperflow` and the existing command spelling `whisper-flow` both launch
 the dictation app. It also has an application-menu entry.
 
+The exception is laptop-intel, whose i5-10210U is too slow to run them
+usefully: it sets `software.heavyMediaTools.enable = false`
+(`modules/hardware/intel-laptop.nix`), which drops Rhubarb, WhisperX and
+WhisperFlow from every stage. It keeps `ffmpeg` and `ffprobe`. To bring them
+back on a host, set the option to `true` there.
+
 FFmpeg, Rhubarb, WhisperX and WhisperFlow system commands automatically run
 in separate systemd scopes beneath `workload.slice`. Child processes stay in
 the same scope, including FFmpeg launched internally by transcription tools.

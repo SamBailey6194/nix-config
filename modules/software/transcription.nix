@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   whisperflow = pkgs.callPackage ../../pkgs/whisperflow.nix { };
@@ -9,7 +9,8 @@ in
 {
   # Imported by the shared desktop module, so stages 2-6 on every device get
   # both tools, while minimal installation images avoid the Python/Qt closure.
-  environment.systemPackages = [
+  # Hosts can opt out with software.heavyMediaTools.enable (media-jobs.nix).
+  environment.systemPackages = lib.optionals config.software.heavyMediaTools.enable [
     # The standard nixpkgs package is CPU-only. A later --device argument can
     # override this when substituting a CUDA-enabled package.
     (contained "whisperx" "${pkgs.whisperx}/bin/whisperx --device cpu --compute_type int8 --batch_size 4")

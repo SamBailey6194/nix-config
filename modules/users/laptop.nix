@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # User configuration for laptop-intel device
@@ -6,8 +6,9 @@
   users.users.sam-laptop = {
     isNormalUser = true;
     description = "Sam Bailey (Laptop)";
-    extraGroups = [
+    extraGroups = lib.optionals config.software.heavyMediaTools.enable [
       "input"          # WhisperFlow global hotkeys under Wayland
+    ] ++ [
       "wheel"          # sudo access
       "networkmanager" # network management
       "video"          # video devices (brightness control)

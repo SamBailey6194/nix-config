@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # Intel laptop-specific hardware configuration
@@ -30,6 +30,11 @@
 
   # Backlight Control (brightnessctl installed in home packages)
   hardware.acpilight.enable = true;
+
+  # The i5-10210U is too slow for local transcription (whisperx/WhisperFlow)
+  # and lip-sync (rhubarb). The local LLM stack is already devtower-intel only
+  # (services.localLlm is off here by default).
+  software.heavyMediaTools.enable = false;
 
   # GPU monitoring: nvtop's Intel build (i915/Xe usage via DRM fdinfo)
   environment.systemPackages = [ pkgs.nvtopPackages.intel ];
