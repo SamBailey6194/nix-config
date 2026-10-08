@@ -20,8 +20,14 @@ sudo python3 scripts/export-ubuntu-migration-secrets.py
 
 If the export fails, resolve it while Ubuntu's VPN is still available. The backup
 script's root copy then includes `/etc/nixos-migration` automatically.
-Do not print or commit those credential files. No export or backup has been
-started by this repository's changes.
+Do not print or commit those credential files.
+
+**Run record.** The export ran on 2026-10-05 at 15:09. The backup ran as unit
+`pre-nixos-backup` from 2026-10-07 07:13 to 11:51 and ended with `COPY FINISHED`.
+There were no vanished-file, `INCOMPLETE` or `LIVE-DATA CAVEATS` lines. It
+copied root 45.9G, archive 122.5G, home 334.4G, Nix 17.0G, Docker 9.4G and the
+Ubuntu EFI, plus images of the other two Ubuntu ESPs. The offline verification
+below is still outstanding.
 
 Run your existing command only after the edits and checks are complete:
 
@@ -63,11 +69,11 @@ encrypted Restic backup in section 2. If you use this verified rsync copy instea
 mount BackupDrive at `/media/backup` in the installer and verify its UUID and
 serial as described there. Do not run `restic restore` against the rsync directory.
 After offline comparison and before erasing Intel, prepare the same temporary
-credential-restore location used by the guide:
+credential-restore location used by the guide. Run this as root in the section 2
+shell; don't start a new `sudo -i`, which would drop the `nix-shell` tools that
+sections 5 and 6 need:
 
 ```sh
-sudo -i
-bash
 copy=/media/backup/pre-nixos-2026-10-05
 restored=/tmp/restore-check/media/ubuntu-root/etc
 install -d -m 0700 "$restored"

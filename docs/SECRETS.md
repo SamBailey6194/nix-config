@@ -196,6 +196,21 @@ rm /tmp/github-personal-* /tmp/github-syntek-*
 sudo nixos-rebuild switch --flake .#HOSTNAME
 ```
 
+### devtower-intel (bootstrapped from the laptop)
+
+The Intel desktop's secrets were created before the PC had a host key, so they
+are encrypted to the laptop's agenix key only
+(`devtowerIntelKeys = [ sam-laptop ]`).
+
+- **Who can open them:** only laptop-intel's `~/.ssh/id_ed25519_agenix`. Keep an
+  offline copy of it.
+- **When they are needed:** only the full stage uses them.
+- **Adding the PC:** once the PC has created its host key, add it on the laptop
+  and run `just rekey-secrets`. The full procedure is
+  [INSTALL-INTEL-MANUALLY.md section 8](INSTALL-INTEL-MANUALLY.md#8-enable-host-secrets-then-the-full-stage),
+  and the pre-flight checks are in
+  [UBUNTU-TO-NIXOS.md](UBUNTU-TO-NIXOS.md#agenix-and-the-laptop).
+
 ---
 
 ## Setup Guide

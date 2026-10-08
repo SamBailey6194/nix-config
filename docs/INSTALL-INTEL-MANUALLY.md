@@ -13,9 +13,9 @@ Keep the backup password and LUKS passphrase independently of this PC.
 ## 1. Prepare on Ubuntu
 
 Record the current configuration and disk inventory somewhere outside Intel.
-The repository, including these uncommitted files, lives in your retained
-Samsung home; include the whole directory in the backup. Do not rely on a fresh
-Git clone to contain the new untracked files.
+The repository is committed and pushed to `origin/main`. It also lives in your
+retained Samsung home, which section 5 copies from. The only local edits during
+installation will be the `disks.nix` UUIDs.
 
 ```sh
 cd /home/sam-dev/Repos/personal/nix-config
@@ -43,10 +43,13 @@ target. Boot it in **UEFI** mode. Use wired networking if possible. The current
 configuration uses systemd-boot, so arrange firmware settings that allow it to
 boot; Secure Boot signing/enrolment is a separate setup task.
 
-If using your already prepared `backup-before-nixos.sh` copy, read
-[the live-backup review and installer adaptation](LIVE-BACKUP-SCRIPT.md) first.
-That copy is unencrypted and requires offline verification; section 2 below
-uses an encrypted Restic repository instead.
+**The backup you took on 2026-10-07 is the `backup-before-nixos.sh` rsync
+copy**, not the Restic repository below (see
+[backup status](UBUNTU-TO-NIXOS.md#backup-status)). That copy is unencrypted
+and still needs offline verification. Follow
+[the live-backup review and installer adaptation](LIVE-BACKUP-SCRIPT.md)
+instead of section 2's Restic commands. The mounts at the start of section 2
+are still the way to bring the sources up read-only for that comparison.
 
 ## 2. Mount source data and make an encrypted offline backup
 
@@ -67,7 +70,7 @@ mount -o ro,noload /dev/disk/by-uuid/9f544f15-8e9a-45de-9951-d84f51b62e57 /media
 mount -o ro /dev/disk/by-uuid/27BE-92E7 /media/ubuntu-efi
 mount -o ro /dev/disk/by-uuid/244E-5B6F /media/home-efi
 mount -o ro /dev/disk/by-uuid/2537-6BE7 /media/archive-efi
-mount /dev/disk/by-uuid/883736aa-556a-4e5e-b42f-e58bd40f5668 /media/backup
+mount /dev/disk/by-uuid/883736aa-556a-4e5e-b42f-e58bd40f5668 /media/backup   # rsync route: add -o ro,noload
 findmnt /media/backup
 lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS
 df -h /media/backup
@@ -77,11 +80,11 @@ If a mount fails, stop and resolve it; do not substitute a random device.
 Read-only/no-journal-replay mounts assume a cleanly shut down source.
 The destination must be Backup+ Hub BK, serial `NA9R0S9H`, label
 `BackupDrive`, ext4 UUID `883736aa-556a-4e5e-b42f-e58bd40f5668`.
-Its main filesystem is currently `sdf2`; the 128MiB `sdf1` partition is not the
-backup filesystem. Do not format either partition. Device letters can change.
-The observed 8.6TiB free exceeds the roughly 1.55TiB used by these Ubuntu data
-filesystems; verify free space again in the installer. The archive is now a
-backup **source**, so its contents are protected independently as well.
+It is a 10TB (9.1TiB) USB drive. Its small first partition (128MiB) is not the
+backup filesystem. Do not format either partition. Device letters change every
+time it is attached. Check free space with `df -h /media/backup`: roughly
+8.1TiB should remain after the ~530GB (~495GiB) rsync copy. The archive is a backup
+**source**, so its contents are protected independently as well.
 
 ```sh
 export RESTIC_REPOSITORY=/media/backup/ubuntu-before-nixos-restic
@@ -107,11 +110,23 @@ Do not print restored credential files. If a check fails, do not proceed.
 This is a filesystem backup, not a bootable disk image: record disk layouts and
 UUIDs as well. Follow [backup verification and staged data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md)
 before encrypting any additional drive. Keep BackupDrive physically disconnected
-during formatting to protect the only independent copy.
+during formatting to protect the only independent copy. Unmount it first
+(`sync; umount /media/backup`); never unplug a mounted filesystem.
 Restic has no automatic database-consistency guarantee; the prior clean stop
 and database exports matter.
 
 ## 3. Identify the Intel target again
+
+**If you are using the rsync copy:** run the credential staging block in
+[LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#using-this-backup-with-the-manual-installer)
+**now, in this same live session**. Section 5 reads WireGuard keys and
+`squid-digest.env` from `/tmp/restore-check`, and only the Restic restore in
+section 2 or that block creates it. `/tmp` is in RAM, so it is lost on reboot.
+Check it before continuing:
+
+```sh
+ls /tmp/restore-check/media/ubuntu-root/etc/nixos-migration/squid-digest.env /tmp/restore-check/media/ubuntu-home/sam-dev/.config/wireguard/sam-desktop/private.key
+```
 
 Unmount the old Intel root after backup. Do not unmount the retained home you
 will copy the configuration from.
@@ -179,11 +194,22 @@ mount -o subvol=@docker,compress=zstd:1,noatime /dev/mapper/cryptroot /mnt/var/l
 mount "$INSTALL_ESP" /mnt/boot
 findmnt -R /mnt
 cryptsetup luksHeaderBackup "$INSTALL_LUKS" --header-backup-file /tmp/intel-nixos-luks-header
-restic backup --tag nixos-luks-header /tmp/intel-nixos-luks-header
+restic backup --tag nixos-luks-header /tmp/intel-nixos-luks-header   # Restic route only
 ```
 
 Use a strong recoverable passphrase; do not depend on TPM auto-unlocking for
-the first boot. The header backup is encrypted by Restic. Its recovery file
+the first boot. On the Restic route the header backup is encrypted by Restic.
+On the rsync route there is no repository, and `/tmp` is lost at the reboot in
+section 6, so save it **before rebooting**. Encrypt it with a passphrase onto
+separate removable media (or BackupDrive, once reconnected), never onto the
+target disk and never unencrypted beside the plaintext rsync copy:
+
+```sh
+nix-shell -p age
+age -p -o /path/to/usb/intel-nixos-luks-header.age /tmp/intel-nixos-luks-header
+age -d /path/to/usb/intel-nixos-luks-header.age | cmp - /tmp/intel-nixos-luks-header && echo header-saved
+```
+ Its recovery file
 must be kept with its passphrase and protected like a key. Later LUKS key-slot
 changes require an updated header backup.
 
@@ -220,11 +246,12 @@ rg 'REPLACE-' hosts/devtower-intel/disks.nix
 That must return **no matches**. Do not generate a hardware configuration over
 the supplied Intel module: it defines the intended subvolumes and retained mounts.
 
-The flake has private SSH inputs using the `github-personal` alias. If fetching
-them fails in the live environment, use your backed-up SSH configuration/keys
-temporarily in the live system (not in the repo or Nix store), verify GitHub's
-host key, and test that alias. Remove temporary copies before leaving the live
-session. No SSH private key is required on an unencrypted installation USB.
+The live installer needs **no GitHub SSH key**: the minimal stage does not use
+the two private flake inputs (`browser_setup`, `accountability_script`), and
+`nixos-install` evaluates it without fetching them. The public inputs still
+download from GitHub over HTTPS, so keep the network connection. The private
+ones are first needed by the desktop stage, which section 7 handles. No SSH private key is required on an
+unencrypted installation USB.
 
 ## 6. Install the minimal stage first
 
@@ -279,6 +306,31 @@ or Docker directory should not be copied wholesale onto the new active paths.
 Ubuntu-owned files have UID 1000, matching the new user, but names and config
 paths still need adjustment.
 
+**Create the SSH host key now** (section 8 step 1). The laptop can then rekey
+the secrets while the later stages build. The private key never leaves the PC:
+
+```sh
+sudo test -s /etc/ssh/ssh_host_ed25519_key || sudo ssh-keygen -q -t ed25519 -N '' -C root@devtower-intel -f /etc/ssh/ssh_host_ed25519_key
+cat /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+**Fetching the private flake inputs.** From the desktop stage on, the flake
+fetches `browser_setup` and `accountability_script` from
+`git@github-personal:...`. The minimal system has neither that SSH alias nor
+GitHub's host keys, and the per-device GitHub keys only arrive through agenix in
+the full stage. Bridge it for this shell with the key and `known_hosts` from the
+retained Ubuntu home (never copied into the repository or the store):
+
+```sh
+export GIT_SSH_COMMAND='ssh -i /mnt/ubuntu-home/sam-dev/.ssh/id_ed25519_devtower_intel_personal -o IdentitiesOnly=yes -o HostName=github.com -o UserKnownHostsFile=/mnt/ubuntu-home/sam-dev/.ssh/known_hosts -o StrictHostKeyChecking=yes'
+```
+
+Run the user-level `nix build` first: it fetches both inputs into the store, and
+the root `nixos-rebuild` then finds them there without SSH. If the rebuild
+still tries to fetch them (for example after a garbage collection in between),
+rerun it as `sudo --preserve-env=GIT_SSH_COMMAND nixos-rebuild ...`. Plain
+`sudo` drops the variable.
+
 ```sh
 cd ~/Repos/personal/nix-config
 nix-shell -p python3
@@ -286,6 +338,11 @@ python3 scripts/prepare-nix-source.py /tmp/nix-config-desktop
 nix build --impure --no-link 'path:/tmp/nix-config-desktop#nixosConfigurations.devtower-intel-desktop.config.system.build.toplevel'
 sudo nixos-rebuild switch --flake 'path:/tmp/nix-config-desktop#devtower-intel-desktop'
 ```
+
+From the desktop stage on, the `github-personal` alias and GitHub's host keys
+exist (`modules/core/ssh-config.nix`), so later stages need only the key itself.
+Keep exporting `GIT_SSH_COMMAND` in any new shell that builds a stage until the
+full stage is running.
 
 Verify Hyprland/NVIDIA/audio/media tools, then build the development stage as
 your user so Nix builds run within the configured daemon budget:
@@ -321,13 +378,15 @@ The full stage (`.#devtower-intel`) declares these agenix secrets in
 | `aws-credentials` (static IAM keys) | `/run/agenix/aws-credentials`, linked to `~/.aws/credentials` |
 
 They are encrypted to the laptop's agenix key only, so this PC cannot decrypt
-them until its own host key is a recipient. Switching to the full stage before
-that only logs agenix decryption errors and leaves those files missing; finish
-the steps below, then switch again.
+them until its own host key is a recipient. If you switch to the full stage
+before that, the agenix activation step fails. `nixos-rebuild` reports an error,
+but the generation is still installed and boots: only those secret files are
+missing. Finish the steps below, then switch again.
 
-**1. On devtower-intel, create and print the host key.** sshd is enabled only
-in the full stage, so the key does not exist yet. sshd keeps an existing key,
-so the one created here stays the host's identity:
+**1. On devtower-intel, create and print the host key** (skip if you already
+did this at the start of section 7). sshd is enabled only in the full stage, so
+the key does not exist yet. sshd keeps an existing key, so the one created here
+stays the host's identity:
 
 ```sh
 sudo test -s /etc/ssh/ssh_host_ed25519_key || sudo ssh-keygen -q -t ed25519 -N '' -C root@devtower-intel -f /etc/ssh/ssh_host_ed25519_key
@@ -341,17 +400,36 @@ first have this repository's devtower-intel secrets work (including
 `hosts/devtower-intel/secrets.nix`). If it was not pushed from Ubuntu, commit and
 push it from devtower-intel using the command in step 3 with `git push`.
 
+Check first that the laptop's key really is the `sam-laptop` recipient and
+opens all 11 devtower-intel files
+([details](UBUNTU-TO-NIXOS.md#agenix-and-the-laptop)):
+
 ```sh
 cd ~/Repos/personal/nix-config
 git pull
+ssh-keygen -y -f ~/.ssh/id_ed25519_agenix   # must match sam-laptop in secrets/secrets.nix
+(cd secrets && for f in *-devtower-intel*.age; do agenix -d "$f" -i ~/.ssh/id_ed25519_agenix >/dev/null && echo "ok $f" || echo "FAIL $f"; done)
 $EDITOR secrets/secrets.nix
 #   devtower-intel = "ssh-ed25519 AAAA... root@devtower-intel";   (uncomment, paste the line)
-#   devtowerIntelKeys = [ sam-laptop devtower-intel ];
-nix develop -c just rekey-secrets   # agenix -r with ~/.ssh/id_ed25519_agenix
+#   devtowerIntelKeys = [ sam-laptop devtower-intel ];             (keep sam-laptop)
+just rekey-secrets   # agenix -r with ~/.ssh/id_ed25519_agenix
 git add secrets
 git commit -m "feat(secrets): add devtower-intel host key"
 git push
 ```
+
+- **Where `just rekey-secrets` gets its tool:** it runs `agenix-helper`, which
+  laptop-intel's full configuration installs system-wide. The dev shell does not
+  provide it.
+- **Without it,** run `(cd secrets && agenix -r -i ~/.ssh/id_ed25519_agenix)`
+  directly. The subshell keeps you in the repository root for `git add`.
+- **Normal output:** all 31 files are rewritten, and you get four
+  `wasn't created.` lines for rules declared in `secrets.nix` that have no file
+  yet. The two ASCII-armoured `typesafe-api-key-*` files come out binary, which
+  is harmless.
+- **Check:** this should now print `2`:
+  `grep -ac '^-> ssh-ed25519' secrets/github-ssh-personal-devtower-intel.age`
+- **Push immediately:** the files are binary and cannot be merged.
 
 **3. On devtower-intel, pull the re-encrypted secrets.** Git rewrites this
 repository's remote to the `github-personal` alias, whose key is one of the
@@ -409,7 +487,10 @@ rm -f ~/.config/ai-mcp/credentials.json ~/.zshenv.hm-backup ~/.aws/config.hm-bac
 rm /mnt/ubuntu-home/sam-dev/.ssh/id_ed25519_devtower_intel_{personal,syntek,missionalgen}
 ```
 
-The encrypted Restic backup still holds them. Sign in to each client's remote
+The plaintext rsync copy on BackupDrive (and any Restic repository, if you made
+one) still holds them, so keep that drive physically secure.
+
+Sign in to each client's remote
 MCP servers on this PC as described in [SHARED-MCP.md](SHARED-MCP.md), and run
 `gh auth login` once per GitHub account (gnome-keyring keeps the tokens).
 
@@ -423,6 +504,7 @@ agenix secrets on the laptop.
 For a failed NixOS rebuild, choose an earlier NixOS generation at boot or run
 `sudo nixos-rebuild switch --rollback` from a working generation. This does not
 undo disk formatting or restore Ubuntu. To recover data, boot the live USB,
-mount the encrypted target with its passphrase, unlock the Restic repository and
-restore selected files to a separate location first. Keep the untouched data
+mount the encrypted target with its passphrase, then copy selected files from the
+rsync copy on BackupDrive (or restore them from the Restic repository, if you
+made one) to a separate location first. Keep the untouched data
 drives and verified backup until the new system has been used and checked.

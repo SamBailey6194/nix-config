@@ -4,21 +4,26 @@
 
 | Item | Observed value |
 | --- | --- |
-| USB drive | Backup+ Hub BK, serial `NA9R0S9H`, 9.1TiB |
-| Backup filesystem | `sdf2`, ext4, label `BackupDrive` |
+| USB drive | Seagate Backup+ Hub BK, serial `NA9R0S9H`, 10TB (9.1TiB) |
+| Backup filesystem | second partition (was `sdf2`), ext4, label `BackupDrive` |
 | Filesystem UUID | `883736aa-556a-4e5e-b42f-e58bd40f5668` |
 | Ubuntu mount | `/mnt/backup` |
-| Available space | Approximately 8.6TiB |
-| Other partition | `sdf1`, 128MiB, no mounted filesystem shown |
+| Available space | ~8.6TiB before the backup; ~8.1TiB estimated after it |
+| Other partition | first partition (was `sdf1`), 128MiB, no mounted filesystem shown |
 
 Device letters are temporary. Mount by UUID and recheck model/serial in the live
 installer. Neither partition needs formatting to make a backup.
 The Intel NixOS configuration also mounts this filesystem at `/mnt/backup`,
 on demand and without preventing boot if the USB drive is disconnected.
 
-Ubuntu root, home, Nix store, Docker and archive currently use approximately
-1.55TiB combined. This destination has enough free space for their filesystem
-backup, with substantial room for verification. The Windows, games and DaVinci
+The backup was taken on 2026-10-07 as the unencrypted rsync copy
+`pre-nixos-2026-10-05/` (about 530GB, ~495GiB, after the /nix and Docker
+clean-up). No
+Restic repository was created, so the Restic criteria below apply only if you
+make one later. For the rsync copy, the equivalent checks are the offline
+`rsync --checksum --dry-run` comparison and restore tests in
+[LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#encryption-and-verification).
+The Windows, games and DaVinci
 NTFS drives are outside that five-filesystem total and remain unchanged; their
 contents are not included automatically. If you intend to erase/encrypt any of
 those too, back them up and verify them separately first.

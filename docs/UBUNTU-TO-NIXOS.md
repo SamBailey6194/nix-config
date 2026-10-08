@@ -1,96 +1,247 @@
 # Preserving this desktop during migration
 
-Inventory observed on 2026-10-05. Device letters can change: verify model,
-serial, size and UUID from a live installer before selecting any target.
-No disk has been formatted or installation started by these configuration edits.
+Inventory first observed on 2026-10-05 and rechecked on 2026-10-08. Device
+letters can change: verify model, serial, size and UUID from a live installer
+before selecting any target. No disk has been formatted or installation started
+by these configuration edits.
+
+Read alongside:
+
+- [Manual Intel installation](INSTALL-INTEL-MANUALLY.md): the step-by-step
+  procedure this page plans for.
+- [The live-backup review](LIVE-BACKUP-SCRIPT.md): how the rsync copy you took
+  is verified and used during installation.
+- [The shared DavinciProj drive](DAVINCI-SHARED-DRIVE.md): DaVinci Resolve and
+  Affinity files shared with Windows.
 
 | Drive / serial | Current use | Filesystem UUID |
 | --- | --- | --- |
-| Intel 256GB / PHHH93710CN8256B | Ubuntu root (ext4), ~49GiB used | `e9605dca-3609-4cd7-be0b-cfac0661111e` |
+| Intel 256GB / PHHH93710CN8256B | Ubuntu root (ext4), ~41GiB used | `e9605dca-3609-4cd7-be0b-cfac0661111e` |
 | Same Intel | Ubuntu EFI | `27BE-92E7` |
 | Same Intel | Ubuntu swap | `6b9a7bb1-febe-475f-9c98-5dfda3e97d4d` |
-| Samsung 512GB / S1X1NYAG302936 | Ubuntu `/home`, ~257GiB used | `8eaacce9-a3bd-4e95-924c-feb9e2d050b4` |
-| Samsung 870 EVO 2TB / S6PPNX0T910090T | Ubuntu `/nix`, ~716GiB used | `af95812e-4174-4c02-94fd-a142a7981165` |
-| Same Samsung 870 EVO | Docker, ~444GiB used | `0bb16801-79b4-435d-b8f6-646e3e12b38c` |
-| Seagate 4TB / ZFN2J51Q | Archive, ~123GiB used | `9f544f15-8e9a-45de-9951-d84f51b62e57` |
+| Samsung 512GB / S1X1NYAG302936 | Ubuntu `/home`, ~282GiB used | `8eaacce9-a3bd-4e95-924c-feb9e2d050b4` |
+| Samsung 870 EVO 2TB / S6PPNX0T910090T | Ubuntu `/nix`, ~57GiB used (grows with builds) | `af95812e-4174-4c02-94fd-a142a7981165` |
+| Same Samsung 870 EVO | Docker, ~9GiB used | `0bb16801-79b4-435d-b8f6-646e3e12b38c` |
+| Seagate ST4000DM004 4TB / ZFN2J51Q | Archive, ~123GiB used | `9f544f15-8e9a-45de-9951-d84f51b62e57` |
+| WD WD40EZRZ 4TB / WD-WCC7K0FU5LY2 | DavinciProj (NTFS, shared with Windows) | `34201009200FD0B2` |
 
-The new independent BackupDrive is Backup+ Hub BK, serial `NA9R0S9H`,
-ext4 UUID `883736aa-556a-4e5e-b42f-e58bd40f5668`, currently `sdf2` at
-`/mnt/backup`, with about 8.6TiB free. Use it for the encrypted Restic backup of
-all five Ubuntu data filesystems and EFI files; include the archive as a source.
-See [backup and staged data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md).
+The `/nix` and Docker figures dropped from ~716GiB and ~444GiB after the
+deliberate clean-up on 2026-10-06.
 
-Additional drives contain Windows, games and DaVinci data. Preserve them too:
-Games_2 `E87AFC317AFBF9E0`, DaVinci `34201009200FD0B2`, Windows
-`FAC43471C434326D`, Games_1 `CC64454F64453E08`, Windows EFI `8C32-B143`.
-Samsung home has another EFI `244E-5B6F`, archive EFI `2537-6BE7`.
+The independent **BackupDrive** is a separate Seagate: Backup+ Hub BK, serial
+`NA9R0S9H`, 10TB (9.1TiB), ext4 UUID `883736aa-556a-4e5e-b42f-e58bd40f5668`.
+Don't confuse it with the Seagate archive drive above, which was a backup
+**source**. Its device letter changes each time it is attached.
 
-## Today’s safe sequence
+Other drives contain Windows, games and recovery data. Preserve them too:
 
-1. Choose an installation target explicitly. Replacing the Intel drive removes
-   its Ubuntu root, EFI and swap; retaining the other drives does not preserve
-   a bootable Ubuntu installation. For dual boot, use another verified target
-   or a separately planned resize after backup. There is no empty drive in this
-   inventory. The current hardware module is a layout specification, not an
-   automatic partitioning script.
-2. Back up and verify restoration **before** changing partitions. Preserve
+- Crucial P3 1TB: Windows EFI `8C32-B143`, Windows `FAC43471C434326D`,
+  Windows recovery `FA2CEE802CEE3773`, Games_1 `CC64454F64453E08`.
+- Samsung 860 QVO 1TB: Games_2 `E87AFC317AFBF9E0`.
+- Old Ubuntu ESPs: Samsung home EFI `244E-5B6F` and archive EFI `2537-6BE7`.
+
+## Backup status
+
+The pre-NixOS backup is **taken but not yet verified**.
+
+- **What:** the unencrypted rsync copy made by `~/backup-before-nixos.sh`, not
+  the encrypted Restic repository the installation guide's section 2 describes.
+  No Restic repository exists.
+- **Where:** `pre-nixos-2026-10-05/` on BackupDrive (mounted at `/mnt/backup` on
+  Ubuntu, `/media/backup` in the live installer).
+- **When:** unit `pre-nixos-backup`, 2026-10-07 07:13 to 11:51. It reported
+  `COPY FINISHED`, with no vanished-file or `INCOMPLETE` warnings.
+- **Contents:** root 45.9G (including `/etc/nixos-migration`), archive 122.5G,
+  home 334.4G, Nix 17.0G, Docker 9.4G, Ubuntu EFI, plus images of the two
+  other Ubuntu ESPs.
+- **Not included:** DavinciProj, Windows and the games drives.
+- **Databases copied live:** MariaDB (`/var/lib/mysql`) and PostgreSQL 16
+  (`/var/lib/postgresql/16/main`) were running during the copy (the script
+  pauses only Docker and Nix). Both live on the Intel root disk, so the copy of
+  their data directories may be inconsistent.
+- **Sensitive:** it is plaintext. It holds every Ubuntu SSH private key, the
+  three devtower-intel GitHub keys, the WireGuard keys and the accountability
+  export. Keep the drive physically secure.
+
+Still to do before erasing anything:
+
+1. **Dump both databases on Ubuntu** before the final shutdown, to the retained
+   home or BackupDrive, then test-restore them into a disposable instance:
+
+   ```sh
+   sudo mysqldump --all-databases --single-transaction --routines --events > ~/mariadb-all.sql
+   sudo -u postgres pg_dumpall > ~/postgres-all.sql
+   ```
+
+   Dumps restore into NixOS's own database versions; copied data directories
+   may not.
+2. Run the offline checksum comparison in
+   [LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)
+   from the live installer, after a clean Ubuntu shutdown. `COPY FINISHED`
+   alone is not verification. Expect it to flag the database files (re-copy
+   them from the cleanly shut-down root) and store paths added to `/nix` since
+   the copy (`/nix` is retained, not erased, so those are harmless).
+3. Test restoring representative files: documents, the repository, credentials
+   and the database dumps.
+4. In the **same live session**, before the guide's section 3, stage the
+   credentials into `/tmp/restore-check` with the
+   [rsync adaptation](LIVE-BACKUP-SCRIPT.md#using-this-backup-with-the-manual-installer).
+   Section 5 reads them from there, and `/tmp` lives in RAM, so a reboot
+   loses it.
+5. Back up DavinciProj from the live installer before the first NixOS boot,
+   since every stage mounts it read-write
+   (see [its page](DAVINCI-SHARED-DRIVE.md#backup-and-encryption)).
+6. Before unplugging BackupDrive for partitioning, unmount it
+   (`sync; umount /media/backup`). On the rsync route nothing needs to write to
+   it, so mounting it `ro,noload` in the live session is safer still.
+
+## Today's safe sequence
+
+1. **Choose the installation target explicitly.** The configured target is the
+   Intel 256GB disk, serial `PHHH93710CN8256B`, only. Replacing it removes
+   Ubuntu's root, EFI and swap. Keeping the other drives does not preserve a
+   bootable Ubuntu installation. There is no empty drive in this inventory. The
+   hardware module is a layout specification, not an automatic partitioning
+   script.
+2. **Verify the backup** (above) **before changing partitions.** Preserve
    `/etc`, personal files, Git work including untracked changes, SSH/GPG keys,
-   age identity keys, credentials, browser profiles and application configs.
-   Export databases and stop Docker before backing up volumes; compose files
-   alone do not contain application data. A live/offline backup avoids changing
-   files during copying. Use the independent BackupDrive; existing archive data
-   is a backup source too. Encrypt backups containing credentials.
-3. Test restoration of representative files and databases and record ownership,
-   ACLs and extended attributes. Preserve a recovery copy of the Ubuntu root if
-   replacing Intel; NixOS generation rollback cannot restore a formatted Ubuntu
-   filesystem. Keep a working live USB and encryption recovery material.
-4. Verify the target from the installer using `lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS`
-   and `blkid`. Disconnect non-target drives during partitioning where practical.
-   Only then create the intended EFI and LUKS2/btrfs layout, with subvolumes
+   age identity keys, credentials, browser profiles and application configs. A
+   NixOS generation rollback cannot restore a formatted Ubuntu filesystem. Keep
+   a working live USB and the encryption recovery material.
+3. **Check the laptop's agenix key now**
+   (see [Agenix and the laptop](#agenix-and-the-laptop)). It is the only key
+   that can open the devtower-intel secrets, and it is not in the backup.
+4. **Verify the target from the installer** with
+   `lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS` and `blkid`.
+   Disconnect non-target drives, BackupDrive included, during partitioning where
+   practical. Only then create the EFI and LUKS2/btrfs layout, with subvolumes
    `@root`, `@nix`, `@snapshots`, `@log`, `@home`, `@docker`. Reconnect retained
-   drives before validating their mounts. Existing Windows/other-drive EFI
-   partitions must not be formatted.
-5. Put the **new** EFI, LUKS container and inner btrfs UUIDs into
-   `hosts/devtower-intel/disks.nix`. Ubuntu root/swap UUIDs are inventory only;
-   they cannot identify a new encrypted filesystem. Evaluate and build the
-   selected stage before installing. New untracked files require `path:.` or
-   adding the files to Git for a Git-backed flake.
-6. Start with a small stage if space/build time requires it; the AI tooling and
-   Neovim are in dev and above. Confirm boot, LUKS unlocking, NVIDIA, network,
-   backups and retained mounts before enabling more workloads. Restore selected
-   personal files to the new home and adjust ownership to `sam-desktop` rather
-   than blindly copying Ubuntu's user/database files over NixOS settings.
+   drives before validating their mounts. Never format the Windows ESP or any
+   other drive's ESP.
+5. **Fill in `hosts/devtower-intel/disks.nix`** with the **new** EFI, LUKS
+   container and inner btrfs UUIDs. Every evaluation warns until you do. The
+   Ubuntu root and swap UUIDs are inventory only. Evaluate and build the stage
+   before installing. New untracked files need `path:` (the guide's
+   `prepare-nix-source.py` does this).
+6. **Install the minimal stage first** (`devtower-intel-minimal`), then move up
+   through `-desktop`, `-dev`, `-productivity` and `-creative` to the full
+   `devtower-intel`.
+   - Installing needs no GitHub SSH key (the public inputs still download over
+     HTTPS, so use a network connection).
+   - From the desktop stage on, the private flake inputs `browser_setup` and
+     `accountability_script` are fetched over SSH. The guide's section 7 gives
+     the one-off bridge.
+   - Only the full stage needs agenix secrets.
+   - DaVinci Resolve Studio and the Affinity apps arrive with the creative
+     stage.
+   - Confirm boot, LUKS unlocking, NVIDIA, network, backups and retained mounts
+     before enabling more workloads.
+7. **Restore selected personal files** into the new home. The uid is already
+   1000, so only the group changes (Ubuntu's 1000 becomes `users`, gid 100;
+   the guide runs `chown -R 1000:100`). Don't copy Ubuntu's user, database or
+   agent config files over NixOS settings wholesale.
 
-The Intel disk cannot hold all your existing data: Ubuntu home alone is larger
-than its entire capacity, before the 716GiB store and 444GiB Docker data. The
-new encrypted `/home`, `/nix` and Docker subvolumes start fresh on the chosen
-OS filesystem. Retained data stays accessible separately. Download only the
-models you use; the seven candidate files alone total roughly 100GiB, and
-builds need additional free space. Plan additional encrypted capacity before
-moving all home, models or Docker workloads onto encrypted storage.
-The Intel Nix configuration starts automatic store garbage collection below
-5GiB free and aims for 15GiB, reclaiming only unreferenced store data. It cannot
-remove rooted generations or runtime model files. Use the source-copy helper
-in the manual guide to avoid archiving multi-gigabyte Rust build directories.
+**Boot order after the erase.** Firmware currently boots `Boot0004 "Ubuntu"`
+from the Intel ESP that is about to be erased. Next in line is `Boot0003`,
+Windows Boot Manager. NixOS sets `canTouchEfiVariables = false`, so it adds no
+NVRAM entry, and the PC will boot Windows by default. Pick the Intel disk's
+systemd-boot from the firmware boot menu, or set it first in firmware setup.
+The stale `Boot0006`/`Boot0007` "ubuntu" entries point at the old Samsung and
+archive ESPs. Secure Boot is currently disabled (Setup Mode).
+
+**Space.** The Intel disk cannot hold all your existing data: Ubuntu home alone
+(282GiB) is larger than its entire capacity. The new encrypted `/home`, `/nix`
+and Docker subvolumes start fresh. Retained data stays reachable on the old
+drives. Download only the models you use: the seven candidates in
+[LOCAL-LLM.md](LOCAL-LLM.md) total roughly 100GiB, and builds need free space
+too. The configuration starts automatic store garbage collection below 5GiB
+free and aims for 15GiB. It reclaims only unreferenced store data, not rooted
+generations or model files. Use the guide's source-copy helper to avoid
+archiving multi-gigabyte Rust build directories.
+
+## Agenix and the laptop
+
+- **Who can decrypt today:** all 11 `*-devtower-intel*.age` files are encrypted
+  to one recipient, the laptop's agenix user key `sam-laptop`
+  (`secrets/secrets.nix`, `devtowerIntelKeys = [ sam-laptop ]`). Ubuntu's own
+  agenix key cannot open them, and neither can the laptop's host key.
+- **What uses them:** only the full stage. It decrypts 7 of them with the PC's
+  SSH host key: the three GitHub keys, `claude-secrets`, `aws-config`,
+  `aws-credentials` and `typesafe-api-key`. Every earlier stage declares no
+  secrets.
+- **Logging in doesn't depend on agenix:** the `sam-desktop` password is set
+  with `passwd` during installation, and root is locked. **If that step is
+  skipped, you cannot log in.**
+
+**On laptop-intel, now** (before Ubuntu is wiped):
+
+```sh
+cd ~/Repos/personal/nix-config && git pull
+ssh-keygen -y -f ~/.ssh/id_ed25519_agenix   # must print the sam-laptop key in secrets/secrets.nix (...+hao)
+cd secrets
+for f in *-devtower-intel*.age; do
+  agenix -d "$f" -i ~/.ssh/id_ed25519_agenix >/dev/null && echo "ok $f" || echo "FAIL $f"
+done
+```
+
+- All 11 lines must say `ok`.
+- Then copy `~/.ssh/id_ed25519_agenix` to offline storage (and its passphrase,
+  if it has one).
+- Losing it would not lose the secrets themselves: their plaintext sources are
+  still on the retained Ubuntu home and in the backup. But you would have to
+  re-encrypt every one of them by hand.
+
+**On install day:** follow the guide's section 8. In short:
+
+1. Create the PC's SSH host key on first boot. It can be done before the desktop
+   stage, so the laptop can rekey while later stages build.
+2. On the laptop, add that public key to `secrets/secrets.nix` and set
+   `devtowerIntelKeys = [ sam-laptop devtower-intel ]`. Keep `sam-laptop`, or
+   the laptop can no longer edit these secrets. Don't add the PC to `allHosts`.
+3. Rekey on the laptop and push straight away.
+   - Expect all 31 files to be rewritten, plus 4 `wasn't created.` warnings for
+     declared rules that have no file yet. Both are normal.
+   - The `.age` files are binary and cannot be merged, so don't let the rekey
+     sit unpushed.
+4. On the PC, pull with the one-off GitHub key bridge, then switch to the full
+   stage.
+
+After the rekey the PC can also decrypt its own secrets, so the laptop key is no
+longer the only way back in.
 
 ## Keeping the other drives and encryption
 
-Yes, NixOS can mount existing ext4/NTFS filesystems without reformatting them.
-The supplied Intel configuration mounts archive at `/mnt/archive`, old home at
-`/mnt/ubuntu-home`, and old Nix/Docker data read-only at `/mnt/ubuntu-nix` and
-`/mnt/ubuntu-docker`. It does **not** reuse the Ubuntu store or start Docker
-against the old data directory. Ubuntu swap is not enabled; zram is used.
-Always shut down completely before switching systems, including disabling
-Windows fast startup/hibernation before writing its NTFS volumes.
+NixOS can mount existing ext4 and NTFS filesystems without reformatting them.
+Every devtower-intel stage, minimal included, mounts:
+
+| Mount | Filesystem | Notes |
+| --- | --- | --- |
+| `/mnt/archive` | Seagate archive, ext4 | read-write |
+| `/mnt/ubuntu-home` | old Ubuntu home, ext4 | read-write |
+| `/mnt/ubuntu-nix` | old Ubuntu `/nix`, ext4 | read-only |
+| `/mnt/ubuntu-docker` | old Docker data, ext4 | read-only |
+| `/mnt/davinci` | DavinciProj, NTFS (ntfs-3g) | read-write for `sam-desktop`; mounted at boot with `norecover`. See [its page](DAVINCI-SHARED-DRIVE.md) |
+| `/mnt/backup` | BackupDrive, ext4 | read-write, on demand when attached |
+
+All use `nofail`, so a missing drive never blocks boot.
+
+- **Not reused:** the configuration doesn't reuse the Ubuntu store, and doesn't
+  start Docker against the old data directory.
+- **Swap:** Ubuntu's swap is not enabled; zram replaces it.
+- **BackupDrive:** until restoration is verified it holds your only copy of
+  Ubuntu. Leave it unplugged except while restoring.
+- **Windows:** always shut down completely before switching systems. Disable
+  Windows Fast Startup and hibernation before writing to its NTFS volumes.
 
 LUKS on the OS drive encrypts only files stored within that encrypted device.
 Plaintext home, archive, Docker partitions and backups remain readable if their
-drives are removed. Mounting them from encrypted NixOS does not encrypt them.
-For full coverage, back up a data drive, create an encrypted replacement,
-restore and verify it, then repeat one drive at a time. Root needs new UUIDs
-after this operation, and each data device needs its own unlock/mount plan.
-In-place conversion is a separate risky operation, unsuitable as a shortcut
-to a same-day migration with irreplaceable data.
+drives are removed, and mounting them from encrypted NixOS does not encrypt
+them. For full coverage, back up a data drive, create an encrypted replacement,
+restore and verify it, then repeat one drive at a time. Each data device then
+needs its own unlock/mount plan and new UUIDs. In-place conversion is a separate
+risky operation, unsuitable as a shortcut to a same-day migration with
+irreplaceable data. DavinciProj stays plain NTFS while Windows needs native
+access to it.
 
 For now, retain the data drives and protect new credentials in the encrypted
 NixOS home. The EFI partition remains unencrypted; verified boot is a separate

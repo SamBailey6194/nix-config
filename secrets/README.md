@@ -24,7 +24,8 @@ only to the keys listed for it in `secrets.nix`.
 ## Quick Reference
 
 ```bash
-# Enter dev shell (provides agenix and agenix-helper)
+# Enter dev shell (provides agenix; agenix-helper comes from the NixOS
+# hosts' system packages, or `just build-rust` elsewhere)
 nix develop
 
 # Create/edit a secret (uses ~/.ssh/id_ed25519_agenix)
