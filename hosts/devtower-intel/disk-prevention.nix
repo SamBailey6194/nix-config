@@ -19,7 +19,8 @@
     RandomizedDelaySec = "1h";
   };
 
-  # NixOS uses a fresh @docker subvolume; Ubuntu's data is mounted read-only.
+  # NixOS uses a fresh @docker subvolume; Ubuntu's old Docker data stays mounted
+  # read-only until the 870 EVO is encrypted (data-drives.nix).
   # Use the classic image store to avoid the containerd image-store leases
   # left behind by interrupted BuildKit builds. Do not apply this backend
   # change to an existing containerd store: it would hide its containers.

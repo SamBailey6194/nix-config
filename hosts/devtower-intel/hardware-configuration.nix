@@ -3,11 +3,13 @@
 # Layout mirrors devtower-os so the full stage's LUKS, btrfs-layouts and
 # snapper modules get exercised:
 #   LUKS2 -> btrfs @root, @nix, @snapshots, @log
-#   plus @home (no separate home SSD here) and @docker (keeps Docker layers
-#   out of the pre-rebuild snapshots of /)
+#   plus @home and @docker (keeps Docker layers out of the pre-rebuild
+#   snapshots of /) until those move to their own encrypted drives
 #
-# UUIDs live in ./disks.nix. Ubuntu's /home and the archive HDD are mounted
-# nofail. Never mount Ubuntu's swap: zram replaces it.
+# UUIDs live in ./disks.nix. The Linux data drives (old Ubuntu home, store and
+# Docker, archive) are handled by ./data-drives.nix, which keeps their old
+# filesystems mounted until each is converted to its own LUKS2 container.
+# Never mount Ubuntu's swap: zram replaces it.
 
 { config, lib, modulesPath, ... }:
 
@@ -23,6 +25,7 @@ in
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
+    ./data-drives.nix
   ];
 
   # CPU - Intel Core i9-9900K (Desktop)
@@ -36,11 +39,13 @@ in
     allowDiscards = true;
   };
 
+  # /home, /nix and /var/lib/docker move to their own encrypted drives once
+  # converted (data-drives.nix overrides these three).
   fileSystems."/" = sub "@root";
   fileSystems."/nix" = sub "@nix";
   fileSystems."/.snapshots" = sub "@snapshots";
   fileSystems."/var/log" = sub "@log";
-  fileSystems."/home" = sub "@home"; # real devtower: separate SSD
+  fileSystems."/home" = sub "@home";
   fileSystems."/var/lib/docker" = sub "@docker";
 
   # EFI System Partition (dedicated to NixOS; Ubuntu's and Windows' ESPs are untouched)
@@ -48,33 +53,6 @@ in
     device = "/dev/disk/by-uuid/${disks.espUuid}";
     fsType = "vfat";
     options = [ "fmask=0077" "dmask=0077" ];
-  };
-
-  # Existing Ubuntu-side data, kept when Ubuntu's root disk is replaced.
-  fileSystems."/mnt/archive" = {
-    device = "/dev/disk/by-uuid/${disks.archiveUuid}";
-    fsType = "ext4";
-    options = [ "nofail" "noatime" ];
-  };
-
-  fileSystems."/mnt/ubuntu-home" = {
-    device = "/dev/disk/by-uuid/${disks.ubuntuHomeUuid}";
-    fsType = "ext4";
-    options = [ "nofail" "noatime" ];
-  };
-
-  # Keep the old store and Docker data intact for recovery. The new /nix and
-  # Docker directories live inside the encrypted NixOS root, not on these
-  # plaintext partitions. Do not start a second daemon against old Docker data.
-  fileSystems."/mnt/ubuntu-nix" = {
-    device = "/dev/disk/by-uuid/${disks.ubuntuNixUuid}";
-    fsType = "ext4";
-    options = [ "ro" "nofail" "noatime" ];
-  };
-  fileSystems."/mnt/ubuntu-docker" = {
-    device = "/dev/disk/by-uuid/${disks.ubuntuDockerUuid}";
-    fsType = "ext4";
-    options = [ "ro" "nofail" "noatime" ];
   };
 
   # Shared media/project files (DaVinci and Affinity): retain NTFS so Windows

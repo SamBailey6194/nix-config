@@ -9,9 +9,21 @@
   luksUuid = "REPLACE-WITH-LUKS-PARTITION-UUID";
   btrfsUuid = "REPLACE-WITH-CRYPTROOT-BTRFS-UUID";
 
-  # Existing Ubuntu-side filesystems, mounted nofail
+  # Existing Ubuntu-side filesystems, mounted nofail until their drive is
+  # converted (dataDrives below; data-drives.nix)
   archiveUuid = "9f544f15-8e9a-45de-9951-d84f51b62e57"; # sdd1 ext4 (/mnt/archive)
   ubuntuHomeUuid = "8eaacce9-a3bd-4e95-924c-feb9e2d050b4"; # sde1 ext4 (Ubuntu /home)
+
+  # Linux data drives, each wiped into its own LUKS2 container after
+  # installation (docs/BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
+  # Leave both null until that drive has been converted and restored; then
+  #   luksUuid = blkid -s UUID -o value <the drive's new LUKS partition>
+  #   fsUuid   = blkid -s UUID -o value /dev/mapper/<crypthome|cryptstore|cryptarchive>
+  dataDrives = {
+    home = { luksUuid = null; fsUuid = null; }; # Samsung 512GB S1X1NYAG302936
+    store = { luksUuid = null; fsUuid = null; }; # Samsung 870 EVO 2TB S6PPNX0T910090T
+    archive = { luksUuid = null; fsUuid = null; }; # Seagate ST4000DM004 ZFN2J51Q
+  };
 
   davinciUuid = "34201009200FD0B2"; # DavinciProj shared with Windows (NTFS)
   backupUuid = "883736aa-556a-4e5e-b42f-e58bd40f5668"; # Backup+ Hub BK, NA9R0S9H

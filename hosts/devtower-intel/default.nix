@@ -2,7 +2,7 @@
 
 let
   disks = import ./disks.nix;
-  placeholders = lib.filterAttrs (_: v: lib.hasPrefix "REPLACE-" v) disks;
+  placeholders = lib.filterAttrs (_: v: lib.isString v && lib.hasPrefix "REPLACE-" v) disks;
 in
 {
   # DEVTOWER-INTEL: stand-in for devtower on the current Ubuntu/Windows PC
