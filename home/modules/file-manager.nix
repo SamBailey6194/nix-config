@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, osConfig ? { }, ... }:
 
 # File management: Yazi (main), Thunar (backup).
 #
@@ -57,6 +57,15 @@ let
   # per device: sam-laptop, sam-framework, sam-desktop).
   mediaDir = "/run/media/${config.home.username}";
 
+  # The DavinciProj NTFS drive shared with Windows (docs/DAVINCI-SHARED-DRIVE.md),
+  # on hosts that mount it. Go through /mnt/davinci itself, not a symlink to a
+  # subfolder, so Affinity under Wine records the drive letter, not Z:\home\...
+  davinci = "/mnt/davinci";
+  davinciKeys = lib.optionals ((osConfig.fileSystems or { }) ? ${davinci}) [
+    { group = "Go to"; on = [ "g" "D" ]; desc = "DavinciProj drive (${davinci})"; run = "cd ${davinci}"; }
+    { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on DavinciProj"; run = "cd ${davinci}/Affinity"; }
+  ];
+
   # ── Keybinds ───────────────────────────────────────────────────────────
   #
   # `on` is the key sequence as Yazi takes it ([ "g" "m" ] = g then m).
@@ -83,6 +92,7 @@ let
     { group = "Go to"; on = [ "g" "d" ]; desc = "~/Downloads"; docOnly = true; }
     { group = "Go to"; on = [ "g" "r" ]; desc = "~/Repos"; run = "cd ~/Repos"; }
     { group = "Go to"; on = [ "g" "m" ]; desc = "Mounted drives (${mediaDir})"; run = "cd ${mediaDir}"; }
+  ] ++ davinciKeys ++ [
     { group = "Go to"; on = [ "g" "<Space>" ]; desc = "Type a path"; docOnly = true; }
     { group = "Go to"; on = [ "g" "f" ]; desc = "Follow symlink"; docOnly = true; }
     { group = "Go to"; on = [ "Z" ]; desc = "Jump with zoxide"; docOnly = true; }

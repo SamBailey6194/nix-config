@@ -50,8 +50,7 @@ in
     options = [ "fmask=0077" "dmask=0077" ];
   };
 
-  # Existing Ubuntu-side data. Always shut down fully (no hibernate) before
-  # switching OS: both systems mount these read-write.
+  # Existing Ubuntu-side data, kept when Ubuntu's root disk is replaced.
   fileSystems."/mnt/archive" = {
     device = "/dev/disk/by-uuid/${disks.archiveUuid}";
     fsType = "ext4";
@@ -78,12 +77,20 @@ in
     options = [ "ro" "nofail" "noatime" ];
   };
 
-  # Shared media/project files: retain NTFS so Windows can access this drive.
-  # Never force a mount of a hibernated/dirty Windows volume.
+  # Shared media/project files (DaVinci and Affinity): retain NTFS so Windows
+  # can access this drive. Never force a mount of a hibernated/dirty volume.
+  #
+  # norecover: with the default `recover`, ntfs-3g clears an unclean journal and
+  # mounts read-write; norecover makes it fall back to a read-only mount instead
+  # (boot Windows, let it check the disk, shut down fully). Hibernated / Fast
+  # Startup volumes already fall back to read-only.
+  # Mounted at boot rather than x-systemd.automount: Affinity's Wine sandbox
+  # (own mount namespace) and Wine's drive-letter scan need it mounted already.
+  # nofail + the device timeout keep a missing drive from blocking boot.
   fileSystems."/mnt/davinci" = {
     device = "/dev/disk/by-uuid/${disks.davinciUuid}";
     fsType = "ntfs-3g";
-    options = [ "nofail" "noatime" "uid=1000" "gid=100" "fmask=0133" "dmask=0022" "windows_names" "x-systemd.automount" "x-systemd.device-timeout=10s" ];
+    options = [ "nofail" "noatime" "norecover" "uid=1000" "gid=100" "fmask=0133" "dmask=0022" "windows_names" "x-systemd.device-timeout=10s" ];
   };
 
   fileSystems."/mnt/backup" = {
