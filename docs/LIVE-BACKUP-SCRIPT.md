@@ -69,16 +69,31 @@ installer**. Running Ubuntu is no good, because its files keep changing. The
 laptop can see only BackupDrive, so it can browse the copy or check the EFI
 image hashes, but it cannot compare.
 
-**Before shutting Ubuntu down**, record the backup script's root exclusions
-off the PC; the root comparison needs the same ones:
+**Root exclusions (confirmed 2026-10-09).** Lines 128–131 of the backup
+script exclude these from the root copy, and the root comparison below uses
+the same ones:
 
-```sh
-grep -n -- '--exclude' ~/backup-before-nixos.sh
+```text
+/dev  /proc  /sys  /run  /tmp  /mnt  /media
+/home  /nix  /var/lib/docker  /boot/efi
 ```
 
+Each is passed as `--exclude='/path/***'`, which skips the directory itself
+and everything in it. `/home`, `/nix`, Docker and `/boot/efi` were copied
+separately, and `/mnt` held BackupDrive and the archive. A leading `/` anchors
+the pattern to the top of the transfer, not to the live system's root, so
+`/media/***` skips `/media/ubuntu-root/media` and leaves the installer's own
+`/media` alone.
+
 **In the live installer**, mount the sources as in section 2 of the
-[manual guide](INSTALL-INTEL-MANUALLY.md), with BackupDrive `ro,noload`. Check
-the `.env` files first; no output means they all match:
+[manual guide](INSTALL-INTEL-MANUALLY.md), with BackupDrive `ro,noload`. To
+recheck the root exclusions against the script:
+
+```sh
+grep -n -- '--exclude' /media/ubuntu-home/sam-dev/backup-before-nixos.sh
+```
+
+Check the `.env` files first; no output means they all match:
 
 ```sh
 copy=/media/backup/pre-nixos-2026-10-05
@@ -89,15 +104,25 @@ find . -name '.env*' -type f -print0 \
 
 Then run the full comparisons. Home and archive should list nothing apart from
 files you know changed after the copy. On root, only `/etc` matters; ignore
-database files. `/nix` and Docker are skipped because NixOS starts both fresh:
+database files. Root also lists a `.d..t......` line for each
+`snap/<name>/<rev>/` directory: these were snap mount points, which `-x`
+copied with the mounted snap's attributes. The Ubuntu EFI, which also holds
+`EFI/Microsoft_backup`, is compared by content only. Ubuntu keeps the hardware
+clock in local time, so its FAT timestamps read an hour out in the installer,
+and `-a` would list every file. `/nix` and Docker are skipped because NixOS
+starts both fresh:
 
 ```sh
 rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes /media/ubuntu-home/ "$copy/filesystems/home/"
 rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes /media/archive/ "$copy/filesystems/archive/"
-rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes EXCLUSIONS /media/ubuntu-root/ "$copy/filesystems/root/"
+rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes \
+  --exclude='/dev/***' --exclude='/proc/***' --exclude='/sys/***' \
+  --exclude='/run/***' --exclude='/tmp/***' --exclude='/mnt/***' \
+  --exclude='/media/***' --exclude='/home/***' --exclude='/nix/***' \
+  --exclude='/var/lib/docker/***' --exclude='/boot/efi/***' \
+  /media/ubuntu-root/ "$copy/filesystems/root/"
+rsync -rc --dry-run --itemize-changes /media/ubuntu-efi/ "$copy/filesystems/efi/"
 ```
-
-Replace `EXCLUSIONS` with the script's `--exclude` options.
 
 ## Using this backup with the manual installer
 

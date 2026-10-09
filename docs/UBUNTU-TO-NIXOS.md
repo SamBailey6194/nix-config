@@ -70,6 +70,10 @@ Decided or done as of 2026-10-09:
 - The laptop's agenix key opens all 11 devtower-intel secrets
   ([below](#agenix-and-the-laptop)).
 - Restore tests are limited to `.env` files, which the comparison covers.
+- The backup script's root exclusions are confirmed and written into the root
+  comparison command
+  ([LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)),
+  so they no longer need recording before Ubuntu shuts down.
 - **DavinciProj is deferred.** It is not in the backup, and every stage mounts
   it read-write (with `norecover` and `windows_names`), so back it up before
   relying on it from NixOS
@@ -82,8 +86,8 @@ Still to do before erasing anything:
    ([commands](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)). It compares
    the backup with the originals on the desktop's internal drives, so it cannot
    run on the laptop with only BackupDrive attached. `COPY FINISHED` alone is
-   not verification. Database files and `/nix` and Docker differences can be
-   ignored.
+   not verification. Database files, the `snap/` mount-point lines, and `/nix`
+   and Docker differences can be ignored.
 2. In the **same live session**, before the guide's section 3, stage the
    credentials into `/tmp/restore-check` with the
    [rsync adaptation](LIVE-BACKUP-SCRIPT.md#using-this-backup-with-the-manual-installer).
