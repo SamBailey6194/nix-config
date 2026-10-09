@@ -30,11 +30,13 @@ those too, back them up and verify them separately first.
 
 ## What counts as ready to erase a source
 
-Use the [manual installation guide](INSTALL-INTEL-MANUALLY.md), which now backs
-up all five Ubuntu data filesystems and their three EFI filesystems to an
-**encrypted Restic repository on BackupDrive**. Shut Ubuntu down cleanly and
-back up offline. Stop containers and export databases before shutdown.
-Preserve VPN/accountability secrets using the export helper first.
+The [manual installation guide](INSTALL-INTEL-MANUALLY.md)'s section 2
+describes an alternative: an **encrypted Restic repository on BackupDrive**,
+made offline, covering all five Ubuntu data filesystems and their three EFI
+filesystems. The backup actually taken is the rsync copy above, so the
+criteria below apply only if you make a Restic repository later. The
+development databases are recreated from scratch, so their dumps are not
+needed.
 
 Record disk UUIDs, models, serials and partition layouts outside the target. A
 filesystem backup does not preserve partition tables or automatically recreate

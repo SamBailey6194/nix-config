@@ -36,8 +36,8 @@ existing desktop VPN identity, and sends no messages. Include them in the root
 backup below. If it fails, resolve that before losing Ubuntu's current access.
 See [desktop connectivity and accountability](DESKTOP-CONNECTIVITY.md).
 
-Export application databases using their normal dump tools. Stop containers
-cleanly, record what was running, and fully shut down Ubuntu. Do not hibernate.
+Database dumps are not needed: the development databases are recreated from
+scratch after the repositories are recloned. Stop containers cleanly, record what was running, and fully shut down Ubuntu. Do not hibernate.
 Create a NixOS installer USB using another computer or a carefully verified USB
 target. Boot it in **UEFI** mode. Use wired networking if possible. The current
 configuration uses systemd-boot, so arrange firmware settings that allow it to
@@ -209,9 +209,9 @@ nix-shell -p age
 age -p -o /path/to/usb/intel-nixos-luks-header.age /tmp/intel-nixos-luks-header
 age -d /path/to/usb/intel-nixos-luks-header.age | cmp - /tmp/intel-nixos-luks-header && echo header-saved
 ```
- Its recovery file
-must be kept with its passphrase and protected like a key. Later LUKS key-slot
-changes require an updated header backup.
+
+Keep the header backup with its passphrase, and protect it like a key. Later
+LUKS key-slot changes require an updated header backup.
 
 ## 5. Copy the config and enter new UUIDs
 

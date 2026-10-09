@@ -42,7 +42,7 @@ Other drives contain Windows, games and recovery data. Preserve them too:
 
 ## Backup status
 
-The pre-NixOS backup is **taken but not yet verified**.
+The pre-NixOS backup is **taken; only the offline comparison is outstanding**.
 
 - **What:** the unencrypted rsync copy made by `~/backup-before-nixos.sh`, not
   the encrypted Restic repository the installation guide's section 2 describes.
@@ -55,45 +55,43 @@ The pre-NixOS backup is **taken but not yet verified**.
   home 334.4G, Nix 17.0G, Docker 9.4G, Ubuntu EFI, plus images of the two
   other Ubuntu ESPs.
 - **Not included:** DavinciProj, Windows and the games drives.
-- **Databases copied live:** MariaDB (`/var/lib/mysql`) and PostgreSQL 16
-  (`/var/lib/postgresql/16/main`) were running during the copy (the script
-  pauses only Docker and Nix). Both live on the Intel root disk, so the copy of
-  their data directories may be inconsistent.
+- **Databases not preserved:** MariaDB and PostgreSQL were running during the
+  copy, so their data directories in it may be inconsistent. That is accepted:
+  the development databases are recreated from scratch after the repositories
+  are recloned, so no dumps are taken.
 - **Sensitive:** it is plaintext. It holds every Ubuntu SSH private key, the
   three devtower-intel GitHub keys, the WireGuard keys and the accountability
   export. Keep the drive physically secure.
 
+Decided or done as of 2026-10-09:
+
+- The backup is taken (above).
+- Databases are skipped (above).
+- The laptop's agenix key opens all 11 devtower-intel secrets
+  ([below](#agenix-and-the-laptop)).
+- Restore tests are limited to `.env` files, which the comparison covers.
+- **DavinciProj is deferred.** It is not in the backup, and every stage mounts
+  it read-write (with `norecover` and `windows_names`), so back it up before
+  relying on it from NixOS
+  (see [its page](DAVINCI-SHARED-DRIVE.md#backup-and-encryption)).
+
 Still to do before erasing anything:
 
-1. **Dump both databases on Ubuntu** before the final shutdown, to the retained
-   home or BackupDrive, then test-restore them into a disposable instance:
-
-   ```sh
-   sudo mysqldump --all-databases --single-transaction --routines --events > ~/mariadb-all.sql
-   sudo -u postgres pg_dumpall > ~/postgres-all.sql
-   ```
-
-   Dumps restore into NixOS's own database versions; copied data directories
-   may not.
-2. Run the offline checksum comparison in
-   [LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)
-   from the live installer, after a clean Ubuntu shutdown. `COPY FINISHED`
-   alone is not verification. Expect it to flag the database files (re-copy
-   them from the cleanly shut-down root) and store paths added to `/nix` since
-   the copy (harmless: NixOS never reuses Ubuntu's store).
-3. Test restoring representative files: documents, the repository, credentials
-   and the database dumps.
-4. In the **same live session**, before the guide's section 3, stage the
+1. **Run the offline checksum comparison on the desktop**, booted from the live
+   installer after a clean Ubuntu shutdown
+   ([commands](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)). It compares
+   the backup with the originals on the desktop's internal drives, so it cannot
+   run on the laptop with only BackupDrive attached. `COPY FINISHED` alone is
+   not verification. Database files and `/nix` and Docker differences can be
+   ignored.
+2. In the **same live session**, before the guide's section 3, stage the
    credentials into `/tmp/restore-check` with the
    [rsync adaptation](LIVE-BACKUP-SCRIPT.md#using-this-backup-with-the-manual-installer).
    Section 5 reads them from there, and `/tmp` lives in RAM, so a reboot
    loses it.
-5. Back up DavinciProj from the live installer before the first NixOS boot,
-   since every stage mounts it read-write
-   (see [its page](DAVINCI-SHARED-DRIVE.md#backup-and-encryption)).
-6. Before unplugging BackupDrive for partitioning, unmount it
+3. Before unplugging BackupDrive for partitioning, unmount it
    (`sync; umount /media/backup`). On the rsync route nothing needs to write to
-   it, so mounting it `ro,noload` in the live session is safer still.
+   it, so mount it `ro,noload` in the live session.
 
 ## Today's safe sequence
 
@@ -108,9 +106,9 @@ Still to do before erasing anything:
    age identity keys, credentials, browser profiles and application configs. A
    NixOS generation rollback cannot restore a formatted Ubuntu filesystem. Keep
    a working live USB and the encryption recovery material.
-3. **Check the laptop's agenix key now**
-   (see [Agenix and the laptop](#agenix-and-the-laptop)). It is the only key
-   that can open the devtower-intel secrets, and it is not in the backup.
+3. **The laptop's agenix key is checked** (2026-10-09; see
+   [Agenix and the laptop](#agenix-and-the-laptop)). It is the only key that
+   can open the devtower-intel secrets, and it is not in the backup.
 4. **Verify the target from the installer** with
    `lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS` and `blkid`.
    Disconnect non-target drives, BackupDrive included, during partitioning where
@@ -174,7 +172,7 @@ archiving multi-gigabyte Rust build directories.
   with `passwd` during installation, and root is locked. **If that step is
   skipped, you cannot log in.**
 
-**On laptop-intel, now** (before Ubuntu is wiped):
+**On laptop-intel, before Ubuntu is wiped** (done on 2026-10-09: all 11 opened):
 
 ```sh
 cd ~/Repos/personal/nix-config && git pull

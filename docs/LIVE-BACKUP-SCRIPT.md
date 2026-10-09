@@ -10,7 +10,8 @@ Its exit trap restarts the services/containers that were previously active.
 ## Before running it
 
 Finish and save edits, close browser/IDE sessions and stop database writers.
-Export important databases using their own dump tools. Preserve the running
+(The development databases are recreated from scratch on NixOS, so no dumps
+are needed.) Preserve the running
 admin VPN and accountability credentials first:
 
 ```sh
@@ -59,8 +60,44 @@ the same root exclusions as the backup script. Inspect every reported difference
 These full checksum comparisons may take hours; copying success alone does not
 verify restored contents. Correct differences before formatting anything.
 Verify the EFI images against their recorded SHA256 hashes and original source
-partitions; test restoring personal files, the complete uncommitted repository,
-credentials and database dumps. This preserves files, not a bootable disk image.
+partitions. This preserves files, not a bootable disk image. Databases are
+recreated from scratch, so their files are not checked.
+
+**Where to run it.** The comparison needs the originals, which are on the
+desktop's internal drives, so run it **on the desktop from the live
+installer**. Running Ubuntu is no good, because its files keep changing. The
+laptop can see only BackupDrive, so it can browse the copy or check the EFI
+image hashes, but it cannot compare.
+
+**Before shutting Ubuntu down**, record the backup script's root exclusions
+off the PC; the root comparison needs the same ones:
+
+```sh
+grep -n -- '--exclude' ~/backup-before-nixos.sh
+```
+
+**In the live installer**, mount the sources as in section 2 of the
+[manual guide](INSTALL-INTEL-MANUALLY.md), with BackupDrive `ro,noload`. Check
+the `.env` files first; no output means they all match:
+
+```sh
+copy=/media/backup/pre-nixos-2026-10-05
+cd /media/ubuntu-home
+find . -name '.env*' -type f -print0 \
+  | rsync -a --from0 --files-from=- --checksum --dry-run --itemize-changes ./ "$copy/filesystems/home/"
+```
+
+Then run the full comparisons. Home and archive should list nothing apart from
+files you know changed after the copy. On root, only `/etc` matters; ignore
+database files. `/nix` and Docker are skipped because NixOS starts both fresh:
+
+```sh
+rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes /media/ubuntu-home/ "$copy/filesystems/home/"
+rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes /media/archive/ "$copy/filesystems/archive/"
+rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes EXCLUSIONS /media/ubuntu-root/ "$copy/filesystems/root/"
+```
+
+Replace `EXCLUSIONS` with the script's `--exclude` options.
 
 ## Using this backup with the manual installer
 
