@@ -24,6 +24,9 @@
       core = {
         editor = "zeditor --wait";
         autocrlf = "input";
+        # -F quits if output fits one screen, -R keeps colours,
+        # -X leaves the output on screen after quitting
+        pager = "less -FRX";
       };
 
       # Init settings
