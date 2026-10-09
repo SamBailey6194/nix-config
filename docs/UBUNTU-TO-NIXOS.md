@@ -1,9 +1,10 @@
 # Preserving this desktop during migration
 
-Inventory first observed on 2026-10-05 and rechecked on 2026-10-08. Device
-letters can change: verify model, serial, size and UUID from a live installer
-before selecting any target. No disk has been formatted or installation started
-by these configuration edits.
+Inventory first observed on 2026-10-05 and rechecked on 2026-10-08. Usage was
+checked again on 2026-10-09: only `/nix` had changed materially, and the other
+figures still hold. Device letters can change: verify model, serial, size and
+UUID from a live installer before selecting any target. No disk has been
+formatted or installation started by these configuration edits.
 
 Read alongside:
 
@@ -20,13 +21,14 @@ Read alongside:
 | Same Intel | Ubuntu EFI | `27BE-92E7` |
 | Same Intel | Ubuntu swap | `6b9a7bb1-febe-475f-9c98-5dfda3e97d4d` |
 | Samsung 512GB / S1X1NYAG302936 | Ubuntu `/home`, ~282GiB used | `8eaacce9-a3bd-4e95-924c-feb9e2d050b4` |
-| Samsung 870 EVO 2TB / S6PPNX0T910090T | Ubuntu `/nix`, ~57GiB used (grows with builds) | `af95812e-4174-4c02-94fd-a142a7981165` |
+| Samsung 870 EVO 2TB / S6PPNX0T910090T | Ubuntu `/nix`, ~109GiB used (grows with builds) | `af95812e-4174-4c02-94fd-a142a7981165` |
 | Same Samsung 870 EVO | Docker, ~9GiB used | `0bb16801-79b4-435d-b8f6-646e3e12b38c` |
 | Seagate ST4000DM004 4TB / ZFN2J51Q | Archive, ~123GiB used | `9f544f15-8e9a-45de-9951-d84f51b62e57` |
 | WD WD40EZRZ 4TB / WD-WCC7K0FU5LY2 | DavinciProj (NTFS, shared with Windows) | `34201009200FD0B2` |
 
 The `/nix` and Docker figures dropped from ~716GiB and ~444GiB after the
-deliberate clean-up on 2026-10-06.
+deliberate clean-up on 2026-10-06. `/nix` has since grown back with new builds:
+~57GiB on 2026-10-08 and ~109GiB on 2026-10-09.
 
 The independent **BackupDrive** is a separate Seagate: Backup+ Hub BK, serial
 `NA9R0S9H`, 10TB (9.1TiB), ext4 UUID `883736aa-556a-4e5e-b42f-e58bd40f5668`.
@@ -47,13 +49,19 @@ The pre-NixOS backup is **taken; only the offline comparison is outstanding**.
 - **What:** the unencrypted rsync copy made by `~/backup-before-nixos.sh`, not
   the encrypted Restic repository the installation guide's section 2 describes.
   No Restic repository exists.
-- **Where:** `pre-nixos-2026-10-05/` on BackupDrive (mounted at `/mnt/backup` on
-  Ubuntu, `/media/backup` in the live installer).
+- **Where:** `pre-nixos-2026-10-05/` on BackupDrive (`/media/backup` in the live
+  installer). On Ubuntu the script needs it at `/mnt/backup`, but Ubuntu has no
+  fstab entry for it and automounts it at `/media/sam-dev/BackupDrive` instead
+  ([mounting it](LIVE-BACKUP-SCRIPT.md#before-running-it)).
 - **When:** unit `pre-nixos-backup`, 2026-10-07 07:13 to 11:51. It reported
-  `COPY FINISHED`, with no vanished-file or `INCOMPLETE` warnings.
-- **Contents:** root 45.9G (including `/etc/nixos-migration`), archive 122.5G,
-  home 334.4G, Nix 17.0G, Docker 9.4G, Ubuntu EFI, plus images of the two
-  other Ubuntu ESPs.
+  `COPY FINISHED`, with no vanished-file or `INCOMPLETE` warnings. The same
+  script refreshed the copy in place on 2026-10-09, 10:37 to 11:41 (run
+  directly with `sudo`, not as a unit), again ending `COPY FINISHED` with no
+  warnings.
+- **Contents (2026-10-09):** root 46.2G (including `/etc/nixos-migration`),
+  archive 122.5G, home 336.0G, Nix 118.2G, Docker 9.4G, Ubuntu EFI, plus images
+  of the two other Ubuntu ESPs. rsync ran without `--delete`, so files deleted
+  on Ubuntu between the two runs are still in the copy.
 - **Not included:** DavinciProj, Windows and the games drives.
 - **Databases not preserved:** MariaDB and PostgreSQL were running during the
   copy, so their data directories in it may be inconsistent. That is accepted:
@@ -65,7 +73,7 @@ The pre-NixOS backup is **taken; only the offline comparison is outstanding**.
 
 Decided or done as of 2026-10-09:
 
-- The backup is taken (above).
+- The backup is taken, and was refreshed on 2026-10-09 (above).
 - Databases are skipped (above).
 - The laptop's agenix key opens all 11 devtower-intel secrets
   ([below](#agenix-and-the-laptop)).

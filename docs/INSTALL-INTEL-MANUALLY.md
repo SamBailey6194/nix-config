@@ -43,8 +43,8 @@ target. Boot it in **UEFI** mode. Use wired networking if possible. The current
 configuration uses systemd-boot, so arrange firmware settings that allow it to
 boot; Secure Boot signing/enrolment is a separate setup task.
 
-**The backup you took on 2026-10-07 is the `backup-before-nixos.sh` rsync
-copy**, not the Restic repository below (see
+**The backup you took on 2026-10-07 and refreshed on 2026-10-09 is the
+`backup-before-nixos.sh` rsync copy**, not the Restic repository below (see
 [backup status](UBUNTU-TO-NIXOS.md#backup-status)). That copy is unencrypted
 and still needs offline verification. Follow
 [the live-backup review and installer adaptation](LIVE-BACKUP-SCRIPT.md)
@@ -83,8 +83,8 @@ The destination must be Backup+ Hub BK, serial `NA9R0S9H`, label
 It is a 10TB (9.1TiB) USB drive. Its small first partition (128MiB) is not the
 backup filesystem. Do not format either partition. Device letters change every
 time it is attached. Check free space with `df -h /media/backup`: roughly
-8.1TiB should remain after the ~530GB (~495GiB) rsync copy. The archive is a backup
-**source**, so its contents are protected independently as well.
+8.1TiB should remain after the ~598GB (~557GiB) rsync copy. The archive is a
+backup **source**, so its contents are protected independently as well.
 
 ```sh
 export RESTIC_REPOSITORY=/media/backup/ubuntu-before-nixos-restic

@@ -7,8 +7,8 @@
 | USB drive | Seagate Backup+ Hub BK, serial `NA9R0S9H`, 10TB (9.1TiB) |
 | Backup filesystem | second partition (was `sdf2`), ext4, label `BackupDrive` |
 | Filesystem UUID | `883736aa-556a-4e5e-b42f-e58bd40f5668` |
-| Ubuntu mount | `/mnt/backup` |
-| Available space | ~8.6TiB before the backup; ~8.1TiB estimated after it |
+| Ubuntu mount | `/mnt/backup`, mounted by hand for the script; no fstab entry, so the desktop automounts it at `/media/sam-dev/BackupDrive` ([details](LIVE-BACKUP-SCRIPT.md#before-running-it)) |
+| Available space | ~8.6TiB before the backup; ~8.1TiB after the 2026-10-09 refresh |
 | Other partition | first partition (was `sdf1`), 128MiB, no mounted filesystem shown |
 
 Device letters are temporary. Mount by UUID and recheck model/serial in the live
@@ -17,8 +17,11 @@ The Intel NixOS configuration also mounts this filesystem at `/mnt/backup`,
 on demand and without preventing boot if the USB drive is disconnected.
 
 The backup was taken on 2026-10-07 as the unencrypted rsync copy
-`pre-nixos-2026-10-05/` (about 530GB, ~495GiB, after the /nix and Docker
-clean-up). No
+`pre-nixos-2026-10-05/` and refreshed in place on 2026-10-09. BackupDrive now
+has about 598GB (~557GiB) in use, per `df`. Docker is still at its cleaned-up
+9.4GB, but `/nix` has grown back with Nix builds since its clean-up, from 17GB
+in the 2026-10-07 copy to 118GB. The refresh had no `--delete`, so files
+removed from Ubuntu between the two runs are still in the copy. No
 Restic repository was created, so the Restic criteria below apply only if you
 make one later. For the rsync copy, the equivalent checks are the offline
 `rsync --checksum --dry-run` comparison and restore tests in
@@ -231,10 +234,11 @@ sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7 /dev/
 
 The archive is not needed to boot, so it can be done without the live installer.
 
-1. **Refresh its backup first.** Every stage mounts `/mnt/archive` read-write,
-   so anything written since 2026-10-07 is not in the backup yet. Stop anything
-   using the archive, make it read-only so nothing changes during the copy, and
-   plug BackupDrive in:
+1. **Refresh its backup first.** The archive was last copied on 2026-10-09
+   (finished 11:23; rsync found no changes since 2026-10-07). Every stage mounts
+   `/mnt/archive` read-write, so anything written after that is not in the
+   backup yet. Stop anything using the archive, make it read-only so nothing
+   changes during the copy, and plug BackupDrive in:
 
    ```sh
    sudo mount -o remount,ro /mnt/archive
@@ -336,10 +340,10 @@ you still want. So, like the store, the copy happens after the rebuild.
 
 1. **Before you start:** make sure the full stage is working and nothing
    still reads `/mnt/ubuntu-home`. The old home's contents are in
-   `filesystems/home/sam-dev` on BackupDrive. Every stage mounts the old home
-   read-write, so if anything you want changed there after 2026-10-07, copy it
-   into a dated folder on BackupDrive first, as for the archive, and restore it
-   from there.
+   `filesystems/home/sam-dev` on BackupDrive, copied on 2026-10-09 between
+   11:23 and 11:27. Every stage mounts the old home read-write, so if anything
+   you want changed there after that, copy it into a dated folder on
+   BackupDrive first, as for the archive, and restore it from there.
 2. **Live installer:** run the common steps with `NAME=crypthome`. Create the
    subvolume, then reboot into NixOS:
 

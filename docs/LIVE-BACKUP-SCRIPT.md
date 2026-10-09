@@ -27,8 +27,34 @@ Do not print or commit those credential files.
 `pre-nixos-backup` from 2026-10-07 07:13 to 11:51 and ended with `COPY FINISHED`.
 There were no vanished-file, `INCOMPLETE` or `LIVE-DATA CAVEATS` lines. It
 copied root 45.9G, archive 122.5G, home 334.4G, Nix 17.0G, Docker 9.4G and the
-Ubuntu EFI, plus images of the other two Ubuntu ESPs. The offline verification
-below is still outstanding.
+Ubuntu EFI, plus images of the other two Ubuntu ESPs.
+
+On 2026-10-09 the same script refreshed that copy in place. It was run directly
+as `sudo bash ~/backup-before-nixos.sh --pause-services` in a terminal, from
+10:37 to 11:41, and again ended with `COPY FINISHED` and none of those lines.
+The Zen browser was closed before the `/home` copy began. `rsync` found nothing
+to transfer for the archive or the Ubuntu EFI (a size and modification-time
+check, not a checksum); root transferred 4.4G, home 4.5G and Docker 323M.
+Nix transferred 101G, because `/nix` had grown back to 118G since the
+2026-10-06 clean-up. Both ESP images were re-imaged. The copy now holds root
+46.2G, archive 122.5G, home 336.0G, Nix 118.2G and Docker 9.4G. The archive was
+copied from 10:39 to 11:23 and home from 11:23 to 11:27, so anything written
+after those times is not in it. The offline verification below is still
+outstanding.
+
+**Mounting BackupDrive.** Ubuntu has no fstab entry for it. When plugged in,
+the desktop automounts it at `/media/sam-dev/BackupDrive`, but the script
+refuses to run unless it is mounted at `/mnt/backup`. Mount it there by UUID:
+
+```sh
+sudo umount /media/sam-dev/BackupDrive
+sudo mount /dev/disk/by-uuid/883736aa-556a-4e5e-b42f-e58bd40f5668 /mnt/backup
+```
+
+If the `umount` says "target is busy" (a file-manager window, for example),
+run the `mount` anyway: one filesystem at two mount points is harmless, and the
+root copy excludes `/media` and `/mnt`. Before unplugging, unmount every mount
+point that `findmnt -S UUID=883736aa-556a-4e5e-b42f-e58bd40f5668` lists.
 
 Run your existing command only after the edits and checks are complete:
 
@@ -37,10 +63,25 @@ sudo systemd-run --unit=pre-nixos-backup --collect \
   /usr/bin/bash /home/sam-dev/backup-before-nixos.sh --pause-services
 ```
 
-Monitor `backup.log` and `STATUS.txt` at the destination. The script can take
-hours; do not shut down the machine or disconnect BackupDrive during copying.
-A live copy can contain changing journals/browser files even with Docker and
-Nix stopped. `COPY FINISHED` explicitly means verification remains to be done.
+Running the script directly with `sudo bash`, as on 2026-10-09, works too if
+the terminal stays open until it ends.
+
+Monitor `backup.log` and `STATUS.txt` at the destination. `backup.log` is
+appended on each run and holds `rsync` progress lines (about 955MB after the two
+runs), so grep it for the summary lines rather than opening it whole:
+
+```sh
+grep -aE '^(Backup started|Copying |Number of files|Total file size|Total transferred file size|COPY FINISHED)' \
+  /mnt/backup/pre-nixos-2026-10-05/backup.log
+```
+
+The script can take hours; do not shut down the machine or disconnect
+BackupDrive during copying. `--pause-services` stops Docker, but Ubuntu's Nix
+is a single-user install with no daemon, so nothing stops Nix: do not run `nix`
+commands during the copy. A live copy can still contain changing journals or
+browser files. Afterwards `docker.service` shows inactive until something next
+uses Docker and `docker.socket` starts it again; that is expected.
+`COPY FINISHED` explicitly means verification remains to be done.
 `INCOMPLETE` or `LIVE-DATA CAVEATS` is not approval to erase a drive.
 
 ## Encryption and verification
@@ -103,8 +144,8 @@ find . -name '.env*' -type f -print0 \
 ```
 
 Then run the full comparisons. Home and archive should list nothing apart from
-files you know changed after the copy. On root, only `/etc` matters; ignore
-database files. Root also lists a `.d..t......` line for each
+files you know changed after the 2026-10-09 refresh. On root, only `/etc`
+matters; ignore database files. Root also lists a `.d..t......` line for each
 `snap/<name>/<rev>/` directory: these were snap mount points, which `-x`
 copied with the mounted snap's attributes. The Ubuntu EFI, which also holds
 `EFI/Microsoft_backup`, is compared by content only. Ubuntu keeps the hardware
@@ -123,6 +164,14 @@ rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes \
   /media/ubuntu-root/ "$copy/filesystems/root/"
 rsync -rc --dry-run --itemize-changes /media/ubuntu-efi/ "$copy/filesystems/efi/"
 ```
+
+The copy is now a superset: `rsync` never deletes without `--delete`, so files
+removed from Ubuntu between 2026-10-07 and 2026-10-09 are still in it. The
+commands above do not list files that exist only in the copy. Add `--delete` to
+a dry run to list them as `*deleting` lines; a dry run deletes nothing, and
+BackupDrive is mounted `ro,noload` anyway. They matter only when restoring
+whole directories. The EFI images and `metadata/efi-images.sha256` were
+regenerated on 2026-10-09, so check the images against the current hashes.
 
 ## Using this backup with the manual installer
 

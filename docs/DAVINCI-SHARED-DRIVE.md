@@ -137,8 +137,8 @@ GPU through CUDA.
 
 ## Backup and encryption
 
-**DavinciProj is not in the pre-NixOS backup.** The 2026-10-07 rsync copy covers
-the Ubuntu filesystems only. Installing NixOS doesn't put this drive at risk,
+**DavinciProj is not in the pre-NixOS backup.** The rsync copy (taken
+2026-10-07, refreshed 2026-10-09) covers the Ubuntu filesystems only. Installing NixOS doesn't put this drive at risk,
 because the install erases only the Intel disk. The risk starts with the first
 read-write use from Linux. Back the drive up before then.
 
