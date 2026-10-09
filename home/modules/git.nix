@@ -111,7 +111,7 @@
   home.file.".gitconfig-personal".text = ''
     [user]
         name = SamBailey6194
-        email = sambailey6194@gmail.com
+        email = samabailey6194@gmail.com
 
     [url "git@github-personal:"]
         insteadOf = git@github.com:
