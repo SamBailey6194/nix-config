@@ -18,24 +18,47 @@ let
     // Collapsed launcher, as on Ubuntu. With vertical tabs on, Firefox expands
     // the launcher unless sidebar.backupState says otherwise.
     pref("sidebar.backupState", "{\"launcherExpanded\":false,\"launcherVisible\":true}");
+    // Profiles last used with horizontal tabs keep "hide-on-close", a
+    // horizontal-only mode that leaves the vertical tab launcher hidden.
+    pref("sidebar.visibility", "always-show");
   '';
-  # Zen loads policies beside its actual binary, not the Firefox wrapper.
-  zenUnwrapped = inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta-unwrapped.override {
+  # Ubuntu's layout: collapsed left sidebar with the URL bar in a top toolbar.
+  # Zen ships use-single-toolbar = true, which moves the URL bar into the
+  # sidebar; Firefox's default nav-bar springs then centre it at the top.
+  zenPrefs = ''
+    // First line must be a comment
+    pref("zen.view.sidebar-expanded", false);
+    pref("zen.view.use-single-toolbar", false);
+    pref("zen.view.compact.enable-at-startup", false);
+  '';
+  # Zen loads policies and AutoConfig beside its actual binary, not the
+  # Firefox wrapper: bin/zen-beta is a symlink into the unwrapped package, so
+  # Gecko takes that as its install directory (compatibility.ini records it as
+  # LastPlatformDir) and never reads the wrapper's mozilla.cfg. The prefs are
+  # therefore installed into the unwrapped package, as the policies are. The
+  # files are not named autoconfig.js/mozilla.cfg because wrapFirefox writes
+  # those through its symlinks into this package and would hit read-only files.
+  zenUnwrapped = (inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta-unwrapped.override {
     policies = zenPolicies;
     enablePrivateDesktopEntry = false;
-  };
+  }).overrideAttrs (old: {
+    postInstall = (old.postInstall or "") + ''
+      for zenLib in "$out"/lib/zen-bin-*; do
+        # Copied read-only from the release tarball.
+        chmod u+w "$zenLib"
+        if [ -d "$zenLib/defaults" ]; then chmod -R u+w "$zenLib/defaults"; fi
+        install -Dm444 ${pkgs.writeText "zen-layout-autoconfig.js" ''
+          pref("general.config.filename", "zen-layout.cfg");
+          pref("general.config.obscure_value", 0);
+        ''} "$zenLib/defaults/pref/zen-layout-autoconfig.js"
+        install -Dm444 ${pkgs.writeText "zen-layout.cfg" zenPrefs} "$zenLib/zen-layout.cfg"
+      done
+    '';
+  });
   zen = pkgs.wrapFirefox (zenUnwrapped // { version = zenUnwrapped.firefoxVersion; }) {
     pname = "zen-beta";
     icon = "zen-browser";
     extraPolicies = zenPolicies;
-    # Ubuntu's layout: collapsed left sidebar with the URL bar in a top toolbar.
-    # Zen ships use-single-toolbar = true, which moves the URL bar into the
-    # sidebar; Firefox's default nav-bar springs then centre it at the top.
-    extraPrefs = ''
-      pref("zen.view.sidebar-expanded", false);
-      pref("zen.view.use-single-toolbar", false);
-      pref("zen.view.compact.enable-at-startup", false);
-    '';
   };
 in {
   options.services.browserPolicies.enable = lib.mkEnableOption "shared managed browser policies and local proxy";

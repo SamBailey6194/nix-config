@@ -16,6 +16,28 @@ let
     };
     bookmark_bar.show_on_all_tabs = false;
   };
+
+  braveLayoutScript = pkgs.writeShellScript "brave-layout" ''
+    braveDir="''${XDG_CONFIG_HOME:-$HOME/.config}/BraveSoftware/Brave-Browser/Default"
+    bravePrefs="$braveDir/Preferences"
+    braveLayout=${lib.escapeShellArg (builtins.toJSON braveLayout)}
+
+    if ${pkgs.procps}/bin/pgrep -u "$(id -u)" -x brave >/dev/null; then
+      echo "braveLayout: Brave is running; skipped (quit Brave and rebuild, or log in again, to apply vertical tabs)" >&2
+      exit 0
+    fi
+    mkdir -p "$braveDir"
+    braveInput=/dev/null
+    if [ -s "$bravePrefs" ]; then braveInput=$bravePrefs; fi
+    braveTmp=$(mktemp "$braveDir/.Preferences.XXXXXX")
+    if ${pkgs.jq}/bin/jq -c -n --slurpfile cur "$braveInput" --argjson layout "$braveLayout" \
+         '($cur[0] // {}) * $layout' > "$braveTmp"; then
+      mv "$braveTmp" "$bravePrefs"
+    else
+      rm -f "$braveTmp"
+      echo "braveLayout: could not parse $bravePrefs; left untouched" >&2
+    fi
+  '';
 in
 {
   # Browser configuration (user-level).
@@ -40,30 +62,24 @@ in
     };
   };
 
-  # Re-applied on every activation, like the Gecko pref() lines in
-  # modules/security/browser-policies. Skipped while Brave runs, because it
-  # rewrites Preferences from memory on exit and would undo the merge.
+  # Re-applied on every activation and again at login, like the Gecko pref()
+  # lines in modules/security/browser-policies. Skipped while Brave runs,
+  # because it rewrites Preferences from memory on exit and would undo the
+  # merge; the login run catches the rebuilds that were skipped that way.
   home.activation.braveLayout = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    braveDir="''${XDG_CONFIG_HOME:-$HOME/.config}/BraveSoftware/Brave-Browser/Default"
-    bravePrefs="$braveDir/Preferences"
-    braveLayout=${lib.escapeShellArg (builtins.toJSON braveLayout)}
-
-    if ${pkgs.procps}/bin/pgrep -u "$(id -u)" -x brave >/dev/null; then
-      echo "braveLayout: Brave is running; skipped (quit Brave and rebuild to apply vertical tabs)" >&2
-    else
-      mkdir -p "$braveDir"
-      braveInput=/dev/null
-      if [ -s "$bravePrefs" ]; then braveInput=$bravePrefs; fi
-      braveTmp=$(mktemp "$braveDir/.Preferences.XXXXXX")
-      if ${pkgs.jq}/bin/jq -c -n --slurpfile cur "$braveInput" --argjson layout "$braveLayout" \
-           '($cur[0] // {}) * $layout' > "$braveTmp"; then
-        mv "$braveTmp" "$bravePrefs"
-      else
-        rm -f "$braveTmp"
-        echo "braveLayout: could not parse $bravePrefs; left untouched" >&2
-      fi
-    fi
+    ${braveLayoutScript}
   '';
+
+  # default.target starts with the user manager at login, before Hyprland can
+  # launch Brave, so the merge is never skipped here.
+  systemd.user.services.brave-layout = {
+    Unit.Description = "Merge Brave's vertical-tab layout into its Preferences";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${braveLayoutScript}";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Set Zen as default browser
   xdg.mimeApps = {
