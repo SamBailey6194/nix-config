@@ -36,13 +36,13 @@ let
   laptop-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHXF52LZvZybhGO0LJGl8UU/SV8t1dODetofFo5CDU4W root@laptop-intel";
   # framework = "ssh-ed25519 REPLACE_WITH_FRAMEWORK_HOST_KEY root@framework";
   # devtower = "ssh-ed25519 REPLACE_WITH_DEVTOWER_HOST_KEY root@devtower";
-  # devtower-intel = "ssh-ed25519 <verified host public key> root@devtower-intel";
+ devtower-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKaigOYGwcCh1ULTD94VhW76hJ3mffg9vkaqmoZC218d root@devtower-intel";
 
   # Bootstrap the Intel desktop secrets with the existing recovery/editor key.
   # After installation, add its real host key above and append devtower-intel
   # here, then re-encrypt these secrets (docs/INSTALL-INTEL-MANUALLY.md, section 8). Until then the desktop cannot decrypt
   # them automatically. WireGuard public keys are NOT age recipients.
-  devtowerIntelKeys = [ sam-laptop ];
+  devtowerIntelKeys = [ sam-laptop devtower-intel ];
 
   # Key groups for easy management (only include keys with real values)
   allUsers = [ sam-laptop ];

@@ -27,7 +27,7 @@ in {
     presharedKeyFile = "${secrets}/arwyn-psk.key";
   };
   environment.systemPackages = [ pkgs.wireguard-tools ];
-  systemd.tmpfiles.rules = [ "d ${secrets} 0750 root sam-desktop -" ];
+  systemd.tmpfiles.rules = [ "d ${secrets} 0750 root users -" ];
 
   # Fresh Mullvad state is disconnected. Log in/connect only after renewal.
   # Use the supported app firewall instead of the older custom kill switch.

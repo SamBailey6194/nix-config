@@ -5,9 +5,9 @@
 # REPLACE after partitioning:
 #   blkid -s UUID -o value <ESP partition> <LUKS partition> /dev/mapper/cryptroot
 {
-  espUuid = "REPLACE-WITH-ESP-UUID";
-  luksUuid = "REPLACE-WITH-LUKS-PARTITION-UUID";
-  btrfsUuid = "REPLACE-WITH-CRYPTROOT-BTRFS-UUID";
+  espUuid = "12CE-A600";
+  luksUuid = "3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8";
+  btrfsUuid = "2d379673-11ff-433c-b378-efece05dadf0";
 
   # Existing Ubuntu-side filesystems, mounted nofail until their drive is
   # converted (dataDrives below; data-drives.nix)
