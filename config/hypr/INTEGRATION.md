@@ -147,6 +147,11 @@ xdg.configFile."hypr/.luarc.json" = lib.mkIf (osConfig != null) {
 };
 ```
 
+Editing the repository copy (Zed or Neovim opened on the repo) uses the
+checked-in repo-root `.luarc.json` instead, which points at the system profile's
+stubs (`/run/current-system/sw/share/hypr/stubs`); see `README.md`, Editor
+Support.
+
 ## Runtime Control (`hyprctl`)
 
 The Lua provider changes what `hyprctl` accepts. This is the part most likely to

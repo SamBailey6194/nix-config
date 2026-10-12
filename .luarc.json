@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "workspace.library": ["/run/current-system/sw/share/hypr/stubs"],
+  "workspace.checkThirdParty": false,
+  "runtime.path": ["?.lua", "?/init.lua", "config/hypr/?.lua"],
+  "diagnostics.globals": ["hl", "vim"]
+}
