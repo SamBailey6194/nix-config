@@ -196,20 +196,39 @@ rm /tmp/github-personal-* /tmp/github-syntek-*
 sudo nixos-rebuild switch --flake .#HOSTNAME
 ```
 
-### devtower-intel (bootstrapped from the laptop)
+### Recipients: devtower-intel holds the master editing key
 
-The Intel desktop's secrets were created before the PC had a host key, so they
-are encrypted to the laptop's agenix key only
-(`devtowerIntelKeys = [ sam-laptop ]`).
+Edits and prep happen on devtower-intel, so its editing key is the master key
+(`allUsers = [ sam-devtower-intel ]`) and opens every secret. Each device's
+secrets use a per-device list:
 
-- **Who can open them:** only laptop-intel's `~/.ssh/id_ed25519_agenix`. Keep an
-  offline copy of it.
-- **When they are needed:** only the full stage uses them.
-- **Adding the PC:** once the PC has created its host key, add it on the laptop
-  and run `just rekey-secrets`. The full procedure is
-  [INSTALL-INTEL-MANUALLY.md section 8](INSTALL-INTEL-MANUALLY.md#8-enable-host-secrets-then-the-full-stage),
-  and the pre-flight checks are in
-  [UBUNTU-TO-NIXOS.md](UBUNTU-TO-NIXOS.md#agenix-and-the-laptop).
+| List | Recipients | Who can open |
+|------|------------|--------------|
+| `devtowerIntelKeys` | `sam-devtower-intel`, `devtower-intel` | the PC's editing key and host key |
+| `laptopIntelKeys` | `sam-devtower-intel`, `sam-laptop`, `laptop-intel` | the master key, the laptop's own editing key and its host key |
+| `allKeys` (shared, e.g. `wifi-passwords`) | `sam-devtower-intel`, `laptop-intel` | the master key and the hosts in `allHosts` |
+
+- **`sam-devtower-intel`:** devtower-intel's passphrase-protected
+  `~/.ssh/id_ed25519_agenix`. Keep an offline copy of it and its passphrase:
+  it is the only editing key for devtower-intel's secrets and for the shared
+  ones.
+- **`sam-laptop`:** laptop-intel's `~/.ssh/id_ed25519_agenix`. It opens only
+  the laptop's own secrets.
+- **Host keys:** decrypt at rebuild. devtower-intel is not in `allHosts`: it is
+  wired and does not use `wifi-passwords`.
+- **Re-encrypting:** `just rekey-secrets` tries every file and stops at the
+  first it cannot open. A device that cannot open everything re-encrypts only
+  its own files. On devtower-intel, decrypting with the host key (no passphrase
+  prompt per file):
+
+  ```bash
+  cd secrets && sudo bash -c 'for f in *-devtower-intel*.age; do EDITOR=: '"$(command -v agenix)"' -e "$f" -i /etc/ssh/ssh_host_ed25519_key || exit 1; done' && sudo chown "$USER:users" *-devtower-intel*.age
+  ```
+
+- **History:** the desktop's secrets were first created on the laptop and its
+  host key was added from there
+  ([INSTALL-INTEL-MANUALLY.md section 8](INSTALL-INTEL-MANUALLY.md#8-enable-host-secrets-then-the-full-stage),
+  [UBUNTU-TO-NIXOS.md](UBUNTU-TO-NIXOS.md#agenix-and-the-laptop)).
 
 ---
 
