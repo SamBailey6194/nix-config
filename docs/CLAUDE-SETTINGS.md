@@ -25,9 +25,14 @@ The prepared default keeps only `codex@openai-codex` enabled, using the Ubuntu
 Codex marketplace definition. Change `enabledPlugins` in the baseline to adjust
 this selection. No plugin caches or project skills have been deleted.
 
-Ubuntu's Claude-in-Chrome allowance and explicit prompts for ElevenLabs audio,
-music and voice generation are retained. These are independent of registering
-the shared MCP servers described in [SHARED-MCP.md](SHARED-MCP.md).
+Explicit prompts for ElevenLabs audio, music and voice generation are retained.
+Ubuntu's Claude-in-Chrome allowance is replaced by allowances for the
+`brave-devtools` and `firefox-developer` servers described in
+[SHARED-MCP.md](SHARED-MCP.md). Claude-in-Chrome is blocked three ways: its
+tools (`mcp__claude-in-chrome__*`) are in `permissions.deny`, activation sets
+`claudeInChromeDefaultEnabled` to false in `~/.claude.json`, and no native
+messaging host is registered with Brave. The deny rule still applies when a
+session is started with `claude --chrome`.
 
 The status line, monitor lifecycle hooks and memory-write guard remain. Monitor
 hooks use the new home directory and read credentials at runtime from

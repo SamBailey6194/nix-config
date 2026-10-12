@@ -18,6 +18,10 @@
   "autoCompactEnabled": false,
   "permissions": {
     "allow": [
+      "mcp__brave-devtools__*",
+      "mcp__firefox-developer__*"
+    ],
+    "deny": [
       "mcp__claude-in-chrome__*"
     ],
     "ask": [

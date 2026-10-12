@@ -12,9 +12,11 @@ Codex, Antigravity CLI (`agy`) and OpenCode; Claude Design in Claude Code only:
 | ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY` |
 | Claude Design (Claude Code only) | HTTP | Claude Code's authentication and account access |
 
-Codex and Antigravity also get two browser DevTools servers wherever the
-managed browsers are installed (`services.browserPolicies`, dev stage and up).
-Claude Code does not: it drives Brave through Claude-in-Chrome instead.
+Claude Code, Codex and Antigravity also get two browser DevTools servers
+wherever the managed browsers are installed (`services.browserPolicies`, dev
+stage and up). Each server launches its own browser instance, separate from
+your everyday profile. Claude Code uses these for browser testing instead of
+Claude-in-Chrome, which is blocked (see [CLAUDE-SETTINGS.md](CLAUDE-SETTINGS.md)).
 
 | Server | Transport | Browser |
 | --- | --- | --- |
@@ -61,7 +63,7 @@ the current user can write. A newly provisioned device needs its own secret
 or private credential file; the inventory alone cannot provision an API key.
 
 Registration removes managed servers a client does not get (Claude Design
-outside Claude Code, the browser servers in Claude Code), including entries an
+outside Claude Code, the browser servers in OpenCode), including entries an
 earlier generation registered. Switching a managed server between stdio and HTTP
 drops the other transport's fields, such as stale headers or bearer settings.
 Registration updates the managed server transports and preserves other

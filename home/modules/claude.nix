@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, osConfig ? { }, ... }:
 
 # Declarative Claude Code setup, reproduced from the manual config on the
 # reference machine. Applies to every device that imports it.
@@ -21,7 +21,6 @@
 
 let
   homeDir = config.home.homeDirectory;
-  claudeBin = lib.getExe pkgs.claude-code;
   nodeBin = "${pkgs.nodejs}/bin/node";
   npmBin = "${pkgs.nodejs}/bin/npm";
 
@@ -58,10 +57,6 @@ let
   monitorRepo = "https://github.com/bruceyxli/claude-code-monitor.git";
   monitorDir = "${homeDir}/Repos/claude-code-monitor";
   secretsFile = "/run/agenix/claude-secrets";
-
-  # Claude (anthropic) browser extension id — must match the Brave forcelist in
-  # modules/security/browser-policies and the native-host allowed_origins.
-  claudeExtensionId = "fcoeoabgfenejglbffodgkkbkcdhcgfn";
 
   # One monitor hook entry for a given lifecycle event.
   monitorHook = event: timeout: [{
@@ -213,26 +208,6 @@ in
         exec ${nodeBin} "$HANDLER" "$1"
       '';
     };
-
-    # Claude-in-Chrome native messaging host wrapper -> the Nix claude binary
-    # (replaces the version-pinned path the CLI generates).
-    ".claude/chrome/chrome-native-host" = {
-      executable = true;
-      text = ''
-        #!/bin/sh
-        exec ${claudeBin} --chrome-native-host
-      '';
-    };
-
-    # Register the native host with Brave so Claude-in-Chrome links to Brave.
-    ".config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json".text =
-      builtins.toJSON {
-        name = "com.anthropic.claude_code_browser_extension";
-        description = "Claude Code Browser Extension Native Host";
-        path = "${homeDir}/.claude/chrome/chrome-native-host";
-        type = "stdio";
-        allowed_origins = [ "chrome-extension://${claudeExtensionId}/" ];
-      };
   };
 
   # Clone the Claude Code Monitor repo (best-effort; the hook wrapper no-ops if
@@ -264,5 +239,20 @@ in
   home.activation.claudeMcpServers = import ./mcp-activation.nix {
     inherit pkgs lib;
     client = "claude";
+    browsers = osConfig.services.browserPolicies.enable or false;
   };
+
+  # Browser testing goes through the brave-devtools and firefox-developer MCP
+  # servers. Claude-in-Chrome is off by default (the --chrome flag can still
+  # enable it), its tools are denied in settings, and no native messaging host
+  # is registered, so the extension cannot reach Claude Code.
+  home.activation.claudeInChromeOff = lib.hm.dag.entryAfter [ "claudeMcpServers" ] ''
+    f="''${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
+    if [ -f "$f" ] && [ ! -L "$f" ] \
+      && ${pkgs.jq}/bin/jq -e '.claudeInChromeDefaultEnabled != false' "$f" >/dev/null 2>&1; then
+      tmp=$(mktemp "$f.XXXXXX") \
+        && ${pkgs.jq}/bin/jq '.claudeInChromeDefaultEnabled = false' "$f" > "$tmp" \
+        && chmod 600 "$tmp" && mv "$tmp" "$f" || rm -f "$tmp"
+    fi
+  '';
 }

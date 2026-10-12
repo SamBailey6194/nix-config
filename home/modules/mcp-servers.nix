@@ -18,8 +18,8 @@ let
     exec ${pkgs.python3}/bin/python ${./mcp-launch.py} "$@"
   '';
 
-  # Claude Code drives Brave through Claude-in-Chrome instead.
-  browserClients = [ "codex" "antigravity" ];
+  # Claude Code uses these rather than Claude-in-Chrome (denied in its settings).
+  browserClients = [ "claude" "codex" "antigravity" ];
 
   # Drop entries limited to other clients, then the `clients` marker itself.
   forClient = servers: lib.mapAttrs (_: server: removeAttrs server [ "clients" ])
