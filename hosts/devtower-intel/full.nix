@@ -15,4 +15,9 @@ in
   # about the AMD board, so keep the service off on this PC. The package is
   # still installed for manual use.
   services.hardware.openrgb.enable = lib.mkForce false;
+
+  # The full stage adds tpm2-device=auto to cryptroot. PCR 7 does not cover
+  # the kernel command line, so an editable boot entry (init=/bin/sh) would
+  # give a root shell on a TPM-unlocked disk. Lock it before enrolling.
+  boot.loader.systemd-boot.editor = false;
 }
