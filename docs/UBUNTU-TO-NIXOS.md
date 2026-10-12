@@ -83,9 +83,9 @@ Decided or done as of 2026-10-09:
   ([LIVE-BACKUP-SCRIPT.md](LIVE-BACKUP-SCRIPT.md#encryption-and-verification)),
   so they no longer need recording before Ubuntu shuts down.
 - **DavinciProj is deferred.** It is not in the backup, and every stage mounts
-  it read-write (with `norecover` and `windows_names`), so back it up before
-  relying on it from NixOS
-  (see [its page](DAVINCI-SHARED-DRIVE.md#backup-and-encryption)).
+  it read-write (with `norecover` and `windows_names`). It is copied to the
+  archive drive as the first step of its VeraCrypt conversion
+  ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#1-copy-davinciproj-to-the-archive-drive-nixos)).
 
 Still to do before erasing anything:
 
@@ -238,14 +238,18 @@ Every devtower-intel stage, minimal included, mounts:
 | `/mnt/backup` | BackupDrive, ext4 | read-write, on demand when attached |
 
 All use `nofail`, so a missing drive never blocks boot. The first four are the
-old Ubuntu filesystems, and they change as each Linux data drive is encrypted
-(below).
+old Ubuntu filesystems. `/mnt/ubuntu-home`, `/mnt/ubuntu-nix` and
+`/mnt/ubuntu-docker` go when the home and store drives are encrypted (below);
+`/mnt/archive` and `/mnt/davinci` are replaced by `/mnt/data` and
+`/mnt/data-mirror`, the VeraCrypt pair ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
 
 - **Not reused:** the configuration doesn't reuse the Ubuntu store, and doesn't
   start Docker against the old data directory.
 - **Swap:** Ubuntu's swap is not enabled; zram replaces it.
-- **BackupDrive:** until restoration is verified it holds your only copy of
-  Ubuntu. Leave it unplugged except while restoring.
+- **BackupDrive:** not usable at the moment
+  ([status](BACKUP-AND-DATA-ENCRYPTION.md#backup-destination-identified-on-5-october-2026)).
+  The Ubuntu home copy is at `/mnt/archive/pre-nixos-home/`, and later
+  `Archive/pre-nixos-home.tar.zst` on the shared data drive.
 - **Windows:** always shut down completely before switching systems. Disable
   Windows Fast Startup and hibernation before writing to its NTFS volumes.
 
@@ -254,20 +258,22 @@ Plaintext home, archive, Docker partitions and backups remain readable if their
 drives are removed, and mounting them from encrypted NixOS does not encrypt
 them.
 
-**The plan: once NixOS works, wipe and encrypt every Linux data drive, one at a
-time.** Each gets its own LUKS2 container and its own passphrase, and the TPM2
-unlocks them all at boot:
+**The plan: once NixOS works, wipe and encrypt every data drive, one at a
+time.**
 
-- **Samsung 512GB** becomes `/home`.
-- **Samsung 870 EVO** becomes `/nix` and Docker.
-- **Seagate archive** becomes `/mnt/archive`.
+- **Samsung 512GB** becomes `/home` (LUKS2, own passphrase, TPM2 unlock).
+- **Samsung 870 EVO** becomes `/nix` and Docker (LUKS2, own passphrase, TPM2
+  unlock).
+- **The two 4TB drives** (DavinciProj and the Seagate archive) become a
+  VeraCrypt pair with NTFS inside, so Windows can read them too: the WD as the
+  working drive, the Seagate as a scheduled mirror
+  ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
 
-`hosts/devtower-intel/data-drives.nix` switches each drive over as soon as its
-two new UUIDs are filled in. The step-by-step procedure (order: archive, store,
-home) is in
+`hosts/devtower-intel/data-drives.nix` switches the LUKS drives over as soon as
+their two new UUIDs are filled in. The step-by-step procedure (order: home,
+the 4TB pair, store) is in
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
-In-place conversion is not used. DavinciProj stays plain NTFS while Windows
-needs native access to it.
+In-place conversion is not used.
 
 For now, retain the data drives and protect new credentials in the encrypted
 NixOS home. The EFI partition remains unencrypted; verified boot is a separate

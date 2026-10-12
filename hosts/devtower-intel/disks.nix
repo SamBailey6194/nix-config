@@ -11,8 +11,8 @@
 
   # Existing Ubuntu-side filesystems, mounted nofail until their drive is
   # converted (dataDrives below; data-drives.nix)
-  archiveUuid = "9f544f15-8e9a-45de-9951-d84f51b62e57"; # sdd1 ext4 (/mnt/archive)
-  ubuntuHomeUuid = "8eaacce9-a3bd-4e95-924c-feb9e2d050b4"; # sde1 ext4 (Ubuntu /home)
+  archiveUuid = "9f544f15-8e9a-45de-9951-d84f51b62e57"; # Seagate 4TB ext4 (/mnt/archive)
+  ubuntuHomeUuid = "8eaacce9-a3bd-4e95-924c-feb9e2d050b4"; # Samsung 512GB ext4 (Ubuntu /home)
 
   # Linux data drives, each wiped into its own LUKS2 container after
   # installation (docs/BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
@@ -22,6 +22,7 @@
   dataDrives = {
     home = { luksUuid = null; fsUuid = null; }; # Samsung 512GB S1X1NYAG302936
     store = { luksUuid = null; fsUuid = null; }; # Samsung 870 EVO 2TB S6PPNX0T910090T
+    # Superseded: the Seagate becomes a VeraCrypt mirror (docs/SHARED-DATA-DRIVES.md).
     archive = { luksUuid = null; fsUuid = null; }; # Seagate ST4000DM004 ZFN2J51Q
   };
 

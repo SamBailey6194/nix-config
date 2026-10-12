@@ -12,6 +12,7 @@
 - [Backup and data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md) — independent BackupDrive and verified restoration.
 - [Desktop connectivity](DESKTOP-CONNECTIVITY.md) — arwyn SSH, Mullvad readiness and accountability.
 - [Shared DaVinci drive](DAVINCI-SHARED-DRIVE.md) — Windows/NixOS NTFS access.
+- [Shared encrypted data drives](SHARED-DATA-DRIVES.md) — the 4TB VeraCrypt pair (working drive + mirror) for Windows and NixOS.
 - [Ubuntu migration](UBUNTU-TO-NIXOS.md) — disk UUIDs, preservation and encryption.
 - [Manual Intel installation](INSTALL-INTEL-MANUALLY.md) — commands and checkpoints for replacing Ubuntu after backup.
 - [Intel displays and workspaces](INTEL-MONITORS.md) — audited monitor identities, scaling and portrait dashboard.

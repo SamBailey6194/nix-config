@@ -8,7 +8,9 @@
 #
 #   home    Samsung 512GB   -> /home (replaces the Intel @home subvolume)
 #   store   Samsung 870 EVO -> /nix and /var/lib/docker (replaces Intel @nix, @docker)
-#   archive Seagate 4TB     -> /mnt/archive
+#   archive Seagate 4TB     -> /mnt/archive (superseded: it becomes the VeraCrypt
+#                              mirror of the WD 4TB, docs/SHARED-DATA-DRIVES.md;
+#                              leave dataDrives.archive null)
 #
 # home and store unlock in the initrd like cryptroot, because the system needs
 # them to boot; without a TPM2 token (or if the TPM refuses) the initrd asks for

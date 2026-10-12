@@ -1,5 +1,12 @@
 # Sharing DavinciProj between Windows and NixOS
 
+> **Planned change (12 October 2026):** this drive becomes the working half of
+> an encrypted VeraCrypt pair with the Seagate archive drive, mounted at
+> `/mnt/data` instead of `/mnt/davinci`
+> ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)). The Windows rules, the
+> Affinity drive-letter mapping and the Resolve advice below still apply after
+> the move; only the path and the unlocking change.
+
 Keep the existing NTFS filesystem on the WD 4TB drive, serial
 `WD-WCC7K0FU5LY2`, label `DavinciProj`, UUID `34201009200FD0B2`.
 It is `sdc1` today, but device letters change, so the NixOS configuration uses
@@ -138,34 +145,15 @@ GPU through CUDA.
 ## Backup and encryption
 
 **DavinciProj is not in the pre-NixOS backup.** The rsync copy (taken
-2026-10-07, refreshed 2026-10-09) covers the Ubuntu filesystems only. Installing NixOS doesn't put this drive at risk,
-because the install erases only the Intel disk. The risk starts with the first
-read-write use from Linux. Back the drive up before then.
+2026-10-07, refreshed 2026-10-09) covers the Ubuntu filesystems only, and
+BackupDrive is not usable at the moment.
 
-Don't put this NTFS partition through the data-drive LUKS conversion procedure
-while Windows needs native access. It stays unencrypted under the current plan,
-and cross-platform encryption would need its own setup.
+Don't put this NTFS partition through the data-drive LUKS conversion procedure:
+Windows can't read LUKS. It is encrypted with VeraCrypt instead, as described in
+[SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md). Its step 1 is this drive's
+backup: a read-only remount, a copy to the archive drive and a checksum
+comparison, before anything is erased.
 
-Every NixOS stage, minimal included, mounts the drive read-write at boot, so
-take this backup from the live installer **before the first NixOS boot**. Shut
-Windows down cleanly first, then mount the drive **read-only**:
-
-```sh
-sudo -i
-nix-shell -p ntfs3g restic
-mkdir -p /media/davinci /media/backup
-mount -t ntfs-3g -o ro /dev/disk/by-uuid/34201009200FD0B2 /media/davinci
-mount /dev/disk/by-uuid/883736aa-556a-4e5e-b42f-e58bd40f5668 /media/backup
-findmnt /media/backup              # must show the BackupDrive UUID
-export RESTIC_REPOSITORY=/media/backup/davinci-restic
-restic init                        # no Restic repository exists yet
-restic backup --one-file-system --tag davinci-before-nixos /media/davinci
-restic check --read-data
-```
-
-- **Check the destination:** if `findmnt` shows nothing, stop. A plain
-  unmounted directory is not a backup destination.
-- **Check the space:** about 8.1TiB is free after the rsync copy, against at
-  most 3.6TiB from this drive. Recheck with `df -h /media/backup`.
-- **After the backup:** record the snapshot ID, and test restoring
-  representative media and project exports.
+The earlier plan, a Restic repository on BackupDrive taken from the live
+installer before the first NixOS boot, no longer applies: NixOS has been
+running on this drive since, and BackupDrive can't be mounted.
