@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+<!-- NixOS snowflake geometry from nixos-icons (nix-snowflake.svg), CC-BY 4.0, NixOS artwork contributors -->
+<defs>
+  <linearGradient id="nxl" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#699ad7"/><stop offset=".24" stop-color="#7eb1dd"/><stop offset="1" stop-color="#7ebae4"/>
+  </linearGradient>
+  <linearGradient id="nxd" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#415e9a"/><stop offset=".23" stop-color="#4a6baf"/><stop offset="1" stop-color="#5277c3"/>
+  </linearGradient>
+  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.45"/>
+  </filter>
+  <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ffb454"/><stop offset="1" stop-color="#59c2ff"/>
+  </linearGradient>
+</defs>
+  <g filter="url(#sh)">
+  <g transform="translate(128 110) scale(0.4)">
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxl)" transform="rotate(60)"/>
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxl)" transform="rotate(180)"/>
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxl)" transform="rotate(300)"/>
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxd)" transform="rotate(0)"/>
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxd)" transform="rotate(120)"/>
+    <path d="m -97.82,5.41 122.19683,211.67512 -56.15706,0.5268 -32.6236,-56.8692 -32.85645,56.5653 -27.90237,-0.011 -14.29086,-24.6896 46.81047,-80.4901 -33.22946,-57.8256 z" fill="url(#nxd)" transform="rotate(240)"/>
+  </g>
+  </g>
+  <!-- Build badge: flake commit and NixOS generation, e.g. "87eb3c0 · 5".
+       Nix fills flake-rev at build time (self.shortRev, with a "*" when the
+       tree was dirty, or the build date for path: builds that carry no Git
+       revision). The rEFInd installer fills generation at switch time, then
+       resizes the pill around the text (12px per glyph at font-size 20). -->
+  <g filter="url(#sh)">
+    <rect id="build-badge" x="54" y="212" width="148" height="36" rx="18" fill="#1a1a1a" fill-opacity=".92" stroke="url(#badge)" stroke-width="3"/>
+    <text id="build-badge-text" x="128" y="236.5" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" font-size="20" fill="#e6e6e6"><tspan id="flake-rev">87eb3c0</tspan><tspan fill="#595959"> · </tspan><tspan fill="#ffb454">#</tspan><tspan id="generation">5</tspan></text>
+  </g>
+</svg>

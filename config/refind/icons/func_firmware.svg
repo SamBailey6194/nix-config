@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+<defs>
+  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+  <mask id="jaw" maskUnits="userSpaceOnUse" x="0" y="0" width="96" height="96">
+    <rect width="96" height="96" fill="#fff"/>
+    <rect x="43.5" y="12" width="10" height="19" rx="2" fill="#000"/>
+    <circle cx="48.5" cy="79" r="2.4" fill="#000"/>
+  </mask>
+</defs>
+  <g fill="#ffb454" opacity=".85"><rect x="27.5" y="14" width="5" height="10" rx="2"/><rect x="27.5" y="72" width="5" height="10" rx="2"/><rect x="14" y="27.5" width="10" height="5" rx="2"/><rect x="72" y="27.5" width="10" height="5" rx="2"/><rect x="39.5" y="14" width="5" height="10" rx="2"/><rect x="39.5" y="72" width="5" height="10" rx="2"/><rect x="14" y="39.5" width="10" height="5" rx="2"/><rect x="72" y="39.5" width="10" height="5" rx="2"/><rect x="51.5" y="14" width="5" height="10" rx="2"/><rect x="51.5" y="72" width="5" height="10" rx="2"/><rect x="14" y="51.5" width="10" height="5" rx="2"/><rect x="72" y="51.5" width="10" height="5" rx="2"/><rect x="63.5" y="14" width="5" height="10" rx="2"/><rect x="63.5" y="72" width="5" height="10" rx="2"/><rect x="14" y="63.5" width="10" height="5" rx="2"/><rect x="72" y="63.5" width="10" height="5" rx="2"/></g>
+  <rect x="22" y="22" width="52" height="52" rx="8" fill="#2a2a2a" stroke="#ffb454" stroke-width="3.5"/>
+  <rect x="35" y="35" width="26" height="26" rx="4" fill="#383838"/>
+  <g transform="rotate(-45 48 48)" filter="url(#sh)">
+    <g mask="url(#jaw)" fill="#59c2ff">
+      <rect x="44" y="40" width="9" height="46" rx="4.5"/>
+      <circle cx="48.5" cy="30" r="13"/>
+    </g>
+  </g>
+</svg>
