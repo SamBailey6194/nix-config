@@ -31,6 +31,7 @@
 
     # NEW: Creative suite (AMD GPU required)
     ../../modules/software/creative.nix
+    ../../modules/software/craft-apps.nix # ArtCraft Craft apps (PhotoCraft, VectorCraft, ...)
   ];
 
   # Device identity

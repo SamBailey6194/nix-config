@@ -228,6 +228,16 @@ check *HOSTS:
 update:
     nix flake update
 
+# Pin the ArtCraft Craft apps (PhotoCraft, VectorCraft, ...) to their latest
+# GitHub releases: rewrites pkgs/craft-apps/sources.json with the AppImage URL
+# and the hash from the release API, cross-checked against SHA256SUMS.txt.
+# Not part of `just update` (the apps are not flake inputs). Set GITHUB_TOKEN
+# to avoid the API rate limit. "just update-craft --check" only reports.
+#
+# Update the ArtCraft Craft apps' pinned releases ("--check" to only report)
+update-craft *args:
+    python3 -I scripts/update-craft-apps.py {{args}}
+
 # Check for available updates WITHOUT changing anything (the `apt update` +
 # `apt list --upgradable` equivalent for a flake config).
 #

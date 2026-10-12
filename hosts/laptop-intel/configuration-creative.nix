@@ -27,6 +27,7 @@
     ../../modules/software/office.nix
     ../../modules/software/communication.nix
     ../../modules/software/media.nix
+    ../../modules/software/craft-apps.nix # ArtCraft Craft apps (PhotoCraft, VectorCraft, ...)
   ];
 
   # Device identity

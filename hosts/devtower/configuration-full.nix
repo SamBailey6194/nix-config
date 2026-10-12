@@ -43,6 +43,7 @@
     ../../modules/software/communication.nix
     ../../modules/software/media.nix
     ../../modules/software/creative.nix # DaVinci Resolve Studio + Blender
+    ../../modules/software/craft-apps.nix # ArtCraft Craft apps (PhotoCraft, VectorCraft, ...)
 
     # Network
     # Declarative Wi-Fi profiles; PSKs come from the wifi-passwords agenix
