@@ -31,6 +31,13 @@ in
     maxGenerations = 5;
     inherit flakeRev;
     windows.partUuid = "89590b26-8a8f-4bc2-885f-3ba0241256bb";
+
+    # EDK2 UEFI shell in the tools row (EFI/tools/shellx64.efi), for recovery.
+    # Accepted trade-off: with Secure Boot off it can start the kernel with
+    # init=/bin/sh while PCR 7 still unseals cryptroot - the same exposure as
+    # booting a live USB (docs/BACKUP-AND-DATA-ENCRYPTION.md). Revisit when
+    # Secure Boot is turned on.
+    shell = true;
   };
 
   # Full stage only: configuration-full.nix hard-codes REPLACE-* placeholders
@@ -46,6 +53,7 @@ in
   # The full stage adds tpm2-device=auto to cryptroot. PCR 7 does not cover
   # the kernel command line, so an editable boot entry (init=/bin/sh) would
   # give a root shell on a TPM-unlocked disk. rEFInd hides its options editor
-  # (hideui editor); this keeps systemd-boot locked too if rEFInd is turned off.
+  # (hideui editor; the EFI shell above is the accepted exception); this keeps
+  # systemd-boot locked too if rEFInd is turned off.
   boot.loader.systemd-boot.editor = false;
 }
