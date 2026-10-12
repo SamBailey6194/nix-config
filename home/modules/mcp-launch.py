@@ -61,6 +61,12 @@ def main():
     elif kind == "firefox":
         graphical_environment()
         command = [executable, "--firefoxPath", args[0]]
+    elif kind == "resolve":
+        # The FHS wrapper runs ResolveMCP in Resolve's sandbox; it attaches to
+        # (or launches) Resolve, which needs XWayland.
+        graphical_environment()
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
+        command = [executable, args[0]]
     else:
         sys.exit("Unknown shared MCP server")
     os.execvpe(command[0], command, os.environ)

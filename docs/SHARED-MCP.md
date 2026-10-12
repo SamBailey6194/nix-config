@@ -23,6 +23,26 @@ Claude-in-Chrome, which is blocked (see [CLAUDE-SETTINGS.md](CLAUDE-SETTINGS.md)
 | `brave-devtools` | Shared launcher, npm `chrome-devtools-mcp` 1.10.1 | `/run/current-system/sw/bin/brave` |
 | `firefox-developer` | Shared launcher, nixpkgs `firefox-devtools-mcp` | `/run/current-system/sw/bin/firefox-devedition` |
 
+Claude Code alone also gets `davinci-resolve` on hosts whose NixOS
+configuration installs `davinci-resolve-studio` (devtower-intel full and
+creative stages; devtower and framework creative and full). This is
+Blackmagic's own stdio server, `bin/ResolveMCP`, built into Resolve Studio
+21.1 and later; nixpkgs pins it with Resolve, so it has no updater. The
+launcher runs it through Resolve's FHS wrapper
+(`davinci-resolve-studio <unwrapped>/bin/ResolveMCP`), so its bundled Python
+and `fusionscript.so` find their libraries, with `QT_QPA_PLATFORM=xcb` and no
+API keys. Codex and agy do not get it until their per-tool approval is managed.
+
+Before using it, start Resolve yourself with the `resolve` alias, and once set
+Preferences > System > General > External scripting using: Local in Resolve.
+`launch_resolve` is denied (it would start Resolve without the XWayland
+setting) and so is `run_script_unsafe` (full OS access). `run_script` (the whole
+Resolve scripting API), `update_dctl`, `generate_lut`, `delete_dctl` and
+`delete_lut` ask first; the read-only tools (status, scripting API and docs,
+DCTL and LUT listings) run without a prompt. Do not use Resolve's File > Setup
+AI Assistants on NixOS: it writes client entries pointing at `/opt/resolve`
+paths, which do not exist here.
+
 An inventory entry with `clients` is registered only in those clients
 (`home/modules/mcp-activation.nix`). The launcher finds the desktop session
 (`XDG_RUNTIME_DIR`, `WAYLAND_DISPLAY`, the XWayland `DISPLAY`, the session bus)
@@ -63,7 +83,8 @@ the current user can write. A newly provisioned device needs its own secret
 or private credential file; the inventory alone cannot provision an API key.
 
 Registration removes managed servers a client does not get (Claude Design
-outside Claude Code, the browser servers in OpenCode), including entries an
+outside Claude Code, the browser servers in OpenCode, `davinci-resolve` on
+hosts without Resolve), including entries an
 earlier generation registered. Switching a managed server between stdio and HTTP
 drops the other transport's fields, such as stale headers or bearer settings.
 Registration updates the managed server transports and preserves other

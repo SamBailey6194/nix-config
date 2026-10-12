@@ -1,10 +1,10 @@
 # Called by each client module, keeping registration and credentials identical.
-{ pkgs, lib, client, browsers ? false }:
+{ pkgs, lib, client, browsers ? false, resolve ? null }:
 let
-  inventory = import ./mcp-servers.nix { inherit pkgs lib client browsers; };
+  inventory = import ./mcp-servers.nix { inherit pkgs lib client browsers resolve; };
   # Managed names this client does not get (e.g. claude-design outside Claude
   # Code): removed, so an entry an earlier generation registered goes away.
-  managed = builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; browsers = true; });
+  managed = builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; all = true; });
   retired = lib.subtractLists (builtins.attrNames inventory) managed;
   file = pkgs.writeText "shared-mcp-servers.json" (builtins.toJSON inventory);
   retiredFile = pkgs.writeText "retired-mcp-servers.json" (builtins.toJSON retired);

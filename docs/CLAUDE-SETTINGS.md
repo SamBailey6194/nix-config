@@ -33,6 +33,9 @@ tools (`mcp__claude-in-chrome__*`) are in `permissions.deny`, activation sets
 `claudeInChromeDefaultEnabled` to false in `~/.claude.json`, and no native
 messaging host is registered with Brave. The deny rule still applies when a
 session is started with `claude --chrome`.
+On Resolve hosts, `davinci-resolve` (see [SHARED-MCP.md](SHARED-MCP.md)) has
+`run_script_unsafe` and `launch_resolve` denied, and `run_script`,
+`update_dctl`, `generate_lut`, `delete_dctl` and `delete_lut` set to ask.
 
 The status line, monitor lifecycle hooks and memory-write guard remain. Monitor
 hooks use the new home directory and read credentials at runtime from

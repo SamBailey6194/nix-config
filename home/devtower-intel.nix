@@ -14,8 +14,7 @@ let
   # /mnt/davinci or ~/DavinciProj, never a symlink to a subfolder.
   davinciDriveLetter = null;
 
-  hasResolve = builtins.any (p: (p.pname or "") == "davinci-resolve-studio")
-    (osConfig.environment.systemPackages or [ ]);
+  hasResolve = import ./modules/resolve-package.nix { inherit lib osConfig; } != null;
 in
 {
   # Keep Cargo artifacts outside any repository Nix might copy as a flake.

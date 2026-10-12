@@ -240,6 +240,7 @@ in
     inherit pkgs lib;
     client = "claude";
     browsers = osConfig.services.browserPolicies.enable or false;
+    resolve = import ./resolve-package.nix { inherit lib osConfig; };
   };
 
   # Browser testing goes through the brave-devtools and firefox-developer MCP

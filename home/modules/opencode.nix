@@ -52,7 +52,7 @@ let
   mcp = import ./mcp-servers.nix { inherit pkgs lib; client = "opencode"; };
   # Managed names OpenCode does not get (e.g. claude-design), removed if present.
   retiredMcp = lib.subtractLists (builtins.attrNames mcp)
-    (builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; browsers = true; }));
+    (builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; all = true; }));
 
   llm = if osConfig != null then osConfig.services.localLlm or null else null;
 

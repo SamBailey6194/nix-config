@@ -22,7 +22,9 @@
       "mcp__firefox-developer__*"
     ],
     "deny": [
-      "mcp__claude-in-chrome__*"
+      "mcp__claude-in-chrome__*",
+      "mcp__davinci-resolve__run_script_unsafe",
+      "mcp__davinci-resolve__launch_resolve"
     ],
     "ask": [
       "mcp__elevenlabs__text_to_speech",
@@ -33,7 +35,12 @@
       "mcp__elevenlabs__voice_clone",
       "mcp__elevenlabs__isolate_audio",
       "mcp__elevenlabs__text_to_voice",
-      "mcp__elevenlabs__create_voice_from_preview"
+      "mcp__elevenlabs__create_voice_from_preview",
+      "mcp__davinci-resolve__run_script",
+      "mcp__davinci-resolve__update_dctl",
+      "mcp__davinci-resolve__generate_lut",
+      "mcp__davinci-resolve__delete_dctl",
+      "mcp__davinci-resolve__delete_lut"
     ]
   },
   "enabledPlugins": {

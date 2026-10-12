@@ -4,8 +4,11 @@
 # An entry may carry `clients`, limiting it to those clients: pass `client` to
 # get that client's servers, or null for every managed server (used to retire
 # names a client no longer gets). `browsers` adds the browser DevTools servers,
-# which need the managed browsers (services.browserPolicies) installed.
-{ pkgs, lib, client ? null, browsers ? false }:
+# which need the managed browsers (services.browserPolicies) installed, and
+# `resolve` (the davinci-resolve-studio package, ./resolve-package.nix) adds
+# Resolve's own server. `all` lists every optional entry by name only, without
+# dereferencing `resolve`, so retired-name lists stay complete on every host.
+{ pkgs, lib, client ? null, browsers ? false, resolve ? null, all ? false }:
 let
   uv = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
   launch = pkgs.writeShellScript "ai-mcp-launch" ''
@@ -34,7 +37,7 @@ in forClient ({
     url = "https://api.anthropic.com/v1/design/mcp";
     clients = [ "claude" ];
   };
-} // lib.optionalAttrs browsers {
+} // lib.optionalAttrs (all || browsers) {
   # Browsers by their system profile path, so this adds no second copy of them.
   brave-devtools = {
     command = [ (toString launch) "brave" "${pkgs.nodejs}/bin/npx" "/run/current-system/sw/bin/brave" ];
@@ -43,5 +46,13 @@ in forClient ({
   firefox-developer = {
     command = [ (toString launch) "firefox" "${pkgs.firefox-devtools-mcp}/bin/firefox-devtools-mcp" "/run/current-system/sw/bin/firefox-devedition" ];
     clients = browserClients;
+  };
+} // lib.optionalAttrs (all || resolve != null) {
+  # Built into Resolve Studio 21.1+ and pinned by nixpkgs, so no updater. Run
+  # through the FHS wrapper, whose libraries it needs. Claude Code only until
+  # Codex and agy per-tool approval is managed (settings-base.json gates it).
+  davinci-resolve = {
+    command = [ (toString launch) "resolve" "${resolve}/bin/davinci-resolve-studio" "${resolve.davinci}/bin/ResolveMCP" ];
+    clients = [ "claude" ];
   };
 })
