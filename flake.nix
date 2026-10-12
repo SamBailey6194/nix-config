@@ -97,6 +97,8 @@
           # llama.cpp (CUDA + OpenBLAS), with the rest of the dev tooling: an
           # allow-list, so a stage added later does not get the local CUDA build
           ++ nixpkgs.lib.optional (builtins.elem stage [ "dev" "productivity" "creative" "full" ]) ./hosts/devtower-intel/local-llm.nix
+          # GoXLR daemon + centre-monitor HDMI audio, from the first graphical stage
+          ++ nixpkgs.lib.optional (builtins.elem stage [ "desktop" "dev" "productivity" "creative" "full" ]) ./hosts/devtower-intel/audio.nix
           ++ extraModules
           ++ nixpkgs.lib.optionals (home != null) [
             home-manager.nixosModules.home-manager

@@ -10,12 +10,11 @@
 
   # USB permissions for Go XLR
   services.udev.extraRules = ''
-    # TC-Helicon GoXLR
-    SUBSYSTEM=="usb", ATTR{idVendor}=="1220", ATTR{idProduct}=="8fe4", MODE="0666"
+    # TC-Helicon GoXLR (full size)
     SUBSYSTEM=="usb", ATTR{idVendor}=="1220", ATTR{idProduct}=="8fe0", MODE="0666"
 
     # GoXLR Mini
-    SUBSYSTEM=="usb", ATTR{idVendor}=="1220", ATTR{idProduct}=="8fe1", MODE="0666"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="1220", ATTR{idProduct}=="8fe4", MODE="0666"
   '';
 
   # Professional audio configuration
