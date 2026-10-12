@@ -310,6 +310,7 @@ See `docs/SECRETS.md` for the complete guide.
 
 - **Installation**: `CLAUDE.md` (this file) - Quick start guide
 - **Secrets Setup**: `docs/SECRETS.md` - Step-by-step secrets configuration and the per-device (zero-trust) model
+- **Email**: `docs/EMAIL.md` - aerc + Claws Mail, OAuth2 via oama, per-device client secrets
 - **Rust Tools**: `rust/README.md` - Rust tooling overview
 - **Phase 2 Summary**: `docs/archive/PHASE-2-IMPLEMENTATION-SUMMARY.md` - What was implemented
 - **Task Automation**: `justfile` - All available commands (`just --list`)

@@ -74,6 +74,8 @@ hl.window_rule({
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's btop pane (laptop only)
 --   yazi               Yazi, the file manager (SUPER + F)
+--   aerc               aerc, the mail client (SUPER + E)
+--   aerc-keybinds      aerc's keybind sheet, beside it
 --   termfilechooser    Yazi as an app's Open / Save dialog (the portal's kitty)
 --
 -- Kept RE2-compatible: alternation and a character class only, no lookaround
@@ -81,7 +83,7 @@ hl.window_rule({
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor|yazi|termfilechooser)$" },
+    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor|yazi|aerc|aerc-keybinds|termfilechooser)$" },
 
     opacity = "0.95 0.95",
 })

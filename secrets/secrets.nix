@@ -174,6 +174,18 @@ in
   "typesafe-api-key-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
+  # oama OAuth Clients (Per-Device)
+  # The app registrations aerc signs in through (home/modules/aerc.nix):
+  # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MICROSOFT_CLIENT_ID. Not the mail
+  # tokens themselves, which oama keeps in GNOME Keyring. docs/EMAIL.md.
+  # ============================================================================
+
+  "oama-clients-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  # "oama-clients-framework.age".publicKeys = allUsers ++ [ framework ];
+  # "oama-clients-devtower.age".publicKeys = allUsers ++ [ devtower ];
+  "oama-clients-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # ============================================================================
   # AWS CLI Config (Per-Device)
   # ~/.aws/config for `aws sso login`: SSO start URL, session, account IDs, role
   # names and regions. Not long-lived credentials (SSO tokens are cached under

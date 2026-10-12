@@ -38,7 +38,7 @@
 --
 --     The pool narrowed from 3-6 to 3-5 when workspace 6 became mail, which
 --     also moved OBS's workspace 6 out of the pool but INTO a collision with
---     Claws Mail instead. Both still need fixing for this device: move
+--     mail instead (aerc + its sheet on SUPER + E, Claws on SUPER + SHIFT + E). Both still need fixing for this device: move
 --     Resolve off 5 and OBS off 6, or set DEV_LAYOUT_POOL_LAST here. This
 --     also needs the three-monitor workspace design still outstanding for
 --     devtower.

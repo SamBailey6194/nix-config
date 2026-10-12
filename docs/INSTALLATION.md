@@ -814,7 +814,7 @@ cd /etc/nixos/nix-config
 sudo nixos-rebuild switch --flake .#devtower-productivity
 ```
 
-**What's Added**: LibreOffice, Discord, Teams, Zoom, Slack, VLC, Spotify, Thunderbird
+**What's Added**: LibreOffice, Discord, Teams, Zoom, Slack, VLC, Spotify, aerc (default mail, `Super + E`) and Claws Mail (backup, `Super + Shift + E`); see [EMAIL.md](EMAIL.md)
 
 ### Stage 5: Creative Software
 
@@ -1124,7 +1124,9 @@ reboot
 | `Super + M` | Fullscreen |
 | `Super + 1-5` | Switch workspace |
 | `Super + Shift + 1-5` | Move window to workspace |
-| `Super + Shift + E` | Exit Hyprland |
+| `Super + Shift + Q` | Exit Hyprland |
+| `Super + E` | Mail: aerc + its keybind sheet (workspace 6) |
+| `Super + Shift + E` | Backup mail client: Claws Mail |
 | `Print` | Screenshot (select area) |
 
 ### Stage Installation Summary

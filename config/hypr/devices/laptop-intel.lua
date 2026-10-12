@@ -74,13 +74,13 @@ hl.window_rule({
 --         class-only for Neovim (its Kitty window has a class of its own).
 --         That rule beats this catch-all by being registered later — last
 --         match wins.
---   6     mail (Claws Mail)
+--   6     mail (aerc + keybind sheet, Claws Mail)
 --   7     browsers
 --   8     Affinity Suite
 --   9     comms
 --   10    catch-all — every ordinary window, via the rule below
 --
--- Workspaces 2 and 7-9 come from vars.workspaceAssignments; only ws1 and ws10
+-- Workspaces 2 and 6-9 come from vars.workspaceAssignments; only ws1 and ws10
 -- are laptop-specific and live here.
 --
 -- HOW THE ORDERING WORKS

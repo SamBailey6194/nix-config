@@ -1,6 +1,11 @@
 { pkgs, ... }:
 
-# Email client (Claws Mail)
+# Email client (Claws Mail), the GUI backup
+#
+# aerc (home/modules/aerc.nix) is the default mail client on SUPER + E; Claws
+# is kept alongside it on SUPER + SHIFT + E, for mail that is easier with a
+# mouse. Both land on workspace 6. The two do not share configuration: Claws
+# signs in on its own (below), aerc through oama.
 #
 # WHY CLAWS AND NOT THUNDERBIRD
 #
@@ -20,7 +25,7 @@
 # engine, so HTML mail still renders properly; it just cannot execute anything.
 # For an email client that is a feature, not a limitation.
 #
-# AUTHENTICATION - WHY THERE IS NO oama HERE
+# AUTHENTICATION - WHY CLAWS DOES NOT USE oama
 #
 # Gmail app passwords are being phased out and Microsoft finished retiring
 # Basic Auth for IMAP/POP/SMTP in April 2026, so Outlook is OAuth2-only now.
@@ -28,10 +33,10 @@
 # tokens, via a browser consent flow on localhost:8888, using the libcurl this
 # package already links.
 #
-# That is why the oama / cyrus-sasl-xoauth2 stack this was originally scoped
-# around is absent. oama exists for clients that speak XOAUTH2 but cannot
-# acquire or renew tokens - mbsync, msmtp, aerc, neomutt. Claws is not one of
-# them, and cyrus-sasl-xoauth2 is only needed by mbsync
+# oama exists for clients that speak XOAUTH2 but cannot acquire or renew
+# tokens - mbsync, msmtp, aerc, neomutt. Claws is not one of them, so it keeps
+# its own tokens; aerc is, which is why aerc.nix brings oama in. Neither needs
+# cyrus-sasl-xoauth2, which only mbsync uses
 # (isync.override { withCyrusSaslXoauth2 = true; }). No mbsync, no SASL plugin.
 #
 # CONFIGURATION IS DELIBERATELY NOT DECLARATIVE
@@ -46,7 +51,7 @@
 #
 # So accounts are set up once through the GUI. What IS declarative lives in the
 # repo: this package, the workspace 6 window rule (config/hypr/00-vars.lua) and
-# the SUPER + E keybind (config/hypr/60-keybinds.lua).
+# the SUPER + SHIFT + E keybind (config/hypr/60-keybinds.lua).
 
 {
   home.packages = [

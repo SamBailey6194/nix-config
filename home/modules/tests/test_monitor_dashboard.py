@@ -50,7 +50,8 @@ class DashboardTests(unittest.TestCase):
         for cls, expected in {
             "brave-browser": "10", "firefox-devedition": "10",
             "zen-beta": "7", "librewolf": "10", "resolve": "8",
-            "claws-mail": "6", "unassigned-app": "10",
+            "claws-mail": "6", "aerc": "6", "aerc-keybinds": "6",
+            "unassigned-app": "10",
         }.items():
             destination = None
             for _, rule in self.lua.globals().rules.items():

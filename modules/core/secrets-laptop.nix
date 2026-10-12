@@ -13,7 +13,7 @@ let
   hostname = config.networking.hostName;
 in
 {
-  imports = [ ./typesafe-secret.nix ];
+  imports = [ ./typesafe-secret.nix ./oama-secret.nix ];
 
   # Configure agenix to use the system SSH host key
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];

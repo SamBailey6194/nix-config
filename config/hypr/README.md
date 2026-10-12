@@ -92,7 +92,7 @@ by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
 | `1`       | Dashboard (keybinds + btop)   | Device file (laptop only)                                   |
 | `2`       | nix-config dev layout         | Window rules (class + title for Zed, class only for Neovim) |
 | `3-5`     | Dev pool, allocated as needed | Window rules registered at launch                           |
-| `6`       | Mail (Claws Mail)             | `00-vars.lua` workspaceAssignments                          |
+| `6`       | Mail (aerc + sheet, Claws)    | `00-vars.lua` workspaceAssignments                          |
 | `7`       | Browsers                      | Window rules (class match)                                  |
 | `8`       | Affinity Suite                | Window rules (class match)                                  |
 | `9`       | Comms (Teams, Zoom, Discord)  | Window rules (class match)                                  |
@@ -290,6 +290,14 @@ Hyprland ships LuaLS type stubs for the `hl.*` API at
 `<hyprland-package>/share/hypr/stubs/hl.meta.lua`. `home/modules/hyprland.nix`
 writes `~/.config/hypr/.luarc.json` pointing at them, with `diagnostics.globals =
 ["hl"]`, so lua-language-server offers completion and catches typos in these files.
+
+When this repository itself is open in Zed or Neovim, lua-language-server's
+workspace is the repository root, so it reads the checked-in `.luarc.json` there
+instead. That file points at `/run/current-system/sw/share/hypr/stubs` (a
+checked-in file cannot name a store path, and the system profile always has the
+running Hyprland's stubs), adds `config/hypr/?.lua` to `runtime.path` so
+`require("00-vars")` resolves, and declares `hl` and `vim` as globals. It needs a
+host with Hyprland installed system-wide.
 
 The stubs are the authoritative API reference. Prefer them over the wiki when the
 two disagree.

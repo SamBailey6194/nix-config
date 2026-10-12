@@ -40,7 +40,7 @@ M.mod = "SUPER"
 --   1     dashboard (laptop only)
 --   2     nix-config dev layout           (reserved, assigned here)
 --   3-5   generic dev pool                (rule registered at launch, not here)
---   6     mail (Claws Mail)               (assigned here)
+--   6     mail: aerc + its keybind sheet, Claws Mail (assigned here)
 --   7     browsers
 --   8     Affinity Suite
 --   9     comms
@@ -82,8 +82,8 @@ M.workspaceAssignments = {
 
     -- Mail (workspace 6)
     --
-    -- Claws Mail gets a fixed home for the same reason the browsers and comms
-    -- do: it is a long-running window you want to find in a known place. The
+    -- Mail gets a fixed home for the same reason the browsers and comms do:
+    -- it is a long-running window you want to find in a known place. The
     -- generic dev pool was narrowed from 3-6 to 3-5 to free this workspace
     -- (rust/dev-layout, DEFAULT_POOL_LAST) - otherwise a dev layout could be
     -- built straight on top of the mail client.
@@ -93,6 +93,19 @@ M.workspaceAssignments = {
     -- with `hyprctl clients | grep -i claws` on first launch and correct this
     -- if it differs - a wrong class here fails silently, exactly like the
     -- brave/brave-browser case documented above.
+    --
+    -- aerc and its sheet are kitty windows launched with these classes by the
+    -- SUPER + E layout (60-keybinds.lua), so unlike Claws they are certain.
+    {
+        name      = "mail-aerc",
+        match     = { class = "^(aerc)$" },
+        workspace = "6",
+    },
+    {
+        name      = "mail-aerc-keybinds",
+        match     = { class = "^(aerc-keybinds)$" },
+        workspace = "6",
+    },
     {
         name      = "mail-claws",
         match     = { class = "^(claws-mail)$" },

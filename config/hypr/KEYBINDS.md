@@ -18,7 +18,8 @@
 | `SUPER + SHIFT + W`  | Brave browser           |
 | `SUPER + ALT + W`    | LibreWolf browser       |
 | `SUPER + CTRL + W`   | Firefox Developer Ed.   |
-| `SUPER + E`          | Email (Claws Mail)      |
+| `SUPER + E`          | Mail: aerc + its keybind sheet (ws 6) |
+| `SUPER + SHIFT + E`  | Backup mail client: Claws Mail (ws 6) |
 | `SUPER + T`          | Teams                   |
 | `SUPER + C`          | Zoom                    |
 | `SUPER + R`          | RustDesk                |
@@ -105,7 +106,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `1`       | Dashboard (keybinds + btop) — laptop only    |
 | `2`       | nix-config dev layout (reserved)             |
 | `3-5`     | Dev pool (allocated as needed)               |
-| `6`       | Mail (Claws Mail)                            |
+| `6`       | Mail (aerc + keybind sheet, Claws Mail)      |
 | `7`       | Browsers                                     |
 | `8`       | Affinity Suite                               |
 | `9`       | Comms (Teams, Zoom, Discord)                 |

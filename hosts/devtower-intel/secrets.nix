@@ -31,7 +31,10 @@ let
   };
 in
 {
-  imports = [ ../../modules/core/typesafe-secret.nix ];
+  imports = [
+    ../../modules/core/typesafe-secret.nix
+    ../../modules/core/oama-secret.nix # aerc OAuth clients (home/modules/aerc.nix)
+  ];
 
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 

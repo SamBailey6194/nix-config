@@ -73,8 +73,97 @@ hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("brave"))
 hl.bind(mod .. " + ALT + W",   hl.dsp.exec_cmd("librewolf"))
 hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 
--- Mail (workspace 6; see 00-vars.lua for the window rule that pins it)
-hl.bind(mod .. " + E", hl.dsp.exec_cmd("claws-mail"))
+-- Mail, on workspace 6 (00-vars.lua pins all three windows there).
+--
+--   E        aerc, the default (home/modules/aerc.nix), with its keybind
+--            sheet beside it: aerc first (left, or top on a portrait
+--            monitor such as devtower-intel's ws6 one), the sheet second
+--   SHIFT+E  Claws Mail, the GUI backup (home/modules/email.nix)
+--
+-- E works like the laptop's ws1 dashboard (devices/laptop-intel.lua, which
+-- explains the API and the reasoning in full): it focuses workspace 6 and
+-- makes sure each pane exists exactly once - left alone if it is there,
+-- brought back if it was moved away, launched if it is not open. So a second
+-- press never starts a second aerc, and reopens the sheet after `q` closed it.
+--
+-- Launch order does not decide the side a tile lands on (dwindle puts it on
+-- the side the mouse is on), so the panes are swapped afterwards if the sheet
+-- came out first. Only two tiled panes are swapped; a swap would trade the
+-- floating state of a floated pane.
+local MAIL_WS = 6
+
+local MAIL = {
+    { class = "aerc",          cmd = "kitty --class aerc -e aerc" },
+    { class = "aerc-keybinds", cmd = "kitty --class aerc-keybinds -e less ~/.config/aerc/KEYBINDS.md" },
+}
+
+local mail_pending = {}
+
+local function mail_find(class)
+    return hl.get_windows({ class = class })[1]
+end
+
+local function on_mail_ws(w)
+    local ws = w and w.workspace
+    return ws ~= nil and ws.id == MAIL_WS
+end
+
+-- `fullscreen` is an integer mode, and 0 is truthy in Lua, so compare it.
+local function mail_tiled(w)
+    return not w.floating and w.fullscreen == 0
+end
+
+-- aerc before the sheet: left of it side by side, above it when stacked.
+-- The order is strict (x first, then y) so one swap always settles it: with
+-- a third window on ws6 (Claws) the two can sit diagonally, and "x OR y
+-- greater" would then swap them back and forth on every press.
+local function mail_enforce_order()
+    local client, sheet = mail_find("aerc"), mail_find("aerc-keybinds")
+    if on_mail_ws(client) and on_mail_ws(sheet)
+        and mail_tiled(client) and mail_tiled(sheet)
+        and (client.at.x > sheet.at.x
+             or (client.at.x == sheet.at.x and client.at.y > sheet.at.y)) then
+        hl.dispatch(hl.dsp.window.swap({ window = client, target = sheet }))
+    end
+end
+
+local function mail_layout()
+    local active = hl.get_active_workspace()
+    if not active or active.id ~= MAIL_WS then
+        hl.dispatch(hl.dsp.focus({ workspace = MAIL_WS }))
+    end
+
+    for _, pane in ipairs(MAIL) do
+        local cls = pane.class
+        local w   = mail_find(cls)
+        if w then
+            if not on_mail_ws(w) then
+                hl.dispatch(hl.dsp.window.move({ window = w, workspace = MAIL_WS, follow = false }))
+            end
+        elseif not mail_pending[cls] then
+            local token = {}
+            mail_pending[cls] = token
+            hl.exec_cmd(pane.cmd)
+            hl.timer(function()
+                if mail_pending[cls] == token then mail_pending[cls] = nil end
+            end, { timeout = 5000, type = "oneshot" })
+        end
+    end
+
+    mail_enforce_order()
+end
+
+hl.on("window.open", function(w)
+    local cls = w.class
+    if cls == "aerc" or cls == "aerc-keybinds" then
+        mail_pending[cls] = nil
+        mail_enforce_order()
+    end
+end)
+
+hl.bind(mod .. " + E", mail_layout,
+    { description = "Mail (ws 6): aerc + keybind sheet, reopen any missing pane" })
+hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("claws-mail"))
 
 -- Communication
 hl.bind(mod .. " + T", hl.dsp.exec_cmd("teams-for-linux"))
