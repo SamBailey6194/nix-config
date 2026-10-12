@@ -42,6 +42,10 @@ in
   # Same uid as Ubuntu's sam-dev, so /mnt/ubuntu-home and /mnt/archive ownership lines up
   users.users.sam-desktop.uid = 1000;
 
+  # Stay awake: only a manual suspend (SUPER+CTRL+S) sleeps this PC. ignore is
+  # logind's default; pinned so no later module can turn on idle suspend.
+  services.logind.settings.Login.IdleAction = "ignore";
+
   # Dual boot from a dedicated ESP: leave NVRAM BootOrder alone (pick NixOS
   # from the firmware boot menu). Each NVIDIA initrd carries ~100MB of GSP
   # firmware, so keep the generation count as low as the full stage does.

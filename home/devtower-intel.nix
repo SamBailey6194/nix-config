@@ -35,6 +35,11 @@ in
       autoLoad = true;
     };
 
+  # Desktop: never dim, lock or blank on idle. hypridle keeps running for the
+  # manual paths only - its lock_cmd serves SUPER+CTRL+L (loginctl
+  # lock-session) and before_sleep_cmd still locks ahead of a manual suspend.
+  services.hypridle.settings.listener = lib.mkForce [ ];
+
   # The drive root in the home folder (a link to the root keeps Wine's drive
   # letter mapping; see davinciDriveLetter above).
   home.file."DavinciProj".source = link davinci;
