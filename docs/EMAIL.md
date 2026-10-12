@@ -1,6 +1,6 @@
 # Email: aerc and Claws Mail
 
-Two mail clients, both on workspace 6 (3 on devtower-intel), from the
+Two mail clients, both on workspace 6 (4 on devtower-intel), from the
 productivity stage up:
 
 | Key                 | Client                                   | Configured in                |
@@ -163,5 +163,5 @@ oama logs through syslog, so its messages are in the journal:
 | OAuth client secret           | `modules/core/oama-secret.nix`, `secrets/secrets.nix` |
 | `SUPER + E` layout            | `config/hypr/60-keybinds.lua`            |
 | Workspace 6 rules             | `config/hypr/00-vars.lua`                |
-| devtower-intel's ws 3 rules   | `config/hypr/devices/devtower-intel.lua` |
+| devtower-intel's ws 4 rules   | `config/hypr/devices/devtower-intel.lua` |
 | Claws Mail                    | `home/modules/email.nix`                 |

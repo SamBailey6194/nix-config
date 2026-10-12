@@ -31,7 +31,7 @@ config/hypr/
 ├── devices/                # Device-specific overrides, deployed as 90-device.lua
 │   ├── laptop-intel.lua    # Intel laptop (i5-10210U, 32GB)
 │   ├── devtower-intel.lua  # Intel desktop: three monitors, 40 workspaces
-│   ├── devtower-intel-dashboard.lua  # devtower-intel's ws1 dashboard panes
+│   ├── devtower-intel-dashboard.lua  # devtower-intel's ws1 dashboard and ws2 terminal grid
 │   ├── framework.lua       # Framework AMD (Ryzen + Radeon, 64GB)
 │   └── devtower.lua        # AMD desktop (CPU + GPU, 64GB, Go XLR)
 ├── KEYBINDS.md             # Keybind cheat sheet (deployed to ~/.config/hypr/)
@@ -110,12 +110,13 @@ worth keeping apart:
   the nix-config layout. It does not place it. The windows land on workspace 2
   because static rules match them there: the editor on class **and** title
   (Zed has no `--class`, so its title — the folder name `nix-config` — is the
-  only distinguishing feature), the terminals on the class `nixcfg-term`. Rename
-  the repository folder and the editor rule stops firing; see `00-vars.lua`.
+  only distinguishing feature). Zed is the layout's only window: it launches
+  no Kitty terminals beside it and fills the workspace. Rename the repository
+  folder and the editor rule stops firing; see `00-vars.lua`.
   The Neovim variant, `SUPER + SHIFT + Return`, is a single Kitty window matched
   on the class `nixcfg-nvim` alone, so it does not depend on the folder name.
-  It launches no terminals: the keybind reference, file tree, git panel and
-  shell are panes and tabs inside Neovim, and the window fills the workspace.
+  The keybind reference, file tree, git panel and shell are panes and tabs
+  inside Neovim, and the window fills the workspace.
 - Static window rules cannot express "the next free workspace", so `SUPER +
   CTRL + Z` picks the workspace at runtime and then registers the *same kind*
   of class+title rule workspace 2 uses, via `hyprctl eval`, immediately before
@@ -142,28 +143,29 @@ worth keeping apart:
 
 `devices/devtower-intel.lua` replaces the map above with forty workspaces over
 three monitors: left (4K, scale 1.5), centre (1440p) and right (1080p,
-portrait). laptop-intel is unaffected.
+portrait), plus overflow workspaces from 41 up. laptop-intel is unaffected.
 
 | Workspace | Contents                                                             | Monitor |
 |-----------|----------------------------------------------------------------------|---------|
 | `1`       | Dashboard (keybinds, btop, nvtop)                                    | right   |
-| `2`       | File managers (Yazi, Thunar)                                         | centre  |
-| `3`       | Mail (aerc + sheet, Claws)                                           | centre  |
-| `4-9`     | LibreOffice Writer, Calc, Impress, Draw, Math, Base                  | centre  |
-| `10`      | Comms (Teams, Zoom)                                                  | centre  |
-| `11`      | Zen                                                                  | left    |
-| `12`      | LibreWolf                                                            | left    |
-| `13`      | Firefox Developer Edition                                            | centre  |
-| `14`      | Brave                                                                | centre  |
-| `15`      | Video and image viewers (VLC, mpv, imv)                              | left    |
-| `16-18`   | Affinity Designer, Photo, Publisher                                  | centre  |
-| `19`      | DaVinci Resolve                                                      | left    |
-| `20`      | Spare; the catch-all for unassigned windows                          | centre  |
+| `2`       | Four Kitty terminals in a 2x2 grid (commands, SSH)                   | centre  |
+| `3`       | File managers (Yazi, Thunar)                                         | centre  |
+| `4`       | Mail (aerc + sheet, Claws)                                           | centre  |
+| `5-10`    | LibreOffice Writer, Calc, Impress, Draw, Math, Base                  | centre  |
+| `11`      | Comms (Teams, Zoom)                                                  | centre  |
+| `12`      | Zen                                                                  | left    |
+| `13`      | LibreWolf                                                            | left    |
+| `14`      | Firefox Developer Edition                                            | centre  |
+| `15`      | Brave                                                                | centre  |
+| `16`      | Video and image viewers (VLC, mpv, imv)                              | left    |
+| `17-19`   | Affinity Designer, Photo, Publisher                                  | centre  |
+| `20`      | DaVinci Resolve                                                      | left    |
 | `21-25`   | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft           | centre  |
 | `26-28`   | SoundCraft, WordCraft, DeckCraft                                     | centre  |
 | `29-30`   | EffectCraft, FilmCraft                                               | left    |
 | `31`      | nix-config dev layout                                                | centre  |
 | `32-40`   | Dev pool, allocated as needed                                        | centre  |
+| `41+`     | Unassigned windows, each on the first free workspace                 | centre  |
 
 - **Keys**: `SUPER + 1-9, 0` switches to 1-10, `SUPER + SHIFT` to 11-20,
   `SUPER + CTRL` to 21-30 and `SUPER + ALT` to 31-40.
@@ -172,7 +174,17 @@ portrait). laptop-intel is unaffected.
   submap, then the number with the bank's modifier minus `SUPER` (`1` → 1,
   `SHIFT + 1` → 11, `CTRL + 1` → 21, `ALT + 1` → 31). The submap resets after
   one move; `Escape` cancels.
-- **Mail** moves to workspace 3: the device file sets `vars.mailWorkspace = 3`,
+- **Login terminals**: `devices/devtower-intel-dashboard.lua` builds the ws1
+  dashboard and the ws2 terminal grid at login, as floating rectangles pinned
+  to their workspace. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
+  focus the group, reopen closed panes and gather strays. The ws2 terminals
+  run the login shell in `$HOME` under the classes `ws2-term-1` to `ws2-term-4`.
+- **Unassigned windows**: the catch-all parks them on the hidden
+  `special:unassigned` workspace; a `window.open` handler then moves each to the
+  lowest workspace from 41 up that holds no windows, and focus follows. A
+  floating dialog instead joins a window of the same process (preferring the
+  active workspace), so it opens over the app that asked.
+- **Mail** moves to workspace 4: the device file sets `vars.mailWorkspace = 4`,
   which the `SUPER + E` mail layout in `60-keybinds.lua` reads.
 - **Dev layouts**: the device file exports `DEV_LAYOUT_NIX_CONFIG_WS=31`,
   `DEV_LAYOUT_POOL_FIRST=32` and `DEV_LAYOUT_POOL_LAST=40` with `hl.env`, so
@@ -253,7 +265,7 @@ All shared settings live in the numbered files:
 
 Each device file may override anything, and is loaded last:
 - **laptop-intel.lua**: single eDP-1 display, battery-tuned blur, workspace-1 dashboard, dual keyboard layouts
-- **devtower-intel.lua**: three monitors, the 40-workspace map, four workspace keybind banks and the `move-window` submap (see [devtower-intel](#devtower-intel)); its ws1 dashboard is `devtower-intel-dashboard.lua`
+- **devtower-intel.lua**: three monitors, the 40-workspace map, the 41+ overflow for unassigned windows, four workspace keybind banks and the `move-window` submap (see [devtower-intel](#devtower-intel)); its ws1 dashboard and ws2 terminal grid are `devtower-intel-dashboard.lua`
 - **framework.lua**: high-DPI scaling, AMD GPU tuning, creative workflow
 - **devtower.lua**: multi-monitor, desktop performance, Go XLR
 
@@ -294,8 +306,9 @@ Highlights:
   (3-5; 32-40 on devtower-intel), through the same picker
 - `SUPER + ALT + Return`: Neovim in a plain Kitty window. No dev-layout rule
   claims it, so it lands wherever an ordinary window would: on the laptop the
-  catch-all sends it, silently, to workspace 10 (20 on devtower-intel), not
-  the workspace you pressed the key on. A bare `nvim` builds the same
+  catch-all sends it, silently, to workspace 10 (on devtower-intel, the first
+  free workspace from 41 up, which takes focus), not the workspace you pressed
+  the key on. A bare `nvim` builds the same
   in-editor layout (keybind reference, file tree, terminal tab, and the git
   panel inside a git work tree) wherever it starts, as far as the window's width allows; the RETURN layouts
   only add the workspace placement and the full width.

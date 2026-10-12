@@ -56,22 +56,18 @@ hl.window_rule({
 -- verbatim as a single string rather than split into two Lua fields.
 
 -- Every kitty window gets the same 0.95 opacity, whatever class it was
--- launched under. The layouts each tag their Kitty windows (Zed's terminals,
--- or the single Neovim window) so the workspace rules can pin them, and a
--- bare ^(kitty)$ match would have left those tagged windows fully opaque —
--- making the two dev layouts and the ws1 dashboard look different from an
--- ordinary terminal for no reason. The alternation therefore lists them all:
+-- launched under. The Neovim layouts tag their single Kitty window so the
+-- workspace rules can pin it, and a bare ^(kitty)$ match would have left those
+-- tagged windows fully opaque — making the dev layouts and the ws1 dashboard
+-- look different from an ordinary terminal for no reason. The alternation
+-- therefore lists them all (Zed layouts launch no Kitty windows):
 --
---   kitty              plain terminal (SUPER + Return, and the pool layout's
---                      terminals if the launcher stops tagging them)
---   nixcfg-term        the workspace 2 Zed layout's two terminals (a Neovim
---                      layout has none)
+--   kitty              plain terminal (SUPER + Return)
 --   nixcfg-nvim        the workspace 2 Neovim layout: its one and only window,
 --                      filling the workspace
---   devpool-term-N     a Zed pool layout's terminals, one class per pool
---                      workspace: 3-5 by default, 32-40 on devtower-intel, so
---                      any number matches
---   devpool-nvim-N     the same, for a pool Neovim layout's single window
+--   devpool-nvim-N     a pool Neovim layout's single window, one class per
+--                      pool workspace: 3-5 by default, 32-40 on
+--                      devtower-intel, so any number matches
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's btop pane (laptop only)
 --   yazi               Yazi, the file manager (SUPER + F)
@@ -84,7 +80,7 @@ hl.window_rule({
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[0-9]+|devpool-nvim-[0-9]+|ws1-keybinds|ws1-monitor|yazi|aerc|aerc-keybinds|termfilechooser)$" },
+    match = { class = "^(kitty|nixcfg-nvim|devpool-nvim-[0-9]+|ws1-keybinds|ws1-monitor|yazi|aerc|aerc-keybinds|termfilechooser)$" },
 
     opacity = "0.95 0.95",
 })

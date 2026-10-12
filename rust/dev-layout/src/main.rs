@@ -16,15 +16,18 @@
 //!                               SUPER + CTRL + RETURN (Neovim), both through
 //!                               the `dev-layout-pick` project picker.
 //!
-//! The EDITOR decides the shape, not the mode:
+//! Whichever the editor, a layout is ONE window filling the whole workspace:
 //!
-//!   Zed     Zed on the left at 75% width, with two Kitty terminals stacked in
-//!           the remaining 25%.
-//!   Neovim  ONE Kitty window running nvim, filling the whole workspace. The
-//!           keybind reference, file tree, git panel and shell all live inside
-//!           Neovim as panes and buffers (see `home/modules/neovim.nix`), so
-//!           there is nothing beside it for the compositor to tile and no
-//!           split to arrange.
+//!   Zed     the Zed window alone. It used to share the workspace with two
+//!           Kitty terminals in a 75/25 split; those went once devtower-intel
+//!           gained a dedicated four-terminal workspace, and Zed's own terminal
+//!           panel covers the rest.
+//!   Neovim  one Kitty window running nvim. The keybind reference, file tree,
+//!           git panel and shell all live inside Neovim as panes and buffers
+//!           (see `home/modules/neovim.nix`).
+//!
+//! With nothing beside the editor there is no split to arrange: dwindle gives a
+//! single tiled window the whole workspace.
 //!
 //! Both modes are placed by STATIC window rules matched on class (and, for
 //! Zed, title); the only difference is that Mode A's rules live in the Lua
@@ -108,13 +111,6 @@ const ZED_CLASS_PATTERN: &str = r"^(dev\.zed\.Zed)$";
 /// no dependency on the project folder name being the window title.
 const NIXCFG_NVIM_CLASS: &str = "nixcfg-nvim";
 
-/// Kitty class for the nix-config layout's terminals.
-///
-/// Only the Zed layout has any: the Neovim layout is a single window (see
-/// `Editor::side_terminals`), so in practice this class, and the `nixcfg-term`
-/// workspace 2 rule that matches it, only ever see Zed's two terminals.
-const NIXCFG_TERM_CLASS: &str = "nixcfg-term";
-
 /// Which editor a layout is built around.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Editor {
@@ -130,43 +126,13 @@ impl Editor {
             Editor::Neovim => "Neovim",
         }
     }
-
-    /// Kitty terminals the layout stacks beside the editor.
-    ///
-    /// Zed keeps the two it has always had, in the right-hand 25%. Neovim gets
-    /// none: its keybind reference is a read-only pane to the left of the file
-    /// tree and its shell is a terminal BUFFER, shown as a bufferline tab next
-    /// to the open files (both built on a bare start by
-    /// `home/modules/neovim.nix`). Two extra Kitty windows would only duplicate
-    /// those and steal a quarter of the screen from the editor, so a Neovim
-    /// layout is one window that takes the whole workspace.
-    fn side_terminals(self) -> usize {
-        match self {
-            Editor::Zed => 2,
-            Editor::Neovim => 0,
-        }
-    }
-
-    /// Every window the layout is made of: the editor plus its side terminals.
-    /// This is what Mode B's readiness poll waits to see on the workspace.
-    fn layout_windows(self) -> usize {
-        1 + self.side_terminals()
-    }
-
-    /// Whether the layout has a split for `arrange_active_workspace` to set.
-    ///
-    /// Only a layout with side terminals does. A lone Neovim window already
-    /// fills the workspace (dwindle gives a single tiled window all of it),
-    /// and the focus/splitratio dispatches would at best do nothing to it —
-    /// at worst an error from hyprctl there would turn a launch that worked
-    /// into a "dev-layout failed" notification. Both modes go through
-    /// `arrange_layout`, which asks this, so the rule lives in one place.
-    fn arranges_split(self) -> bool {
-        self.side_terminals() > 0
-    }
 }
 
-/// How long to wait for a Mode B layout's windows to appear on their target
+/// Windows a layout is made of, for either editor: the editor and nothing else.
+/// This is what Mode B's readiness poll waits to see on the workspace.
+const LAYOUT_WINDOWS: usize = 1;
+
+/// How long to wait for a Mode B layout's window to appear on its target
 /// workspace, and how often to look.
 const WINDOW_WAIT: Duration = Duration::from_secs(10);
 const WINDOW_POLL_INTERVAL: Duration = Duration::from_millis(250);
@@ -201,8 +167,13 @@ fn run() -> Result<()> {
 
 enum Mode {
     Help,
-    NixConfig { editor: Editor },
-    New { path: Option<String>, editor: Editor },
+    NixConfig {
+        editor: Editor,
+    },
+    New {
+        path: Option<String>,
+        editor: Editor,
+    },
 }
 
 fn parse_args(args: Vec<String>) -> Result<Mode> {
@@ -260,13 +231,13 @@ fn print_help() {
     println!("    dev-layout --help          show this help");
     println!();
     println!("SHAPE:");
-    println!("    Zed      Zed at 75% width, two Kitty terminals stacked on the right");
-    println!("    Neovim   one Kitty window running nvim, filling the whole workspace;");
-    println!("             the keybind reference, file tree, git panel and shell are");
-    println!("             panes and tabs inside Neovim");
+    println!("    Either editor is one window filling the whole workspace:");
+    println!("    Zed      the Zed window alone");
+    println!("    Neovim   one Kitty window running nvim; the keybind reference, file");
+    println!("             tree, git panel and shell are panes and tabs inside Neovim");
     println!();
     println!("Re-running a nix-config layout focuses the existing one rather than");
-    println!("stacking a second set of windows on workspace {nix_ws}.");
+    println!("stacking a second editor on workspace {nix_ws}.");
     println!();
     println!("PATH defaults to the current directory. Under a Hyprland keybind that is");
     println!("HYPRLAND's working directory, not a terminal's, so pass the project");
@@ -303,14 +274,13 @@ fn print_help() {
 /// (or point the override at a differently named checkout) and the rule stops
 /// firing, so the editor lands on the catch-all workspace instead.
 ///
-/// Kitty windows have no such problem: Kitty does support `--class`, so Zed's
-/// two terminals are launched as `nixcfg-term`, the Neovim layout's single
-/// window as `nixcfg-nvim`, and both are matched on class alone.
+/// The Neovim layout has no such problem: Kitty does support `--class`, so its
+/// single window is launched as `nixcfg-nvim` and matched on class alone.
 fn nix_config_layout(editor: Editor) -> Result<()> {
     // Both the Zed and the Neovim nix-config layouts live on the nix-config
     // workspace (2 by default, DEV_LAYOUT_NIX_CONFIG_WS), so without this a
-    // second press of either keybind stacks a fresh editor (plus, for Zed, two more terminals) on top of whatever is
-    // already there. Neither mode had the check before, which is why the Zed
+    // second press of either keybind stacks a fresh editor on top of whatever
+    // is already there. Neither mode had the check before, which is why the Zed
     // keybind used to be additive rather than idempotent.
     let nix_ws = nix_config_ws()?;
     if workspace_is_occupied(nix_ws)? {
@@ -360,28 +330,15 @@ fn nix_config_layout(editor: Editor) -> Result<()> {
     }
 
     // Spawn the editor. No per-launch rules needed: the static window rules pin
-    // the Zed window (class + title), the Neovim window (class NIXCFG_NVIM_CLASS)
-    // and the NIXCFG_TERM_CLASS terminals alike.
+    // the Zed window (class + title) and the Neovim window (class
+    // NIXCFG_NVIM_CLASS) alike.
     spawn_editor(editor, repo_path, NIXCFG_NVIM_CLASS)?;
 
-    // Zed's terminals, tagged so the workspace 2 rule can match them. A
-    // Neovim layout has none, and this launches nothing.
-    spawn_side_terminals(editor, NIXCFG_TERM_CLASS, repo_path)?;
-
-    // Move to workspace 2, for both editors: it is where the keybind should
-    // leave you. The ordering differs by editor. For Zed, spawn_side_terminals
-    // has slept, so the windows have usually mapped by now; if the static
-    // rules place them without `silent`, focus has already followed them here
-    // and this is a no-op, and if the rules ever gain `silent`, this is what
-    // stops the Zed split being applied to whatever workspace we happened to
-    // be on. For Neovim nothing has slept, so this runs a few milliseconds
-    // after the spawn and switches to a still-empty workspace 2; the single
-    // Kitty window lands on it when it maps, since its rule targets the same
-    // workspace. Either way you end up on workspace 2.
+    // Move to workspace 2: it is where the keybind should leave you. This runs
+    // a few milliseconds after the spawn, so it usually switches to a
+    // still-empty workspace 2; the editor lands on it when it maps, since its
+    // rule targets the same workspace. A single window needs no arranging.
     focus_workspace(nix_ws)?;
-
-    // Zed only: a lone Neovim window is already the whole workspace.
-    arrange_layout(editor)?;
 
     println!("{}", "Dev layout ready.".green());
     Ok(())
@@ -426,54 +383,6 @@ fn spawn_editor(editor: Editor, project: &Path, nvim_class: &str) -> Result<()> 
     Ok(())
 }
 
-/// Spawn the layout's side terminals (`Editor::side_terminals`), plain Kitty
-/// shells tagged with `term_class`, in the project. Call it right after
-/// `spawn_editor`.
-///
-/// Only Zed layouts have any. Neovim layouts used to get two as well: a `less`
-/// view of the Neovim keybind reference on top and a free shell underneath.
-/// Both moved inside Neovim (a reference pane beside the file tree, a terminal
-/// buffer tab), so the Kitty versions, and the helper that located the
-/// reference file for `less`, are gone rather than kept as a second copy of
-/// the same thing. For Neovim this returns at once, sleeps included.
-///
-/// The sleeps are about map ORDER, not readiness (Mode B's poll handles
-/// readiness). Dwindle splits in the order windows map, so the editor has to
-/// map first to end up as the left-hand column `arrange_active_workspace`
-/// then widens, and the terminals stack in the right-hand column in the order
-/// they map, which is what the half-second gap between them protects.
-fn spawn_side_terminals(editor: Editor, term_class: &str, project: &Path) -> Result<()> {
-    let count = editor.side_terminals();
-    if count == 0 {
-        return Ok(());
-    }
-
-    thread::sleep(Duration::from_secs(1));
-    for _ in 0..count {
-        let mut command = Command::new("kitty");
-        command.args(["--class", term_class]);
-
-        if project.is_dir() {
-            command.current_dir(project);
-        }
-
-        command.spawn().context("Failed to launch kitty")?;
-        thread::sleep(Duration::from_millis(500));
-    }
-    Ok(())
-}
-
-/// Widen the editor column of the layout on the ACTIVE workspace, if the
-/// layout has a split at all (`Editor::arranges_split`). The short sleep lets
-/// the workspace switch that precedes it settle first.
-fn arrange_layout(editor: Editor) -> Result<()> {
-    if !editor.arranges_split() {
-        return Ok(());
-    }
-    thread::sleep(Duration::from_millis(200));
-    arrange_active_workspace()
-}
-
 /// Whether a workspace currently holds any windows.
 ///
 /// This is what makes the fixed-workspace layouts idempotent. It reuses the
@@ -509,12 +418,9 @@ fn nix_config_path() -> Result<String> {
 ///      (and, for Zed, its folder name is what the editor rule matches on),
 ///      so nothing can be launched without it;
 ///   3. pick the target workspace;
-///   4. register the window rules for this launch (editor, plus terminals for
-///      Zed);
-///   5. launch the layout's windows as direct children (three for Zed, one
-///      for Neovim);
-///   6. wait for them to actually land, then arrange the split (Zed only; a
-///      single Neovim window already fills the workspace).
+///   4. register the window rule for this launch;
+///   5. launch the editor as a direct child;
+///   6. wait for it to actually land, then switch to its workspace.
 fn new_dev_space(path: Option<&str>, editor: Editor) -> Result<()> {
     let _lock = PoolLock::acquire()?;
 
@@ -531,32 +437,20 @@ fn new_dev_space(path: Option<&str>, editor: Editor) -> Result<()> {
 
     register_pool_rules(target, project.title.as_deref(), editor)?;
 
-    // Direct children of this process, exactly as Mode A launches its windows:
+    // A direct child of this process, exactly as Mode A launches its editor:
     // no shell is involved, so nothing needs quoting, and the child inherits
-    // OUR working directory rather than the compositor's. The launch order
-    // (editor first) matters for the split; `spawn_side_terminals` says why.
+    // OUR working directory rather than the compositor's.
     spawn_editor(editor, &project.path, &pool_nvim_class(target))?;
-    spawn_side_terminals(editor, &pool_term_class(target), &project.path)?;
 
     // Bounded poll rather than a fixed sleep: Zed's start-up time varies by an
     // order of magnitude between a cold start and a hand-off to a running
-    // instance, so any single sleep is either too short or wasteful. The count
-    // comes from the editor — waiting for three windows when Neovim only ever
-    // opens one would time out every single time.
-    wait_for_workspace_windows(target, editor.layout_windows())?;
+    // instance, so any single sleep is either too short or wasteful.
+    wait_for_workspace_windows(target, LAYOUT_WINDOWS)?;
 
-    // The windows were placed 'silent', so focus never followed them: the
-    // focus/splitratio dispatches below act on the ACTIVE workspace, which is
-    // still whichever one we were on. Switch to the target workspace first so
-    // the split is applied to the layout we just built. Scoping the dispatches
-    // to a workspace instead is not an option — the Lua stubs expose no
-    // workspace-scoped variant of `focus` or `layout`, and `HL.Window` has no
-    // per-window move setter. Switching is also the behaviour the keybinds
-    // want: SUPER + CTRL + Z and SUPER + CTRL + RETURN open a new dev space and
-    // take you to it, which is why a Neovim layout switches too even though it
-    // has no split to arrange.
+    // The window was placed 'silent', so focus never followed it. Switch to
+    // the target workspace: SUPER + CTRL + Z and SUPER + CTRL + RETURN open a
+    // new dev space and take you to it.
     focus_workspace(target)?;
-    arrange_layout(editor)?;
 
     println!(
         "{} {}",
@@ -566,21 +460,11 @@ fn new_dev_space(path: Option<&str>, editor: Editor) -> Result<()> {
     Ok(())
 }
 
-/// Class the Mode B terminals (Zed layouts only) are launched with, and
-/// matched on.
+/// Class the Mode B Neovim window is launched with, and matched on.
 ///
 /// The target workspace is baked into the class so that two pool layouts can
-/// never collide: a leftover `devpool-term-4` rule cannot capture terminals
+/// never collide: a leftover `devpool-nvim-4` rule cannot capture a window
 /// meant for workspace 5.
-fn pool_term_class(workspace: u32) -> String {
-    format!("devpool-term-{workspace}")
-}
-
-/// Class the Mode B Neovim window is launched with, and matched on. It is the
-/// whole of a pool Neovim layout, so it is the only window its rule places.
-///
-/// Workspace-scoped for the same reason as `pool_term_class`: a leftover rule
-/// for one pool workspace must not capture a window meant for another.
 fn pool_nvim_class(workspace: u32) -> String {
     format!("devpool-nvim-{workspace}")
 }
@@ -684,8 +568,7 @@ fn zed_title(dir: &Path) -> Result<String> {
     Ok(name)
 }
 
-/// Register the window rules that place this launch's windows: one for the
-/// editor and, for a layout that has terminals (Zed), one for those.
+/// Register the window rule that places this launch's editor.
 ///
 /// WHY NOT `hl.exec_cmd(cmd, { workspace = 'N silent' })`
 ///
@@ -718,7 +601,7 @@ fn zed_title(dir: &Path) -> Result<String> {
 fn register_pool_rules(target: u32, title: Option<&str>, editor: Editor) -> Result<()> {
     let expression = pool_rules_expression(target, title, editor)?;
     hyprctl(&["eval", expression.as_str()])
-        .context("Failed to register the window rules for this dev space")
+        .context("Failed to register the window rule for this dev space")
 }
 
 /// Build the Lua that `register_pool_rules` hands to `hyprctl eval`.
@@ -726,15 +609,14 @@ fn register_pool_rules(target: u32, title: Option<&str>, editor: Editor) -> Resu
 /// Split out from the hyprctl call so the text can be unit tested: a mistake
 /// here does not fail loudly, it just leaves a window on the wrong workspace.
 ///
-/// A Neovim layout registers NO terminal rule. It launches no terminals, so the
-/// rule would be dead weight that outlives the process (see above) and matches
-/// nothing. The terminal rule's NAME is still retired, though: the workspace
-/// was free when it was picked, so any rule left under that name belongs to a
-/// Zed layout that has since closed, and disabling it keeps "at most one live
-/// rule per name" true whichever editor used the workspace last.
+/// Only the editor rule is registered and retired. Zed layouts used to add a
+/// `dev-layout-pool-N-term` rule for their side terminals, and this used to
+/// retire that name too. It no longer does: such a rule can only survive in a
+/// Hyprland session that ran the old binary, it matches the `devpool-term-N`
+/// class that nothing launches any more, so it cannot misplace a window, and
+/// the next config reload clears it anyway.
 fn pool_rules_expression(target: u32, title: Option<&str>, editor: Editor) -> Result<String> {
-    let editor_rule = lua_string(&format!("dev-layout-pool-{target}-editor"))?;
-    let term_rule = lua_string(&format!("dev-layout-pool-{target}-term"))?;
+    let rule_name = lua_string(&format!("dev-layout-pool-{target}-editor"))?;
     let workspace = lua_string(&format!("{target} silent"))?;
 
     // Zed has no `--class`, so its rule must pin class AND title, which is what
@@ -754,21 +636,6 @@ fn pool_rules_expression(target: u32, title: Option<&str>, editor: Editor) -> Re
         }
     };
 
-    // Only for a layout that launches terminals; empty for Neovim. Every
-    // statement ends in `;` so the fragment splices cleanly into the
-    // expression below whether it is present or not.
-    let term_registration = if editor.side_terminals() > 0 {
-        let term_class = lua_string(&format!("^({})$", re2_escape(&pool_term_class(target))))?;
-        format!(
-            "local term = hl.window_rule({{ name = names[2], \
-             match = {{ class = {term_class} }}, \
-             workspace = {workspace} }}); \
-             if store then store[names[2]] = term end; "
-        )
-    } else {
-        String::new()
-    };
-
     // One expression, on one line. An immediately-invoked function is used
     // rather than a `do ... end` block so the text is valid both as a chunk and
     // as an expression, whichever way `hyprctl eval` chooses to wrap it. The
@@ -780,16 +647,13 @@ fn pool_rules_expression(target: u32, title: Option<&str>, editor: Editor) -> Re
          local store = nil; \
          pcall(function() _G.__dev_layout_rules = _G.__dev_layout_rules or {{}}; \
          store = _G.__dev_layout_rules end); \
-         local names = {{ {editor_rule}, {term_rule} }}; \
-         if store then for _, n in ipairs(names) do \
-         local old = store[n]; store[n] = nil; \
-         if old then pcall(function() old:set_enabled(false) end) end \
-         end end; \
-         local editor = hl.window_rule({{ name = names[1], \
+         local name = {rule_name}; \
+         if store then local old = store[name]; store[name] = nil; \
+         if old then pcall(function() old:set_enabled(false) end) end end; \
+         local rule = hl.window_rule({{ name = name, \
          match = {editor_match}, \
          workspace = {workspace} }}); \
-         if store then store[names[1]] = editor end; \
-         {term_registration}\
+         if store then store[name] = rule end; \
          end)()"
     ))
 }
@@ -1105,7 +969,7 @@ fn lock_is_stale(path: &Path) -> bool {
 /// Wait until `expected` windows are sitting on `workspace`.
 ///
 /// Bounded, and it does not pretend to have succeeded: on timeout the caller
-/// must leave the workspace alone rather than arrange a half-built layout.
+/// reports the failure rather than switching to a workspace that never filled.
 fn wait_for_workspace_windows(workspace: u32, expected: usize) -> Result<()> {
     let deadline = Instant::now() + WINDOW_WAIT;
     let mut seen;
@@ -1124,8 +988,8 @@ fn wait_for_workspace_windows(workspace: u32, expected: usize) -> Result<()> {
     }
 
     bail!(
-        "Only {seen} of {expected} windows reached workspace {workspace} within {}s. \
-         Leaving it as it is rather than arranging a half-built layout.",
+        "Only {seen} of {expected} windows reached workspace {workspace} within {}s; \
+         check the window rule for this dev space.",
         WINDOW_WAIT.as_secs()
     )
 }
@@ -1134,41 +998,6 @@ fn wait_for_workspace_windows(workspace: u32, expected: usize) -> Result<()> {
 fn focus_workspace(workspace: u32) -> Result<()> {
     let expression = format!("hl.dsp.focus({{ workspace = {workspace} }})");
     hyprctl(&["dispatch", expression.as_str()])
-}
-
-/// Focus the editor and give it 75% of the width.
-///
-/// Zed layouts only. A Neovim layout is a single window, which dwindle already
-/// sizes to the whole workspace, so its callers skip this: there is no second
-/// column to take the other 25%.
-///
-/// Two `focus left` dispatches, not one: whichever of the three windows holds
-/// focus, two steps left always lands on the editor column (a third step would
-/// be a no-op, so overshooting is harmless). `splitratio` then applies to the
-/// focused window.
-///
-/// Hyprland 0.56 runs a Lua config provider, under which `hyprctl dispatch`
-/// wraps its argument as `hl.dispatch(<text>)`. The legacy flat forms
-/// (`dispatch movefocus l`, `dispatch splitratio exact 0.75`) are therefore
-/// Lua syntax errors and exit 7, which would make this helper bail. Each
-/// dispatch must be a single argument holding a Lua expression.
-///
-/// The `splitratio` message itself has two traps, both of which produce a
-/// layout that is silently wrong rather than an obvious one:
-///
-///   * ARGUMENT ORDER. 0.56 parses `ARGS[1]` as the delta and only then tests
-///     `ARGS[2]` for `exact`, so the value comes FIRST. The pre-0.56 spelling
-///     `splitratio exact 0.75` now fails outright with
-///     `failed to parse "exact" as a delta`.
-///   * THE VALUE IS NOT A FRACTION. Dwindle sizes the first child as
-///     `box.w / 2 * splitRatio`, so the ratio that gives the editor 75% of the
-///     width is 1.5; 0.75 would ask for a 37.5% column. The accepted range is
-///     0.1 to 1.9, i.e. 5% to 95%.
-fn arrange_active_workspace() -> Result<()> {
-    hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
-    hyprctl(&["dispatch", "hl.dsp.focus({ direction = 'left' })"])?;
-    hyprctl(&["dispatch", "hl.dsp.layout('splitratio 1.5 exact')"])?;
-    Ok(())
 }
 
 /// Run a hyprctl command and check for errors.
@@ -1276,7 +1105,14 @@ fn notify(urgency: Urgency, summary: &str, body: &str) {
     };
 
     let sent = Command::new("notify-send")
-        .args(["--app-name", "dev-layout", "--urgency", level, summary, body])
+        .args([
+            "--app-name",
+            "dev-layout",
+            "--urgency",
+            level,
+            summary,
+            body,
+        ])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()
@@ -1308,25 +1144,10 @@ mod tests {
     // ── Layout shape ──────────────────────────────────────────────────
 
     #[test]
-    fn zed_layout_is_editor_plus_two_terminals() {
-        assert_eq!(Editor::Zed.side_terminals(), 2);
-        assert_eq!(Editor::Zed.layout_windows(), 3);
-    }
-
-    #[test]
-    fn neovim_layout_is_a_single_window() {
-        // The keybind reference and the shell live inside Neovim now, so
-        // Mode B's readiness poll must wait for exactly one window, not three.
-        assert_eq!(Editor::Neovim.side_terminals(), 0);
-        assert_eq!(Editor::Neovim.layout_windows(), 1);
-    }
-
-    #[test]
-    fn only_a_layout_with_terminals_arranges_a_split() {
-        // `arrange_layout` (both modes) keys on this: the focus/splitratio
-        // dispatches must never run on a lone Neovim window.
-        assert!(Editor::Zed.arranges_split());
-        assert!(!Editor::Neovim.arranges_split());
+    fn every_layout_is_a_single_window() {
+        // Neither editor gets side terminals any more, so Mode B's readiness
+        // poll waits for exactly one window whichever editor it launched.
+        assert_eq!(LAYOUT_WINDOWS, 1);
     }
 
     // ── Argument parsing ──────────────────────────────────────────────
@@ -1365,32 +1186,42 @@ mod tests {
     // ── Mode B window rules ───────────────────────────────────────────
 
     #[test]
-    fn zed_pool_rules_place_editor_and_terminals() {
+    fn zed_pool_rules_place_only_the_editor() {
         let lua = pool_rules_expression(4, Some("my.app"), Editor::Zed).unwrap();
 
         // Editor matched on class AND the escaped folder name.
         assert!(lua.contains(r"class = [==[^(dev\.zed\.Zed)$]==]"));
         assert!(lua.contains(r"title = [==[^(my\.app)$]==]"));
-        // Terminals registered, on the workspace-scoped class.
-        assert!(lua.contains("[==[^(devpool-term-4)$]==]"));
-        assert!(lua.contains("local term = hl.window_rule"));
-        assert_eq!(lua.matches("hl.window_rule(").count(), 2);
+        assert!(lua.contains("[==[dev-layout-pool-4-editor]==]"));
         assert!(lua.contains("[==[4 silent]==]"));
+        // One rule, and no trace of the old side-terminal rule.
+        assert_eq!(lua.matches("hl.window_rule(").count(), 1);
+        assert!(!lua.contains("devpool-term"));
+        assert!(!lua.contains("-term"));
     }
 
     #[test]
-    fn neovim_pool_rules_register_no_terminal_rule() {
+    fn neovim_pool_rules_match_the_kitty_class_alone() {
         let lua = pool_rules_expression(5, None, Editor::Neovim).unwrap();
 
         // One rule, on the Kitty class; no dependency on the folder name.
         assert_eq!(lua.matches("hl.window_rule(").count(), 1);
         assert!(lua.contains("[==[^(devpool-nvim-5)$]==]"));
+        assert!(lua.contains("[==[dev-layout-pool-5-editor]==]"));
         assert!(!lua.contains("title ="));
-        assert!(!lua.contains("devpool-term"));
-        // ...but a stale terminal rule a Zed layout left under this
-        // workspace's name is still retired.
-        assert!(lua.contains("[==[dev-layout-pool-5-term]==]"));
-        assert!(lua.ends_with("end; end)()"));
+        assert!(!lua.contains("-term"));
+    }
+
+    #[test]
+    fn pool_rule_retires_and_stores_the_previous_handle() {
+        // The previous launch's rule on this workspace is disabled before the
+        // new one is registered, and the new handle is stored under the same
+        // name so the next launch can do the same.
+        let lua = pool_rules_expression(4, Some("project"), Editor::Zed).unwrap();
+        let retire = lua.find("old:set_enabled(false)").unwrap();
+        let register = lua.find("hl.window_rule(").unwrap();
+        let store = lua.find("store[name] = rule").unwrap();
+        assert!(retire < register && register < store);
     }
 
     #[test]

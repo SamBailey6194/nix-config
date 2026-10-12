@@ -1071,7 +1071,7 @@ reads:
 ```nix
   dev-layout = buildWorkspaceCrate {
     pname = "dev-layout";
-    description = "Hyprland dev layout launcher (Zed + 2 terminals)";
+    description = "Hyprland dev layout launcher (Zed or Neovim, one window)";
   };
 
   just-panel = buildWorkspaceCrate {

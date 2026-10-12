@@ -4,7 +4,7 @@
 #
 #   SUPER + F          Yazi in kitty, on workspace 10   (config/hypr/60-keybinds.lua)
 #   SUPER + SHIFT + F  Thunar, on workspace 10
-#                      (both on workspace 2 on devtower-intel)
+#                      (both on workspace 3 on devtower-intel)
 #   F1 inside Yazi     ~/.config/yazi/KEYBINDS.md in less, in the same window
 #                      (generated from `keybinds` below)
 #   `y` in a shell     Yazi, then cd to wherever it was left (q; Q skips the cd)
@@ -311,7 +311,7 @@ in
   # unit Requires tray.target, which waybar's unit provides.
   #
   # "Browse" from the tray or a notification opens the drive in Yazi, in a
-  # kitty with the `yazi` class so it lands on workspace 10 (2 on
+  # kitty with the `yazi` class so it lands on workspace 10 (3 on
   # devtower-intel) like SUPER + F.
   services.udiskie = {
     enable = true;

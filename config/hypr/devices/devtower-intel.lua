@@ -14,25 +14,26 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 -- ── Workspace map (devtower-intel only; laptop-intel keeps 00-vars.lua's) ──
 --
 --   1      dashboard: keybinds, btop, nvtop       right (portrait)
---   2      file managers (Yazi, Thunar)           centre
---   3      mail (aerc + sheet, Claws Mail)        centre
---   4-9    LibreOffice Writer, Calc, Impress,     centre
+--   2      four Kitty terminals, 2x2 grid         centre
+--   3      file managers (Yazi, Thunar)           centre
+--   4      mail (aerc + sheet, Claws Mail)        centre
+--   5-10   LibreOffice Writer, Calc, Impress,     centre
 --          Draw, Math, Base
---   10     comms (Teams, Zoom)                    centre
---   11     Zen (streaming)                        left
---   12     LibreWolf                              left
---   13     Firefox Developer Edition              centre
---   14     Brave                                  centre
---   15     video and image viewers                left
---   16-18  Affinity Designer, Photo, Publisher    centre
---   19     DaVinci Resolve                        left
---   20     spare; catches unassigned windows      centre
+--   11     comms (Teams, Zoom)                    centre
+--   12     Zen (streaming)                        left
+--   13     LibreWolf                              left
+--   14     Firefox Developer Edition              centre
+--   15     Brave                                  centre
+--   16     video and image viewers                left
+--   17-19  Affinity Designer, Photo, Publisher    centre
+--   20     DaVinci Resolve                        left
 --   21-25  PhotoCraft, VectorCraft, LightCraft,   centre
 --          PdfCraft, DesignCraft
 --   26-28  SoundCraft, WordCraft, DeckCraft       centre
 --   29-30  EffectCraft, FilmCraft                 left
 --   31     nix-config dev layout                  centre
 --   32-40  dev pool                               centre
+--   41+    unassigned windows, first free one     centre
 --
 -- Keys: SUPER + 1-9,0 -> 1-10, + SHIFT -> 11-20, + CTRL -> 21-30,
 -- + ALT -> 31-40. Moving a window: SUPER + period, then the same chord
@@ -40,13 +41,13 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 
 local placement = {
     [right] = { 1 },
-    [left] = { 11, 12, 15, 19, 29, 30 },
+    [left] = { 12, 13, 16, 20, 29, 30 },
 }
 local monitor_of = {}
 for monitor, ids in pairs(placement) do
     for _, id in ipairs(ids) do monitor_of[id] = monitor end
 end
-local defaults = { [centre] = 2, [left] = 11, [right] = 1 }
+local defaults = { [centre] = 2, [left] = 12, [right] = 1 }
 
 for id = 1, 40 do
     local monitor = monitor_of[id] or centre
@@ -57,57 +58,71 @@ for id = 1, 40 do
         -- discover them as free. Binding remains effective when created.
     })
 end
+-- Overflow workspaces for unassigned windows (see below): centre, never
+-- anyone's default, created and destroyed on demand.
+for id = 41, 99 do
+    hl.workspace_rule({ workspace = tostring(id), monitor = centre })
+end
 
 -- ── Window placement ──────────────────────────────────────────────────
 --
 -- 70-windowrules.lua already registered the default map from 00-vars.lua.
 -- Window rules apply in registration order and the last match wins, so the
 -- catch-all goes first and this device's assignments after it, overriding
--- both. The ws1 dashboard panes are pinned by devtower-intel-dashboard.lua,
--- which is required after this file.
+-- both. The ws1 dashboard panes and the ws2 terminals are pinned by
+-- devtower-intel-dashboard.lua, which is required after this file.
 local vars = require("00-vars")
-vars.mailWorkspace = 3
+vars.mailWorkspace = 4
 
-hl.window_rule({ name = "intel-default-catch-all", match = { class = ".*" }, workspace = "20" })
+-- Unassigned windows are parked, out of sight, on a holding special
+-- workspace; the window.open handler below moves each one on to the first
+-- free workspace from 41 up. A static rule cannot name "the first free
+-- workspace", and parking first means the window never flashes on whichever
+-- workspace happened to be active.
+local holding = "unassigned"
+hl.window_rule({
+    name = "intel-default-catch-all", match = { class = ".*" },
+    workspace = "special:" .. holding .. " silent",
+})
 
 -- Class strings marked "unverified" are guesses: confirm with
 -- `hyprctl clients` on first launch. A wrong class fails silently and the
--- window lands on the catch-all (20).
+-- window lands on the first free workspace from 41 up.
 local assignments = {
-    -- 2: file managers
-    { "files-yazi", { class = "^(yazi)$" }, 2 },
-    { "files-thunar", { class = "^(thunar)$" }, 2 },
-    -- 3: mail
-    { "mail-aerc", { class = "^(aerc)$" }, 3 },
-    { "mail-aerc-keybinds", { class = "^(aerc-keybinds)$" }, 3 },
-    { "mail-claws", { class = "^(claws-mail)$" }, 3 },
-    -- 4-9: LibreOffice. Wayland app ids per module (unverified). The Start
+    -- 3: file managers
+    { "files-yazi", { class = "^(yazi)$" }, 3 },
+    { "files-thunar", { class = "^(thunar)$" }, 3 },
+    -- 4: mail
+    { "mail-aerc", { class = "^(aerc)$" }, 4 },
+    { "mail-aerc-keybinds", { class = "^(aerc-keybinds)$" }, 4 },
+    { "mail-claws", { class = "^(claws-mail)$" }, 4 },
+    -- 5-10: LibreOffice. Wayland app ids per module (unverified). The Start
     -- Center keeps its own id, so it opens with Writer.
-    { "office-startcenter", { class = "^(libreoffice-startcenter)$" }, 4 },
-    { "office-writer", { class = "^(libreoffice-writer)$" }, 4 },
-    { "office-calc", { class = "^(libreoffice-calc)$" }, 5 },
-    { "office-impress", { class = "^(libreoffice-impress)$" }, 6 },
-    { "office-draw", { class = "^(libreoffice-draw)$" }, 7 },
-    { "office-math", { class = "^(libreoffice-math)$" }, 8 },
-    { "office-base", { class = "^(libreoffice-base)$" }, 9 },
-    -- 10: comms
-    { "comms-teams-for-linux", { class = "^(teams-for-linux)$" }, 10 },
-    { "comms-zoom", { class = "^(zoom)$" }, 10 },
-    -- 11-14: browsers
-    { "browser-zen", { class = "^(zen-beta)$" }, 11 },
-    { "browser-librewolf", { class = "^(librewolf)$" }, 12 },
-    { "browser-firefox-devedition", { class = "^(firefox-devedition)$" }, 13 },
-    { "browser-brave", { class = "^(brave-browser)$" }, 14 },
-    -- 15: video and image viewers (modules/software/media.nix)
-    { "viewer-vlc", { class = "^(vlc)$" }, 15 },
-    { "viewer-mpv", { class = "^(mpv)$" }, 15 },
-    { "viewer-imv", { class = "^(imv)$" }, 15 },
-    -- 16-18: Affinity, one app per workspace
-    { "affinity-designer", { class = "^(affinity-designer)$" }, 16 },
-    { "affinity-photo", { class = "^(affinity-photo)$" }, 17 },
-    { "affinity-publisher", { class = "^(affinity-publisher)$" }, 18 },
-    -- 19: DaVinci Resolve (20 is the spare catch-all)
-    { "resolve", { class = "^(resolve|Resolve|DaVinciResolve)$" }, 19 },
+    { "office-startcenter", { class = "^(libreoffice-startcenter)$" }, 5 },
+    { "office-writer", { class = "^(libreoffice-writer)$" }, 5 },
+    { "office-calc", { class = "^(libreoffice-calc)$" }, 6 },
+    { "office-impress", { class = "^(libreoffice-impress)$" }, 7 },
+    { "office-draw", { class = "^(libreoffice-draw)$" }, 8 },
+    { "office-math", { class = "^(libreoffice-math)$" }, 9 },
+    { "office-base", { class = "^(libreoffice-base)$" }, 10 },
+    -- 11: comms
+    { "comms-teams-for-linux", { class = "^(teams-for-linux)$" }, 11 },
+    { "comms-zoom", { class = "^(zoom)$" }, 11 },
+    -- 12-15: browsers
+    { "browser-zen", { class = "^(zen-beta)$" }, 12 },
+    { "browser-librewolf", { class = "^(librewolf)$" }, 13 },
+    { "browser-firefox-devedition", { class = "^(firefox-devedition)$" }, 14 },
+    { "browser-brave", { class = "^(brave-browser)$" }, 15 },
+    -- 16: video and image viewers (modules/software/media.nix)
+    { "viewer-vlc", { class = "^(vlc)$" }, 16 },
+    { "viewer-mpv", { class = "^(mpv)$" }, 16 },
+    { "viewer-imv", { class = "^(imv)$" }, 16 },
+    -- 17-19: Affinity, one app per workspace
+    { "affinity-designer", { class = "^(affinity-designer)$" }, 17 },
+    { "affinity-photo", { class = "^(affinity-photo)$" }, 18 },
+    { "affinity-publisher", { class = "^(affinity-publisher)$" }, 19 },
+    -- 20: DaVinci Resolve
+    { "resolve", { class = "^(resolve|Resolve|DaVinciResolve)$" }, 20 },
     -- 21-30: the Craft suite (modules/software/craft-apps.nix). Wayland
     -- app_id = the desktop file id (ai.storyteller.<app>), read from the
     -- shipped .desktop StartupWMClass and the binaries.
@@ -126,7 +141,6 @@ local assignments = {
     { "craft-film", { class = "^(ai\\.storyteller\\.filmcraft)$" }, 30 },
     -- 31: nix-config dev layout (class + title for Zed; see 00-vars.lua)
     { "nixcfg-editor", { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" }, 31 },
-    { "nixcfg-term", { class = "^(nixcfg-term)$" }, 31 },
     { "nixcfg-nvim", { class = "^(nixcfg-nvim)$" }, 31 },
     -- Popups stay on the current workspace, over the app that asked.
     { "popup-file-picker", { class = "^(termfilechooser)$" }, "unset" },
@@ -135,6 +149,57 @@ local assignments = {
 for _, a in ipairs(assignments) do
     hl.window_rule({ name = "intel-" .. a[1], match = a[2], workspace = tostring(a[3]) })
 end
+
+-- ── Overflow: the first free workspace from 41 up ─────────────────────
+--
+-- Each new unassigned window takes the lowest 41+ workspace with no windows
+-- (or not existing at all); follow = true takes focus there, on the centre
+-- monitor (workspace rules above). Dialogs are the exception: a floating
+-- window whose process already has a window on a normal workspace joins it
+-- (the active workspace first), so a Save dialog or Zed's project picker
+-- opens over the app that asked rather than on a workspace of its own. Tiled
+-- windows always get a fresh workspace, so a second Zed project does not pile
+-- onto the nix-config layout on 31.
+local overflow_first = 41
+
+local function is_holding(workspace)
+    return workspace ~= nil and workspace.special
+        and workspace.name:gsub("^special:", "") == holding
+end
+
+local function parent_workspace(window)
+    if not window.floating then return nil end
+    local active = hl.get_active_workspace()
+    local found
+    for _, other in ipairs(hl.get_windows()) do
+        local ws = other.workspace
+        if other.address ~= window.address and other.pid == window.pid
+            and ws and not ws.special and ws.id then
+            if active and active.id == ws.id then return ws.id end
+            found = found or ws.id
+        end
+    end
+    return found
+end
+
+local function free_workspace()
+    local busy = {}
+    for _, ws in ipairs(hl.get_workspaces()) do
+        if ws.id and ws.windows > 0 then busy[ws.id] = true end
+    end
+    local id = overflow_first
+    while busy[id] do id = id + 1 end
+    return id
+end
+
+hl.on("window.open", function(window)
+    if not is_holding(window.workspace) then return end
+    hl.dispatch(hl.dsp.window.move({
+        window = window,
+        workspace = parent_workspace(window) or free_workspace(),
+        follow = true,
+    }))
+end)
 
 -- dev-layout reads these from its environment, which it inherits from
 -- Hyprland through the SUPER + (SHIFT|CTRL) + Z / RETURN keybinds.

@@ -20,11 +20,11 @@ local mod = vars.mod
 --   CTRL+RETURN   dev pool picker,  Neovim  (mirrors CTRL  + Z)
 --   ALT+RETURN    a terminal that just runs nvim, with no layout at all
 --
--- The mirror is in WHERE the layout goes, not in its shape. A Zed layout is
--- Zed at 75% plus two Kitty terminals; a Neovim layout is ONE Kitty window
--- that fills the workspace, because the keybind reference, file tree, git
--- panel and shell all live inside Neovim (home/modules/neovim.nix builds them
--- on a bare start). See rust/dev-layout for the launcher.
+-- The mirror is in WHERE the layout goes, and both shapes are now a single
+-- window filling the workspace: a Zed layout is Zed alone, and a Neovim layout
+-- is ONE Kitty window, because the keybind reference, file tree, git panel and
+-- shell all live inside Neovim (home/modules/neovim.nix builds them on a bare
+-- start). See rust/dev-layout for the launcher.
 --
 -- ALT+RETURN is the escape hatch that used to live on SHIFT+RETURN: one nvim,
 -- no workspace claimed, no window rule, so it lands wherever an ordinary
@@ -74,7 +74,7 @@ hl.bind(mod .. " + ALT + W",   hl.dsp.exec_cmd("librewolf"))
 hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 
 -- Mail, on workspace vars.mailWorkspace: 6 by default (00-vars.lua pins all
--- three windows there), 3 on devtower-intel (devices/devtower-intel.lua).
+-- three windows there), 4 on devtower-intel (devices/devtower-intel.lua).
 --
 --   E        aerc, the default (home/modules/aerc.nix), with its keybind
 --            sheet beside it: aerc first (left, or top on a portrait

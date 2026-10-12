@@ -110,6 +110,6 @@ privacy policies. Check `systemctl status squid squid-quic-block`,
 `ss -ltn 'sport = :3128'` (listener must be loopback only), and ordinary browsing.
 Check DDEV sites in Brave and the Claude browser extension separately.
 
-On devtower-intel, Zen goes to workspace 11 and LibreWolf to 12, both on the
-left monitor; Firefox Developer goes to 13 and Brave to 14 on the centre
+On devtower-intel, Zen goes to workspace 12 and LibreWolf to 13, both on the
+left monitor; Firefox Developer goes to 14 and Brave to 15 on the centre
 monitor. See [monitor configuration](INTEL-MONITORS.md).

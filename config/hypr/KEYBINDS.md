@@ -14,8 +14,8 @@ place of this one.
 | `SUPER + ALT + Return`   | Neovim in plain Kitty (not placed; laptop: ws 10) |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
-| `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 2) |
-| `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 3-5) |
+| `SUPER + SHIFT + Z`  | nix-config layout: Zed alone (ws 2) |
+| `SUPER + CTRL + Z`   | Dev layout: Zed alone (next free ws 3-5) |
 | `SUPER + F`          | File manager: Yazi (ws 10; F1 inside = its keys) |
 | `SUPER + SHIFT + F`  | Backup file manager: Thunar (ws 10) |
 | `SUPER + W`          | Zen browser (default)   |
@@ -39,8 +39,8 @@ there.
 
 From a terminal you can skip the picker: `dev-layout --new [--nvim] <path>`.
 
-A Zed layout is Zed at 75% with two terminals stacked on the right. A Neovim
-layout is a single Kitty window filling the workspace: the keybind reference,
+Both layouts are a single window filling the workspace. A Zed layout is Zed
+alone. A Neovim layout is one Kitty window: the keybind reference,
 file tree, git panel and shell are panes and tabs inside Neovim, and its own
 bindings are listed in `~/.config/nvim/KEYBINDS.md`.
 
@@ -117,9 +117,10 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `10`      | File managers; everything else (catch-all) — laptop only |
 
 The workspace-10 catch-all exists on laptop-intel (`devices/laptop-intel.lua`);
-framework and devtower have none, and devtower-intel uses its own map (catch-all
-on 28). The ws1 dashboard above is laptop-intel's. The file managers go to 10 on
-every device except devtower-intel (ws 2).
+framework and devtower have none, and devtower-intel uses its own map (unassigned
+windows open on the first free workspace from 41 up). The ws1 dashboard above is
+laptop-intel's. The file managers go to 10 on every device except devtower-intel
+(ws 3).
 
 Files opened from Yazi or Thunar go to that app's usual workspace (a browser
 to 7, and so on); apps with no workspace of their own stay on 10. An app's

@@ -15,7 +15,7 @@ M.mod = "SUPER"
 
 -- Workspace the SUPER + E mail layout (60-keybinds.lua) focuses and gathers
 -- aerc and its sheet onto. Read when the keybind fires, not at load time, so a
--- device file required after 60-keybinds can move it: devtower-intel sets 3.
+-- device file required after 60-keybinds can move it: devtower-intel sets 4.
 -- Every Lua config file shares one state, so require() returns this same table.
 M.mailWorkspace = 6
 
@@ -157,7 +157,7 @@ M.workspaceAssignments = {
     -- opens Thunar. On laptop-intel the catch-all already sends them to 10,
     -- but it is "10 silent" — the window would open out of sight. These rules
     -- are not silent, so you follow it there. devtower-intel overrides them
-    -- with workspace 2 (devices/devtower-intel.lua).
+    -- with workspace 3 (devices/devtower-intel.lua).
     -- udiskie's "browse" action launches the same `yazi` class.
     --
     -- Files opened FROM a file manager need nothing here: each app's window
@@ -210,18 +210,11 @@ M.workspaceAssignments = {
     --     things like `devxzedxZed`; more importantly, escaping is what makes
     --     the intent obvious to the next reader.
     --
-    -- The Zed layout's two terminals are the easy half: kitty DOES support
-    -- --class, so the nix-config layout launches them with
-    -- `--class nixcfg-term` and a plain class match is enough. Only the Zed
-    -- layout has them; the Neovim one below is a single window.
+    -- Zed is the layout's only window: it fills the workspace on its own,
+    -- with no Kitty terminals beside it.
     {
         name      = "nixcfg-editor",
         match     = { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" },
-        workspace = "2",
-    },
-    {
-        name      = "nixcfg-term",
-        match     = { class = "^(nixcfg-term)$" },
         workspace = "2",
     },
 
@@ -231,8 +224,8 @@ M.workspaceAssignments = {
     --
     -- This one rule places the WHOLE Neovim layout: it is a single Kitty
     -- window filling the workspace, with the keybind reference, file tree,
-    -- git panel and shell as panes and tabs inside Neovim, so there are no
-    -- nixcfg-term windows to go with it.
+    -- git panel and shell as panes and tabs inside Neovim. Both variants are
+    -- now a single window.
     --
     -- Note how much smaller this rule is than nixcfg-editor above. Neovim runs
     -- inside Kitty and Kitty supports --class, so there is no title clause and

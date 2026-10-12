@@ -51,7 +51,7 @@
 #
 # So accounts are set up once through the GUI. What IS declarative lives in the
 # repo: this package, the workspace 6 window rule (config/hypr/00-vars.lua;
-# workspace 3 in config/hypr/devices/devtower-intel.lua) and the
+# workspace 4 in config/hypr/devices/devtower-intel.lua) and the
 # SUPER + SHIFT + E keybind (config/hypr/60-keybinds.lua).
 
 {

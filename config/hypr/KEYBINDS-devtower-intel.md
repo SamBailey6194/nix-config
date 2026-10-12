@@ -10,21 +10,21 @@ laptop-intel uses `KEYBINDS.md`; this sheet replaces it on devtower-intel
 | `SUPER + Return`     | Terminal (kitty)        |
 | `SUPER + SHIFT + Return` | nix-config layout: Neovim alone (ws 31) |
 | `SUPER + CTRL + Return`  | Dev layout: Neovim alone (next free ws 32-40) |
-| `SUPER + ALT + Return`   | Neovim in plain Kitty (ws 20) |
+| `SUPER + ALT + Return`   | Neovim in plain Kitty (first free ws 41+) |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
-| `SUPER + SHIFT + Z`  | nix-config layout: Zed + 2 terminals (ws 31) |
-| `SUPER + CTRL + Z`   | Dev layout: Zed + 2 terminals (next free ws 32-40) |
-| `SUPER + F`          | File manager: Yazi (ws 2; F1 inside = its keys) |
-| `SUPER + SHIFT + F`  | Backup file manager: Thunar (ws 2) |
-| `SUPER + W`          | Zen browser (ws 11)     |
-| `SUPER + SHIFT + W`  | Brave browser (ws 14)   |
-| `SUPER + ALT + W`    | LibreWolf browser (ws 12) |
-| `SUPER + CTRL + W`   | Firefox Developer Ed. (ws 13) |
-| `SUPER + E`          | Mail: aerc + its keybind sheet (ws 3) |
-| `SUPER + SHIFT + E`  | Backup mail client: Claws Mail (ws 3) |
-| `SUPER + T`          | Teams (ws 10)           |
-| `SUPER + C`          | Zoom (ws 10)            |
+| `SUPER + SHIFT + Z`  | nix-config layout: Zed alone (ws 31) |
+| `SUPER + CTRL + Z`   | Dev layout: Zed alone (next free ws 32-40) |
+| `SUPER + F`          | File manager: Yazi (ws 3; F1 inside = its keys) |
+| `SUPER + SHIFT + F`  | Backup file manager: Thunar (ws 3) |
+| `SUPER + W`          | Zen browser (ws 12)     |
+| `SUPER + SHIFT + W`  | Brave browser (ws 15)   |
+| `SUPER + ALT + W`    | LibreWolf browser (ws 13) |
+| `SUPER + CTRL + W`   | Firefox Developer Ed. (ws 14) |
+| `SUPER + E`          | Mail: aerc + its keybind sheet (ws 4) |
+| `SUPER + SHIFT + E`  | Backup mail client: Claws Mail (ws 4) |
+| `SUPER + T`          | Teams (ws 11)           |
+| `SUPER + C`          | Zoom (ws 11)            |
 | `SUPER + R`          | RustDesk                |
 | `SUPER + M`          | System monitor (btop)   |
 | `SUPER + SHIFT + M`  | Backup monitor (htop)   |
@@ -38,8 +38,9 @@ there.
 
 From a terminal you can skip the picker: `dev-layout --new [--nvim] <path>`.
 
-A Zed layout is Zed at 75% with two terminals stacked on the right. A Neovim
-layout is a single Kitty window filling the workspace: the keybind reference,
+Both layouts are a single window filling the workspace. A Zed layout is Zed
+alone; for shells, use the four terminals on workspace 2. A Neovim layout is
+one Kitty window: the keybind reference,
 file tree, git panel and shell are panes and tabs inside Neovim, and its own
 bindings are listed in `~/.config/nvim/KEYBINDS.md`.
 
@@ -47,9 +48,9 @@ bindings are listed in `~/.config/nvim/KEYBINDS.md`.
 
 | Keybind              | Action                  |
 |----------------------|-------------------------|
-| `SUPER + D`          | Affinity Designer (ws 16) |
-| `SUPER + P`          | Affinity Photo (ws 17)  |
-| `SUPER + B`          | Affinity Publisher (ws 18) |
+| `SUPER + D`          | Affinity Designer (ws 17) |
+| `SUPER + P`          | Affinity Photo (ws 18)  |
+| `SUPER + B`          | Affinity Publisher (ws 19) |
 
 ## Window Management
 
@@ -105,6 +106,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + SHIFT + S`      | Move to scratchpad            |
 | `SUPER + Scroll`         | Cycle workspaces              |
 | `SUPER + Escape`         | Dashboard (ws 1): reopens a closed pane |
+| `SUPER + SHIFT + Escape` | Terminal grid (ws 2): reopens a closed terminal |
 
 ## Workspace Map
 
@@ -113,25 +115,25 @@ L = left 4K, C = centre 1440p, R = right portrait.
 | Workspace | Key                  | Mon | Contents                               |
 |-----------|----------------------|-----|----------------------------------------|
 | `1`       | `SUPER + 1`          | R   | Dashboard: this sheet, btop, nvtop     |
-| `2`       | `SUPER + 2`          | C   | File managers (Yazi, Thunar)           |
-| `3`       | `SUPER + 3`          | C   | Mail (aerc + sheet, Claws Mail)        |
-| `4`       | `SUPER + 4`          | C   | LibreOffice Writer (and Start Center)  |
-| `5`       | `SUPER + 5`          | C   | LibreOffice Calc                       |
-| `6`       | `SUPER + 6`          | C   | LibreOffice Impress                    |
-| `7`       | `SUPER + 7`          | C   | LibreOffice Draw                       |
-| `8`       | `SUPER + 8`          | C   | LibreOffice Math                       |
-| `9`       | `SUPER + 9`          | C   | LibreOffice Base                       |
-| `10`      | `SUPER + 0`          | C   | Comms (Teams, Zoom)                    |
-| `11`      | `SUPER + SHIFT + 1`  | L   | Zen (streaming)                        |
-| `12`      | `SUPER + SHIFT + 2`  | L   | LibreWolf                              |
-| `13`      | `SUPER + SHIFT + 3`  | C   | Firefox Developer Edition              |
-| `14`      | `SUPER + SHIFT + 4`  | C   | Brave                                  |
-| `15`      | `SUPER + SHIFT + 5`  | L   | Video and image viewers (VLC, mpv, imv)|
-| `16`      | `SUPER + SHIFT + 6`  | C   | Affinity Designer                      |
-| `17`      | `SUPER + SHIFT + 7`  | C   | Affinity Photo                         |
-| `18`      | `SUPER + SHIFT + 8`  | C   | Affinity Publisher                     |
-| `19`      | `SUPER + SHIFT + 9`  | L   | DaVinci Resolve                        |
-| `20`      | `SUPER + SHIFT + 0`  | C   | Spare; everything unassigned lands here |
+| `2`       | `SUPER + 2`          | C   | Four terminals, 2x2 (commands, SSH)    |
+| `3`       | `SUPER + 3`          | C   | File managers (Yazi, Thunar)           |
+| `4`       | `SUPER + 4`          | C   | Mail (aerc + sheet, Claws Mail)        |
+| `5`       | `SUPER + 5`          | C   | LibreOffice Writer (and Start Center)  |
+| `6`       | `SUPER + 6`          | C   | LibreOffice Calc                       |
+| `7`       | `SUPER + 7`          | C   | LibreOffice Impress                    |
+| `8`       | `SUPER + 8`          | C   | LibreOffice Draw                       |
+| `9`       | `SUPER + 9`          | C   | LibreOffice Math                       |
+| `10`      | `SUPER + 0`          | C   | LibreOffice Base                       |
+| `11`      | `SUPER + SHIFT + 1`  | C   | Comms (Teams, Zoom)                    |
+| `12`      | `SUPER + SHIFT + 2`  | L   | Zen (streaming)                        |
+| `13`      | `SUPER + SHIFT + 3`  | L   | LibreWolf                              |
+| `14`      | `SUPER + SHIFT + 4`  | C   | Firefox Developer Edition              |
+| `15`      | `SUPER + SHIFT + 5`  | C   | Brave                                  |
+| `16`      | `SUPER + SHIFT + 6`  | L   | Video and image viewers (VLC, mpv, imv)|
+| `17`      | `SUPER + SHIFT + 7`  | C   | Affinity Designer                      |
+| `18`      | `SUPER + SHIFT + 8`  | C   | Affinity Photo                         |
+| `19`      | `SUPER + SHIFT + 9`  | C   | Affinity Publisher                     |
+| `20`      | `SUPER + SHIFT + 0`  | L   | DaVinci Resolve                        |
 | `21`      | `SUPER + CTRL + 1`   | C   | PhotoCraft                             |
 | `22`      | `SUPER + CTRL + 2`   | C   | VectorCraft                            |
 | `23`      | `SUPER + CTRL + 3`   | C   | LightCraft                             |
@@ -144,11 +146,14 @@ L = left 4K, C = centre 1440p, R = right portrait.
 | `30`      | `SUPER + CTRL + 0`   | L   | FilmCraft                              |
 | `31`      | `SUPER + ALT + 1`    | C   | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | C | Dev pool (allocated as needed)         |
+| `41+`     | none                 | C   | Unassigned windows, one per workspace  |
 
-Files opened from Yazi or Thunar go to that app's workspace (a video to 15,
-and so on); apps with no workspace of their own go to 20. An app's
-"Open / Save file" dialog is Yazi too: it floats over the app, on the current
-workspace.
+Files opened from Yazi or Thunar go to that app's workspace (a video to 16,
+and so on). An app with no workspace of its own opens on the first free
+workspace from 41 up, on the centre monitor, and takes focus; floating
+dialogs open beside the window that asked. Workspaces 41+ have no keybind:
+reach them with `SUPER + Scroll`. An app's "Open / Save file" dialog
+is Yazi too: it floats over the app, on the current workspace.
 
 ## Screenshots
 
