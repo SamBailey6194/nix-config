@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   disks = import ./disks.nix;
@@ -51,6 +51,16 @@ in
   # firmware, so keep the generation count as low as the full stage does.
   boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
+
+  # The full stage puts rEFInd at EFI/BOOT/BOOTX64.EFI (modules/boot/refind).
+  # bootctl update skips a fallback loader it does not own, so a later
+  # systemd-boot stage or rollback would leave rEFInd booting a frozen menu.
+  # Put systemd-boot back in the firmware's fallback slot whenever it installs.
+  boot.loader.systemd-boot.extraInstallCommands = lib.mkIf config.boot.loader.systemd-boot.enable ''
+    ${pkgs.coreutils}/bin/install -D -m0644 \
+      ${config.systemd.package}/lib/systemd/boot/efi/systemd-bootx64.efi \
+      ${config.boot.loader.efi.efiSysMountPoint}/EFI/BOOT/BOOTX64.EFI
+  '';
 
   warnings = lib.optional (placeholders != { })
     "devtower-intel: hosts/devtower-intel/disks.nix still has placeholder UUIDs (${lib.concatStringsSep ", " (lib.attrNames placeholders)}). Do not install until they are filled in.";
