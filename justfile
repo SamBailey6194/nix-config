@@ -1006,3 +1006,8 @@ downloads-retry:
 [positional-arguments]
 downloads-record-choice PATTERN FILE:
     @download-sorter --pattern "$1" --record-choice "$2"
+
+# Release a held download (scanned in part, too large or unscannable) by SHA-256
+[positional-arguments]
+approve-download FILE:
+    @download-sorter --approve "$1"
