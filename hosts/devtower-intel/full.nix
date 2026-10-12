@@ -26,8 +26,12 @@ in
   # NixOS icon (older generations in its F2/Insert submenu) and Windows from
   # its own ESP on the Crucial P3 (nvme0n1p1, FAT 8C32-B143). Firmware still
   # boots EFI/BOOT/BOOTX64.EFI on the Intel disk, which rEFInd now occupies.
+  #
+  # Disabled: generation 7 (first rEFInd build) failed to reach rEFInd at
+  # boot. Back on systemd-boot until that is diagnosed; the default.nix
+  # extraInstallCommands puts systemd-boot back at EFI/BOOT/BOOTX64.EFI.
   bootloader.refind = {
-    enable = true;
+    enable = false;
     maxGenerations = 5;
     inherit flakeRev;
     windows.partUuid = "89590b26-8a8f-4bc2-885f-3ba0241256bb";
