@@ -42,6 +42,12 @@
       zle -N zle-keymap-select
       zle -N zle-line-init
 
+      # Drop the autosuggestion when pasting. Oh My Zsh's bracketed-paste-magic
+      # otherwise restores the suggestion fetched before the paste, so Right
+      # arrow appends a stale history line (e.g. an old `rm -rf` target).
+      # Appended here, after the plugin has set its default list.
+      ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(bracketed-paste)
+
       # DDEV completions (if ddev is installed)
       if command -v ddev &> /dev/null; then
         eval "$(ddev completion zsh)"
