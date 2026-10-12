@@ -48,6 +48,10 @@ the retained Ubuntu directories are never modified. Ensure the encrypted root
 has enough free space first. Native messaging files are excluded because Home
 Manager supplies the NixOS Claude host with its correct executable path.
 
+After the home drive has been converted, `/mnt/ubuntu-home` no longer exists:
+use `oldhome=/mnt/archive/pre-nixos-home/sam-dev` instead, or, once the 4TB
+drives are converted, an extracted copy of `Archive/pre-nixos-home.tar.zst`.
+
 ```sh
 oldhome=/mnt/ubuntu-home/sam-dev
 backup="$HOME/browser-profiles-before-import-$(date +%Y%m%d-%H%M%S)"
@@ -78,9 +82,7 @@ for old, new in paths.items():
 PYTHON
 ```
 
-Because the Brave directory backup includes Home Manager's native host, rebuild
-or rerun Home Manager activation before using Claude-in-Chrome. Keep the backup
-until the copied profiles and native host have been checked. Do not repeat the
+Keep the backup until the copied profiles have been checked. Do not repeat the
 copy after browsing without backing up the new data first.
 
 Browser installation IDs change between Ubuntu and NixOS. Start Gecko browsers
@@ -108,6 +110,6 @@ privacy policies. Check `systemctl status squid squid-quic-block`,
 `ss -ltn 'sport = :3128'` (listener must be loopback only), and ordinary browsing.
 Check DDEV sites in Brave and the Claude browser extension separately.
 
-Zen goes to workspace 7 on the left monitor. Brave, Firefox Developer and
-LibreWolf go to workspace 10 on the centre monitor. See
-[monitor configuration](INTEL-MONITORS.md).
+On devtower-intel, Zen goes to workspace 11 and LibreWolf to 12, both on the
+left monitor; Firefox Developer goes to 13 and Brave to 14 on the centre
+monitor. See [monitor configuration](INTEL-MONITORS.md).

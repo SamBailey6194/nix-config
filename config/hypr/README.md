@@ -30,9 +30,12 @@ config/hypr/
 ├── 80-autostart.lua        # Startup applications (a "hyprland.start" handler)
 ├── devices/                # Device-specific overrides, deployed as 90-device.lua
 │   ├── laptop-intel.lua    # Intel laptop (i5-10210U, 32GB)
+│   ├── devtower-intel.lua  # Intel desktop: three monitors, 40 workspaces
+│   ├── devtower-intel-dashboard.lua  # devtower-intel's ws1 dashboard panes
 │   ├── framework.lua       # Framework AMD (Ryzen + Radeon, 64GB)
 │   └── devtower.lua        # AMD desktop (CPU + GPU, 64GB, Go XLR)
 ├── KEYBINDS.md             # Keybind cheat sheet (deployed to ~/.config/hypr/)
+├── KEYBINDS-devtower-intel.md  # devtower-intel's sheet (replaces KEYBINDS.md there)
 ├── INTEGRATION.md          # How these files reach ~/.config/hypr
 └── README.md               # This file
 ```
@@ -85,7 +88,9 @@ disturbing the rest of `decoration`.
 
 Workspaces are not interchangeable — most of them have a fixed purpose, enforced
 by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
-`devices/laptop-intel.lua`:
+`devices/laptop-intel.lua`. This is the default map, used by laptop-intel;
+devtower-intel replaces it with forty workspaces (see
+[devtower-intel](#devtower-intel) below):
 
 | Workspace | Contents                      | Assigned by                                                 |
 |-----------|-------------------------------|-------------------------------------------------------------|
@@ -95,7 +100,7 @@ by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
 | `6`       | Mail (aerc + sheet, Claws)    | `00-vars.lua` workspaceAssignments                          |
 | `7`       | Browsers                      | Window rules (class match)                                  |
 | `8`       | Affinity Suite                | Window rules (class match)                                  |
-| `9`       | Comms (Teams, Zoom, Discord)  | Window rules (class match)                                  |
+| `9`       | Comms (Teams, Zoom)           | Window rules (class match)                                  |
 | `10`      | Everything else               | Catch-all rule (laptop only)                                |
 
 The "Assigned by" column is the **mechanism**, not the trigger — the two are
@@ -132,6 +137,51 @@ worth keeping apart:
   would be handed a workspace that a creative application already claims. Both
   device files carry a comment recording this; settle it before enabling the
   pool there.
+
+### devtower-intel
+
+`devices/devtower-intel.lua` replaces the map above with forty workspaces over
+three monitors: left (4K, scale 1.5), centre (1440p) and right (1080p,
+portrait). laptop-intel is unaffected.
+
+| Workspace | Contents                                                             | Monitor |
+|-----------|----------------------------------------------------------------------|---------|
+| `1`       | Dashboard (keybinds, btop, nvtop)                                    | right   |
+| `2`       | File managers (Yazi, Thunar)                                         | centre  |
+| `3`       | Mail (aerc + sheet, Claws)                                           | centre  |
+| `4-9`     | LibreOffice Writer, Calc, Impress, Draw, Math, Base                  | centre  |
+| `10`      | Comms (Teams, Zoom)                                                  | centre  |
+| `11`      | Zen                                                                  | left    |
+| `12`      | LibreWolf                                                            | left    |
+| `13`      | Firefox Developer Edition                                            | centre  |
+| `14`      | Brave                                                                | centre  |
+| `15`      | Video and image viewers (VLC, mpv, imv)                              | left    |
+| `16-18`   | Affinity Designer, Photo, Publisher                                  | centre  |
+| `19`      | DaVinci Resolve                                                      | left    |
+| `20`      | Spare; the catch-all for unassigned windows                          | centre  |
+| `21-25`   | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft           | centre  |
+| `26-28`   | SoundCraft, WordCraft, DeckCraft                                     | centre  |
+| `29-30`   | EffectCraft, FilmCraft                                               | left    |
+| `31`      | nix-config dev layout                                                | centre  |
+| `32-40`   | Dev pool, allocated as needed                                        | centre  |
+
+- **Keys**: `SUPER + 1-9, 0` switches to 1-10, `SUPER + SHIFT` to 11-20,
+  `SUPER + CTRL` to 21-30 and `SUPER + ALT` to 31-40.
+- **Moving a window**: `SUPER + SHIFT + number` no longer moves (it is unbound
+  and reused for 11-20). Press `SUPER + period` to enter the `move-window`
+  submap, then the number with the bank's modifier minus `SUPER` (`1` → 1,
+  `SHIFT + 1` → 11, `CTRL + 1` → 21, `ALT + 1` → 31). The submap resets after
+  one move; `Escape` cancels.
+- **Mail** moves to workspace 3: the device file sets `vars.mailWorkspace = 3`,
+  which the `SUPER + E` mail layout in `60-keybinds.lua` reads.
+- **Dev layouts**: the device file exports `DEV_LAYOUT_NIX_CONFIG_WS=31`,
+  `DEV_LAYOUT_POOL_FIRST=32` and `DEV_LAYOUT_POOL_LAST=40` with `hl.env`, so
+  `dev-layout` (which inherits Hyprland's environment through the keybinds)
+  places nix-config on 31 and allocates from 32-40. No creative application
+  sits in that pool here.
+- **Keybind sheet**: `KEYBINDS-devtower-intel.md`, deployed by
+  `home/devtower-intel.nix` as `~/.config/hypr/KEYBINDS.md` in place of the
+  laptop sheet, so `SUPER + /` and the ws1 dashboard show the right keys.
 
 ## Usage
 
@@ -203,6 +253,7 @@ All shared settings live in the numbered files:
 
 Each device file may override anything, and is loaded last:
 - **laptop-intel.lua**: single eDP-1 display, battery-tuned blur, workspace-1 dashboard, dual keyboard layouts
+- **devtower-intel.lua**: three monitors, the 40-workspace map, four workspace keybind banks and the `move-window` submap (see [devtower-intel](#devtower-intel)); its ws1 dashboard is `devtower-intel-dashboard.lua`
 - **framework.lua**: high-DPI scaling, AMD GPU tuning, creative workflow
 - **devtower.lua**: multi-monitor, desktop performance, Go XLR
 
@@ -217,7 +268,9 @@ Highlights:
 
 ### Workspaces
 - `SUPER + 1-9, 0`: switch to workspace 1-10
-- `SUPER + SHIFT + 1-9, 0`: move window to workspace 1-10
+- `SUPER + SHIFT + 1-9, 0`: move window to workspace 1-10 (devtower-intel:
+  switch to 11-20; moving uses `SUPER + period` — see
+  [devtower-intel](#devtower-intel))
 - `SUPER + S`: toggle scratchpad (special workspace)
 - `SUPER + scroll`: cycle workspaces
 - Each workspace has a fixed purpose — see [Workspace Map](#workspace-map)
@@ -228,21 +281,23 @@ Highlights:
 - `SUPER + W`: Zen browser (`SHIFT` Brave, `ALT` LibreWolf, `CTRL` Firefox Developer Edition)
 - `SUPER + F`: file manager (Thunar)
 - `SUPER + Z`: Zed editor
-- `SUPER + SHIFT + Z`: nix-config dev layout on workspace 2
-- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-5).
+- `SUPER + SHIFT + Z`: nix-config dev layout on workspace 2 (31 on devtower-intel)
+- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-5;
+  32-40 on devtower-intel).
   Goes through the `dev-layout-pick` wofi picker (declared in
   `home/modules/hyprland.nix`), because dev-layout needs a project path and a
   keybind inherits Hyprland's working directory rather than a project's. From a
   terminal, `dev-layout --new [--nvim] <path>` skips the picker.
 - `SUPER + SHIFT + Return`: nix-config layout, Neovim alone, on workspace 2
+  (31 on devtower-intel)
 - `SUPER + CTRL + Return`: dev layout, Neovim alone, on the next free workspace
-  (3-5), through the same picker
+  (3-5; 32-40 on devtower-intel), through the same picker
 - `SUPER + ALT + Return`: Neovim in a plain Kitty window. No dev-layout rule
   claims it, so it lands wherever an ordinary window would: on the laptop the
-  catch-all sends it, silently, to workspace 10, not the workspace you pressed
-  the key on. A bare `nvim` builds the same in-editor layout (keybind
-  reference, file tree, terminal tab, and the git panel inside a git work tree)
-  wherever it starts, as far as the window's width allows; the RETURN layouts
+  catch-all sends it, silently, to workspace 10 (20 on devtower-intel), not
+  the workspace you pressed the key on. A bare `nvim` builds the same
+  in-editor layout (keybind reference, file tree, terminal tab, and the git
+  panel inside a git work tree) wherever it starts, as far as the window's width allows; the RETURN layouts
   only add the workspace placement and the full width.
 
 ### Window Management

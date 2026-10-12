@@ -4,8 +4,8 @@
 #
 # aerc (home/modules/aerc.nix) is the default mail client on SUPER + E; Claws
 # is kept alongside it on SUPER + SHIFT + E, for mail that is easier with a
-# mouse. Both land on workspace 6. The two do not share configuration: Claws
-# signs in on its own (below), aerc through oama.
+# mouse. Both land on workspace 6 (3 on devtower-intel). The two do not share
+# configuration: Claws signs in on its own (below), aerc through oama.
 #
 # WHY CLAWS AND NOT THUNDERBIRD
 #
@@ -50,8 +50,9 @@
 # /run/agenix symlink would stop Claws saving and lose folder state.
 #
 # So accounts are set up once through the GUI. What IS declarative lives in the
-# repo: this package, the workspace 6 window rule (config/hypr/00-vars.lua) and
-# the SUPER + SHIFT + E keybind (config/hypr/60-keybinds.lua).
+# repo: this package, the workspace 6 window rule (config/hypr/00-vars.lua;
+# workspace 3 in config/hypr/devices/devtower-intel.lua) and the
+# SUPER + SHIFT + E keybind (config/hypr/60-keybinds.lua).
 
 {
   home.packages = [

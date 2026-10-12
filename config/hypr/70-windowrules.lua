@@ -68,9 +68,10 @@ hl.window_rule({
 --                      layout has none)
 --   nixcfg-nvim        the workspace 2 Neovim layout: its one and only window,
 --                      filling the workspace
---   devpool-term-3..5  a Zed pool layout's terminals, one class per pool
---                      workspace, matched with the range [3-5]
---   devpool-nvim-3..5  the same, for a pool Neovim layout's single window
+--   devpool-term-N     a Zed pool layout's terminals, one class per pool
+--                      workspace: 3-5 by default, 32-40 on devtower-intel, so
+--                      any number matches
+--   devpool-nvim-N     the same, for a pool Neovim layout's single window
 --   ws1-keybinds       the dashboard's KEYBINDS.md viewer (laptop only)
 --   ws1-monitor        the dashboard's btop pane (laptop only)
 --   yazi               Yazi, the file manager (SUPER + F)
@@ -83,7 +84,7 @@ hl.window_rule({
 -- uses lookaround).
 hl.window_rule({
     name  = "opacity-kitty",
-    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[3-5]|devpool-nvim-[3-5]|ws1-keybinds|ws1-monitor|yazi|aerc|aerc-keybinds|termfilechooser)$" },
+    match = { class = "^(kitty|nixcfg-term|nixcfg-nvim|devpool-term-[0-9]+|devpool-nvim-[0-9]+|ws1-keybinds|ws1-monitor|yazi|aerc|aerc-keybinds|termfilechooser)$" },
 
     opacity = "0.95 0.95",
 })

@@ -2,7 +2,8 @@
 
 # Email in the terminal (aerc), the default mail client
 #
-#   SUPER + E          aerc on workspace 6, with this keybind sheet beside it
+#   SUPER + E          aerc on workspace 6 (3 on devtower-intel), with this
+#                      keybind sheet beside it
 #                      (config/hypr/60-keybinds.lua). Claws Mail, the GUI
 #                      client in email.nix, moved to SUPER + SHIFT + E.
 #   ?  inside aerc     aerc's own :help keys, for the live bindings

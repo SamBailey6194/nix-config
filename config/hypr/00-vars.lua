@@ -13,6 +13,12 @@ local M = {}
 -- Modifier key (was `$mod = SUPER`)
 M.mod = "SUPER"
 
+-- Workspace the SUPER + E mail layout (60-keybinds.lua) focuses and gathers
+-- aerc and its sheet onto. Read when the keybind fires, not at load time, so a
+-- device file required after 60-keybinds can move it: devtower-intel sets 3.
+-- Every Lua config file shares one state, so require() returns this same table.
+M.mailWorkspace = 6
+
 -- ── Workspace assignments ─────────────────────────────────────────────
 --
 -- Single source of truth for "this app always opens on that workspace".
@@ -36,6 +42,10 @@ M.mod = "SUPER"
 -- anchoring visible at the point of use.
 --
 -- WORKSPACE MAP (see devices/laptop-intel.lua for the full picture)
+--
+-- This is the default map, used as-is by laptop-intel. devtower-intel runs a
+-- 40-workspace map across three monitors instead and re-registers its own
+-- assignments after these (devices/devtower-intel.lua); last match wins.
 --
 --   1     dashboard (laptop only)
 --   2     nix-config dev layout           (reserved, assigned here)
@@ -123,11 +133,6 @@ M.workspaceAssignments = {
         match     = { class = "^(zoom)$" },
         workspace = "9",
     },
-    {
-        name      = "comms-discord",
-        match     = { class = "^(discord)$" },
-        workspace = "9",
-    },
 
     -- Affinity Suite (workspace 8)
     {
@@ -149,9 +154,10 @@ M.workspaceAssignments = {
     -- File managers (workspace 10)
     --
     -- SUPER + F opens Yazi in kitty with the `yazi` class; SUPER + SHIFT + F
-    -- opens Thunar. On laptop-intel and devtower-intel the catch-all already
-    -- sends them to 10, but the laptop's is "10 silent" — the window would
-    -- open out of sight. These rules are not silent, so you follow it there.
+    -- opens Thunar. On laptop-intel the catch-all already sends them to 10,
+    -- but it is "10 silent" — the window would open out of sight. These rules
+    -- are not silent, so you follow it there. devtower-intel overrides them
+    -- with workspace 2 (devices/devtower-intel.lua).
     -- udiskie's "browse" action launches the same `yazi` class.
     --
     -- Files opened FROM a file manager need nothing here: each app's window

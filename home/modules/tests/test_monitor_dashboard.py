@@ -1,6 +1,5 @@
 """Exercise monitor geometry and dashboard launch/reopen logic with Lua mocks."""
 from pathlib import Path
-import re
 import unittest
 from lupa import LuaRuntime
 
@@ -26,7 +25,11 @@ class DashboardTests(unittest.TestCase):
                 dispatch = function(action)
                     if action.window then action.window.workspace = {id=action.workspace} end
                 end,
-                dsp = { focus = function(x) return x end, window = {move = function(x) return x end} },
+                env = function() end,
+                unbind = function() end,
+                define_submap = function(_, _, fn) fn() end,
+                dsp = { focus = function(x) return x end, window = {move = function(x) return x end},
+                        submap = function(x) return x end },
             }
         ''')
 
@@ -35,29 +38,13 @@ class DashboardTests(unittest.TestCase):
         self.lua.globals().package.path = str(DEVICES.parent / "?.lua") + ";" + self.lua.globals().package.path
         self.lua.execute((DEVICES / "devtower-intel.lua").read_text())
         self.lua.execute('''
-            assert(#monitors == 3 and #workspaces == 10)
+            assert(#monitors == 3 and #workspaces == 40)
             assert(monitors[1].scale == 1.5)
             assert(monitors[2].position == "2560x0")
             assert(monitors[3].position == "5120x0" and monitors[3].transform == 1)
-            local expected = {"right", "centre", "centre", "centre", "centre", "right", "left", "centre", "centre", "centre"}
-            local outputs = {left=monitors[1].output, centre=monitors[2].output, right=monitors[3].output}
-            for _, rule in ipairs(workspaces) do
-                assert(rule.monitor == outputs[expected[tonumber(rule.workspace)]])
-                assert(not rule.persistent)
-            end
         ''')
-        # Apply matching rules in registration order, as Hyprland does.
-        for cls, expected in {
-            "brave-browser": "10", "firefox-devedition": "10",
-            "zen-beta": "7", "librewolf": "10", "resolve": "8",
-            "claws-mail": "6", "aerc": "6", "aerc-keybinds": "6",
-            "unassigned-app": "10",
-        }.items():
-            destination = None
-            for _, rule in self.lua.globals().rules.items():
-                if rule.match.title is None and re.fullmatch(rule.match['class'], cls):
-                    destination = rule.workspace
-            self.assertEqual(destination, expected, cls)
+        # The 40-workspace map, keybinds and window rules are covered in
+        # test_devtower_intel_layout.py.
 
     def test_three_nonoverlapping_vertical_panes_and_reopen_without_duplicates(self):
         self.lua.execute((DEVICES / "devtower-intel-dashboard.lua").read_text())

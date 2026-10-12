@@ -85,7 +85,7 @@ class MailLayoutTests(unittest.TestCase):
             open("aerc-keybinds", 0, 0); open("aerc", 960, 0)
             assert(#swaps == 1 and windows["aerc"].at.x == 0)
 
-            -- Portrait (devtower-intel's ws6 monitor): the sheet came out on top.
+            -- Portrait (e.g. a rotated mail monitor): the sheet came out on top.
             windows = {}; swaps = {}
             open("aerc-keybinds", 0, 0); open("aerc", 0, 960)
             assert(#swaps == 1 and windows["aerc"].at.y == 0)
@@ -100,7 +100,7 @@ class MailLayoutTests(unittest.TestCase):
         self.lua.execute('''
             local mail = binds["SUPER + E"]
             mail()
-            -- Claws shares ws6, so aerc sits bottom-left and the sheet top-right.
+            -- Claws shares the mail workspace, so aerc sits bottom-left and the sheet top-right.
             open("aerc", 0, 540); open("aerc-keybinds", 960, 0)
             mail(); mail(); mail()
             assert(#swaps == 0, "aerc is already left of the sheet")

@@ -1,5 +1,9 @@
 # Hyprland Keybinds Reference
 
+This is laptop-intel's sheet. devtower-intel has forty workspaces and its own
+sheet, `KEYBINDS-devtower-intel.md`, which home/devtower-intel.nix deploys in
+place of this one.
+
 ## Applications
 
 | Keybind              | Action                  |
@@ -109,13 +113,13 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `6`       | Mail (aerc + keybind sheet, Claws Mail)      |
 | `7`       | Browsers                                     |
 | `8`       | Affinity Suite                               |
-| `9`       | Comms (Teams, Zoom, Discord)                 |
-| `10`      | File managers; everything else (catch-all) — laptop, devtower-intel |
+| `9`       | Comms (Teams, Zoom)                          |
+| `10`      | File managers; everything else (catch-all) — laptop only |
 
-The workspace-10 catch-all exists on laptop-intel (`devices/laptop-intel.lua`)
-and devtower-intel (`devices/devtower-intel.lua`); framework and devtower have
-none. The ws1 dashboard above is laptop-intel's. The file managers go to 10 on
-every device.
+The workspace-10 catch-all exists on laptop-intel (`devices/laptop-intel.lua`);
+framework and devtower have none, and devtower-intel uses its own map (catch-all
+on 28). The ws1 dashboard above is laptop-intel's. The file managers go to 10 on
+every device except devtower-intel (ws 2).
 
 Files opened from Yazi or Thunar go to that app's usual workspace (a browser
 to 7, and so on); apps with no workspace of their own stay on 10. An app's

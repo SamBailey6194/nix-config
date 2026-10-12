@@ -35,6 +35,11 @@ in
       autoLoad = true;
     };
 
+  # The 40-workspace map above needs its own cheat sheet; the ws1 dashboard
+  # and SUPER + / both read this path.
+  home.file.".config/hypr/KEYBINDS.md".source =
+    lib.mkForce ../config/hypr/KEYBINDS-devtower-intel.md;
+
   # Desktop: never dim, lock or blank on idle. hypridle keeps running for the
   # manual paths only - its lock_cmd serves SUPER+CTRL+L (loginctl
   # lock-session) and before_sleep_cmd still locks ahead of a manual suspend.

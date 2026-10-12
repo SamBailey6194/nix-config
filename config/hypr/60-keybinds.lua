@@ -73,15 +73,16 @@ hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("brave"))
 hl.bind(mod .. " + ALT + W",   hl.dsp.exec_cmd("librewolf"))
 hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 
--- Mail, on workspace 6 (00-vars.lua pins all three windows there).
+-- Mail, on workspace vars.mailWorkspace: 6 by default (00-vars.lua pins all
+-- three windows there), 3 on devtower-intel (devices/devtower-intel.lua).
 --
 --   E        aerc, the default (home/modules/aerc.nix), with its keybind
 --            sheet beside it: aerc first (left, or top on a portrait
---            monitor such as devtower-intel's ws6 one), the sheet second
+--            monitor), the sheet second
 --   SHIFT+E  Claws Mail, the GUI backup (home/modules/email.nix)
 --
 -- E works like the laptop's ws1 dashboard (devices/laptop-intel.lua, which
--- explains the API and the reasoning in full): it focuses workspace 6 and
+-- explains the API and the reasoning in full): it focuses the mail workspace and
 -- makes sure each pane exists exactly once - left alone if it is there,
 -- brought back if it was moved away, launched if it is not open. So a second
 -- press never starts a second aerc, and reopens the sheet after `q` closed it.
@@ -90,7 +91,11 @@ hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 -- the side the mouse is on), so the panes are swapped afterwards if the sheet
 -- came out first. Only two tiled panes are swapped; a swap would trade the
 -- floating state of a floated pane.
-local MAIL_WS = 6
+-- Looked up on every call rather than captured here: the device file that
+-- overrides vars.mailWorkspace is required after this one.
+local function mail_ws()
+    return vars.mailWorkspace or 6
+end
 
 local MAIL = {
     { class = "aerc",          cmd = "kitty --class aerc -e aerc" },
@@ -105,7 +110,7 @@ end
 
 local function on_mail_ws(w)
     local ws = w and w.workspace
-    return ws ~= nil and ws.id == MAIL_WS
+    return ws ~= nil and ws.id == mail_ws()
 end
 
 -- `fullscreen` is an integer mode, and 0 is truthy in Lua, so compare it.
@@ -115,7 +120,7 @@ end
 
 -- aerc before the sheet: left of it side by side, above it when stacked.
 -- The order is strict (x first, then y) so one swap always settles it: with
--- a third window on ws6 (Claws) the two can sit diagonally, and "x OR y
+-- a third window on the mail workspace (Claws) the two can sit diagonally, and "x OR y
 -- greater" would then swap them back and forth on every press.
 local function mail_enforce_order()
     local client, sheet = mail_find("aerc"), mail_find("aerc-keybinds")
@@ -128,9 +133,10 @@ local function mail_enforce_order()
 end
 
 local function mail_layout()
+    local ws     = mail_ws()
     local active = hl.get_active_workspace()
-    if not active or active.id ~= MAIL_WS then
-        hl.dispatch(hl.dsp.focus({ workspace = MAIL_WS }))
+    if not active or active.id ~= ws then
+        hl.dispatch(hl.dsp.focus({ workspace = ws }))
     end
 
     for _, pane in ipairs(MAIL) do
@@ -138,7 +144,7 @@ local function mail_layout()
         local w   = mail_find(cls)
         if w then
             if not on_mail_ws(w) then
-                hl.dispatch(hl.dsp.window.move({ window = w, workspace = MAIL_WS, follow = false }))
+                hl.dispatch(hl.dsp.window.move({ window = w, workspace = ws, follow = false }))
             end
         elseif not mail_pending[cls] then
             local token = {}
@@ -162,7 +168,7 @@ hl.on("window.open", function(w)
 end)
 
 hl.bind(mod .. " + E", mail_layout,
-    { description = "Mail (ws 6): aerc + keybind sheet, reopen any missing pane" })
+    { description = "Mail: aerc + keybind sheet, reopen any missing pane" })
 hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("claws-mail"))
 
 -- Communication
@@ -258,7 +264,10 @@ hl.bind(mod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
 
 -- Switch workspaces with mod + [0-9], and move the active window to a
 -- workspace with mod + SHIFT + [0-9]. Key 0 maps to workspace 10, exactly
--- as the hyprlang config did.
+-- as the hyprlang config did. devtower-intel replaces the SHIFT half with
+-- workspaces 11-20 and moves windows through a submap instead
+-- (devices/devtower-intel.lua). hl.unbind matches on these key strings
+-- (spaces and case ignored), so keep the two files' spellings in step.
 for i = 1, 10 do
     local key = i % 10 -- 10 maps to key 0
     hl.bind(mod .. " + " .. key,             hl.dsp.focus({ workspace = i }))

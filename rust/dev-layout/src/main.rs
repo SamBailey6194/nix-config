@@ -3,13 +3,15 @@
 //! Two modes, each with a Zed variant and a Neovim (`--nvim`) variant:
 //!
 //!   dev-layout [--nvim]         Mode A - the nix-config layout, pinned to
-//!                               workspace 2 by static window rules.
+//!                               workspace 2 by static window rules
+//!                               (31 on devtower-intel).
 //!                               Bound to SUPER + SHIFT + Z (Zed) and
 //!                               SUPER + SHIFT + RETURN (Neovim).
 //!
 //!   dev-layout --new [--nvim]   Mode B - a generic dev layout, placed on the
 //!              [PATH]           lowest free workspace in the dynamic pool
-//!                               (workspaces 3-5 by default).
+//!                               (workspaces 3-5 by default, 32-40 on
+//!                               devtower-intel).
 //!                               Bound to SUPER + CTRL + Z (Zed) and
 //!                               SUPER + CTRL + RETURN (Neovim), both through
 //!                               the `dev-layout-pick` project picker.
@@ -50,24 +52,34 @@ use anyhow::{bail, ensure, Context, Result};
 use colored::Colorize;
 
 /// Default first and last workspace of the generic dev pool. Workspace 1 is the
-/// dashboard, workspace 2 is reserved for the nix-config layout, 6 is mail
-/// (Claws Mail), 7-9 are browsers/Affinity/comms and 10 is the catch-all, so
-/// the pool is 3-5.
+/// dashboard, workspace 2 is reserved for the nix-config layout, 6 is mail,
+/// 7-9 are browsers/Affinity/comms and 10 is the catch-all, so the pool is 3-5.
+/// That is the ten-workspace layout laptop-intel uses.
 ///
-/// The pool used to run 3-6. Workspace 6 was handed to Claws Mail so that mail
-/// has a fixed home like the browsers and comms do; a dev layout landing on
-/// top of the mail client would defeat the point of pinning it.
+/// The pool used to run 3-6. Workspace 6 was handed to the mail client so that
+/// mail has a fixed home like the browsers and comms do; a dev layout landing
+/// on top of the mail client would defeat the point of pinning it.
 ///
-/// These are only the DEFAULTS. `60-keybinds.lua` is shared by every device,
-/// but `devices/devtower.lua` pins DaVinci Resolve to workspace 5 and OBS to
-/// workspace 6, and `devices/framework.lua` pins Resolve to workspace 5 — still
-/// inside the narrowed pool in Resolve's case. Those devices can narrow it
-/// further with the environment variables below instead of forking the keybind.
+/// These are only the DEFAULTS. `60-keybinds.lua` is shared by every device, so
+/// a device with a different workspace map overrides them with `hl.env` rather
+/// than forking the keybind. devtower-intel runs a 40-workspace layout and sets
+/// all three variables in `devices/devtower-intel.lua`: the nix-config layout
+/// on 31 and the pool on 32-40. `devices/devtower.lua` pins DaVinci Resolve to
+/// workspace 5 and OBS to workspace 6, and `devices/framework.lua` pins Resolve
+/// to workspace 5, still inside the default pool; those two can narrow it with
+/// `DEV_LAYOUT_POOL_LAST` the same way.
 const DEFAULT_POOL_FIRST: u32 = 3;
 const DEFAULT_POOL_LAST: u32 = 5;
 
-/// Workspace the nix-config layout is pinned to by the static window rules.
-const NIX_CONFIG_WS: u32 = 2;
+/// Default workspace the nix-config layout is pinned to by the static window
+/// rules. Overridden by `DEV_LAYOUT_NIX_CONFIG_WS`, which must agree with
+/// wherever the device's Lua config sends the `nixcfg-*` and nix-config Zed
+/// windows: this binary only checks and focuses that workspace, the rules
+/// decide where the windows actually land.
+const DEFAULT_NIX_CONFIG_WS: u32 = 2;
+
+/// Environment variable that overrides the nix-config layout's workspace.
+const NIX_CONFIG_WS_ENV: &str = "DEV_LAYOUT_NIX_CONFIG_WS";
 
 /// Environment variable that overrides where the nix-config repo lives.
 const NIX_CONFIG_ENV: &str = "DEV_LAYOUT_NIX_CONFIG";
@@ -228,14 +240,20 @@ fn parse_args(args: Vec<String>) -> Result<Mode> {
 }
 
 fn print_help() {
+    // The values in effect, so the help reflects a device's `hl.env` overrides.
+    // A malformed override falls back to the default here; actually running a
+    // layout reports the error instead.
+    let nix_ws = nix_config_ws().unwrap_or(DEFAULT_NIX_CONFIG_WS);
+    let (pool_first, pool_last) = pool_range().unwrap_or((DEFAULT_POOL_FIRST, DEFAULT_POOL_LAST));
+
     println!("{}", "dev-layout - Hyprland dev layout launcher".green());
     println!();
     println!("USAGE:");
-    println!("    dev-layout                 nix-config layout on workspace {NIX_CONFIG_WS}");
+    println!("    dev-layout                 nix-config layout on workspace {nix_ws}");
     println!("    dev-layout --new [PATH]    generic dev layout on the lowest free");
     println!(
         "                               workspace in the pool \
-         (default {DEFAULT_POOL_FIRST}-{DEFAULT_POOL_LAST})"
+         ({pool_first}-{pool_last})"
     );
     println!("    dev-layout --nvim          as above, but Neovim in Kitty instead of Zed");
     println!("                               (combines with --new)");
@@ -248,17 +266,27 @@ fn print_help() {
     println!("             panes and tabs inside Neovim");
     println!();
     println!("Re-running a nix-config layout focuses the existing one rather than");
-    println!("stacking a second set of windows on workspace {NIX_CONFIG_WS}.");
+    println!("stacking a second set of windows on workspace {nix_ws}.");
     println!();
     println!("PATH defaults to the current directory. Under a Hyprland keybind that is");
     println!("HYPRLAND's working directory, not a terminal's, so pass the project");
     println!("explicitly when launching from a keybind.");
     println!();
     println!("ENVIRONMENT:");
-    println!("    {NIX_CONFIG_ENV}   override the nix-config repo path");
-    println!("                            (default: $HOME/{NIX_CONFIG_DEFAULT_REL})");
-    println!("    {POOL_FIRST_ENV}  first workspace of the dev pool (default: {DEFAULT_POOL_FIRST})");
-    println!("    {POOL_LAST_ENV}   last workspace of the dev pool (default: {DEFAULT_POOL_LAST})");
+    println!("    {NIX_CONFIG_ENV:<25} override the nix-config repo path");
+    println!("    {:<25} (default: $HOME/{NIX_CONFIG_DEFAULT_REL})", "");
+    println!(
+        "    {NIX_CONFIG_WS_ENV:<25} workspace of the nix-config layout \
+         (default: {DEFAULT_NIX_CONFIG_WS})"
+    );
+    println!(
+        "    {POOL_FIRST_ENV:<25} first workspace of the dev pool \
+         (default: {DEFAULT_POOL_FIRST})"
+    );
+    println!(
+        "    {POOL_LAST_ENV:<25} last workspace of the dev pool \
+         (default: {DEFAULT_POOL_LAST})"
+    );
 }
 
 // ── Mode A: the nix-config layout ─────────────────────────────────────
@@ -279,19 +307,20 @@ fn print_help() {
 /// two terminals are launched as `nixcfg-term`, the Neovim layout's single
 /// window as `nixcfg-nvim`, and both are matched on class alone.
 fn nix_config_layout(editor: Editor) -> Result<()> {
-    // Both the Zed and the Neovim nix-config layouts live on workspace
-    // NIX_CONFIG_WS, so without this a second press of either keybind stacks a
-    // fresh editor (plus, for Zed, two more terminals) on top of whatever is
+    // Both the Zed and the Neovim nix-config layouts live on the nix-config
+    // workspace (2 by default, DEV_LAYOUT_NIX_CONFIG_WS), so without this a
+    // second press of either keybind stacks a fresh editor (plus, for Zed, two more terminals) on top of whatever is
     // already there. Neither mode had the check before, which is why the Zed
     // keybind used to be additive rather than idempotent.
-    if workspace_is_occupied(NIX_CONFIG_WS)? {
+    let nix_ws = nix_config_ws()?;
+    if workspace_is_occupied(nix_ws)? {
         println!(
             "{} {}{}",
             "nix-config layout already open on workspace".green(),
-            NIX_CONFIG_WS.to_string().cyan(),
+            nix_ws.to_string().cyan(),
             "; focusing it.".green()
         );
-        focus_workspace(NIX_CONFIG_WS)?;
+        focus_workspace(nix_ws)?;
         return Ok(());
     }
 
@@ -326,7 +355,7 @@ fn nix_config_layout(editor: Editor) -> Result<()> {
         // See the placement coupling note above.
         warn(&format!(
             "repo folder is not named '{NIX_CONFIG_FOLDER}'; the workspace \
-             {NIX_CONFIG_WS} window rule matches on Zed's title and will not fire."
+             {nix_ws} window rule matches on Zed's title and will not fire."
         ));
     }
 
@@ -349,7 +378,7 @@ fn nix_config_layout(editor: Editor) -> Result<()> {
     // after the spawn and switches to a still-empty workspace 2; the single
     // Kitty window lands on it when it maps, since its rule targets the same
     // workspace. Either way you end up on workspace 2.
-    focus_workspace(NIX_CONFIG_WS)?;
+    focus_workspace(nix_ws)?;
 
     // Zed only: a lone Neovim window is already the whole workspace.
     arrange_layout(editor)?;
@@ -787,38 +816,66 @@ fn first_free_pool_workspace() -> Result<u32> {
     )
 }
 
+/// The nix-config layout's workspace, after applying the environment override.
+fn nix_config_ws() -> Result<u32> {
+    nix_config_ws_from(&env_lookup)
+}
+
 /// The dev pool bounds, after applying the environment overrides.
 fn pool_range() -> Result<(u32, u32)> {
-    let first = pool_bound(POOL_FIRST_ENV, DEFAULT_POOL_FIRST)?;
-    let last = pool_bound(POOL_LAST_ENV, DEFAULT_POOL_LAST)?;
+    pool_range_from(&env_lookup)
+}
 
-    ensure!(
-        first >= 1,
-        "{POOL_FIRST_ENV} must be at least 1; workspace 0 does not exist."
-    );
+/// Read an environment variable for the workspace settings. Unset and not
+/// valid UTF-8 both read as `None`, i.e. "use the default".
+fn env_lookup(name: &str) -> Option<String> {
+    env::var(name).ok()
+}
+
+/// `nix_config_ws` over an arbitrary variable source, so tests never have to
+/// mutate the process environment (which races with parallel tests).
+fn nix_config_ws_from(lookup: &dyn Fn(&str) -> Option<String>) -> Result<u32> {
+    workspace_setting(lookup, NIX_CONFIG_WS_ENV, DEFAULT_NIX_CONFIG_WS)
+}
+
+/// `pool_range` over an arbitrary variable source; see `nix_config_ws_from`.
+fn pool_range_from(lookup: &dyn Fn(&str) -> Option<String>) -> Result<(u32, u32)> {
+    let first = workspace_setting(lookup, POOL_FIRST_ENV, DEFAULT_POOL_FIRST)?;
+    let last = workspace_setting(lookup, POOL_LAST_ENV, DEFAULT_POOL_LAST)?;
+    let nix_ws = nix_config_ws_from(lookup)?;
+
     ensure!(
         first <= last,
         "{POOL_FIRST_ENV} ({first}) is above {POOL_LAST_ENV} ({last}); the dev pool is empty."
     );
     ensure!(
-        !(first..=last).contains(&NIX_CONFIG_WS),
-        "The dev pool ({first}-{last}) covers workspace {NIX_CONFIG_WS}, which is reserved \
-         for the nix-config layout."
+        !(first..=last).contains(&nix_ws),
+        "The dev pool ({first}-{last}) covers workspace {nix_ws}, which is reserved \
+         for the nix-config layout ({NIX_CONFIG_WS_ENV})."
     );
 
     Ok((first, last))
 }
 
-/// Read one pool bound from the environment, falling back to `default`.
-fn pool_bound(name: &str, default: u32) -> Result<u32> {
-    match env::var(name) {
-        Ok(raw) if !raw.trim().is_empty() => raw
+/// Read one workspace number from `lookup`, falling back to `default`.
+fn workspace_setting(
+    lookup: &dyn Fn(&str) -> Option<String>,
+    name: &str,
+    default: u32,
+) -> Result<u32> {
+    let ws = match lookup(name) {
+        Some(raw) if !raw.trim().is_empty() => raw
             .trim()
             .parse::<u32>()
-            .with_context(|| format!("{name} must be a workspace number, but is '{raw}'")),
+            .with_context(|| format!("{name} must be a workspace number, but is '{raw}'"))?,
         // Unset, empty, or not valid UTF-8: use the default.
-        _ => Ok(default),
-    }
+        _ => default,
+    };
+    ensure!(
+        ws >= 1,
+        "{name} must be at least 1; workspace 0 does not exist."
+    );
+    Ok(ws)
 }
 
 /// Ids of every workspace that currently holds at least one window.
@@ -1408,5 +1465,83 @@ mod tests {
         assert_eq!(lua_string("a]]b").unwrap(), "[==[a]]b]==]");
         assert!(lua_string("x]==]y").is_err());
         assert!(lua_string("\nleading").is_err());
+    }
+
+    // ── Workspace settings ────────────────────────────────────────────
+
+    /// A variable source built from fixed pairs. Tests go through this rather
+    /// than `env::set_var`, which is process-wide and races between the
+    /// parallel test threads.
+    fn vars(pairs: &[(&'static str, &'static str)]) -> impl Fn(&str) -> Option<String> {
+        let pairs = pairs.to_vec();
+        move |name| {
+            pairs
+                .iter()
+                .find(|(key, _)| *key == name)
+                .map(|(_, value)| (*value).to_string())
+        }
+    }
+
+    #[test]
+    fn workspace_settings_default_when_unset_or_blank() {
+        assert_eq!(
+            nix_config_ws_from(&vars(&[])).unwrap(),
+            DEFAULT_NIX_CONFIG_WS
+        );
+        assert_eq!(
+            nix_config_ws_from(&vars(&[(NIX_CONFIG_WS_ENV, "  ")])).unwrap(),
+            DEFAULT_NIX_CONFIG_WS
+        );
+        assert_eq!(
+            pool_range_from(&vars(&[])).unwrap(),
+            (DEFAULT_POOL_FIRST, DEFAULT_POOL_LAST)
+        );
+    }
+
+    #[test]
+    fn nix_config_ws_override_is_parsed_and_validated() {
+        assert_eq!(
+            nix_config_ws_from(&vars(&[(NIX_CONFIG_WS_ENV, " 31 ")])).unwrap(),
+            31
+        );
+        assert!(nix_config_ws_from(&vars(&[(NIX_CONFIG_WS_ENV, "0")])).is_err());
+        assert!(nix_config_ws_from(&vars(&[(NIX_CONFIG_WS_ENV, "-3")])).is_err());
+        assert!(nix_config_ws_from(&vars(&[(NIX_CONFIG_WS_ENV, "two")])).is_err());
+    }
+
+    #[test]
+    fn devtower_intel_overrides_give_a_valid_pool() {
+        // The three values `devices/devtower-intel.lua` sets with hl.env.
+        let lookup = vars(&[
+            (NIX_CONFIG_WS_ENV, "31"),
+            (POOL_FIRST_ENV, "32"),
+            (POOL_LAST_ENV, "40"),
+        ]);
+        assert_eq!(nix_config_ws_from(&lookup).unwrap(), 31);
+        assert_eq!(pool_range_from(&lookup).unwrap(), (32, 40));
+    }
+
+    #[test]
+    fn pool_must_not_cover_the_overridden_nix_config_ws() {
+        // Moving only the nix-config workspace into the default pool collides.
+        assert!(pool_range_from(&vars(&[(NIX_CONFIG_WS_ENV, "4")])).is_err());
+        // Moving it out of the way frees the old workspace 2 for the pool.
+        assert_eq!(
+            pool_range_from(&vars(&[
+                (NIX_CONFIG_WS_ENV, "31"),
+                (POOL_FIRST_ENV, "2"),
+                (POOL_LAST_ENV, "5"),
+            ]))
+            .unwrap(),
+            (2, 5)
+        );
+        // A malformed nix-config override fails the pool too, not silently.
+        assert!(pool_range_from(&vars(&[(NIX_CONFIG_WS_ENV, "x")])).is_err());
+    }
+
+    #[test]
+    fn pool_bounds_are_validated() {
+        assert!(pool_range_from(&vars(&[(POOL_FIRST_ENV, "0")])).is_err());
+        assert!(pool_range_from(&vars(&[(POOL_FIRST_ENV, "6")])).is_err());
     }
 }
