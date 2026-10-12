@@ -102,6 +102,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + ALT + 1-9, 0`   | Switch to workspace 31-40     |
 | `SUPER + .`, then `1-9, 0` (+ `SHIFT` / `CTRL` / `ALT`) | Move window to that workspace (same banks) |
 | `SUPER + .`, then `Esc`  | Cancel the move               |
+| `SUPER + ,`              | Move the focused workspace between centre and left monitors |
 | `SUPER + S`              | Toggle scratchpad             |
 | `SUPER + SHIFT + S`      | Move to scratchpad            |
 | `SUPER + Scroll`         | Cycle workspaces              |
@@ -152,7 +153,8 @@ Files opened from Yazi or Thunar go to that app's workspace (a video to 16,
 and so on). An app with no workspace of its own opens on the first free
 workspace from 41 up, on the centre monitor, and takes focus; floating
 dialogs open beside the window that asked. Workspaces 41+ have no keybind:
-reach them with `SUPER + Scroll`. An app's "Open / Save file" dialog
+reach them with `SUPER + Scroll`. To put one on the left monitor (or bring it
+back), focus it and press `SUPER + ,`; it stays there until it empties. An app's "Open / Save file" dialog
 is Yazi too: it floats over the app, on the current workspace.
 
 ## Screenshots

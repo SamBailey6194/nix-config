@@ -265,7 +265,7 @@ All shared settings live in the numbered files:
 
 Each device file may override anything, and is loaded last:
 - **laptop-intel.lua**: single eDP-1 display, battery-tuned blur, workspace-1 dashboard, dual keyboard layouts
-- **devtower-intel.lua**: three monitors, the 40-workspace map, the 41+ overflow for unassigned windows, four workspace keybind banks and the `move-window` submap (see [devtower-intel](#devtower-intel)); its ws1 dashboard and ws2 terminal grid are `devtower-intel-dashboard.lua`
+- **devtower-intel.lua**: three monitors, the 40-workspace map, the 41+ overflow for unassigned windows, four workspace keybind banks, the `move-window` submap and `SUPER + comma` to move the focused workspace between the centre and left monitors (see [devtower-intel](#devtower-intel)); its ws1 dashboard and ws2 terminal grid are `devtower-intel-dashboard.lua`
 - **framework.lua**: high-DPI scaling, AMD GPU tuning, creative workflow
 - **devtower.lua**: multi-monitor, desktop performance, Go XLR
 

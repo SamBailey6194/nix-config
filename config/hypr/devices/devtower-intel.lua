@@ -37,7 +37,8 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 --
 -- Keys: SUPER + 1-9,0 -> 1-10, + SHIFT -> 11-20, + CTRL -> 21-30,
 -- + ALT -> 31-40. Moving a window: SUPER + period, then the same chord
--- without SUPER (see "Workspace keybinds" below).
+-- without SUPER (see "Workspace keybinds" below). SUPER + comma moves the
+-- focused workspace between the centre and left monitors.
 
 local placement = {
     [right] = { 1 },
@@ -240,3 +241,31 @@ hl.define_submap("move-window", "reset", function()
     end
     hl.bind("escape", hl.dsp.submap("reset"))
 end)
+
+-- ── Moving a workspace between centre and left ────────────────────────
+--
+-- SUPER + comma sends the focused workspace, windows and all, across to the
+-- other of the centre and left monitors and follows it there. Meant for the
+-- 41+ overflow workspaces, which all open on the centre monitor, but it
+-- works on any of them. The right (portrait) monitor is left alone.
+--
+-- The move lasts while the workspace exists. Once it empties and Hyprland
+-- destroys it, the number reopens on the monitor its workspace rule names.
+local function swap_side()
+    local ws = hl.get_active_workspace()
+    if not ws or ws.special or not ws.id or not ws.monitor then return end
+    local target
+    local on_centre, on_left = hl.get_monitor(centre), hl.get_monitor(left)
+    if on_centre and ws.monitor.id == on_centre.id then
+        target = left
+    elseif on_left and ws.monitor.id == on_left.id then
+        target = centre
+    else
+        return
+    end
+    hl.dispatch(hl.dsp.workspace.move({ workspace = ws.id, monitor = target }))
+    hl.dispatch(hl.dsp.focus({ workspace = ws.id }))
+end
+
+hl.bind(mod .. " + comma", swap_side,
+    { description = "Move the focused workspace between the centre and left monitors" })
