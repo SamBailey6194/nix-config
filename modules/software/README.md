@@ -14,7 +14,7 @@ This directory contains purpose-specific software modules that can be mixed and 
 | Module | Purpose | Key Packages | Imported By |
 |--------|---------|--------------|-------------|
 | `browsers.nix` | Web browsers | LibreWolf, Firefox, Chrome | base-configuration |
-| `communication.nix` | Chat & collaboration | Discord, Teams, Zoom, Slack, Obsidian | base-configuration |
+| `communication.nix` | Chat & collaboration | Discord, Teams, Zoom, Slack | base-configuration |
 | `media.nix` | Media playback | VLC, Spotify, MPV, image viewers | base-configuration |
 | `development.nix` | Dev tools & IDEs | VS Code, Docker, language servers | base-configuration |
 | `office.nix` | Office productivity | LibreOffice, PDF tools | base-configuration |
@@ -26,7 +26,7 @@ This directory contains purpose-specific software modules that can be mixed and 
 These modules are imported in `modules/core/base-configuration.nix` and available on **all** devices:
 
 - **Browsers**: LibreWolf (privacy), Firefox (dev testing), Chrome (Claude extension)
-- **Communication**: Discord, Microsoft Teams, Zoom, Slack, Obsidian
+- **Communication**: Discord, Microsoft Teams, Zoom, Slack
 - **Media**: VLC, Spotify, Audacity, image/PDF viewers
 - **Development**: VS Code, Docker, Git, language servers, Python, Node.js
 - **Office**: LibreOffice suite

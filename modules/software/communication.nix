@@ -1,8 +1,9 @@
 { config, pkgs, ... }:
 
 {
-  # Communication and productivity apps
-  # Discord, Slack, note-taking, etc.
+  # Communication apps
+  # Discord, Slack, Teams, Zoom. Notes are plain Markdown in Neovim (Zed as
+  # the backup), so there is no separate notes app.
 
   environment.systemPackages = with pkgs; [
     # Chat and collaboration
@@ -12,11 +13,6 @@
     zoom-us              # Zoom video conferencing
     # telegram-desktop   # Telegram (optional)
 
-    # Note-taking and knowledge management
-    obsidian
-
-    # Email clients (optional)
-    # thunderbird        # Mozilla Thunderbird
-    # mailspring         # Modern email client
+    # Email: aerc and Claws Mail, per user (home/modules/aerc.nix, email.nix)
   ];
 }
