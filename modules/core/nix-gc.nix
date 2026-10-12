@@ -2,7 +2,8 @@
 
 {
   # Garbage collection
-  # - Boot menu shows 5 entries (configurationLimit in base-configuration.nix)
+  # - Boot menu shows 5 entries (configurationLimit in base-configuration.nix;
+  #   bootloader.refind.maxGenerations on devtower-intel's full stage)
   # - Always keep the 3 most recent generations regardless of age
   # - Delete generations older than 90 days beyond those 3
   nix.gc.automatic = false; # We use a custom service instead

@@ -275,6 +275,15 @@ configuration leaves firmware NVRAM entries unchanged; select this Intel ESP's
 systemd-boot loader using your firmware's boot-from-file menu if necessary.
 Do not change Windows or another disk's bootloader to make it work.
 
+The full stage swaps systemd-boot for a themed rEFInd menu
+(`modules/boot/refind`, enabled in `hosts/devtower-intel/full.nix`). It lives
+entirely in this ESP's `EFI/BOOT` (the slot firmware boots), shows one NixOS
+icon with older generations in its submenu (F2, Insert or Tab) and a Windows
+entry that chainloads the Crucial disk's ESP by partition GUID. Going back to a
+systemd-boot stage restores systemd-boot to `EFI/BOOT/BOOTX64.EFI`. If rEFInd
+ever fails to start, `EFI/systemd/systemd-bootx64.efi` is still on this ESP and
+can be launched from the firmware's boot-from-file menu.
+
 ```sh
 cd /
 sync
