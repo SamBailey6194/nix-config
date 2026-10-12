@@ -156,9 +156,9 @@ from the Intel ESP that is about to be erased. Next in line is `Boot0003`,
 Windows Boot Manager. NixOS sets `canTouchEfiVariables = false`, so it adds no
 NVRAM entry, and the PC will boot Windows by default. Pick the Intel disk's
 fallback loader (`EFI/BOOT/BOOTX64.EFI`) from the firmware boot menu, or set it
-first in firmware setup. Stages minimal to creative install systemd-boot there;
-the full stage replaces it with the themed rEFInd menu (`modules/boot/refind`),
-which also chainloads Windows from the Crucial disk's ESP.
+first in firmware setup. Every stage installs systemd-boot there; the full
+stage adds the themed rEFInd menu (`modules/boot/refind`) as an extra
+systemd-boot entry, which also chainloads Windows from the Crucial disk's ESP.
 The stale `Boot0006`/`Boot0007` "ubuntu" entries point at the old Samsung and
 archive ESPs. Secure Boot is currently disabled (Setup Mode).
 

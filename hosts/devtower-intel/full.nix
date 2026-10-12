@@ -22,16 +22,25 @@ in
     ../../modules/boot/refind
   ];
 
-  # Themed rEFInd menu (modules/boot/refind) in place of systemd-boot: one
-  # NixOS icon (older generations in its F2/Insert submenu) and Windows from
-  # its own ESP on the Crucial P3 (nvme0n1p1, FAT 8C32-B143). Firmware still
-  # boots EFI/BOOT/BOOTX64.EFI on the Intel disk, which rEFInd now occupies.
+  # Themed rEFInd menu (modules/boot/refind): one NixOS icon (older
+  # generations in its F2/Insert submenu) and Windows from its own ESP on the
+  # Crucial P3 (nvme0n1p1, FAT 8C32-B143).
   #
-  # Disabled: generation 7 (first rEFInd build) failed to reach rEFInd at
-  # boot. Back on systemd-boot until that is diagnosed; the default.nix
-  # extraInstallCommands puts systemd-boot back at EFI/BOOT/BOOTX64.EFI.
+  # On trial as the last systemd-boot entry ("rEFInd", EFI/refind): generation
+  # 7, which made rEFInd the firmware's EFI/BOOT/BOOTX64.EFI, left a black
+  # screen and needed a rescue USB. systemd-boot stays the default, so a failed
+  # rEFInd costs a reboot. Diagnostics for the trial:
+  # - logLevel 1: rEFInd writes EFI/refind/refind.log (refind.log-old for the
+  #   run before), readable afterwards with sudo
+  # - no resolution token: generation 7 had "resolution max", which on the
+  #   RTX 2080 Ti and 4K monitor may pick a mode the screen cannot show
+  # If the screen goes black again, type the LUKS passphrase blind: rEFInd
+  # boots NixOS after its timeout, so a boot means rEFInd worked and only the
+  # display failed.
   bootloader.refind = {
-    enable = false;
+    enable = true;
+    chainload = true;
+    logLevel = 1;
     maxGenerations = 5;
     inherit flakeRev;
     windows.partUuid = "89590b26-8a8f-4bc2-885f-3ba0241256bb";

@@ -275,14 +275,20 @@ configuration leaves firmware NVRAM entries unchanged; select this Intel ESP's
 systemd-boot loader using your firmware's boot-from-file menu if necessary.
 Do not change Windows or another disk's bootloader to make it work.
 
-The full stage swaps systemd-boot for a themed rEFInd menu
-(`modules/boot/refind`, enabled in `hosts/devtower-intel/full.nix`). It lives
-entirely in this ESP's `EFI/BOOT` (the slot firmware boots), shows one NixOS
-icon with older generations in its submenu (F2, Insert or Tab) and a Windows
-entry that chainloads the Crucial disk's ESP by partition GUID. Going back to a
-systemd-boot stage restores systemd-boot to `EFI/BOOT/BOOTX64.EFI`. If rEFInd
-ever fails to start, `EFI/systemd/systemd-bootx64.efi` is still on this ESP and
-can be launched from the firmware's boot-from-file menu.
+The full stage adds a themed rEFInd menu (`modules/boot/refind`, enabled in
+`hosts/devtower-intel/full.nix`) as the last systemd-boot entry, "rEFInd".
+systemd-boot stays in `EFI/BOOT` (the slot firmware boots) and stays the
+default; rEFInd lives in `EFI/refind` and shows one NixOS icon with older
+generations in its submenu (F2, Insert or Tab) and a Windows entry that
+chainloads the Crucial disk's ESP by partition GUID. It is on trial there
+because generation 7, which put rEFInd in `EFI/BOOT` itself, left a black
+screen and needed a rescue USB. rEFInd logs each run to
+`EFI/refind/refind.log` (`refind.log-old` for the run before):
+
+    sudo cat /boot/EFI/refind/refind.log
+
+If its screen stays black, type the LUKS passphrase anyway: rEFInd boots
+NixOS after its timeout, so a boot means only the display failed.
 
 ```sh
 cd /

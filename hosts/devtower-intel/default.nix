@@ -52,8 +52,8 @@ in
   boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
 
-  # The full stage puts rEFInd at EFI/BOOT/BOOTX64.EFI (modules/boot/refind).
-  # bootctl update skips a fallback loader it does not own, so a later
+  # rEFInd as the main loader (modules/boot/refind without chainload) sits at
+  # EFI/BOOT/BOOTX64.EFI, as generation 7 did. bootctl update skips a fallback loader it does not own, so a later
   # systemd-boot stage or rollback would leave rEFInd booting a frozen menu.
   # Put systemd-boot back in the firmware's fallback slot whenever it installs.
   boot.loader.systemd-boot.extraInstallCommands = lib.mkIf config.boot.loader.systemd-boot.enable ''

@@ -7,7 +7,8 @@
 # generation, scans every disk (stray Ubuntu ESPs, raw kernels) and, when
 # installed as the removable loader, leaves refind.conf and the icons away
 # from the binary, where rEFInd does not resolve icons_dir/banner. This
-# module replaces systemd-boot when enabled.
+# module replaces systemd-boot when enabled, or with chainload = true sits
+# beside it as one extra systemd-boot menu entry.
 
 let
   cfg = config.bootloader.refind;
@@ -22,10 +23,12 @@ let
     fontPath = "${pkgs.refind}/share/refind/fonts/ubuntu-mono-24.png";
     themePath = theme;
     efiMountPoint = efi.efiSysMountPoint;
-    efiRemovable = !efi.canTouchEfiVariables;
-    inherit (efi) canTouchEfiVariables;
+    # Chainloaded rEFInd has its own directory; as the main loader without
+    # NVRAM access it takes the firmware's removable fallback slot.
+    efiRemovable = !cfg.chainload && !efi.canTouchEfiVariables;
+    registerNvram = !cfg.chainload && efi.canTouchEfiVariables;
     inherit (config.boot.loader) timeout;
-    inherit (cfg) maxGenerations windows tools;
+    inherit (cfg) maxGenerations windows tools logLevel resolution;
     flakeRev = cfg.flakeRev.text;
     flakeRevDirty = cfg.flakeRev.dirty;
     shellPath = if cfg.shell then "${pkgs.edk2-uefi-shell}/shell.efi" else null;
@@ -62,6 +65,33 @@ in
         default = false;
         description = "Whether the flake had uncommitted changes (adds an orange * to the badge).";
       };
+    };
+
+    chainload = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Keep systemd-boot as the boot loader and add rEFInd (EFI/refind) as one
+        extra entry in its menu, so a rEFInd that fails to start costs a
+        reboot rather than a rescue USB.
+      '';
+    };
+
+    logLevel = lib.mkOption {
+      type = lib.types.ints.between 0 4;
+      default = 0;
+      description = "rEFInd's log_level: above 0 it writes refind.log (and refind.log-old) beside its binary.";
+    };
+
+    resolution = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "max";
+      description = ''
+        rEFInd's resolution token ("max", "1920 1080", or a GOP mode number).
+        Null keeps the mode the firmware set, which every monitor that showed
+        the firmware screen can display.
+      '';
     };
 
     windows = lib.mkOption {
@@ -105,26 +135,50 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = pkgs.stdenv.hostPlatform.isx86_64;
-        message = "bootloader.refind: only x86_64 (refind_x64.efi) is supported.";
-      }
-      {
-        assertion = config.boot.initrd.secrets == { };
-        message = "bootloader.refind does not install boot.initrd.secrets.";
-      }
-      {
-        assertion = !config.boot.loader.grub.enable;
-        message = "bootloader.refind replaces systemd-boot; GRUB must be off.";
-      }
-    ];
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = pkgs.stdenv.hostPlatform.isx86_64;
+          message = "bootloader.refind: only x86_64 (refind_x64.efi) is supported.";
+        }
+        {
+          assertion = config.boot.initrd.secrets == { };
+          message = "bootloader.refind does not install boot.initrd.secrets.";
+        }
+        {
+          assertion = !config.boot.loader.grub.enable;
+          message = "bootloader.refind replaces or chainloads from systemd-boot; GRUB must be off.";
+        }
+      ];
+    }
 
-    boot.loader.systemd-boot.enable = lib.mkForce false;
-    # GRUB defaults to on; systemd-boot normally turns it off, but not once disabled
-    boot.loader.grub.enable = lib.mkDefault false;
-    system.boot.loader.id = "refind";
-    system.build.installBootLoader = installer;
-  };
+    (lib.mkIf (!cfg.chainload) {
+      boot.loader.systemd-boot.enable = lib.mkForce false;
+      # GRUB defaults to on; systemd-boot normally turns it off, but not once disabled
+      boot.loader.grub.enable = lib.mkDefault false;
+      system.boot.loader.id = "refind";
+      system.build.installBootLoader = installer;
+    })
+
+    (lib.mkIf cfg.chainload {
+      assertions = [
+        {
+          assertion = config.boot.loader.systemd-boot.enable;
+          message = "bootloader.refind.chainload adds rEFInd to systemd-boot's menu; systemd-boot must be on.";
+        }
+      ];
+
+      # Sorts after the NixOS generations, so systemd-boot's default is unchanged.
+      # The systemd-boot builder deletes the entry again once chainload is off.
+      boot.loader.systemd-boot.extraEntries."refind.conf" = ''
+        title rEFInd
+        efi /EFI/refind/refind_x64.efi
+        sort-key z-refind
+      '';
+      # Runs after systemd-boot has installed this generation, with the profile
+      # already pointing at it, as the installer expects.
+      boot.loader.systemd-boot.extraInstallCommands = "${installer}";
+    })
+  ]);
 }
