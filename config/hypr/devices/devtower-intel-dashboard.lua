@@ -6,6 +6,7 @@
 -- Dedicated floating rectangles make placement independent of launch order,
 -- cursor position and dwindle splits; they do not float across workspaces.
 -- The keybinds build a missing group, refill closed panes and gather strays.
+-- Login also opens Yazi (ws3), aerc (ws4) and Teams (ws11); see login_apps.
 local vars = require("00-vars")
 
 -- Margins: 10px sides and bottom, 50px top (40px bar plus margin), 8px
@@ -95,8 +96,22 @@ end)
 for _, group in ipairs(groups) do
     hl.bind(group.bind, function() build(group) end, { description = group.description })
 end
+-- Apps opened at login on their usual workspaces (devtower-intel.lua's map).
+-- The per-launch rule adds "silent" so none of them steals focus; their own
+-- keybinds still follow the window there. aerc's sheet is the SUPER + E
+-- layout's second pane; 60-keybinds.lua's window.open handler orders the two.
+local login_apps = {
+    { workspace = 3, command = "kitty --class yazi yazi" },
+    { workspace = 4, command = "kitty --class aerc -e aerc" },
+    { workspace = 4, command = "kitty --class aerc-keybinds -e less ~/.config/aerc/KEYBINDS.md" },
+    { workspace = 11, command = "teams-for-linux" },
+}
+
 -- ws1 is on the right monitor and ws2 on the centre one, so both stay
 -- visible; building ws2 last leaves focus on the centre monitor at login.
 hl.on("hyprland.start", function()
+    for _, app in ipairs(login_apps) do
+        hl.exec_cmd(app.command, { workspace = app.workspace .. " silent" })
+    end
     for _, group in ipairs(groups) do build(group) end
 end)

@@ -11,7 +11,7 @@ class DashboardTests(unittest.TestCase):
         self.lua = LuaRuntime()
         self.lua.execute('''
             rules, monitors, workspaces, events, launches, windows, timers = {}, {}, {}, {}, {}, {}, {}
-            binds, active_ws = {}, 1
+            binds, active_ws, exec_rules = {}, 1, {}
             package.preload["00-vars"] = function() return { mod = "SUPER" } end
             hl = {
                 monitor = function(r) table.insert(monitors, r) end,
@@ -28,7 +28,10 @@ class DashboardTests(unittest.TestCase):
                     return all
                 end,
                 get_workspaces = function() return {} end,
-                exec_cmd = function(cmd) table.insert(launches, cmd) end,
+                exec_cmd = function(cmd, rules)
+                    table.insert(launches, cmd)
+                    if rules then exec_rules[cmd] = rules end
+                end,
                 timer = function(fn, _) table.insert(timers, fn) end,
                 on = function(event, fn) events[event] = fn end,
                 bind = function(key, fn, _) binds[key] = fn end,
@@ -157,8 +160,28 @@ class DashboardTests(unittest.TestCase):
         self.lua.execute((DEVICES / "devtower-intel-dashboard.lua").read_text())
         self.lua.execute('''
             events["hyprland.start"]()
-            assert(#launches == 7 and active_ws == 2)
-            assert(launches[1]:find("ws1%-keybinds") and launches[7]:find("ws2%-term%-4"))
+            -- 4 login apps, then 3 dashboard panes and 4 terminals.
+            assert(#launches == 11 and active_ws == 2)
+            assert(launches[5]:find("ws1%-keybinds") and launches[11]:find("ws2%-term%-4"))
+        ''')
+
+    def test_login_apps_open_silently_on_their_workspaces(self):
+        self.lua.execute((DEVICES / "devtower-intel-dashboard.lua").read_text())
+        self.lua.execute('''
+            events["hyprland.start"]()
+            local expected = {
+                ["kitty --class yazi yazi"] = "3 silent",
+                ["kitty --class aerc -e aerc"] = "4 silent",
+                ["kitty --class aerc-keybinds -e less ~/.config/aerc/KEYBINDS.md"] = "4 silent",
+                ["teams-for-linux"] = "11 silent",
+            }
+            for cmd, ws in pairs(expected) do
+                assert(exec_rules[cmd] and exec_rules[cmd].workspace == ws, cmd)
+            end
+            -- No Claws Mail or Zoom at login.
+            for _, cmd in ipairs(launches) do
+                assert(not cmd:find("claws") and not cmd:find("zoom"), cmd)
+            end
         ''')
 
 
