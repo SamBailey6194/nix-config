@@ -188,11 +188,6 @@ hl.window_rule({
 
 -- Communication apps: workspace 9, right vertical monitor (perfect for chat)
 hl.window_rule({
-    name      = "devtower-discord-workspace",
-    match     = { class = "^(discord)$" },
-    workspace = "9",
-})
-hl.window_rule({
     name      = "devtower-slack-workspace",
     match     = { class = "^(slack)$" },
     workspace = "9",
@@ -202,7 +197,6 @@ hl.window_rule({
     match     = { class = "^(element)$" },
     workspace = "9",
 })
--- hl.window_rule({ name = "devtower-discord-monitor", match = { class = "^(discord)$" }, monitor = "HDMI-A-1" }) -- Force to vertical monitor
 
 -- Terminal/System monitoring: right vertical monitor is great for btop, logs, etc.
 -- hl.window_rule({

@@ -22,6 +22,5 @@ hl.on("hyprland.start", function()
     -- hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
 
     -- Optional: Auto-start applications
-    -- hl.exec_cmd("discord")
     -- hl.exec_cmd("spotify")
 end)

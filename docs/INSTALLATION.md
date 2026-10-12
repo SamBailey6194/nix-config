@@ -104,7 +104,7 @@ Each device has 6 configuration stages:
 | 1 | `{device}-minimal` | Boot test | Base system, network, shell | 10-20 min |
 | 2 | `{device}-desktop` | Desktop environment | Hyprland, terminal, launcher | 15-30 min |
 | 3 | `{device}-dev` | Development tools | Browsers, dev tools, language servers | 20-40 min |
-| 4 | `{device}-productivity` | Office & communication | LibreOffice, Discord, Zoom, VLC | 15-25 min |
+| 4 | `{device}-productivity` | Office & communication | LibreOffice, Teams, Zoom, VLC | 15-25 min |
 | 5 | `{device}-creative` | Creative software | Blender, GIMP, DaVinci (GPU-dependent) | 30-60 min |
 | 6 | `{device}` | **Daily use** | ALL stages combined | First time: 60-120 min, updates: 5-30 min |
 
@@ -814,7 +814,7 @@ cd /etc/nixos/nix-config
 sudo nixos-rebuild switch --flake .#devtower-productivity
 ```
 
-**What's Added**: LibreOffice, Discord, Teams, Zoom, Slack, VLC, Spotify, aerc (default mail, `Super + E`) and Claws Mail (backup, `Super + Shift + E`); see [EMAIL.md](EMAIL.md)
+**What's Added**: LibreOffice, Teams, Zoom, Slack, VLC, Spotify, aerc (default mail, `Super + E`) and Claws Mail (backup, `Super + Shift + E`); see [EMAIL.md](EMAIL.md)
 
 ### Stage 5: Creative Software
 

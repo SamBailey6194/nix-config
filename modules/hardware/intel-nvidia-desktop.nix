@@ -32,7 +32,7 @@
   # NVIDIA Wayland session variables
   environment.sessionVariables = {
     LIBVA_DRIVER_NAME = "nvidia";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia"; # drop if Discord/Zoom screen sharing misbehaves
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia"; # drop if Zoom/Teams screen sharing misbehaves
     NVD_BACKEND = "direct";
   };
 
