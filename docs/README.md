@@ -9,11 +9,13 @@
 - [Claude settings](CLAUDE-SETTINGS.md) — Ubuntu preferences with Syntek project skills and fewer plugins.
 - [Shared MCP servers](SHARED-MCP.md) — Ubuntu Claude inventory in all four clients.
 - [Prepared Ubuntu backup script](LIVE-BACKUP-SCRIPT.md) — coverage, verification and installer compatibility.
-- [Backup and data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md) — independent BackupDrive and verified restoration.
+- [Backup and data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md) — independent BackupDrive, verified restoration and the per-drive LUKS procedure (OS TPM2, home, store).
 - [Desktop connectivity](DESKTOP-CONNECTIVITY.md) — arwyn SSH, Mullvad readiness and accountability.
 - [Shared DaVinci drive](DAVINCI-SHARED-DRIVE.md) — Windows/NixOS NTFS access.
-- [Shared encrypted data drives](SHARED-DATA-DRIVES.md) — the 4TB VeraCrypt pair (working drive + mirror) for Windows and NixOS.
-- [Ubuntu migration](UBUNTU-TO-NIXOS.md) — disk UUIDs, preservation and encryption.
+- [Shared encrypted data drives](SHARED-DATA-DRIVES.md) — the 4TB VeraCrypt pair (working drive + mirror) for Windows and NixOS, plus later Samba and remote Docker plans.
+- [Ubuntu migration](UBUNTU-TO-NIXOS.md) — disk UUIDs, preservation and the target drive layout.
+- [Disk prevention](DISK-PREVENTION.md) — Nix GC and generations, Docker storage, the client-store clean-up and agent skills.
+- [Secrets](SECRETS.md) — agenix recipients and the devtower-intel LUKS escrow secrets.
 - [Manual Intel installation](INSTALL-INTEL-MANUALLY.md) — commands and checkpoints for replacing Ubuntu after backup.
 - [Intel displays and workspaces](INTEL-MONITORS.md) — audited monitor identities, scaling and portrait dashboard.
 

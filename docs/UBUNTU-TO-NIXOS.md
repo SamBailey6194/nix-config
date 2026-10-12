@@ -164,14 +164,15 @@ archive ESPs. Secure Boot is currently disabled (Setup Mode).
 
 **Space.** The Intel disk cannot hold all your existing data: Ubuntu home alone
 (282GiB) is larger than its entire capacity. The new encrypted `/home`, `/nix`
-and Docker subvolumes start fresh on it, and move to the larger drives as those
-are encrypted. Retained data stays reachable on the old
-drives. Download only the models you use: the seven candidates in
-[LOCAL-LLM.md](LOCAL-LLM.md) total roughly 100GiB, and builds need free space
-too. The configuration starts automatic store garbage collection below 5GiB
-free and aims for 15GiB. It reclaims only unreferenced store data, not rooted
-generations or model files. Use the guide's source-copy helper to avoid
-archiving multi-gigabyte Rust build directories.
+and Docker subvolumes start fresh on it. `/home` and Docker move to the larger
+drives as those are encrypted; the system `/nix` stays on the Intel disk.
+Retained data stays reachable on the old drives. Download only the models you
+use: the seven candidates in [LOCAL-LLM.md](LOCAL-LLM.md) total roughly
+100GiB, and builds need free space too. The configuration starts automatic
+store garbage collection below 5GiB free and aims for 15GiB. It reclaims only
+unreferenced store data, not rooted generations or model files. Use the
+guide's source-copy helper to avoid archiving multi-gigabyte Rust build
+directories.
 
 ## Agenix and the laptop
 
@@ -238,8 +239,10 @@ Every devtower-intel stage, minimal included, mounts:
 | `/mnt/backup` | BackupDrive, ext4 | read-write, on demand when attached |
 
 All use `nofail`, so a missing drive never blocks boot. The first four are the
-old Ubuntu filesystems. `/mnt/ubuntu-home`, `/mnt/ubuntu-nix` and
-`/mnt/ubuntu-docker` go when the home and store drives are encrypted (below);
+old Ubuntu filesystems. `/mnt/ubuntu-home` goes when the home drive is
+encrypted, and `/mnt/ubuntu-nix` and `/mnt/ubuntu-docker` when the store drive
+is (below). Copy anything still wanted out of them first: BackupDrive is
+unusable, so erasing them accepts that loss.
 `/mnt/archive` and `/mnt/davinci` are replaced by `/mnt/data` and
 `/mnt/data-mirror`, the VeraCrypt pair ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
 
@@ -261,19 +264,32 @@ them.
 **The plan: once NixOS works, wipe and encrypt every data drive, one at a
 time.**
 
-- **Samsung 512GB** becomes `/home` (LUKS2, own passphrase, TPM2 unlock).
-- **Samsung 870 EVO** becomes `/nix` and Docker (LUKS2, own passphrase, TPM2
-  unlock).
+- **Intel NVMe (OS)**, already encrypted and not wiped, keeps `/`, the system
+  `/nix` and its generations, `/var/log` and `/.snapshots`. It gains TPM2
+  auto-unlock (PCR 7) and an escrow secret first.
+- **Samsung 512GB** becomes `/home` (LUKS2 `crypthome`, own passphrase, TPM2
+  unlock in the initrd).
+- **Samsung 870 EVO** becomes one LUKS2 container, `cryptstore`, with three
+  btrfs subvolumes under simple-quota caps: `@docker` at `/var/lib/docker`
+  (950 GiB), `@vm` at `/var/lib/libvirt/images` (450 GiB) and `@clients` at
+  `/srv/clients` (400 GiB, a Nix store for client servers whose old
+  generations are cleaned up weekly), with about 60 GiB left unallocated. It
+  is not needed to boot: it unlocks after boot from `/etc/crypttab` (TPM2,
+  `nofail`), and Docker and libvirtd wait for their mounts.
 - **The two 4TB drives** (DavinciProj and the Seagate archive) become a
   VeraCrypt pair with NTFS inside, so Windows can read them too: the WD as the
   working drive, the Seagate as a scheduled mirror
   ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
 
-`hosts/devtower-intel/data-drives.nix` switches the LUKS drives over as soon as
-their two new UUIDs are filled in. The step-by-step procedure (order: home,
-the 4TB pair, store) is in
+`hosts/devtower-intel/data-drives.nix` switches the home drive over as soon as
+its two new UUIDs are filled in. The store drive's configuration is still
+pending: today the file mounts the 870 EVO as `/nix` and unlocks it in the
+initrd, so the new mounts, after-boot unlock and quota caps must be merged
+before that drive is converted. The step-by-step procedure (order: OS drive
+TPM2 and escrow secret, home, the 4TB pair, store) is in
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
-In-place conversion is not used.
+In-place conversion is not used. Remote Docker from the laptop comes after the
+drives ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#later)).
 
 For now, retain the data drives and protect new credentials in the encrypted
 NixOS home. The EFI partition remains unencrypted; verified boot is a separate

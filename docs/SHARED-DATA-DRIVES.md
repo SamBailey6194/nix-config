@@ -69,7 +69,9 @@ folders beside it:
 <volume root>/
 ├── <existing DavinciProj folders, including Affinity/>
 ├── Personal/        Documents/, Photos/, Videos/
-├── Business/        Documents/, Photos/, Videos/
+├── Business/        Documents/, Photos/, Videos/, plus the two Syntek repos:
+│   ├── syntek-business-docs/   business documents and Python scripts (git)
+│   └── syntek-content/         photos, videos and Python scripts (git)
 ├── Craft/           PhotoCraft, VectorCraft, ... project files
 ├── Archive/         *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
 └── .data-primary    marker file the mirror job checks for (WD only)
@@ -248,6 +250,47 @@ To be implemented in `hosts/devtower-intel/` once the drives are converted:
   never wipe the mirror.
 - **Health:** smartd on both drives. The mirror job's failures show in
   `systemctl --failed`.
+- **syntek-studio GitHub config** for the repos in `Business/` (see
+  [Syntek repos on the data drive](#syntek-repos-on-the-data-drive)): add
+  `includeIf."gitdir:/mnt/data/Business/".path = "~/.gitconfig-syntek"` to
+  `home/modules/git.nix`, beside the existing `~/Repos/syntek/` and
+  `/mnt/archive/OldRepos/syntek/` rules. `~/.gitconfig-syntek` sets the
+  syntek-studio identity (`Syntek-Studio`, `sam.bailey@syntekstudio.com`) and
+  rewrites `git@github.com:` to `git@github-syntek:`, so pushes use the
+  per-device syntek key (`~/.ssh/github-devtower-intel-syntek`). Without the
+  rule, commits there get the default identity and pushes the wrong key.
+  Check with `git config user.email` and `git remote -v` in each repo.
+
+### Syntek repos on the data drive
+
+`syntek-business-docs` and `syntek-content` live in `/mnt/data/Business/`, so
+they are on the drive Windows can open and are copied to the mirror every
+night. GitHub remains their off-site copy. NTFS changes how they are used:
+
+- **No executable bits** (the mount's `fmask=0133`). Set
+  `git config core.fileMode false` in both repos, or every file shows as
+  modified. Run scripts as `python script.py` or `uv run …`, not
+  `./script.py`.
+- **No reliable symlinks**, so Python environments stay off the drive: with
+  uv, `UV_PROJECT_ENVIRONMENT=~/.cache/venvs/<repo>` (for example from the
+  repo's `.envrc`) keeps the environment on the SSD.
+- **Large media in git:** every committed version of a photo or video is kept
+  in full. Track them with Git LFS (or keep them beside the repo, outside git)
+  so the repos don't grow without limit.
+- **Speed:** a hard disk through NTFS-3G (FUSE) is slower than the SSD;
+  `git status` over many media files takes noticeably longer.
+- **Ownership:** the mount is owned by `sam-desktop` (`uid=1000`), so git's
+  safe-directory check passes without exceptions.
+
+**From laptop-intel**, once the WireGuard link and sshd (see [Later](#later))
+are in place, the work runs on devtower-intel:
+
+- SSH in, or open the folder with Zed's SSH remote: the Python scripts run on
+  devtower-intel against its own drive, so nothing heavy crosses the network.
+- The Samba share of `/mnt/data/Business` is for browsing and opening files in
+  the laptop's file manager, not for running the scripts.
+- Only while devtower-intel is booted into NixOS; when it is in Windows, the
+  laptop cannot reach the drive.
 
 ## Later
 
@@ -256,7 +299,21 @@ To be implemented in `hosts/devtower-intel/` once the drives are converted:
   Hetzner Storage Box. Personal and business data in separate encrypted
   repositories with separate keys.
 - **Network access:** Samba on NixOS, reachable only over WireGuard, for other
-  devices with the right keys. It works only while NixOS is running.
+  devices with the right keys. It works only while NixOS is running. Bind it
+  to the WireGuard interface only, with SMB3 and encryption required.
+- **Remote Docker from laptop-intel** (after the drives are done): a dedicated
+  WireGuard link between laptop and PC (for example `wg-lan`, `10.200.0.0/24`,
+  keys in agenix, bypassing Mullvad on devtower-intel), and a Docker context
+  over SSH: `docker context create devtower --docker host=ssh://sam-desktop@<tunnel IP>`.
+  - Containers run on devtower-intel and use `/var/lib/docker` on the 870 EVO.
+  - Bind mounts and compose volumes resolve on devtower-intel, so the source
+    must live there: edit it with Zed's SSH remote, or mount it on the laptop
+    over Samba at the same absolute path.
+  - Never share `/var/lib/docker` itself over Samba, and never expose
+    `tcp://2375`.
+  - First: sshd key-only and listening only on `wg-lan`, and Docker-published
+    ports bound to `127.0.0.1` or the tunnel IP (they bypass the NixOS
+    firewall today).
 - **NAS** as a further backup target, then the homelab and business server.
 - **Replacing the Seagate** with a CMR drive (WD Red Plus, Seagate IronWolf):
   create a new VeraCrypt mirror volume on it and run the first mirror copy

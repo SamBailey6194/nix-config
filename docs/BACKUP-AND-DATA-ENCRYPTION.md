@@ -89,35 +89,75 @@ and an interruption can lose data, so it isn't used here.
 
 | Drive | Serial | Becomes | Mapper name | btrfs subvolumes | Unlocks |
 | --- | --- | --- | --- | --- | --- |
+| Intel NVMe 256GB (OS) | - | `/`, `/nix`, `/var/log`, `/.snapshots` | `cryptroot` | `@root`, `@nix`, `@log`, `@snapshots` | initrd (already encrypted) |
 | Samsung 512GB | `S1X1NYAG302936` | `/home` | `crypthome` | `@home` | initrd (needed for login) |
-| Samsung 870 EVO 2TB | `S6PPNX0T910090T` | `/nix`, `/var/lib/docker` | `cryptstore` | `@nix`, `@docker` | initrd (needed to boot) |
+| Samsung 870 EVO 2TB | `S6PPNX0T910090T` | `/var/lib/docker`, `/var/lib/libvirt/images`, `/srv/clients` | `cryptstore` | `@docker`, `@vm`, `@clients` | after boot, `/etc/crypttab`, `nofail` |
+
+The OS drive keeps the **system** Nix store and every generation. Once `/home`
+has moved to the 512GB Samsung and `/var/lib/docker` to the 2TB, the NVMe holds
+only the OS; the whole drive uses about 80G today. The old plan, where the 2TB
+took over the system `/nix`, is dropped.
 
 The two 4TB drives (WD DavinciProj and the Seagate archive) are **not** LUKS
 drives any more. Windows needs them too, so they become a VeraCrypt pair with
-NTFS inside, the WD as the working drive and the Seagate as a scheduled mirror:
-[SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md). The `cryptarchive` block in
-`data-drives.nix` is superseded by that plan; leave `dataDrives.archive` null.
+NTFS inside, the WD as the working drive and the Seagate as a scheduled mirror
+(not RAID1): [SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md). The
+`cryptarchive` block in `data-drives.nix` is superseded by that plan; leave
+`dataDrives.archive` null.
 
 - **Unlocking:** each drive has its **own LUKS2 container and its own
-  passphrase**, plus a TPM2 token, so both unlock automatically at boot. If the
-  TPM refuses (for example after a firmware or Secure Boot change), the initrd
-  asks for that drive's passphrase.
+  passphrase**, plus a TPM2 token, so all of them unlock automatically. If the
+  TPM refuses (for example after a firmware or Secure Boot change), you are
+  asked for that drive's passphrase: in the initrd for the OS and home drives,
+  after boot for the store.
 - **Configuration:** `hosts/devtower-intel/data-drives.nix` does the switching.
   A drive changes over when both of its UUIDs are filled in under `dataDrives`
   in `hosts/devtower-intel/disks.nix`. Until then its old Ubuntu filesystem
   stays mounted exactly as before. Filling in only one of the two UUIDs fails
   the build.
 - **The old drive ESP goes too:** the Samsung home drive carries an old Ubuntu
-  ESP (the 1GB second partition, `sdd2` today). The whole drive is erased.
+  ESP (the 1GB second partition, `sdd2` today). The whole drive is erased, and
+  its firmware boot entry is removed afterwards (home step 11).
+- **Always use by-uuid paths** for the OS drive (LUKS UUID
+  `3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8`). NVMe numbering can swap with the
+  Windows Crucial drive, so `/dev/nvme0n1p2` is not always the Intel disk.
+
+> **Configuration status (13 October 2026).** This page describes the target
+> design. The OS step and the home conversion work with the configuration as
+> it is (apart from uncommenting the `-home` secret, which is part of the home
+> procedure). The **store** conversion does not, yet: `data-drives.nix` still
+> mounts the 2TB as `/nix` (`mkForce`) and unlocks it in the initrd. These
+> changes must be merged **before converting the store**:
+>
+> - `data-drives.nix`: `@docker`, `@vm` and `@clients` mounts, an after-boot
+>   `/etc/crypttab` unlock (`tpm2-device=auto,nofail`), `RequiresMountsFor` on
+>   `docker.service` and `libvirtd`, and a oneshot that re-applies the quota
+>   caps from `disks.nix` at each boot.
+> - `secrets/secrets.nix`: the `-data` entry renamed to
+>   `luks-passphrase-devtower-intel-store.age`, and `sam-laptop` added to the
+>   recipients of every devtower-intel LUKS entry.
+> - `modules/core/nix-gc.nix`: keep the newest 5 system generations with no age
+>   rule, and prune home-manager generations too (shared with laptop-intel).
+> - A weekly systemd timer that cleans up the client store: it deletes old
+>   generations of each client profile, keeping every server's current one,
+>   then garbage-collects that store only (see
+>   [the client store](#client-servers-nix-store-clients)).
+> - `justfile`: `just deploy-client <name>` (records each server's profile
+>   generation in the client store), and `backup-luks-headers` taking a
+>   by-uuid device argument (today it hard-codes `/dev/nvme0n1p2`; use the
+>   manual commands below until then).
 
 **What TPM2 auto-unlock does and doesn't protect.** Every enrolment here binds
-to PCR 7 (Secure Boot state), the same as the OS disk. Secure Boot is currently
-**off**, so PCR 7 reads the same whatever this PC boots, a live USB included.
+to PCR 7 (Secure Boot state). Secure Boot is currently **off**, so PCR 7 reads
+the same whatever this PC boots, a live USB included.
 
 - **Protected:** a drive taken out of the PC. Its key only exists inside this
   PC's TPM.
 - **Not protected:** someone who can boot this PC from their own USB; the TPM
   will release the keys to them too.
+- **Prompts:** NixOS rebuilds don't change PCR 7. A firmware update or a
+  Secure Boot change does, so every drive then prompts once until you re-enrol
+  it (see the end of the common steps).
 - **To close that gap:** enable Secure Boot with signed boot files (for example
   lanzaboote, a separate project), then re-enrol every drive. Until then, the
   passphrases are what protect the whole machine.
@@ -125,33 +165,94 @@ to PCR 7 (Secure Boot state), the same as the OS disk. Secure Boot is currently
 Without `--tpm2-pcrs=7`, current systemd binds a token to **no** PCRs at all,
 so never leave it out.
 
+**Agenix cannot unlock a drive at boot.** Agenix decrypts secrets during
+activation, after the root filesystem is mounted, using the host key that
+lives on the encrypted OS drive. So the `luks-passphrase-devtower-intel-*.age`
+files are **recovery (escrow) copies only**: they let you read a passphrase on
+another machine when the TPM refuses and you don't have it to hand. They must
+**not** be declared in `age.secrets`, which would leave the plaintext
+passphrase in `/run/agenix`. The recipients are `devtowerIntelKeys` plus
+`sam-laptop` (the `sam-laptop` part is pending, above), so a copy can be
+decrypted off this PC. The master editing key `~/.ssh/id_ed25519_agenix` lives
+in `/home`; keep an offline backup of it.
+
 **Rebuilding.** Run rebuilds from the repository as `sam-desktop`. Both forms
 pick up the `disks.nix` edits:
 
 - `just rebuild-host devtower-intel` switches straight away.
 - `just rebuild-host devtower-intel --boot` applies the change at next boot.
 
-### Before converting any drive
+### Order of work
 
-1. **Be on the full stage** (`.#devtower-intel`), and enrol the **OS disk** in
-   TPM2 if you haven't already. Back up its header afterwards, as in step 4 of
-   the finishing steps below.
+1. **OS drive:** TPM2 auto-unlock, the escrow secret and a header backup
+   (next section). No configuration change needed.
+2. **Home** on the 512GB Samsung, from the running system.
+3. **The 4TB pair**, from the running system and Windows, per
+   [SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#conversion). Its restore
+   source is the old archive drive itself, so the old home copy on it moves
+   with it.
+4. **Store** on the 2TB, from the running system, **after** the pending
+   configuration above is merged.
+5. **Remote Docker from laptop-intel**, once the store is in place: a Docker
+   context over SSH through a dedicated WireGuard link (see
+   [Remote Docker](#remote-docker-from-laptop-intel-planned)).
+
+None of these needs a live USB.
+
+### OS drive (Intel NVMe): TPM2 and escrow secret
+
+The OS drive is already encrypted, so this only adds automatic unlocking and a
+recovery copy of its passphrase. Run it on the full stage (`.#devtower-intel`).
+
+1. **Check the existing tokens and keyslots** first, so you don't enrol twice:
 
    ```sh
-   sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 /dev/disk/by-uuid/<disks.nix luksUuid>
+   OS=/dev/disk/by-uuid/3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8
+   sudo systemd-cryptenroll "$OS"
    ```
 
-2. **Go in this order: home, then the 4TB pair, then store.**
-   - **Home** goes first and needs no live USB: the drive is only a data mount
+2. **Enrol TPM2** (asks for the current passphrase once):
+
+   ```sh
+   sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 "$OS"
+   ```
+
+3. **Create the escrow secret.** `luks-passphrase-devtower-intel-os.age` is
+   already declared in `secrets/secrets.nix`. Paste the passphrase on a single
+   line:
+
+   ```sh
+   just edit-secret luks-passphrase-devtower-intel-os
+   ```
+
+   Check that the stored copy really opens the disk. A piped passphrase ends at
+   the first newline, so the editor's trailing newline doesn't matter:
+
+   ```sh
+   sudo -v                                          # so sudo doesn't prompt mid-pipe
+   (cd secrets && agenix -d luks-passphrase-devtower-intel-os.age -i ~/.ssh/id_ed25519_agenix) \
+     | sudo cryptsetup open --test-passphrase "$OS" && echo passphrase ok
+   ```
+
+   Commit and push the `.age` file.
+4. **Back up the header** to USB, as in finishing step 5 below, with
+   `NAME=cryptroot` and `<luksUuid>` `3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8`. The automatic backups in `/var/lib/luks-backups` are inside
+   `cryptroot` itself, so they are no use if its header is damaged; only the
+   off-disk, age-encrypted copy counts.
+5. **Reboot** and confirm there is no passphrase prompt.
+
+### Before converting any drive
+
+1. **Be on the full stage** (`.#devtower-intel`), with the OS drive done as
+   above.
+2. **Know what the drive needs first.**
+   - **Home** needs no live USB: the drive is only a data mount
      (`/mnt/ubuntu-home`), not the running `/home`. Nothing in the
      configuration needs it any more: the GitHub keys come from agenix, and
      `home/modules/mcp-sync.py` falls back to the old `.claude.json` only if it
      exists.
-   - **The 4TB pair** comes next, from the running system and Windows. Its
-     restore source is the old archive drive itself, so the old home backup on
-     it moves with it.
-   - **Store** is last, because it still needs the live installer and nothing
-     else depends on it.
+   - **Store** needs the pending configuration merged, and nothing else depends
+     on it: it isn't needed to boot.
 
    Steps 3 to 6 below, and the common steps, are for the two LUKS drives. The
    4TB pair has its own procedure in
@@ -168,9 +269,9 @@ pick up the `disks.nix` edits:
 
 ### Steps common to every drive
 
-Run these in a root shell (`sudo -i`): on the running system for home, from
-the live installer for store. Replace `SERIAL`, `NAME` (`crypthome`,
-`cryptstore`) and `LABEL` (`NIXOS_HOME`, `NIXOS_STORE`) for the drive in hand.
+Run these in a root shell (`sudo -i`) on the running system. Replace `SERIAL`,
+`NAME` (`crypthome`, `cryptstore`) and `LABEL` (`NIXOS_HOME`, `NIXOS_STORE`)
+for the drive in hand.
 
 **1. Identify the drive** by its serial:
 
@@ -215,19 +316,21 @@ Write both UUIDs down. Then create the drive's subvolumes and restore into them
 
 1. **Fill in the two UUIDs** in `disks.nix` and rebuild as each drive's section
    says. Check `findmnt` shows the new device.
-2. **Enrol TPM2.** It asks for the drive's passphrase once. Home is formatted
-   on the running system, so it is enrolled before its first boot and never
-   prompts. Store is formatted from the live installer, so its first NixOS boot
-   asks for the passphrase once; enrol it after that boot.
+2. **Enrol TPM2** before the first boot that uses the drive, so it never
+   prompts. It asks for the drive's passphrase once:
 
    ```sh
-   sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 /dev/disk/by-uuid/<luksUuid>
+   systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 "$PART"
    ```
 
-3. **Commit the `disks.nix` change** (UUIDs are not secret) and push it, so a
-   fresh clone or another machine builds the same layout.
-4. **Back up the LUKS header after enrolling**, because enrolment adds a token
-   to the header. Encrypt it and keep it off the drive itself:
+3. **Create the escrow secret** for the drive with `just edit-secret`, and
+   check it with `cryptsetup open --test-passphrase`, as in OS step 3. Never
+   add it to `age.secrets`.
+4. **Commit the `disks.nix` change** (UUIDs are not secret) and the `.age`
+   file, and push them, so a fresh clone or another machine builds the same
+   layout.
+5. **Back up the LUKS header after enrolling**, because enrolment adds a token
+   to the header. Encrypt it and keep it off the drive itself, on USB:
 
    ```sh
    sudo -i
@@ -237,11 +340,13 @@ Write both UUIDs down. Then create the drive's subvolumes and restore into them
    age -d /path/to/usb/NAME-header.age | cmp - /root/NAME-header && shred -u /root/NAME-header
    ```
 
-5. **Reboot once more** and confirm the drive unlocked without a prompt.
+   Automatic header backups in `/var/lib/luks-backups` live inside `cryptroot`,
+   so only this off-disk copy counts.
+6. **Reboot once more** and confirm the drive unlocked without a prompt.
 
-If you later enable Secure Boot, PCR 7 changes. Every drive, the OS disk
-included, then asks for its passphrase until you re-enrol it, one command per
-LUKS UUID:
+After a firmware update, or if you later enable Secure Boot, PCR 7 changes.
+Every drive, the OS disk included, then asks for its passphrase until you
+re-enrol it, one command per LUKS UUID:
 
 ```sh
 sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=7 /dev/disk/by-uuid/<luksUuid>
@@ -254,7 +359,9 @@ Intel disk), including the repository with its `disks.nix` edit, plus whichever
 Ubuntu personal files you still want. The Samsung is only mounted as
 `/mnt/ubuntu-home`, so it can be erased while NixOS runs. The final copy is
 made from a text console with the desktop logged out, so nothing is writing to
-`/home` while it runs. No live USB is needed.
+`/home` while it runs. No live USB and no pending configuration are needed;
+`data-drives.nix` already unlocks `crypthome` in the initrd with
+`tpm2-device=auto` once `dataDrives.home` is filled in.
 
 1. **Refresh the old home's copy.** It is on the archive drive at
    `/mnt/archive/pre-nixos-home/` (the root of the old filesystem, with
@@ -267,40 +374,55 @@ made from a text console with the desktop logged out, so nothing is writing to
    sudo rsync -aHAXSx --numeric-ids --checksum --dry-run --itemize-changes /mnt/ubuntu-home/ /mnt/archive/pre-nixos-home/
    ```
 
-   The dry run must list nothing. This is now the **only** copy of the Ubuntu
-   home, so if anything in it is irreplaceable, put a second copy of that
+   The dry run must list nothing. After this step the Seagate holds the
+   **only** copy of the Ubuntu home, and the Seagate is later wiped for
+   VeraCrypt; [SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md) moves it to the WD
+   first. If anything in it is irreplaceable, put a second copy of that
    somewhere else (another disk, or encrypted off-site) before going on.
 2. **Commit and push the repository**, so the work in progress is safe
    whatever happens to either disk. If you haven't yet done the browser
    profile import ([BROWSER-MIGRATION.md](BROWSER-MIGRATION.md)), do it now:
-   it reads `/mnt/ubuntu-home`, which disappears with this step.
+   it reads `/mnt/ubuntu-home`, which disappears with this step. Back up
+   `~/.ssh/id_ed25519_agenix` offline too: it is the master editing key for
+   the secrets, and it moves to this drive.
 3. **Unmount the old home and erase the drive:** in a `sudo -i` root shell,
    `umount /mnt/ubuntu-home`, then run the common steps 1 to 3 with
    `SERIAL=S1X1NYAG302936`, `NAME=crypthome`, `LABEL=NIXOS_HOME`. It stays
    unmounted until the reboot, so nothing recreates it.
 4. **Create the subvolume, enrol TPM2 and make the first copy** while still
    logged in. Most of the data crosses now; the final pass only sends what
-   changed since.
+   changed since. `-x` keeps rsync on the `/home` filesystem, so FUSE or other
+   mounts under `~` aren't copied:
 
    ```sh
    mount /dev/mapper/crypthome /mnt/new
    btrfs subvolume create /mnt/new/@home
    systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 "$PART"
-   rsync -aHAXS --numeric-ids --delete /home/ /mnt/new/@home/
+   rsync -aHAXSx --numeric-ids --delete /home/ /mnt/new/@home/
    exit; exit                                       # leave nix-shell, then the root shell
    ```
 
-   Leave `/mnt/new` mounted and `crypthome` open for step 6.
-5. **Switch the configuration over:** `whoami` must print `sam-desktop`. Then
+   Leave `/mnt/new` mounted and `crypthome` open for step 7.
+5. **Create the escrow secret:** uncomment the
+   `luks-passphrase-devtower-intel-home.age` entry in `secrets/secrets.nix`,
+   then run `just edit-secret luks-passphrase-devtower-intel-home` and check it
+   against `/dev/disk/by-uuid/<home luksUuid>` as in OS step 3.
+6. **Switch the configuration over:** `whoami` must print `sam-desktop`. Then
    in `~/Repos/personal/nix-config`, fill in `dataDrives.home` with the two UUIDs
-   from common step 3, commit it, and run
+   from common step 3, commit it with the secret, and run
    `just rebuild-host devtower-intel --boot`. **Don't reboot yet.**
-6. **Final copy from a text console.** Close every app and log out of
-   Hyprland. Press Ctrl+Alt+F3, log in as `sam-desktop`, then:
+7. **Final copy from a text console.** Close every app and log out of
+   Hyprland. Press Ctrl+Alt+F3 and log in as `sam-desktop`. Stop Docker, and
+   check nothing of yours is still running: `KillUserProcesses` is off, so
+   tmux, zellij and similar sessions survive logout, and ClamAV watches
+   `/home`:
 
    ```sh
-   sudo rsync -aHAXS --numeric-ids --delete /home/ /mnt/new/@home/
-   sudo rsync -aHAXS --numeric-ids --delete --dry-run --itemize-changes /home/ /mnt/new/@home/
+   sudo systemctl stop docker.socket docker.service
+   ps -u sam-desktop -o pid,cmd                     # only this console's shell and ps
+   # kill anything left over (tmux kill-server, zellij kill-all-sessions, kill <pid>)
+   sudo rsync -aHAXSx --numeric-ids --delete /home/ /mnt/new/@home/
+   sudo rsync -aHAXSx --numeric-ids --delete --dry-run --itemize-changes /home/ /mnt/new/@home/
    ```
 
    The dry run should list nothing, or only shell history and state files from
@@ -313,78 +435,279 @@ made from a text console with the desktop logged out, so nothing is writing to
    sudo systemctl reboot
    ```
 
-7. **Check the result.** `crypthome` unlocks through the TPM2 without a prompt.
+8. **Check the result.** `crypthome` unlocks through the TPM2 without a prompt.
    `findmnt /home` shows `/dev/mapper/crypthome[/@home]`, and
    `/mnt/ubuntu-home` is gone. A rebuild made from
    `~/Repos/personal/nix-config` must still have `dataDrives.home` filled in.
-8. **Bring back Ubuntu files selectively** from
+9. **Bring back Ubuntu files selectively** from
    `/mnt/archive/pre-nixos-home/sam-dev/` into `~/` (the Ubuntu uid is the
    same, 1000). Don't bring back the agent configs, shell histories or `~/.aws`
    that
    [INSTALL-INTEL-MANUALLY.md](INSTALL-INTEL-MANUALLY.md#7-first-boot-and-staged-upgrade)
    lists. The declarative config and agenix already provide them.
-9. **Finish:** do finishing steps 3 and 4 (push, header backup).
-10. **Only later, delete the Intel `@home`.** Older boot entries still mount
-    `/home` from it, so first remove the older generations and rebuild, as in
-    store step 5. Until then it is a fallback copy of the NixOS home as it was
-    at the switch-over.
+10. **Finish:** do finishing steps 4 and 5 (push, header backup with
+    `NAME=crypthome`).
+11. **Remove the dead Ubuntu boot entry.** Its ESP was `sdd2`, now erased:
 
-### Store (Samsung 870 EVO 2TB): live installer, in two visits
+    ```sh
+    nix-shell -p efibootmgr --run 'efibootmgr -v'    # find the ubuntu entry pointing at the old ESP
+    sudo nix-shell -p efibootmgr --run 'efibootmgr -b XXXX -B'
+    ```
 
-`/nix` holds the running system, so the copy must happen **after** the
-generation that mounts the new drive has been built. Otherwise the new drive
-would lack that generation.
+12. **Only later, delete the Intel `@home`.** Older boot entries still mount
+    `/home` from it, so first remove the older generations and rebuild
+    (`sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +1`,
+    then `just rebuild-host devtower-intel --boot`). Until then it is a
+    fallback copy of the NixOS home as it was at the switch-over. To delete it,
+    mount the btrfs top level:
 
-1. **Live installer:** run the common steps with `NAME=cryptstore`. Create the
-   subvolumes, then reboot into NixOS:
+    ```sh
+    sudo mkdir -p /mnt/top
+    sudo mount -o subvolid=5 /dev/mapper/cryptroot /mnt/top
+    sudo btrfs subvolume delete /mnt/top/@home
+    sudo umount /mnt/top
+    ```
+
+### Store (Samsung 870 EVO 2TB): from the running system
+
+**Merge the pending configuration first** (see the status note above). Until
+then `data-drives.nix` would mount this drive as `/nix`.
+
+The 2TB (1.82TiB, about 1,863GiB usable) becomes **one** GPT partition with
+**one** LUKS2 container, `cryptstore`, labelled `NIXOS_STORE`. Inside is one
+btrfs filesystem with three subvolumes, each capped by a btrfs simple quota:
+
+| Subvolume | Mount | Cap | Holds |
+| --- | --- | --- | --- |
+| `@docker` | `/var/lib/docker` | 950GiB | images, containers, volumes |
+| `@vm` | `/var/lib/libvirt/images` | 450GiB | VM disk images, not copy-on-write (`chattr +C`) |
+| `@clients` | `/srv/clients` | 400GiB | client servers' Nix store; old generations cleaned weekly |
+| free | - | ~60GiB | btrfs metadata and SSD headroom |
+
+One container rather than three partitions means one passphrase, one TPM2
+enrolment, one escrow secret and one header backup, and the caps can be
+changed while running. The caps live in `hosts/devtower-intel/disks.nix`; a
+oneshot re-applies them at each boot, so changing one is a single number and a
+rebuild.
+
+The store isn't needed to boot. It unlocks after boot from `/etc/crypttab`
+with `tpm2-device=auto,nofail`, like the archive pattern, and `docker.service`
+and `libvirtd` have `RequiresMountsFor` on their directories, so they never
+start against an empty directory on the root drive. Docker keeps the
+`overlay2` storage driver: the `btrfs` driver would make each layer its own
+subvolume, outside the `@docker` cap.
+
+The old Ubuntu `/nix` and Docker partitions on this drive are erased. Their
+only copy was on BackupDrive (`filesystems/nix`, `filesystems/docker`), which is
+not usable, so erasing them accepts that loss. Nothing in them is needed by the
+configuration.
+
+1. **Copy out anything you still want** from `/mnt/ubuntu-nix` and
+   `/mnt/ubuntu-docker`.
+2. **Shut down any running VMs, stop Docker and libvirt, and unmount the old
+   partitions:**
+
+   ```sh
+   sudo virsh list --all                                  # every VM must be "shut off"
+   sudo systemctl stop docker.socket docker.service libvirtd.service
+   sudo umount /mnt/ubuntu-nix /mnt/ubuntu-docker
+   ```
+
+3. **Erase and format:** in a `sudo -i` root shell, run the common steps 1 to 3
+   with `SERIAL=S6PPNX0T910090T`, `NAME=cryptstore`, `LABEL=NIXOS_STORE`.
+4. **Enable simple quotas straight away**, before writing any data: a simple
+   quota only accounts for extents written after it is enabled (kernel 6.18
+   supports it). Then create the subvolumes and caps:
 
    ```sh
    mount /dev/mapper/cryptstore /mnt/new
-   btrfs subvolume create /mnt/new/@nix
+   btrfs quota enable --simple /mnt/new
    btrfs subvolume create /mnt/new/@docker
-   umount /mnt/new; cryptsetup close cryptstore
+   btrfs subvolume create /mnt/new/@vm
+   btrfs subvolume create /mnt/new/@clients
+   btrfs qgroup limit 950G /mnt/new/@docker
+   btrfs qgroup limit 450G /mnt/new/@vm
+   btrfs qgroup limit 400G /mnt/new/@clients
+   chattr +C /mnt/new/@vm                            # while empty: new images inherit No_COW
+   install -d -o sam-desktop -g users /mnt/new/@clients/nix-root   # plain directory, inside the @clients cap
+   touch /mnt/new/@clients/.client-store             # the weekly clean-up refuses without it
    ```
 
-2. **NixOS:** fill in `dataDrives.store` and run
-   `just rebuild-host devtower-intel --boot`. This builds the new generation
-   into the Intel `/nix` and makes it the default. **Don't reboot into it
-   yet**: its `/nix` drive is still empty. Shut down instead. The previous
-   generation in the boot menu still uses the Intel `/nix` if you need it.
-3. **Live installer again:** unlock both disks and copy `/nix` and Docker
-   across while nothing is running:
+5. **Enrol TPM2** (common finishing step 2):
+   `systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=7 "$PART"`.
+6. **Copy the existing Docker data** from the Intel `@docker` through the btrfs
+   top level (or skip this and re-pull images later). Move any VM images
+   already in `/var/lib/libvirt/images` the same way; rsync writes new files,
+   so they pick up No_COW:
 
    ```sh
-   sudo -i
-   cryptsetup open /dev/disk/by-uuid/<cryptroot luksUuid> cryptroot
-   cryptsetup open /dev/disk/by-uuid/<store luksUuid> cryptstore
-   mkdir -p /mnt/old /mnt/new
-   mount /dev/mapper/cryptroot /mnt/old            # btrfs top level: @nix, @docker inside
-   mount /dev/mapper/cryptstore /mnt/new
-   rsync -aHAXS --numeric-ids --delete /mnt/old/@nix/ /mnt/new/@nix/
-   rsync -aHAXS --numeric-ids --delete /mnt/old/@docker/ /mnt/new/@docker/
-   umount /mnt/old /mnt/new
+   mkdir -p /mnt/top
+   mount -o subvolid=5 /dev/mapper/cryptroot /mnt/top
+   rsync -aHAXS --numeric-ids /mnt/top/@docker/ /mnt/new/@docker/
+   test ! -d /var/lib/libvirt/images || rsync -aHAXS --numeric-ids /var/lib/libvirt/images/ /mnt/new/@vm/
+   umount /mnt/top /mnt/new
+   exit; exit                                        # leave nix-shell, then the root shell
    ```
 
-4. **Reboot into the new generation.** It asks for the store passphrase once.
-   Check that `findmnt /nix` shows `cryptstore` and that
-   `sudo nix-store --verify --check-contents` passes. Then do finishing steps
-   2 to 5.
-5. **Only later, free the Intel copies.** Older boot entries still mount
-   `/nix` from the Intel `@nix`, so remove those generations first:
+7. **Create the escrow secret** `luks-passphrase-devtower-intel-store.age`
+   (the renamed `-data` entry) with
+   `just edit-secret luks-passphrase-devtower-intel-store`, and check it as in
+   OS step 3.
+8. **Switch the configuration over:** as `sam-desktop`, fill in
+   `dataDrives.store`, commit, and run
+   `just rebuild-host devtower-intel --boot`. Don't restart Docker; reboot.
+9. **Check the result.** No prompt at boot or after. Then:
 
    ```sh
-   sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +1   # keep only the current one
-   just rebuild-host devtower-intel --boot                                # drops their boot entries
+   findmnt /var/lib/docker /var/lib/libvirt/images /srv/clients   # all /dev/mapper/cryptstore[/@...]
+   sudo btrfs qgroup show -re /var/lib/docker                    # three limits, usage counted
+   lsattr -d /var/lib/libvirt/images                             # shows C
+   systemctl status docker.service libvirtd.service
    ```
 
-   Then, from a live session, `btrfs subvolume delete` the Intel disk's old
-   `@nix` and `@docker`. Or leave them as a fallback until space is needed.
+10. **Finish:** finishing steps 4 and 5 (push, header backup with
+    `NAME=cryptstore`).
+11. **Only later, delete the Intel `@docker`**, once Docker on the store has
+    run for a while: mount `subvolid=5` as in home step 12, then
+    `sudo btrfs subvolume delete /mnt/top/@docker`. Any VM images copied in
+    step 6 also still sit on `@root`, hidden under the new mount; remove them
+    from `/mnt/top/@root/var/lib/libvirt/images/` at the same time.
 
-The old Ubuntu `/nix` and Docker partitions on this drive are erased by step 1.
-Their only copy was on BackupDrive (`filesystems/nix`, `filesystems/docker`),
-which is not usable at the moment. Nothing from them is reused, so this loses
-nothing the configuration needs; copy out anything you still want from
-`/mnt/ubuntu-nix` or `/mnt/ubuntu-docker` before starting.
+#### Client servers' Nix store (`@clients`)
+
+Client servers are built into a **separate** Nix store at
+`/srv/clients/nix-root`, never the system `/nix`. `nix-root` is a plain
+directory inside `@clients`, not a nested subvolume, so the 400GiB cap on
+`@clients` covers it. It is never deleted and re-created. Keep it owned by one
+account (`sam-desktop`): builds as root would use the nixbld users and root
+ownership, which mix badly with builds as the normal user.
+
+Building with a plain `nixos-rebuild --target-host` would put the closure in
+the system store on the NVMe instead, where the weekly GC removes it.
+`nixos-rebuild` has no `--store` option, and `--store-path` copies from the
+host `/nix`, so it can't deploy from this store.
+
+**Deploying (`just deploy-client <name>`, planned).** Each server has a profile
+in the client store, `/srv/clients/nix-root/nix/var/nix/profiles/clients/<name>`.
+The garbage collector treats every profile there as a root. Always give the
+profile by its physical path (under `/srv/clients/nix-root`), never as
+`/nix/var/nix/profiles/...`, which is the host's own profile directory. The
+recipe switches the profile only after the build has succeeded and the server
+has activated the new system, so a deploy that fails part-way leaves the
+previous generation current. Before building, the recipe makes the same
+realpath, `findmnt` and marker checks as the weekly clean-up below (not the
+`nix/var/nix/db` check, as the first deploy creates the store), so it never
+builds onto the root filesystem when `@clients` isn't mounted, and it holds
+the shared lock from the build to the profile switch:
+
+1. Build with a pending GC root, so a clean-up during the deploy can't collect
+   the result:
+
+   ```sh
+   S=/srv/clients/nix-root
+   mkdir -p $S/nix/var/nix/gcroots/clients-pending $S/nix/var/nix/profiles/clients
+   nix build --store $S --out-link $S/nix/var/nix/gcroots/clients-pending/<name> \
+     .#nixosConfigurations.<name>.config.system.build.toplevel
+   ```
+
+2. Copy it to the server and activate it there:
+
+   ```sh
+   P=$(readlink $S/nix/var/nix/gcroots/clients-pending/<name>)
+   nix copy --from $S --to ssh://root@<host> "$P"
+   ssh root@<host> nix-env -p /nix/var/nix/profiles/system --set "$P"
+   ssh root@<host> "$P"/bin/switch-to-configuration switch
+   ```
+
+   Locally built paths are unsigned, so the server refuses them unless they
+   are signed with a key it trusts (`nix store sign --store $S -k <key> -r "$P"`,
+   with the public key in the clients' `trusted-public-keys`, which suits the
+   zero-trust model) or the copy uses `--no-check-sigs` as a trusted user
+   such as root.
+3. Only on success, record the generation and drop the pending root:
+
+   ```sh
+   nix-env --store $S -p $S/nix/var/nix/profiles/clients/<name> --set "$P"
+   rm $S/nix/var/nix/gcroots/clients-pending/<name>
+   ```
+
+If you ever use `nix build --profile` instead, add `--no-link`: otherwise it
+also writes `./result` links and registers them as GC roots.
+
+**Rollback lives on each server.** The server's own
+`/nix/var/nix/profiles/system` keeps its generations and boot entries, so
+rolling a server back happens on the server. The client store only keeps what
+is needed to deploy each server's current system.
+
+**Weekly clean-up.** A weekly systemd timer (`Persistent=true`), running as
+the account that owns `nix-root`, keeps each server's current generation and
+removes the rest. It refuses unless all of these hold:
+
+- `realpath -e /srv/clients/nix-root` is not `/`, `/nix` or anything under
+  `/nix/`;
+- `findmnt -no SOURCE /srv/clients` is `/dev/mapper/cryptstore[/@clients]`;
+- the marker `/srv/clients/.client-store` exists;
+- `/srv/clients/nix-root/nix/var/nix/db` exists (`--store` on a missing
+  directory silently creates a new, empty store).
+
+It then takes the shared lock `/srv/clients/.client-store.lock` (`flock`, also
+held by `deploy-client` from the build to the profile switch) and runs, always
+with an explicit `--store`:
+
+```sh
+for p in "$S"/nix/var/nix/profiles/clients/*; do
+  case "$p" in *-link) continue ;; esac     # skip the <name>-N-link generations
+  [ -L "$p" ] || continue                   # also skips an unmatched glob
+  nix profile wipe-history --store "$S" --profile "$p"
+done
+nix store gc --store "$S"
+```
+
+`wipe-history` deletes every generation of a profile except the current one;
+the GC then removes everything unrooted in the client store only. It never
+uses `nix-collect-garbage -d`, which looks for the host's profiles, and it
+never touches the system `/nix`. No `fuser` check is needed: the GC uses the
+client store's own lock and temporary roots, and a GC during a build is safe.
+
+Two side effects, neither of which deletes too much: runtime roots are read
+from the host's `/proc`, so a store path that some host process is using
+(the nixpkgs source, for example) is kept; and Nix's automatic low-space GC
+(`min-free`) also runs on this store, but measures the free space of the
+whole btrfs filesystem, probably not the `@clients` cap (not tested).
+
+NixOS VMs don't use this: each keeps its own store inside its disk image in
+`@vm`.
+
+#### Generations and garbage collection
+
+The pending `modules/core/nix-gc.nix` change (shared with laptop-intel) keeps
+the newest 5 system generations, matching the 5-entry boot menu, with no age
+rule, and prunes home-manager generations too. The weekly GC still removes
+anything without a GC root, which is why client builds that do land in the
+system store don't accumulate.
+
+### Remote Docker from laptop-intel (planned)
+
+After the store is in place, laptop-intel can use Docker on this PC through a
+Docker context over SSH:
+
+```sh
+docker context create devtower --docker host=ssh://sam-desktop@<tunnel IP>
+```
+
+- **Link:** a new dedicated WireGuard tunnel between the laptop and devtower
+  (for example `wg-lan`, `10.200.0.0/24`), keys in agenix, with a Mullvad
+  bypass on devtower. Containers run on devtower and use `/var/lib/docker` on
+  the store.
+- **Source files:** bind mounts and compose volumes resolve on devtower, so the
+  source must live there. Edit it with Zed's SSH remote, or mount a Samba share
+  at the same absolute path on the laptop. Samba listens on `wg-lan` only,
+  SMB3 with encryption required.
+- **Never** share `/var/lib/docker` itself over Samba, and never expose
+  `tcp://2375`.
+- **Prerequisites:** `sshd` key-only and only on `wg-lan`, and Docker-published
+  ports bound to `127.0.0.1` or the tunnel IP. Published ports bypass the
+  NixOS firewall today.
 
 ### What a LUKS header backup is not
 

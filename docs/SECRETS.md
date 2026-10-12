@@ -230,6 +230,34 @@ secrets use a per-device list:
   ([INSTALL-INTEL-MANUALLY.md section 8](INSTALL-INTEL-MANUALLY.md#8-enable-host-secrets-then-the-full-stage),
   [UBUNTU-TO-NIXOS.md](UBUNTU-TO-NIXOS.md#agenix-and-the-laptop)).
 
+### LUKS escrow secrets (devtower-intel)
+
+Each devtower-intel LUKS container has its own recovery passphrase as an
+escrow secret:
+
+| Secret | Container | Status |
+|--------|-----------|--------|
+| `luks-passphrase-devtower-intel-os.age` | `cryptroot`, Intel NVMe | declared |
+| `luks-passphrase-devtower-intel-home.age` | `crypthome`, Samsung 512GB | uncomment when converting the home drive |
+| `luks-passphrase-devtower-intel-store.age` | `cryptstore`, Samsung 870 EVO | pending: renamed from the commented `-data` entry |
+
+- **Recovery copies only.** agenix decrypts at activation, after root is
+  mounted, with a host key that lives on the encrypted disk, so it can never
+  unlock a drive at boot. TPM2 (or typing the passphrase) does that; these
+  files only let you read a passphrase back when the TPM refuses.
+- **Never in `age.secrets`.** Declaring them there would leave the plaintext
+  passphrase in `/run/agenix`. They are only listed in `secrets/secrets.nix`.
+- **Recipients:** `devtowerIntelKeys` plus `sam-laptop` (pending), so a
+  recovery copy can be opened off this PC.
+- **Create and check:** `just edit-secret luks-passphrase-devtower-intel-os`,
+  then confirm it opens the disk with `cryptsetup open --test-passphrase`
+  against the `/dev/disk/by-uuid/` path.
+- **Master key:** back up `~/.ssh/id_ed25519_agenix` (and its passphrase)
+  offline before the home drive is converted; it moves to the new `/home`.
+
+The full procedure is in
+[BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
+
 ---
 
 ## Setup Guide

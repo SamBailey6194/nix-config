@@ -1,9 +1,19 @@
 # devtower-intel disk prevention and agent skills
 
-The NixOS migration creates fresh encrypted `@nix` and `@docker` subvolumes.
+The NixOS migration creates fresh encrypted `@nix` and `@docker` subvolumes on
+the Intel NVMe (`cryptroot`).
 Ubuntu's cleaned store and Docker data remain read-only recovery mounts until
-the 870 EVO is itself encrypted and takes over `/nix` and Docker
-([BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time)).
+the 870 EVO is itself encrypted. The system `/nix` stays on the Intel NVMe
+(`cryptroot`). The 870 EVO becomes one LUKS2 container, `cryptstore`, with
+three capped btrfs subvolumes: `@docker` (`/var/lib/docker`, 950 GiB), `@vm`
+(`/var/lib/libvirt/images`, 450 GiB) and `@clients` (`/srv/clients`, 400 GiB),
+leaving about 60 GiB unallocated (see the store section of
+[BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time)).
+
+**Config status:** this is the target design. The configuration for it (the
+three mounts, unlock after boot, quota caps, the generation rule and the client
+store clean-up below) is still pending and must be merged before the 870 EVO is
+converted. Today `data-drives.nix` still mounts it as `/nix`.
 
 ## Nix and Cargo
 
@@ -14,6 +24,34 @@ and other system generations up to 90 days old. Its timer now catches up after
 downtime, and now applies to every devtower-intel stage. Existing GC roots,
 including the Ubuntu `tidy-2026-10-06` pins, remain
 protected; this configuration does not release them.
+
+**Planned (shared `modules/core/nix-gc.nix`, devtower-intel and laptop-intel):**
+keep the newest 5 system generations, matching the 5-entry boot menu, with no
+age rule, and prune home-manager generations too. The weekly GC still removes
+anything without a GC root.
+
+**Client servers (planned):** client systems are built into a separate Nix
+store, `/srv/clients/nix-root`, a plain directory in `@clients` and so inside
+its 400 GiB cap. `just deploy-client <name>` builds there
+(`nix build --store /srv/clients/nix-root`, still using the binary cache),
+copies the result to the server with `nix copy --from` and activates it. Only
+after the build and activation succeed does it record the system as the new
+generation of the profile `nix/var/nix/profiles/clients/<name>` inside that
+store, so a failed deploy leaves the previous generation current. Rollback
+generations live on each server itself.
+
+A weekly timer (`Persistent=true`) keeps every server's current generation:
+it deletes the older generations of each client profile
+(`nix profile wipe-history --store /srv/clients/nix-root`), then
+garbage-collects that store only
+(`nix store gc --store /srv/clients/nix-root`). It refuses if the store's
+realpath is `/`, `/nix` or under `/nix/`, if `/srv/clients` is not mounted from
+`/dev/mapper/cryptstore` (`@clients`), if the marker `/srv/clients/.client-store`
+is missing, or if the store's `nix/var/nix/db` doesn't exist. It shares a lock
+with `deploy-client` and never touches the system `/nix`. A plain
+`nixos-rebuild --target-host` would build into the system store on the NVMe
+instead, where the weekly GC removes it. Details are in
+[BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#client-servers-nix-store-clients).
 
 The devtower-intel user environment and this repository's development shell
 set `CARGO_TARGET_DIR` outside repositories at `~/.cache/cargo-target`.
@@ -40,6 +78,9 @@ The fresh NixOS Docker store uses classic `overlay2`, with
 lease problem observed on Ubuntu. Do not switch an existing containerd-backed
 daemon to this configuration: Docker hides the other backend's containers
 and images. Restore DDEV projects using the migration backup procedure.
+Once the 870 EVO is converted, `/var/lib/docker` is its `@docker` subvolume
+(950 GiB simple-quota cap), and `docker.service` will require that mount so it
+never starts against an empty directory on the root drive.
 See [Docker's storage-backend documentation](https://docs.docker.com/engine/storage/containerd/).
 
 BuildKit's GC target is 20 GB. A persistent weekly
