@@ -136,6 +136,8 @@
       systemctl suspend
     '')
 
+    (import ../../rust/nix { inherit pkgs; }).dev-layout
+
     (pkgs.writeShellScriptBin "dev-layout-pick" ''
       set -euo pipefail
 
