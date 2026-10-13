@@ -64,9 +64,8 @@ has been run on these commits yet.**
    `luks/cryptroot-header-2026-10-13-tpm2.age` on KEYS). Left: reboot and
    confirm there is no passphrase prompt.
 3. **Master key backup**: done via the KEYS recovery key instead of a copy.
-   Left: rekey devtower-intel's 11 remaining files (host key, see
-   `docs/SECRETS.md`), then decrypt a secret with the stick key only. Do this
-   before touching `/home`.
+   All 12 devtower-intel secrets rekeyed for it (host key), and the stick key
+   alone decrypted `luks-passphrase-devtower-intel-os.age`.
 4. **Home drive (sdd)**: same doc, Home section. Copy the Ubuntu home somewhere
    other than the Seagate first.
 5. **Write the pending config** (below) and rebuild, before any sda work.
