@@ -26,6 +26,16 @@
     archive = { luksUuid = null; fsUuid = null; }; # Seagate ST4000DM004 ZFN2J51Q
   };
 
+  # btrfs simple-quota caps on the store's subvolumes (1,863GiB usable; about
+  # 60GiB left for metadata and SSD headroom). Applied at every boot by
+  # data-drives.nix once dataDrives.store is filled in, so changing a cap is a
+  # single number here and a rebuild.
+  storeQuotas = {
+    docker = "950G"; # @docker  -> /var/lib/docker
+    vm = "450G"; # @vm      -> /var/lib/libvirt/images
+    clients = "400G"; # @clients -> /srv/clients
+  };
+
   davinciUuid = "34201009200FD0B2"; # DavinciProj shared with Windows (NTFS)
   backupUuid = "883736aa-556a-4e5e-b42f-e58bd40f5668"; # Backup+ Hub BK, NA9R0S9H
 

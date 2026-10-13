@@ -39,8 +39,8 @@ in
     allowDiscards = true;
   };
 
-  # /home, /nix and /var/lib/docker move to their own encrypted drives once
-  # converted (data-drives.nix overrides these three).
+  # /home and /var/lib/docker move to their own encrypted drives once
+  # converted (data-drives.nix overrides these two); /nix stays here.
   fileSystems."/" = sub "@root";
   fileSystems."/nix" = sub "@nix";
   fileSystems."/.snapshots" = sub "@snapshots";

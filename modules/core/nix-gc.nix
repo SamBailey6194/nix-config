@@ -4,34 +4,37 @@
   # Garbage collection
   # - Boot menu shows 5 entries (configurationLimit in base-configuration.nix;
   #   bootloader.refind.maxGenerations on devtower-intel's full stage)
-  # - Always keep the 3 most recent generations regardless of age
-  # - Delete generations older than 90 days beyond those 3
+  # - Keep the newest 5 system generations to match, with no age rule
+  #   (nix-env --delete-generations +5 never deletes the current generation)
+  # - Prune every user's home-manager profile to the newest 5 the same way
+  # - Then collect anything without a GC root
   nix.gc.automatic = false; # We use a custom service instead
   systemd.services.nix-gc-custom = {
-    description = "Nix garbage collection (keep min 3 generations, remove >90d)";
+    description = "Nix garbage collection (keep newest 5 system and home-manager generations)";
     script = ''
       set -eu
-      profile="/nix/var/nix/profiles/system"
-      cutoff=$(date -d '90 days ago' +%Y-%m-%d)
+      nixEnv=${pkgs.nix}/bin/nix-env
 
-      # List generations newest first, skip the 3 most recent,
-      # then collect generation numbers older than 90 days
-      to_delete=$(${pkgs.nix}/bin/nix-env -p "$profile" --list-generations \
-        | sort -rn \
-        | tail -n +4 \
-        | while read -r gen date rest; do
-            if [ "$date" \< "$cutoff" ]; then
-              echo "$gen"
-            fi
-          done \
-        | tr '\n' ' ')
+      echo "Pruning system generations to the newest 5"
+      $nixEnv -p /nix/var/nix/profiles/system --delete-generations +5
 
-      if [ -n "$to_delete" ]; then
-        echo "Deleting old generations: $to_delete"
-        ${pkgs.nix}/bin/nix-env -p "$profile" --delete-generations $to_delete
-      else
-        echo "No generations to clean up"
-      fi
+      # home-manager runs as a NixOS module, so its profile is either the
+      # legacy per-user one or the XDG one under the user's home. Check both
+      # for every account, skip missing ones, and prune as the profile's owner
+      # so no root-owned files appear in the user's profile directory. One
+      # failing profile must not stop the rest or the GC.
+      ${pkgs.getent}/bin/getent passwd | while IFS=: read -r user _ _ _ _ home _; do
+        for profile in \
+          "/nix/var/nix/profiles/per-user/$user/home-manager" \
+          "$home/.local/state/nix/profiles/home-manager"; do
+          [ -L "$profile" ] || continue
+          owner=$(${pkgs.coreutils}/bin/stat -c %U "$(${pkgs.coreutils}/bin/dirname "$profile")")
+          echo "Pruning home-manager generations to the newest 5: $profile"
+          ${pkgs.util-linux}/bin/runuser -u "$owner" -- \
+            $nixEnv -p "$profile" --delete-generations +5 \
+            || echo "Warning: could not prune $profile" >&2
+        done
+      done
 
       ${pkgs.nix}/bin/nix-store --gc
     '';

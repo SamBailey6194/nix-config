@@ -3,7 +3,7 @@
 {
   imports = [ ../../modules/core/nix-gc.nix ];
 
-  # Collect before the store partition fills. Explicitly avoid retaining
+  # Collect before /nix (on the OS drive) fills. Explicitly avoid retaining
   # derivations/output closures solely for rebuild caching.
   nix.settings = {
     min-free = lib.mkDefault (5 * 1024 * 1024 * 1024);

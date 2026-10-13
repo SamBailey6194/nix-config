@@ -209,9 +209,11 @@ in
   "aws-credentials-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
-  # LUKS Encryption Passphrases (Per-Device Fallback Recovery)
-  # These are fallback passphrases when TPM2 auto-unlock fails
-  # DevTower has separate passphrases for OS, home, and media drives
+  # LUKS Encryption Passphrases (Per-Device Recovery Escrow)
+  # Escrow copies of each drive's recovery passphrase, for typing in by hand
+  # when TPM2 auto-unlock fails. agenix decrypts after the drives are open, so
+  # it can never unlock a drive at boot: never list these in age.secrets.
+  # DevTower has separate passphrases for OS, home, and store drives
   # ============================================================================
 
   # Laptop LUKS passphrases (single drive)
@@ -224,14 +226,13 @@ in
   # "luks-passphrase-devtower-media.age".publicKeys = allUsers ++ [ devtower ];   # /dev/sdc1 (Media)
 
   # Intel desktop: separate recovery passphrases for each future LUKS container.
-  # Only the OS container is currently configured. Additional drives are migrated
-  # individually after backup verification and a successful OS installation.
+  # The OS and home containers are configured; the store entry is uncommented
+  # when that drive is converted (docs/BACKUP-AND-DATA-ENCRYPTION.md, store step 7).
   # Names do not encrypt disks or configure mounts; new UUIDs are needed first.
-  # If Nix and Docker retain separate LUKS containers, give each its own secret.
   # DavinciProj stays shared NTFS; it is not a Linux-only LUKS media container.
   "luks-passphrase-devtower-intel-os.age".publicKeys = devtowerIntelKeys;
   "luks-passphrase-devtower-intel-home.age".publicKeys = devtowerIntelKeys;      # Samsung 512 GB
-  # "luks-passphrase-devtower-intel-data.age".publicKeys = devtowerIntelKeys;    # Samsung 870 EVO: Nix/Docker
+  # "luks-passphrase-devtower-intel-store.age".publicKeys = devtowerIntelKeys;   # Samsung 870 EVO: Docker, VMs, client store
   # "luks-passphrase-devtower-intel-archive.age".publicKeys = devtowerIntelKeys; # Seagate archive
 
   # ============================================================================

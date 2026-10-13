@@ -78,9 +78,29 @@ luks-status:
 enroll-tpm2 DEVICE:
     sudo luks-manage enroll-tpm2 {{DEVICE}}
 
-# Backup LUKS headers
-backup-luks-headers:
-    sudo luks-manage backup-header /dev/nvme0n1p2
+# Back up a LUKS header to /var/lib/luks-backups. That lives inside cryptroot,
+# so also keep an encrypted copy on USB (docs/BACKUP-AND-DATA-ENCRYPTION.md,
+# finishing step 5). DEVICE is the LUKS partition's UUID (blkid -s UUID -o
+# value <partition>) or its /dev/disk/by-uuid/ path, never a /dev/sdX or
+# nvme name, which can change between boots.
+#
+# Back up a LUKS header (DEVICE: LUKS UUID or /dev/disk/by-uuid/<uuid>)
+backup-luks-headers DEVICE:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dev={{quote(DEVICE)}}
+    case "$dev" in
+      /dev/disk/by-uuid/*) ;;
+      /*) echo "backup-luks-headers: give a LUKS UUID or /dev/disk/by-uuid/<uuid>, not '$dev'" >&2; exit 1 ;;
+      *) dev="/dev/disk/by-uuid/$dev" ;;
+    esac
+    if [[ ! "${dev#/dev/disk/by-uuid/}" =~ ^[0-9A-Fa-f-]+$ ]]; then
+      echo "backup-luks-headers: '${dev#/dev/disk/by-uuid/}' is not a UUID" >&2; exit 1
+    fi
+    if [ ! -e "$dev" ]; then
+      echo "backup-luks-headers: $dev does not exist (blkid -s UUID -o value <partition>)" >&2; exit 1
+    fi
+    sudo luks-manage backup-header "$dev"
 
 # Test LUKS passphrase
 test-luks-passphrase DEVICE:
@@ -167,6 +187,127 @@ rebuild-host HOST *ARGS:
       esac
     done
     sudo nixos-rebuild "$action" --flake .#{{HOST}}
+
+# Deploy a client server from the client servers' Nix store on @clients
+# (/srv/clients/nix-root, never the system /nix), as
+# docs/BACKUP-AND-DATA-ENCRYPTION.md#client-servers-nix-store-clients describes.
+# NAME is both nixosConfigurations.<NAME> and the server's profile in the client
+# store; HOST is what `ssh root@HOST` reaches. Run as sam-desktop (the owner of
+# nix-root), not with sudo.
+#
+# The build is signed for the servers' trusted-public-keys with --key FILE, or
+# ~/.config/nix/client-store-signing.key when that exists. Without a key the
+# deploy stops, unless --no-check-sigs is given: then the copy skips signature
+# checks, which the server accepts only because the copy runs as root there.
+#
+# Activation runs on the server under systemd-run, as nixos-rebuild does, so a
+# dropped SSH connection (activation may restart networking, the firewall or
+# sshd) doesn't kill it part-way. The client-store profile is switched only once
+# the server has activated the new system, so a deploy that fails part-way
+# leaves that profile on the previous generation (the server itself may already
+# be on the new one). The shared lock keeps the weekly clean-up out from build
+# to switch.
+#
+# Deploy a client server from the client store (--key FILE | --no-check-sigs)
+[positional-arguments]
+deploy-client NAME HOST *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name=$1 host=$2
+    shift 2
+    key="" no_check_sigs=0
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --key) [ "$#" -ge 2 ] || { echo "deploy-client: --key needs a file" >&2; exit 1; }; key=$2; shift 2 ;;
+        --key=*) key=${1#--key=}; shift ;;
+        --no-check-sigs) no_check_sigs=1; shift ;;
+        *) echo "deploy-client: unknown argument '$1' (only --key FILE and --no-check-sigs)" >&2; exit 1 ;;
+      esac
+    done
+    if [[ ! "$name" =~ ^[A-Za-z0-9_-]+$ ]]; then
+      echo "deploy-client: '$name' is not a plain configuration name" >&2; exit 1
+    fi
+    if [ -z "$host" ] || [[ "$host" == -* ]]; then
+      echo "deploy-client: '$host' is not a host name" >&2; exit 1
+    fi
+
+    # Decide on signing before building anything
+    if [ -n "$key" ] && [ "$no_check_sigs" = 1 ]; then
+      echo "deploy-client: give --key or --no-check-sigs, not both" >&2; exit 1
+    fi
+    if [ -z "$key" ] && [ "$no_check_sigs" = 0 ]; then
+      key="$HOME/.config/nix/client-store-signing.key"
+      if [ ! -e "$key" ]; then
+        echo "deploy-client: no signing key ($key), so the server would refuse the" >&2
+        echo "  unsigned paths. Pass --key FILE, or --no-check-sigs to copy them unsigned as root." >&2
+        exit 1
+      fi
+    fi
+    if [ -n "$key" ] && [ ! -r "$key" ]; then
+      echo "deploy-client: cannot read signing key $key" >&2; exit 1
+    fi
+
+    # Same checks as the weekly clean-up (hosts/devtower-intel/client-store.nix),
+    # except nix/var/nix/db: the first deploy creates the store
+    if ! command -v client-store-guard >/dev/null; then
+      echo "deploy-client: client-store-guard not found; it comes with the full stage once" >&2
+      echo "  dataDrives.store in hosts/devtower-intel/disks.nix is filled in" >&2
+      exit 1
+    fi
+    client-store-guard --no-db
+    S=/srv/clients/nix-root
+    owner=$(stat -c %U "$S")
+    if [ "$owner" != "$(id -un)" ]; then
+      echo "deploy-client: run this as $owner, who owns $S, not as $(id -un)" >&2; exit 1
+    fi
+
+    # @clients' top level belongs to root; the clean-up creates the lock too
+    lock=/srv/clients/.client-store.lock
+    if [ ! -e "$lock" ]; then
+      echo "Creating the shared lock $lock (needs sudo)"
+      sudo install -m 0644 -o "$owner" -g users /dev/null "$lock"
+    fi
+    exec 9<"$lock"
+    if ! flock -n 9; then
+      echo "Waiting for the client-store clean-up to finish..."
+      flock 9
+    fi
+
+    # 1. Build with a pending GC root, so a clean-up can't collect the result
+    pending="$S/nix/var/nix/gcroots/clients-pending/$name"
+    profile="$S/nix/var/nix/profiles/clients/$name"
+    mkdir -p "$S/nix/var/nix/gcroots/clients-pending" "$S/nix/var/nix/profiles/clients"
+    nix build --store "$S" --out-link "$pending" \
+      ".#nixosConfigurations.$name.config.system.build.toplevel"
+    P=$(readlink "$pending")
+    case "$P" in
+      /nix/store/?*) ;;
+      *) echo "deploy-client: unexpected build result '$P'" >&2; exit 1 ;;
+    esac
+
+    # 2. Copy it to the server and activate it there
+    copy_flags=()
+    if [ -n "$key" ]; then
+      nix store sign --store "$S" -k "$key" -r "$P"
+    else
+      copy_flags=(--no-check-sigs)
+    fi
+    nix copy "${copy_flags[@]}" --from "$S" --to "ssh://root@$host" "$P"
+    ssh "root@$host" nix-env -p /nix/var/nix/profiles/system --set "$P"
+    # Detached from the SSH session; plain command only without systemd-run
+    ssh "root@$host" "if command -v systemd-run >/dev/null; then
+        exec systemd-run -E LOCALE_ARCHIVE -E NIXOS_INSTALL_BOOTLOADER --collect \\
+          --no-ask-password --pipe --quiet --service-type=exec \\
+          --unit=deploy-client-switch-to-configuration $P/bin/switch-to-configuration switch
+      else
+        exec $P/bin/switch-to-configuration switch
+      fi"
+
+    # 3. Only on success, record the generation (by its physical path, never
+    #    /nix/var/nix/profiles) and drop the pending root
+    nix-env --store "$S" -p "$profile" --set "$P"
+    rm "$pending"
+    echo "Deployed $name to $host: $P"
 
 # Build without switching (test configuration)
 build:

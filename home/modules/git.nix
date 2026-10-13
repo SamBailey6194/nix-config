@@ -81,6 +81,9 @@
       includeIf."gitdir:/mnt/archive/OldRepos/syntek/" = {
         path = "~/.gitconfig-syntek";
       };
+      includeIf."gitdir:/mnt/data/Business/" = {
+        path = "~/.gitconfig-syntek";
+      };
 
       # Missional Gen repos
       includeIf."gitdir:~/Repos/missional-gen/" = {
