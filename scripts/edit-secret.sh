@@ -16,20 +16,16 @@ if [[ -L "$secrets_dir/$secret_name" ]]; then
   exit 2
 fi
 
-if [[ -z "${EDITOR:-}" ]]; then
-  if [[ -n "${VISUAL:-}" ]]; then
-    export EDITOR="$VISUAL"
-  else
-    for editor in nano vim vi; do
-      if command -v "$editor" >/dev/null 2>&1; then
-        export EDITOR="$editor"
-        break
-      fi
-    done
-  fi
-fi
-if [[ -z "${EDITOR:-}" ]]; then
-  echo "Set EDITOR to an installed editor before editing a secret." >&2
+# Edit in this terminal, not the global $EDITOR (Zed opens a GUI tab and agenix
+# then waits until it closes). Restricted nano with no rc file writes no backup
+# or history files, so the plaintext stays in agenix's temporary directory.
+# SECRET_EDITOR overrides this. Piped input skips the editor (agenix copies stdin).
+if [[ -n "${SECRET_EDITOR:-}" ]]; then
+  export EDITOR="$SECRET_EDITOR"
+elif command -v nano >/dev/null 2>&1; then
+  export EDITOR="nano --restricted --ignorercfiles"
+else
+  echo "nano is not installed; set SECRET_EDITOR to a terminal editor." >&2
   exit 2
 fi
 
