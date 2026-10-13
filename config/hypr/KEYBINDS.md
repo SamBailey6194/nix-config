@@ -139,6 +139,7 @@ workspace.
 | Keybind              | Action                  |
 |----------------------|-------------------------|
 | `Volume Up/Down`     | Adjust volume (5%)      |
+| `SUPER + =` / `SUPER + -` | Volume up/down (5%, repeats when held) |
 | `Mute`               | Toggle mute             |
 | `Mic Mute`           | Toggle mic mute         |
 | `Brightness Up/Down` | Adjust brightness (5%)  |
