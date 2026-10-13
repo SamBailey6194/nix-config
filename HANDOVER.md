@@ -96,6 +96,10 @@ has been run on these commits yet.**
 
 ## Still open
 
+- Browser profiles: Ubuntu import skipped on purpose (settings come from
+  `browser_setup`). Revisit personal data (bookmarks, passwords, extensions)
+  after using the NixOS profiles for a while; the Ubuntu copies are in
+  `/mnt/archive/pre-nixos-home/sam-dev/` (see `docs/BROWSER-MIGRATION.md`).
 - Untested: whether Nix's automatic low-space GC (`min-free`) respects the
   400 GiB cap on `@clients`.
 - Untested: a real deploy to a client server (signing key the clients trust,
