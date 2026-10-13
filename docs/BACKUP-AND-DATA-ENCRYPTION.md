@@ -134,8 +134,7 @@ NTFS inside, the WD as the working drive and the Seagate as a scheduled mirror
 >   `docker.service` and `libvirtd`, and a oneshot that re-applies the quota
 >   caps from `disks.nix` at each boot.
 > - `secrets/secrets.nix`: the `-data` entry renamed to
->   `luks-passphrase-devtower-intel-store.age`, and `sam-laptop` added to the
->   recipients of every devtower-intel LUKS entry.
+>   `luks-passphrase-devtower-intel-store.age`.
 > - `modules/core/nix-gc.nix`: keep the newest 5 system generations with no age
 >   rule, and prune home-manager generations too (shared with laptop-intel).
 > - A weekly systemd timer that cleans up the client store: it deletes old
@@ -171,10 +170,11 @@ lives on the encrypted OS drive. So the `luks-passphrase-devtower-intel-*.age`
 files are **recovery (escrow) copies only**: they let you read a passphrase on
 another machine when the TPM refuses and you don't have it to hand. They must
 **not** be declared in `age.secrets`, which would leave the plaintext
-passphrase in `/run/agenix`. The recipients are `devtowerIntelKeys` plus
-`sam-laptop` (the `sam-laptop` part is pending, above), so a copy can be
-decrypted off this PC. The master editing key `~/.ssh/id_ed25519_agenix` lives
-in `/home`; keep an offline backup of it.
+passphrase in `/run/agenix`. The recipients are `devtowerIntelKeys` only:
+devtower-intel is the authority, and `sam-laptop` is deliberately not a
+recipient. Off this PC, a copy is decrypted with the master editing key
+`~/.ssh/id_ed25519_agenix`, which lives in `/home`; keep an offline backup of
+it.
 
 **Rebuilding.** Run rebuilds from the repository as `sam-desktop`. Both forms
 pick up the `disks.nix` edits:

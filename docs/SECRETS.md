@@ -247,8 +247,9 @@ escrow secret:
   files only let you read a passphrase back when the TPM refuses.
 - **Never in `age.secrets`.** Declaring them there would leave the plaintext
   passphrase in `/run/agenix`. They are only listed in `secrets/secrets.nix`.
-- **Recipients:** `devtowerIntelKeys` plus `sam-laptop` (pending), so a
-  recovery copy can be opened off this PC.
+- **Recipients:** `devtowerIntelKeys` only; devtower-intel is the authority,
+  so `sam-laptop` is not a recipient. Off this PC, a recovery copy is opened
+  with the offline backup of the master key.
 - **Create and check:** `just edit-secret luks-passphrase-devtower-intel-os`,
   then confirm it opens the disk with `cryptsetup open --test-passphrase`
   against the `/dev/disk/by-uuid/` path.
@@ -371,7 +372,7 @@ HOSTNAME=$(hostname)
 # Encrypt personal GitHub SSH key
 agenix-helper edit github-ssh-personal-$HOSTNAME
 # Paste contents of /tmp/github-personal-$HOSTNAME (private key)
-# Save and exit (Ctrl+D in nano)
+# Save and exit (Ctrl+O, Enter, then Ctrl+X in nano)
 
 # Encrypt syntek GitHub SSH key
 agenix-helper edit github-ssh-syntek-$HOSTNAME
@@ -386,7 +387,7 @@ agenix-helper edit github-ssh-missionalgen-$HOSTNAME
 
 **What agenix does**:
 1. Looks up `secrets/secrets.nix` to find which keys can decrypt this secret
-2. Opens your `$EDITOR` (vim/nano) to enter the secret
+2. Opens restricted `nano` in the same terminal (`just edit-secret`; set `SECRET_EDITOR` to use another terminal editor)
 3. Encrypts the file with all authorized public keys
 4. Saves as `.age` file in `secrets/`
 
