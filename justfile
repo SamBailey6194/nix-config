@@ -35,9 +35,10 @@ edit-secret SECRET:
 list-secrets:
     agenix-helper list --verbose
 
-# Rekey all secrets (after adding new host keys)
-rekey-secrets:
-    agenix-helper rekey
+# Rekey the secrets this key can open (after changing recipients); lists the rest.
+# Options: --identity KEY (default ~/.ssh/id_ed25519_agenix), --all, --dry-run
+rekey-secrets *ARGS:
+    python3 {{quote(justfile_directory() / "scripts/rekey-secrets.py")}} {{ARGS}}
 
 # Add a new server with per-device SSH keys
 add-server SERVER:

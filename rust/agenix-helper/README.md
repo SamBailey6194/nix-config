@@ -155,8 +155,10 @@ agenix-helper check-keys
 
 # 3. Add key to secrets/secrets.nix
 
-# 4. Rekey all secrets
-agenix-helper rekey
+# 4. Rekey (agenix-helper rekey stops at the first file its key cannot open;
+#    `just rekey-secrets` skips those instead). On a new device, use the
+#    recovery key on the KEYS stick:
+just rekey-secrets --identity /run/media/<user>/KEYS/agenix/id_ed25519_recovery
 
 # 5. Rebuild on new device
 sudo nixos-rebuild switch --flake .#new-device

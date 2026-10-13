@@ -198,31 +198,36 @@ sudo nixos-rebuild switch --flake .#HOSTNAME
 
 ### Recipients: devtower-intel holds the master editing key
 
-Edits and prep happen on devtower-intel, so its editing key is the master key
-(`allUsers = [ sam-devtower-intel ]`) and opens every secret. Each device's
+Edits and prep happen on devtower-intel, so its editing key is the master key.
+`allUsers = [ sam-devtower-intel sam-keys-recovery ]`: the master key and the
+offline recovery key on the KEYS stick each open every secret. Each device's
 secrets use a per-device list:
 
 | List | Recipients | Who can open |
 |------|------------|--------------|
-| `devtowerIntelKeys` | `sam-devtower-intel`, `devtower-intel` | the PC's editing key and host key |
-| `laptopIntelKeys` | `sam-devtower-intel`, `sam-laptop`, `laptop-intel` | the master key, the laptop's own editing key and its host key |
-| `allKeys` (shared, e.g. `wifi-passwords`) | `sam-devtower-intel`, `laptop-intel` | the master key and the hosts in `allHosts` |
+| `devtowerIntelKeys` | `sam-devtower-intel`, `sam-keys-recovery`, `devtower-intel` | the PC's editing key, the recovery key and the PC's host key |
+| `laptopIntelKeys` | `sam-devtower-intel`, `sam-keys-recovery`, `sam-laptop`, `laptop-intel` | the master key, the recovery key, the laptop's own editing key and its host key |
+| `allKeys` (shared, e.g. `wifi-passwords`) | `sam-devtower-intel`, `sam-keys-recovery`, `laptop-intel` | the master key, the recovery key and the hosts in `allHosts` |
 
 - **`sam-devtower-intel`:** devtower-intel's passphrase-protected
-  `~/.ssh/id_ed25519_agenix`. Keep an offline copy of it and its passphrase:
-  it is the only editing key for devtower-intel's secrets and for the shared
-  ones.
+  `~/.ssh/id_ed25519_agenix`. It is not copied anywhere: the recovery key
+  below is the offline fallback.
+- **`sam-keys-recovery`:** the passphrase-protected recovery key on the KEYS
+  stick (see [Recovery key on the KEYS stick](#recovery-key-on-the-keys-stick)).
 - **`sam-laptop`:** laptop-intel's `~/.ssh/id_ed25519_agenix`. It opens only
   the laptop's own secrets.
 - **Host keys:** decrypt at rebuild. devtower-intel is not in `allHosts`: it is
   wired and does not use `wifi-passwords`.
-- **Re-encrypting:** `just rekey-secrets` tries every file and stops at the
-  first it cannot open. A device that cannot open everything re-encrypts only
-  its own files. On devtower-intel, decrypting with the host key (no passphrase
-  prompt per file):
+- **Re-encrypting:** `just rekey-secrets` (`scripts/rekey-secrets.py`) reads
+  each file's recipients from its header and rekeys only the files the key can
+  open and whose recipients differ from `secrets.nix`. The rest are listed as
+  `skip` (another device's key opens them) or `current`. `--dry-run` shows the
+  plan; `--all` rekeys current files too; `--identity KEY` picks the key
+  (default `~/.ssh/id_ed25519_agenix`, needs `KEY.pub` beside it). On
+  devtower-intel, the host key avoids one passphrase prompt per file:
 
   ```bash
-  cd secrets && sudo bash -c 'for f in *-devtower-intel*.age; do EDITOR=: '"$(command -v agenix)"' -e "$f" -i /etc/ssh/ssh_host_ed25519_key || exit 1; done' && sudo chown "$USER:users" *-devtower-intel*.age
+  sudo AGENIX="$(command -v agenix)" python3 scripts/rekey-secrets.py --identity /etc/ssh/ssh_host_ed25519_key
   ```
 
 - **History:** the desktop's secrets were first created on the laptop and its
@@ -249,15 +254,48 @@ escrow secret:
   passphrase in `/run/agenix`. They are only listed in `secrets/secrets.nix`.
 - **Recipients:** `devtowerIntelKeys` only; devtower-intel is the authority,
   so `sam-laptop` is not a recipient. Off this PC, a recovery copy is opened
-  with the offline backup of the master key.
+  with the recovery key on the KEYS stick.
 - **Create and check:** `just edit-secret luks-passphrase-devtower-intel-os`,
   then confirm it opens the disk with `cryptsetup open --test-passphrase`
   against the `/dev/disk/by-uuid/` path.
-- **Master key:** back up `~/.ssh/id_ed25519_agenix` (and its passphrase)
-  offline before the home drive is converted; it moves to the new `/home`.
+- **Master key:** `~/.ssh/id_ed25519_agenix` moves to the new `/home` when
+  the home drive is converted. It is not copied offline: the recovery key on
+  the KEYS stick covers its loss, so check that key opens a secret first.
 
 The full procedure is in
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
+The OS drive's LUKS header backup is on the KEYS stick as
+`luks/cryptroot-header-2026-10-13-tpm2.age` (`age -p`, taken after TPM2
+enrolment).
+
+### Recovery key on the KEYS stick
+
+`sam-keys-recovery` is an ed25519 key (`sam@keys-recovery`) at
+`agenix/id_ed25519_recovery` on the KEYS USB stick, protected by a passphrase.
+It is in `allUsers`, so it opens every secret. It exists to recover the
+secrets if devtower-intel is lost and to bootstrap new devices. It replaces
+the earlier plan to keep an offline copy of the master key: one stick never
+holds two all-powerful keys.
+
+- **Never on a machine.** It is not in `allHosts`, never goes in
+  `age.identityPaths` and is never copied off the stick. Use it in place:
+
+  ```bash
+  # Mounted at /run/media/<user>/KEYS
+  AGENIX_IDENTITY=/run/media/<user>/KEYS/agenix/id_ed25519_recovery just edit-secret <name>
+  cd secrets && agenix -d <name>.age -i /run/media/<user>/KEYS/agenix/id_ed25519_recovery
+  ```
+
+- **New device:** install NixOS, add its host key (and any editing key) to
+  `secrets/secrets.nix`, then rekey from the new device with the stick:
+  `just rekey-secrets --identity /run/media/<user>/KEYS/agenix/id_ed25519_recovery`.
+- **After adding it:** existing `.age` files gain the recipient only once
+  rekeyed: devtower-intel's files on devtower-intel, laptop-intel's on the
+  laptop (only its keys open them until then). Then confirm a secret decrypts
+  with the stick key alone.
+- **If the stick is lost:** remove `sam-keys-recovery` from `allUsers`, rekey,
+  and rotate the secrets that matter: the old `.age` files stay in git
+  history. Keep a second copy of the stick (or key) somewhere else.
 
 ---
 

@@ -143,7 +143,7 @@ See `docs/ARCHITECTURE.md` for detailed explanation of the modular design.
 just verify-secrets           # Verify all secrets deployed correctly
 just edit-secret <name>       # Edit an encrypted secret
 just list-secrets             # List all secrets and authorized keys
-just rekey-secrets            # Rekey all secrets (after adding hosts)
+just rekey-secrets            # Rekey the secrets this key opens (after adding hosts)
 just add-server <name>        # Generate per-device SSH keys for server
 ```
 

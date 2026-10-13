@@ -16,7 +16,11 @@ is required. See [the editing and runtime instructions](../docs/DISK-PREVENTION.
 `just edit-secret <name>` works without an installed `agenix-helper`: it uses
 agenix on PATH, or runs the repository's locked agenix input through Nix.
 It uses `~/.ssh/id_ed25519_agenix` when present. Override the identity with
-`AGENIX_IDENTITY=/path/to/recovery-key just edit-secret <name>`.
+`AGENIX_IDENTITY=/path/to/key just edit-secret <name>`, for example the
+recovery key on the KEYS stick,
+`/run/media/<user>/KEYS/agenix/id_ed25519_recovery` (`sam-keys-recovery`, in
+`allUsers`; use it from the stick, never copy it onto a machine). See
+[the recovery key](../docs/SECRETS.md#recovery-key-on-the-keys-stick).
 The identity must be a recipient already authorised for the encrypted file.
 Secrets are per device: each file is named `<secret>-<host>.age` and is encrypted
 only to the keys listed for it in `secrets.nix`.

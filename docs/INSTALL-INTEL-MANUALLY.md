@@ -211,7 +211,10 @@ age -d /path/to/usb/intel-nixos-luks-header.age | cmp - /tmp/intel-nixos-luks-he
 ```
 
 Keep the header backup with its passphrase, and protect it like a key. Later
-LUKS key-slot changes require an updated header backup.
+LUKS key-slot changes require an updated header backup. On devtower-intel the
+current one is `luks/cryptroot-header-2026-10-13-tpm2.age` on the KEYS stick,
+taken after TPM2 enrolment; the original `intel-nixos-luks-header.age` was
+deleted.
 
 ## 5. Copy the config and enter new UUIDs
 
@@ -433,9 +436,10 @@ git commit -m "feat(secrets): add devtower-intel host key"
 git push
 ```
 
-- **Where `just rekey-secrets` gets its tool:** it runs `agenix-helper`, which
-  laptop-intel's full configuration installs system-wide. The dev shell does not
-  provide it.
+- **Where `just rekey-secrets` gets its tool:** at the time it ran
+  `agenix-helper`, which laptop-intel's full configuration installs
+  system-wide. Since 13 October 2026 it runs `scripts/rekey-secrets.py`, which
+  skips files the key cannot open ([SECRETS.md](SECRETS.md#recipients-devtower-intel-holds-the-master-editing-key)).
 - **Without it,** run `(cd secrets && agenix -r -i ~/.ssh/id_ed25519_agenix)`
   directly. The subshell keeps you in the repository root for `git add`.
 - **Normal output:** all 31 files are rewritten, and you get four
@@ -536,3 +540,6 @@ mount the encrypted target with its passphrase, then copy selected files from th
 rsync copy on BackupDrive (or restore them from the Restic repository, if you
 made one) to a separate location first. Keep the untouched data
 drives and verified backup until the new system has been used and checked.
+If devtower-intel itself is lost, the agenix recovery key on the KEYS stick
+opens every secret, used straight from the stick; see
+[SECRETS.md](SECRETS.md#recovery-key-on-the-keys-stick).

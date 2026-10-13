@@ -146,10 +146,10 @@ authorised for **both** bundles:
 python3 scripts/set-typesafe-api-key.py --bundled --identity /path/to/recovery-key
 ```
 
-Ubuntu's `sam-ubuntu` identity is not a recipient for those bundles, so
-`just edit-secret claude-secrets-devtower-intel` cannot decrypt them with that
-identity. The recipe now supplies agenix without requiring `agenix-helper`.
-Override its identity with `AGENIX_IDENTITY=/path/to/recovery-key` if needed.
+`just edit-secret claude-secrets-devtower-intel` supplies agenix without
+requiring `agenix-helper`. Override its identity with
+`AGENIX_IDENTITY=/path/to/recovery-key` if needed, for example the KEYS stick
+key ([SECRETS.md](SECRETS.md#recovery-key-on-the-keys-stick)).
 
 After rebuilding, run SDK commands as `with-typesafe python your_script.py`
 (or `with-typesafe node your_script.js`). The helper loads the dedicated key,

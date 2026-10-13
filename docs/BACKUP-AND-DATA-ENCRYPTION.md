@@ -172,9 +172,16 @@ another machine when the TPM refuses and you don't have it to hand. They must
 **not** be declared in `age.secrets`, which would leave the plaintext
 passphrase in `/run/agenix`. The recipients are `devtowerIntelKeys` only:
 devtower-intel is the authority, and `sam-laptop` is deliberately not a
-recipient. Off this PC, a copy is decrypted with the master editing key
-`~/.ssh/id_ed25519_agenix`, which lives in `/home`; keep an offline backup of
-it.
+recipient. On this PC, a copy is decrypted with the master editing key
+`~/.ssh/id_ed25519_agenix`, which lives in `/home` and is not copied
+anywhere. Off this PC, use the recovery key `sam-keys-recovery` on the KEYS
+stick (`agenix/id_ed25519_recovery`, passphrase-protected). It is in
+`allUsers`, so it opens every secret, and it is used straight from the stick
+(`-i /run/media/<user>/KEYS/agenix/id_ed25519_recovery`), never copied onto a
+machine or listed in `age.identityPaths`. If the stick is lost, remove the key
+from `allUsers`, rekey, and rotate the secrets that matter: the old `.age`
+files stay in git history. A second copy of the stick kept elsewhere is
+advisable.
 
 **Rebuilding.** Run rebuilds from the repository as `sam-desktop`. Both forms
 pick up the `disks.nix` edits:
@@ -382,9 +389,11 @@ made from a text console with the desktop logged out, so nothing is writing to
 2. **Commit and push the repository**, so the work in progress is safe
    whatever happens to either disk. If you haven't yet done the browser
    profile import ([BROWSER-MIGRATION.md](BROWSER-MIGRATION.md)), do it now:
-   it reads `/mnt/ubuntu-home`, which disappears with this step. Back up
-   `~/.ssh/id_ed25519_agenix` offline too: it is the master editing key for
-   the secrets, and it moves to this drive.
+   it reads `/mnt/ubuntu-home`, which disappears with this step.
+   `~/.ssh/id_ed25519_agenix`, the master editing key for the secrets, moves
+   to this drive; it is not copied offline. The recovery key on the KEYS
+   stick covers it, so check first that the stick key alone decrypts a
+   secret.
 3. **Unmount the old home and erase the drive:** in a `sudo -i` root shell,
    `umount /mnt/ubuntu-home`, then run the common steps 1 to 3 with
    `SERIAL=S1X1NYAG302936`, `NAME=crypthome`, `LABEL=NIXOS_HOME`. It stays

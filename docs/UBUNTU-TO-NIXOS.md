@@ -119,8 +119,8 @@ Still to do before erasing anything:
    NixOS generation rollback cannot restore a formatted Ubuntu filesystem. Keep
    a working live USB and the encryption recovery material.
 3. **The laptop's agenix key is checked** (2026-10-09; see
-   [Agenix and the laptop](#agenix-and-the-laptop)). It is the only key that
-   can open the devtower-intel secrets, and it is not in the backup.
+   [Agenix and the laptop](#agenix-and-the-laptop)). It was then the only key
+   that could open the devtower-intel secrets, and it is not in the backup.
 4. **Verify the target from the installer** with
    `lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,UUID,MOUNTPOINTS` and `blkid`.
    Disconnect non-target drives, BackupDrive included, during partitioning where
@@ -200,11 +200,13 @@ done
 ```
 
 - All 11 lines must say `ok`.
-- Then copy `~/.ssh/id_ed25519_agenix` to offline storage (and its passphrase,
-  if it has one).
-- Losing it would not lose the secrets themselves: their plaintext sources are
-  in the backup (and on the old Ubuntu home until that drive is encrypted). But
-  you would have to re-encrypt every one of them by hand.
+- The laptop keeps its own key; no offline copy of it is kept (the old one on
+  the KEYS stick was deleted on 2026-10-13). Offline recovery now uses the
+  agenix recovery key on the KEYS stick, which opens every secret
+  ([SECRETS.md](SECRETS.md#recovery-key-on-the-keys-stick)).
+- Losing the laptop key would not lose the secrets themselves: their plaintext
+  sources are in the backup (and on the old Ubuntu home until that drive is
+  encrypted). But you would have to re-encrypt every one of them by hand.
 
 **On install day:** follow the guide's section 8. In short:
 

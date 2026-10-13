@@ -23,13 +23,14 @@ let
   # Get public key: cat ~/.ssh/id_ed25519_agenix.pub
   # ============================================================================
   sam-laptop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDDdE+EkEkG7BtvLb5mDPC6bPbs0vzw1yq6xcfmv+hao sam@laptop-intel";
-  # Ubuntu dev PC (SamLinPC) — where this repo is edited. Deliberately NOT in
-  # allUsers: it is a recipient for the aws-config secret only, so the zero-trust
-  # model for GitHub keys, LUKS passphrases, VPN and the rest is unchanged.
-  sam-ubuntu = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHPskJivc4/qcwMb4XCNT4bK7GcIXeQn/rsya5IkKBvO sam-dev@SamLinPC";
   # devtower-intel editing key (passphrase-protected). The master editing key:
   # it is allUsers, so it opens every secret. Prep and edits happen here.
   sam-devtower-intel = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMpKt3D+3F9hRgxQ2SfCF8w/4imuzx1EvS0KpBptd4iw sam@devtower-intel";
+  # Recovery key on the KEYS USB stick (agenix/id_ed25519_recovery,
+  # passphrase-protected). Same authority as the master key, held offline: opens
+  # every secret if devtower-intel is lost, and bootstraps new devices. Use it
+  # from the stick with `-i`; never copy it onto a machine or into identityPaths.
+  sam-keys-recovery = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL85AfBRAEKSNgFe7cM0mmmG3w+e0S5mcEtIQy/P0fgG sam@keys-recovery";
 
   # ============================================================================
   # Host keys (machine SSH host keys - extracted after NixOS installation)
@@ -43,8 +44,9 @@ let
 
   # Key groups for easy management (only include keys with real values)
   # allUsers: editing keys that open EVERY secret (the master key lives on
-  # devtower-intel). allHosts: hosts that receive shared secrets (allKeys).
-  allUsers = [ sam-devtower-intel ];
+  # devtower-intel, the recovery key on the KEYS stick). allHosts: hosts that
+  # receive shared secrets (allKeys).
+  allUsers = [ sam-devtower-intel sam-keys-recovery ];
   allHosts = [ laptop-intel ];
   allKeys = allUsers ++ allHosts;
 
@@ -197,7 +199,7 @@ in
   # ~/.aws/sso/cache at login), but the account topology is not repo-public.
   # ============================================================================
 
-  "aws-config-laptop-intel.age".publicKeys = laptopIntelKeys ++ [ sam-ubuntu ];
+  "aws-config-laptop-intel.age".publicKeys = laptopIntelKeys;
   # "aws-config-framework.age".publicKeys = allUsers ++ [ framework ];
   # "aws-config-devtower.age".publicKeys = allUsers ++ [ devtower ];
   "aws-config-devtower-intel.age".publicKeys = devtowerIntelKeys;
