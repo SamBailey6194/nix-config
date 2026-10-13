@@ -6,7 +6,7 @@
 -- Dedicated floating rectangles make placement independent of launch order,
 -- cursor position and dwindle splits; they do not float across workspaces.
 -- The keybinds build a missing group, refill closed panes and gather strays.
--- Login also opens Yazi (ws3), aerc (ws4) and Teams (ws11); see login_apps.
+-- Login also opens Yazi (ws3), aerc (ws4) and Zen (ws12); see login_apps.
 local vars = require("00-vars")
 
 -- Margins: 10px sides and bottom, 50px top (40px bar plus margin), 8px
@@ -104,7 +104,7 @@ local login_apps = {
     { workspace = 3, command = "kitty --class yazi yazi" },
     { workspace = 4, command = "kitty --class aerc -e aerc" },
     { workspace = 4, command = "kitty --class aerc-keybinds -e less ~/.config/aerc/KEYBINDS.md" },
-    { workspace = 11, command = "teams-for-linux" },
+    { workspace = 12, command = "zen-beta" },
 }
 
 -- ws1 is on the right monitor and ws2 on the centre one, so both stay

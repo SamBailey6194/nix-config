@@ -29,7 +29,7 @@ confined to their workspace, with margins for the top bar; login leaves focus
 on workspace 2. `Super+Escape` focuses the dashboard and `Super+Shift+Escape`
 the terminal grid; each reopens missing panes without duplicating existing
 ones. Login also opens Yazi on workspace 3, aerc with its keybind sheet on 4
-and Teams on 11, silently, so focus stays on workspace 2. The desktop stage
+and Zen on 12, silently, so focus stays on workspace 2. The desktop stage
 gets the display/workspace rules without any of this autostart.
 
 After booting the NixOS desktop, run:

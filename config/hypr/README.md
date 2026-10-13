@@ -180,7 +180,7 @@ portrait), plus overflow workspaces from 41 up. laptop-intel is unaffected.
   focus the group, reopen closed panes and gather strays. The ws2 terminals
   run the login shell in `$HOME` under the classes `ws2-term-1` to `ws2-term-4`.
   The same login handler opens Yazi on ws3, aerc with its keybind sheet on ws4
-  and Teams on ws11, each with a per-launch `"<n> silent"` rule so focus stays
+  and Zen on ws12, each with a per-launch `"<n> silent"` rule so focus stays
   on ws2.
 - **Unassigned windows**: the catch-all parks them on the hidden
   `special:unassigned` workspace; a `window.open` handler then moves each to the

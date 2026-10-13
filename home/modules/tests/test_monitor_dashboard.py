@@ -173,14 +173,14 @@ class DashboardTests(unittest.TestCase):
                 ["kitty --class yazi yazi"] = "3 silent",
                 ["kitty --class aerc -e aerc"] = "4 silent",
                 ["kitty --class aerc-keybinds -e less ~/.config/aerc/KEYBINDS.md"] = "4 silent",
-                ["teams-for-linux"] = "11 silent",
+                ["zen-beta"] = "12 silent",
             }
             for cmd, ws in pairs(expected) do
                 assert(exec_rules[cmd] and exec_rules[cmd].workspace == ws, cmd)
             end
-            -- No Claws Mail or Zoom at login.
+            -- No Claws Mail, Teams or Zoom at login.
             for _, cmd in ipairs(launches) do
-                assert(not cmd:find("claws") and not cmd:find("zoom"), cmd)
+                assert(not cmd:find("claws") and not cmd:find("teams") and not cmd:find("zoom"), cmd)
             end
         ''')
 
