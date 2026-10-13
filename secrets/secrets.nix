@@ -230,7 +230,7 @@ in
   # If Nix and Docker retain separate LUKS containers, give each its own secret.
   # DavinciProj stays shared NTFS; it is not a Linux-only LUKS media container.
   "luks-passphrase-devtower-intel-os.age".publicKeys = devtowerIntelKeys;
-  # "luks-passphrase-devtower-intel-home.age".publicKeys = devtowerIntelKeys;    # Samsung 512 GB
+  "luks-passphrase-devtower-intel-home.age".publicKeys = devtowerIntelKeys;      # Samsung 512 GB
   # "luks-passphrase-devtower-intel-data.age".publicKeys = devtowerIntelKeys;    # Samsung 870 EVO: Nix/Docker
   # "luks-passphrase-devtower-intel-archive.age".publicKeys = devtowerIntelKeys; # Seagate archive
 

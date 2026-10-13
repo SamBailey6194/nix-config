@@ -20,7 +20,7 @@
   #   luksUuid = blkid -s UUID -o value <the drive's new LUKS partition>
   #   fsUuid   = blkid -s UUID -o value /dev/mapper/<crypthome|cryptstore|cryptarchive>
   dataDrives = {
-    home = { luksUuid = null; fsUuid = null; }; # Samsung 512GB S1X1NYAG302936
+    home = { luksUuid = "4ce3ec83-3913-41ab-96e1-ea2405157802"; fsUuid = "fef98229-e0df-444b-8143-9e3152ee8834"; }; # Samsung 512GB S1X1NYAG302936
     store = { luksUuid = null; fsUuid = null; }; # Samsung 870 EVO 2TB S6PPNX0T910090T
     # Superseded: the Seagate becomes a VeraCrypt mirror (docs/SHARED-DATA-DRIVES.md).
     archive = { luksUuid = null; fsUuid = null; }; # Seagate ST4000DM004 ZFN2J51Q
