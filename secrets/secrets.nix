@@ -232,7 +232,7 @@ in
   # DavinciProj stays shared NTFS; it is not a Linux-only LUKS media container.
   "luks-passphrase-devtower-intel-os.age".publicKeys = devtowerIntelKeys;
   "luks-passphrase-devtower-intel-home.age".publicKeys = devtowerIntelKeys;      # Samsung 512 GB
-  # "luks-passphrase-devtower-intel-store.age".publicKeys = devtowerIntelKeys;   # Samsung 870 EVO: Docker, VMs, client store
+  "luks-passphrase-devtower-intel-store.age".publicKeys = devtowerIntelKeys;     # Samsung 870 EVO: Docker, VMs, client store
   # "luks-passphrase-devtower-intel-archive.age".publicKeys = devtowerIntelKeys; # Seagate archive
 
   # ============================================================================
