@@ -148,13 +148,13 @@ sudo cryptsetup luksDump /dev/nvme0n1p2
 
 ```bash
 # Add new passphrase to slot 1
-sudo luks-manage add-passphrase /dev/nvme0n1p2 --slot 1
+sudo luks-manage add-passphrase /dev/disk/by-uuid/<luks-uuid> --slot 1
 
 # Remove key from slot 2
-sudo luks-manage remove-key /dev/nvme0n1p2 2
+sudo luks-manage remove-key /dev/disk/by-uuid/<luks-uuid> 2
 
 # Test if passphrase works
-sudo luks-manage test-unlock /dev/nvme0n1p2
+sudo luks-manage test-unlock /dev/disk/by-uuid/<luks-uuid>
 ```
 
 #### Backup LUKS Headers
@@ -383,19 +383,21 @@ sudo tpm-manage enrolled-devices
 #### Enroll TPM2 for Device
 
 ```bash
-# Enroll single drive (laptop-intel, framework)
-just enroll-tpm2 /dev/nvme0n1p2
+# Enroll single drive (laptop-intel, framework). Give the LUKS partition's
+# UUID (sudo blkid -s UUID -o value <partition>), never /dev/sdX or nvme
+# names, which change between boots and computers; the recipe refuses them.
+just enroll-tpm2 <luks-uuid>
 
 # DevTower: Enroll all three drives
-just enroll-tpm2 /dev/nvme1n1p2  # OS drive
-just enroll-tpm2 /dev/sdd1        # Home drive
-just enroll-tpm2 /dev/sdc1        # Media drive
+just enroll-tpm2 <os-luks-uuid>     # OS drive
+just enroll-tpm2 <home-luks-uuid>   # Home drive
+just enroll-tpm2 <media-luks-uuid>  # Media drive
 ```
 
 **PCR Banks**: By default, PCR 7 (Secure Boot state) is used. You can specify custom PCRs:
 
 ```bash
-sudo luks-manage enroll-tpm2 /dev/nvme0n1p2 --pcr "0+2+4+7"
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<luks-uuid> --pcr "0+2+4+7"
 ```
 
 Common PCR values:

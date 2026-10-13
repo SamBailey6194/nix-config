@@ -21,7 +21,7 @@ enum Commands {
 
     /// Enroll TPM2 for auto-unlock
     EnrollTpm2 {
-        /// Device to enroll (e.g., /dev/nvme0n1p2)
+        /// Device to enroll (e.g., /dev/disk/by-uuid/<luks-uuid>)
         device: PathBuf,
 
         /// PCR banks to bind to (comma-separated, default: 7)

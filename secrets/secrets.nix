@@ -221,9 +221,9 @@ in
   # "luks-passphrase-framework.age".publicKeys = allUsers ++ [ framework ];
 
   # DevTower LUKS passphrases (3 separate drives)
-  # "luks-passphrase-devtower-os.age".publicKeys = allUsers ++ [ devtower ];      # /dev/nvme1n1p2 (OS)
-  # "luks-passphrase-devtower-home.age".publicKeys = allUsers ++ [ devtower ];    # /dev/sdd1 (Home)
-  # "luks-passphrase-devtower-media.age".publicKeys = allUsers ++ [ devtower ];   # /dev/sdc1 (Media)
+  # "luks-passphrase-devtower-os.age".publicKeys = allUsers ++ [ devtower ];      # OS NVMe
+  # "luks-passphrase-devtower-home.age".publicKeys = allUsers ++ [ devtower ];    # Home SSD
+  # "luks-passphrase-devtower-media.age".publicKeys = allUsers ++ [ devtower ];   # Media drive
 
   # Intel desktop: separate recovery passphrases for each future LUKS container.
   # The OS and home containers are configured; the store entry is uncommented

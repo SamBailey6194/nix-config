@@ -56,55 +56,74 @@ check-keys:
 # Encryption Management
 # ============================================================================
 
-# Full TPM2 setup: verify hardware, show LUKS devices, enroll, and confirm
+# The LUKS recipes take DEVICE as the LUKS partition's UUID (blkid -s UUID -o
+# value <partition>) or its /dev/disk/by-uuid/ path, never a /dev/sdX or nvme
+# name, which can change between boots or when a disk moves to another
+# computer. This snippet checks $dev and turns it into the by-uuid path; the
+# recipe sets $recipe (for messages) and $dev first.
+luks_by_uuid := '''
+case "$dev" in
+  /dev/disk/by-uuid/*) ;;
+  /*) echo "$recipe: give a LUKS UUID or /dev/disk/by-uuid/<uuid>, not '$dev'" >&2; exit 1 ;;
+  *) dev="/dev/disk/by-uuid/$dev" ;;
+esac
+if [[ ! "${dev#/dev/disk/by-uuid/}" =~ ^[0-9A-Fa-f-]+$ ]]; then
+  echo "$recipe: '${dev#/dev/disk/by-uuid/}' is not a UUID" >&2; exit 1
+fi
+if [ ! -e "$dev" ]; then
+  echo "$recipe: $dev does not exist (blkid -s UUID -o value <partition>)" >&2; exit 1
+fi
+'''
+
+# Full TPM2 setup: verify hardware, show LUKS devices, enroll, and confirm (DEVICE: LUKS UUID)
 setup-tpm2 DEVICE:
-    @echo "=== Step 1: Verify TPM2 hardware ==="
+    #!/usr/bin/env bash
+    set -euo pipefail
+    recipe=setup-tpm2 dev={{quote(DEVICE)}}
+    {{luks_by_uuid}}
+    echo "=== Step 1: Verify TPM2 hardware ==="
     sudo tpm-manage verify
-    @echo ""
-    @echo "=== Step 2: Show LUKS devices ==="
+    echo ""
+    echo "=== Step 2: Show LUKS devices ==="
     sudo luks-manage status
-    @echo ""
-    @echo "=== Step 3: Enroll TPM2 for auto-unlock ==="
-    sudo luks-manage enroll-tpm2 {{DEVICE}}
-    @echo ""
-    @echo "=== Step 4: Verify enrolment ==="
+    echo ""
+    echo "=== Step 3: Enroll TPM2 for auto-unlock ==="
+    sudo luks-manage enroll-tpm2 "$dev"
+    echo ""
+    echo "=== Step 4: Verify enrolment ==="
     sudo tpm-manage enrolled-devices
 
 # Show LUKS device status
 luks-status:
     sudo luks-manage status
 
-# Enroll TPM2 for auto-unlock
+# Enroll TPM2 for auto-unlock (DEVICE: LUKS UUID or /dev/disk/by-uuid/<uuid>)
 enroll-tpm2 DEVICE:
-    sudo luks-manage enroll-tpm2 {{DEVICE}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    recipe=enroll-tpm2 dev={{quote(DEVICE)}}
+    {{luks_by_uuid}}
+    sudo luks-manage enroll-tpm2 "$dev"
 
 # Back up a LUKS header to /var/lib/luks-backups. That lives inside cryptroot,
 # so also keep an encrypted copy on USB (docs/BACKUP-AND-DATA-ENCRYPTION.md,
-# finishing step 5). DEVICE is the LUKS partition's UUID (blkid -s UUID -o
-# value <partition>) or its /dev/disk/by-uuid/ path, never a /dev/sdX or
-# nvme name, which can change between boots.
+# finishing step 5).
 #
 # Back up a LUKS header (DEVICE: LUKS UUID or /dev/disk/by-uuid/<uuid>)
 backup-luks-headers DEVICE:
     #!/usr/bin/env bash
     set -euo pipefail
-    dev={{quote(DEVICE)}}
-    case "$dev" in
-      /dev/disk/by-uuid/*) ;;
-      /*) echo "backup-luks-headers: give a LUKS UUID or /dev/disk/by-uuid/<uuid>, not '$dev'" >&2; exit 1 ;;
-      *) dev="/dev/disk/by-uuid/$dev" ;;
-    esac
-    if [[ ! "${dev#/dev/disk/by-uuid/}" =~ ^[0-9A-Fa-f-]+$ ]]; then
-      echo "backup-luks-headers: '${dev#/dev/disk/by-uuid/}' is not a UUID" >&2; exit 1
-    fi
-    if [ ! -e "$dev" ]; then
-      echo "backup-luks-headers: $dev does not exist (blkid -s UUID -o value <partition>)" >&2; exit 1
-    fi
+    recipe=backup-luks-headers dev={{quote(DEVICE)}}
+    {{luks_by_uuid}}
     sudo luks-manage backup-header "$dev"
 
-# Test LUKS passphrase
+# Test LUKS passphrase (DEVICE: LUKS UUID or /dev/disk/by-uuid/<uuid>)
 test-luks-passphrase DEVICE:
-    sudo luks-manage test-unlock {{DEVICE}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    recipe=test-luks-passphrase dev={{quote(DEVICE)}}
+    {{luks_by_uuid}}
+    sudo luks-manage test-unlock "$dev"
 
 # Show BTRFS filesystem usage
 btrfs-usage:

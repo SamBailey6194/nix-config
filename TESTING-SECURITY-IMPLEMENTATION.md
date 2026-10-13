@@ -112,7 +112,7 @@ After NixOS is installed with LUKS:
 sudo just luks-status
 
 # Test passphrase (will prompt for LUKS passphrase)
-sudo just test-luks-passphrase /dev/nvme0n1p2
+just test-luks-passphrase <luks-uuid>   # sudo blkid -s UUID -o value <partition>
 
 # Back up a LUKS header (LUKS UUID or /dev/disk/by-uuid/<uuid>, from
 # `sudo blkid -s UUID -o value <partition>`; the recipe runs sudo itself)
@@ -135,7 +135,7 @@ sudo just tpm-enrolled
 sudo just tpm-verify
 
 # Enroll TPM2 (ONLY after LUKS is set up)
-sudo just enroll-tpm2 /dev/nvme0n1p2
+just enroll-tpm2 <luks-uuid>
 ```
 
 ### Test 6: BTRFS Management
@@ -264,7 +264,7 @@ zramctl
 systemd-analyze
 
 # Enroll TPM2
-sudo luks-manage enroll-tpm2 /dev/nvme0n1p2
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<luks-uuid>
 
 # Reboot and measure again
 sudo reboot

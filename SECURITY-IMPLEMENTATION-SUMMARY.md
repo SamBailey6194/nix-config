@@ -138,9 +138,9 @@ Added encryption management tasks:
 ```bash
 # LUKS management
 just luks-status
-just enroll-tpm2 <device>
+just enroll-tpm2 <luks-uuid>          # or /dev/disk/by-uuid/<uuid>
 just backup-luks-headers <luks-uuid>   # or /dev/disk/by-uuid/<uuid>
-just test-luks-passphrase <device>
+just test-luks-passphrase <luks-uuid> # or /dev/disk/by-uuid/<uuid>
 
 # BTRFS management
 just btrfs-usage
@@ -316,12 +316,12 @@ After first boot:
 nix develop
 
 # Enroll TPM2 (laptop-intel, framework)
-sudo luks-manage enroll-tpm2 /dev/nvme0n1p2
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<luks-uuid>
 
 # DevTower: Enroll all three drives
-sudo luks-manage enroll-tpm2 /dev/nvme1n1p2  # OS
-sudo luks-manage enroll-tpm2 /dev/sdd1        # Home
-sudo luks-manage enroll-tpm2 /dev/sdc1        # Media
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<os-luks-uuid>     # OS
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<home-luks-uuid>   # Home
+sudo luks-manage enroll-tpm2 /dev/disk/by-uuid/<media-luks-uuid>  # Media
 
 # Verify enrollment
 tpm-manage enrolled-devices
@@ -399,8 +399,8 @@ All procedures documented in `docs/ENCRYPTION-GUIDE.md`:
 ### LUKS Verification
 ```bash
 sudo luks-manage status
-sudo luks-manage test-unlock /dev/nvme0n1p2
-sudo cryptsetup luksDump /dev/nvme0n1p2
+sudo luks-manage test-unlock /dev/disk/by-uuid/<luks-uuid>
+sudo cryptsetup luksDump /dev/disk/by-uuid/<luks-uuid>
 ```
 
 ### BTRFS Verification

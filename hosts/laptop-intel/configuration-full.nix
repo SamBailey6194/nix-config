@@ -174,7 +174,7 @@
   };
 
   # LUKS encryption with TPM2 auto-unlock
-  # After rebuilding, run: just enroll-tpm2 /dev/nvme0n1p2
+  # After rebuilding, run: just enroll-tpm2 <LUKS UUID from disks/hardware config>
   security.luksEncryption = {
     enable = true;
     devices.cryptroot = {
