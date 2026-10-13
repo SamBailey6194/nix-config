@@ -40,8 +40,15 @@
     thunar
     thunar-archive-plugin
 
-    # Image viewers
+    # Image viewer and video player (defaults for images and video, see
+    # xdg.mimeApps below). VLC stays in modules/software/media.nix for
+    # Open With.
     imv
+    mpv
+
+    # Audio player for listening (default for audio files, see xdg.mimeApps
+    # below). SoundCraft stays installed for editing.
+    amberol
 
     # PDF viewers
     zathura
@@ -222,6 +229,68 @@
       "application/xhtml+xml" = "zen-beta.desktop";
       "application/x-extension-xhtml" = "zen-beta.desktop";
       "application/x-extension-xht" = "zen-beta.desktop";
-    };
+    }
+    # Audio opens in Amberol, not whichever app lists the type (SoundCraft
+    # claims MP3, FLAC and WAV).
+    // lib.genAttrs [
+      "audio/mpeg"
+      "audio/mp3"
+      "audio/x-mp3"
+      "audio/flac"
+      "audio/x-flac"
+      "audio/wav"
+      "audio/x-wav"
+      "audio/vnd.wave"
+      "audio/aiff"
+      "audio/x-aiff"
+      "audio/ogg"
+      "audio/x-vorbis+ogg"
+      "audio/opus"
+      "audio/x-opus+ogg"
+      "audio/mp4"
+      "audio/x-m4a"
+      "audio/aac"
+      "audio/x-aac"
+      "audio/x-ape"
+      "audio/x-wavpack"
+    ] (_: "io.bassi.Amberol.desktop")
+    # imv-dir opens the file with the rest of its folder queued (arrow keys).
+    // lib.genAttrs [
+      "image/png"
+      "image/jpeg"
+      "image/jpg"
+      "image/pjpeg"
+      "image/gif"
+      "image/webp"
+      "image/avif"
+      "image/heif"
+      "image/jxl"
+      "image/bmp"
+      "image/x-bmp"
+      "image/tiff"
+      "image/svg+xml"
+      "image/qoi"
+    ] (_: "imv-dir.desktop")
+    // lib.genAttrs [
+      "video/mp4"
+      "video/x-m4v"
+      "video/x-matroska"
+      "video/mkv"
+      "video/webm"
+      "video/quicktime"
+      "video/x-msvideo"
+      "video/avi"
+      "video/vnd.avi"
+      "video/mpeg"
+      "video/ogg"
+      "video/x-flv"
+      "video/x-ms-wmv"
+      "video/mp2t"
+      "video/3gpp"
+    ] (_: "mpv.desktop");
+
+    # Amberol's .desktop also lists inode/directory; keep it from ever being
+    # picked to open folders.
+    associations.removed."inode/directory" = "io.bassi.Amberol.desktop";
   };
 }
