@@ -287,7 +287,7 @@ for the drive in hand.
 nix-shell -p cryptsetup parted btrfs-progs rsync age util-linux
 ls /dev/disk/by-id/*SERIAL                            # the whole-disk path (no -partN)
 read -r -p 'Whole-disk by-id path: ' DISK
-test "$(lsblk -dn -o SERIAL "$DISK" | tr -d ' ')" = SERIAL || exit 1
+test "$(udevadm info --query=property --property=ID_SERIAL_SHORT --value --name="$DISK")" = SERIAL || exit 1   # lsblk shows no serial for these SATA disks
 lsblk -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINTS "$DISK"
 test -z "$(lsblk -nro MOUNTPOINTS "$DISK" | tr -d '\n')" || exit 1   # nothing may be mounted
 read -r -p 'Type ERASE-SERIAL to continue: ' CONFIRM && test "$CONFIRM" = ERASE-SERIAL || exit 1

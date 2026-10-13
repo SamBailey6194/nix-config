@@ -189,7 +189,7 @@ The archive contents now exist only on the WD. Still in the root shell:
 ```sh
 umount /mnt/archive
 DISK=$(ls /dev/disk/by-id/ata-*ZFN2J51Q | grep -v -- -part)
-test "$(lsblk -dn -o SERIAL "$DISK" | tr -d ' ')" = ZFN2J51Q || exit 1
+test "$(udevadm info --query=property --property=ID_SERIAL_SHORT --value --name="$DISK")" = ZFN2J51Q || exit 1
 test -z "$(lsblk -nro MOUNTPOINTS "$DISK" | tr -d '\n')" || exit 1
 read -r -p 'Type ERASE-ZFN2J51Q to continue: ' CONFIRM && test "$CONFIRM" = ERASE-ZFN2J51Q || exit 1
 wipefs -a "$DISK"-part1 "$DISK"-part2              # old ext4 and the old Ubuntu ESP
