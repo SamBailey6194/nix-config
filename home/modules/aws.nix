@@ -29,7 +29,8 @@
 # Browser: `aws sso login` (and anything else in the CLI that opens a page)
 # goes through Python's webbrowser module, which honours $BROWSER. The CLI
 # below is wrapped to set it to Brave, so AWS logins always open there while
-# Zen stays the default everywhere else. Being a wrapper rather than a shell
+# Zen stays the default everywhere else (except devtower-intel, where Brave is
+# the default anyway). Being a wrapper rather than a shell
 # alias, it also applies in scripts, editor terminals and just recipes.
 # `--no-browser` still prints the URL instead. Brave's policy bypasses the
 # Squid proxy for localhost, so the login's localhost callback works.

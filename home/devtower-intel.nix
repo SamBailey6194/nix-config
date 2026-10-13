@@ -39,6 +39,24 @@ in
   home.file.".config/hypr/KEYBINDS.md".source =
     lib.mkForce ../config/hypr/KEYBINDS-devtower-intel.md;
 
+  # Zen is for streaming only on this PC (workspace 12), so links open in
+  # Brave instead. home/modules/browsers.nix and home/stages/desktop.nix both
+  # set Zen for these types and the lists merge, so each one is forced here.
+  xdg.mimeApps.defaultApplications = lib.genAttrs [
+    "text/html"
+    "x-scheme-handler/http"
+    "x-scheme-handler/https"
+    "x-scheme-handler/about"
+    "x-scheme-handler/unknown"
+    "application/x-extension-htm"
+    "application/x-extension-html"
+    "application/x-extension-shtml"
+    "application/xhtml+xml"
+    "application/x-extension-xhtml"
+    "application/x-extension-xht"
+  ] (_: lib.mkForce "brave-browser.desktop");
+  home.sessionVariables.BROWSER = lib.mkForce "brave";
+
   # Desktop: never dim, lock or blank on idle. hypridle keeps running for the
   # manual paths only - its lock_cmd serves SUPER+CTRL+L (loginctl
   # lock-session) and before_sleep_cmd still locks ahead of a manual suspend.
