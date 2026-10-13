@@ -123,29 +123,30 @@ NTFS inside, the WD as the working drive and the Seagate as a scheduled mirror
   `3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8`). NVMe numbering can swap with the
   Windows Crucial drive, so `/dev/nvme0n1p2` is not always the Intel disk.
 
-> **Configuration status (13 October 2026).** This page describes the target
-> design. The OS step and the home conversion work with the configuration as
-> it is (apart from uncommenting the `-home` secret, which is part of the home
-> procedure). The **store** conversion does not, yet: `data-drives.nix` still
-> mounts the 2TB as `/nix` (`mkForce`) and unlocks it in the initrd. These
-> changes must be merged **before converting the store**:
+> **Configuration status (13 October 2026).** The configuration for every
+> step on this page is merged; nothing more needs writing before converting
+> the store. It takes effect for the store once `dataDrives.store` is filled
+> in:
 >
-> - `data-drives.nix`: `@docker`, `@vm` and `@clients` mounts, an after-boot
->   `/etc/crypttab` unlock (`tpm2-device=auto,nofail`), `RequiresMountsFor` on
->   `docker.service` and `libvirtd`, and a oneshot that re-applies the quota
->   caps from `disks.nix` at each boot.
-> - `secrets/secrets.nix`: the `-data` entry renamed to
->   `luks-passphrase-devtower-intel-store.age`.
-> - `modules/core/nix-gc.nix`: keep the newest 5 system generations with no age
->   rule, and prune home-manager generations too (shared with laptop-intel).
-> - A weekly systemd timer that cleans up the client store: it deletes old
->   generations of each client profile, keeping every server's current one,
->   then garbage-collects that store only (see
+> - `data-drives.nix`: no `/nix` mount and no initrd unlock for the store. It
+>   unlocks after boot from `/etc/crypttab`
+>   (`tpm2-device=auto,nofail,discard`) and mounts `@docker`, `@vm` and
+>   `@clients` with `nofail`; `docker.service` and `libvirtd` have
+>   `RequiresMountsFor` on their directories, and `store-quotas.service`
+>   re-applies the caps from `storeQuotas` in `disks.nix` at each boot.
+> - `secrets/secrets.nix`: `luks-passphrase-devtower-intel-store.age` is
+>   declared but commented out until the store is converted (store step 7).
+> - `modules/core/nix-gc.nix`: keeps the newest 5 system generations with no
+>   age rule, and prunes every user's home-manager profile to the newest 5 too
+>   (shared with laptop-intel).
+> - `hosts/devtower-intel/client-store.nix`: the `client-store-guard` checks
+>   and the weekly `client-store-gc` service and timer (see
 >   [the client store](#client-servers-nix-store-clients)).
-> - `justfile`: `just deploy-client <name>` (records each server's profile
->   generation in the client store), and `backup-luks-headers` taking a
->   by-uuid device argument (today it hard-codes `/dev/nvme0n1p2`; use the
->   manual commands below until then).
+> - `justfile`: `just deploy-client <name> <host>`, and
+>   `just backup-luks-headers <DEVICE>`, which takes the LUKS UUID or its
+>   `/dev/disk/by-uuid/` path and refuses `/dev/sdX` or NVMe names. Its copy
+>   lands in `/var/lib/luks-backups` inside `cryptroot`, so the off-disk copy
+>   in finishing step 5 is still needed.
 
 **What TPM2 auto-unlock does and doesn't protect.** Every enrolment here binds
 to PCR 7 (Secure Boot state). Secure Boot is currently **off**, so PCR 7 reads
@@ -199,8 +200,8 @@ pick up the `disks.nix` edits:
    [SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#conversion). Its restore
    source is the old archive drive itself, so the old home copy on it moves
    with it.
-4. **Store** on the 2TB, from the running system, **after** the pending
-   configuration above is merged.
+4. **Store** on the 2TB, from the running system (its configuration is
+   merged; see the status note above).
 5. **Remote Docker from laptop-intel**, once the store is in place: a Docker
    context over SSH through a dedicated WireGuard link (see
    [Remote Docker](#remote-docker-from-laptop-intel-planned)).
@@ -259,8 +260,8 @@ recovery copy of its passphrase. Run it on the full stage (`.#devtower-intel`).
      configuration needs it any more: the GitHub keys come from agenix, and
      `home/modules/mcp-sync.py` falls back to the old `.claude.json` only if it
      exists.
-   - **Store** needs the pending configuration merged, and nothing else depends
-     on it: it isn't needed to boot.
+   - **Store** needs no live USB either: nothing else depends on it, and it
+     isn't needed to boot.
 
    Steps 3 to 6 below, and the common steps, are for the two LUKS drives. The
    4TB pair has its own procedure in
@@ -481,8 +482,8 @@ made from a text console with the desktop logged out, so nothing is writing to
 
 ### Store (Samsung 870 EVO 2TB): from the running system
 
-**Merge the pending configuration first** (see the status note above). Until
-then `data-drives.nix` would mount this drive as `/nix`.
+The configuration is merged (see the status note above). The system `/nix`
+stays on the OS drive; nothing on this drive is mounted as `/nix`.
 
 The 2TB (1.82TiB, about 1,863GiB usable) becomes **one** GPT partition with
 **one** LUKS2 container, `cryptstore`, labelled `NIXOS_STORE`. Inside is one
@@ -497,14 +498,29 @@ btrfs filesystem with three subvolumes, each capped by a btrfs simple quota:
 
 One container rather than three partitions means one passphrase, one TPM2
 enrolment, one escrow secret and one header backup, and the caps can be
-changed while running. The caps live in `hosts/devtower-intel/disks.nix`; a
-oneshot re-applies them at each boot, so changing one is a single number and a
-rebuild.
+changed while running. The caps live in `storeQuotas` in
+`hosts/devtower-intel/disks.nix`; `store-quotas.service`, a oneshot, re-applies
+them at each boot (before Docker and libvirtd), so changing one is a single
+number and a rebuild. It fails, rather than setting limits, if a path isn't on
+a filesystem with simple quotas enabled.
 
 The store isn't needed to boot. It unlocks after boot from `/etc/crypttab`
-with `tpm2-device=auto,nofail`, like the archive pattern, and `docker.service`
-and `libvirtd` have `RequiresMountsFor` on their directories, so they never
-start against an empty directory on the root drive. Docker keeps the
+with `tpm2-device=auto,nofail,discard`, like the archive pattern, and its
+three mounts are plain `nofail` mounts (not automounts).
+`store-quotas.service`, `docker.service` and `libvirtd` have
+`RequiresMountsFor` on their directories, so if the store isn't there they
+fail rather than start against an empty directory on the root drive.
+
+If the TPM2 unlock fails, the passphrase prompt can't be seen once the login
+screen is up. Unlock it from a terminal, then start the units that pull the
+three mounts in:
+
+```sh
+sudo systemd-tty-ask-password-agent --query
+sudo systemctl start store-quotas.service docker.service libvirtd.service
+```
+
+Docker keeps the
 `overlay2` storage driver: the `btrfs` driver would make each layer its own
 subvolume, outside the `@docker` cap.
 
@@ -560,12 +576,12 @@ configuration.
    exit; exit                                        # leave nix-shell, then the root shell
    ```
 
-7. **Create the escrow secret** `luks-passphrase-devtower-intel-store.age`
-   (the renamed `-data` entry) with
-   `just edit-secret luks-passphrase-devtower-intel-store`, and check it as in
-   OS step 3.
+7. **Create the escrow secret:** uncomment the
+   `luks-passphrase-devtower-intel-store.age` entry in `secrets/secrets.nix`,
+   then run `just edit-secret luks-passphrase-devtower-intel-store` and check
+   it against `/dev/disk/by-uuid/<store luksUuid>` as in OS step 3.
 8. **Switch the configuration over:** as `sam-desktop`, fill in
-   `dataDrives.store`, commit, and run
+   `dataDrives.store`, commit it with the secret, and run
    `just rebuild-host devtower-intel --boot`. Don't restart Docker; reboot.
 9. **Check the result.** No prompt at boot or after. Then:
 
@@ -573,7 +589,7 @@ configuration.
    findmnt /var/lib/docker /var/lib/libvirt/images /srv/clients   # all /dev/mapper/cryptstore[/@...]
    sudo btrfs qgroup show -re /var/lib/docker                    # three limits, usage counted
    lsattr -d /var/lib/libvirt/images                             # shows C
-   systemctl status docker.service libvirtd.service
+   systemctl status store-quotas.service docker.service libvirtd.service
    ```
 
 10. **Finish:** finishing steps 4 and 5 (push, header backup with
@@ -598,72 +614,106 @@ the system store on the NVMe instead, where the weekly GC removes it.
 `nixos-rebuild` has no `--store` option, and `--store-path` copies from the
 host `/nix`, so it can't deploy from this store.
 
-**Deploying (`just deploy-client <name>`, planned).** Each server has a profile
-in the client store, `/srv/clients/nix-root/nix/var/nix/profiles/clients/<name>`.
-The garbage collector treats every profile there as a root. Always give the
-profile by its physical path (under `/srv/clients/nix-root`), never as
-`/nix/var/nix/profiles/...`, which is the host's own profile directory. The
-recipe switches the profile only after the build has succeeded and the server
-has activated the new system, so a deploy that fails part-way leaves the
-previous generation current. Before building, the recipe makes the same
-realpath, `findmnt` and marker checks as the weekly clean-up below (not the
-`nix/var/nix/db` check, as the first deploy creates the store), so it never
-builds onto the root filesystem when `@clients` isn't mounted, and it holds
-the shared lock from the build to the profile switch:
+This is implemented in `hosts/devtower-intel/client-store.nix` (imported by
+the full stage) and the `deploy-client` recipe in the `justfile`. Neither does
+anything until `dataDrives.store` is filled in.
 
-1. Build with a pending GC root, so a clean-up during the deploy can't collect
-   the result:
+**Deploying.** From the repository, as `sam-desktop` (the owner of
+`nix-root`), never with `sudo`:
+
+```sh
+just deploy-client <name> <host> [--key FILE | --no-check-sigs]
+```
+
+`<name>` is both `nixosConfigurations.<name>` and the server's profile in the
+client store; `<host>` is whatever `ssh root@<host>` reaches. Each server's
+profile is `/srv/clients/nix-root/nix/var/nix/profiles/clients/<name>`, and
+the garbage collector treats every profile there as a root. The recipe always
+gives it by its physical path (under `/srv/clients/nix-root`), never as
+`/nix/var/nix/profiles/...`, which is the host's own profile directory.
+
+Locally built paths are unsigned, so the server refuses them unless they are
+signed with a key it trusts (public key in the clients'
+`trusted-public-keys`, which suits the zero-trust model). The recipe signs
+with `--key FILE`, or by default with `~/.config/nix/client-store-signing.key`;
+if that doesn't exist it stops before building. `--no-check-sigs` copies
+unsigned instead, which the server accepts only because the copy runs as
+root there. The two options can't be combined.
+
+Before building, the recipe runs `client-store-guard --no-db` (the same
+realpath, `findmnt` and marker checks as the weekly clean-up below, without
+the `nix/var/nix/db` check, as the first deploy creates the store), so it
+never builds onto the root filesystem when `@clients` isn't mounted. It
+creates the shared lock `/srv/clients/.client-store.lock` if it is missing
+(with `sudo`, owned by `sam-desktop`, mode 0644, as `@clients`' top level
+belongs to root) and holds it from the build to the profile switch, waiting
+if a clean-up has it. Then:
+
+1. It builds with a pending GC root, so a clean-up can't collect the result:
 
    ```sh
    S=/srv/clients/nix-root
-   mkdir -p $S/nix/var/nix/gcroots/clients-pending $S/nix/var/nix/profiles/clients
    nix build --store $S --out-link $S/nix/var/nix/gcroots/clients-pending/<name> \
      .#nixosConfigurations.<name>.config.system.build.toplevel
    ```
 
-2. Copy it to the server and activate it there:
+2. It signs (unless `--no-check-sigs`), copies to the server and activates
+   there:
 
    ```sh
    P=$(readlink $S/nix/var/nix/gcroots/clients-pending/<name>)
+   nix store sign --store $S -k <key> -r "$P"
    nix copy --from $S --to ssh://root@<host> "$P"
    ssh root@<host> nix-env -p /nix/var/nix/profiles/system --set "$P"
-   ssh root@<host> "$P"/bin/switch-to-configuration switch
+   ssh root@<host> systemd-run ... "$P"/bin/switch-to-configuration switch
    ```
 
-   Locally built paths are unsigned, so the server refuses them unless they
-   are signed with a key it trusts (`nix store sign --store $S -k <key> -r "$P"`,
-   with the public key in the clients' `trusted-public-keys`, which suits the
-   zero-trust model) or the copy uses `--no-check-sigs` as a trusted user
-   such as root.
-3. Only on success, record the generation and drop the pending root:
+   Activation runs on the server under `systemd-run` (unit
+   `deploy-client-switch-to-configuration`), as `nixos-rebuild` does, so a
+   dropped SSH connection (activation may restart networking, the firewall
+   or `sshd`) doesn't kill it part-way. Without `systemd-run` on the server
+   it runs `switch-to-configuration` directly.
+3. Only on success, it records the generation and drops the pending root:
 
    ```sh
    nix-env --store $S -p $S/nix/var/nix/profiles/clients/<name> --set "$P"
    rm $S/nix/var/nix/gcroots/clients-pending/<name>
    ```
 
-If you ever use `nix build --profile` instead, add `--no-link`: otherwise it
-also writes `./result` links and registers them as GC roots.
+A deploy that fails part-way leaves the **client-store profile** on the
+previous generation; the server itself may already have switched to the new
+system (its system profile is set before activation). The pending root keeps
+the new build until the next deploy of that server replaces it.
+
+If you ever use `nix build --profile` by hand instead, add `--no-link`:
+otherwise it also writes `./result` links and registers them as GC roots.
 
 **Rollback lives on each server.** The server's own
 `/nix/var/nix/profiles/system` keeps its generations and boot entries, so
 rolling a server back happens on the server. The client store only keeps what
 is needed to deploy each server's current system.
 
-**Weekly clean-up.** A weekly systemd timer (`Persistent=true`), running as
-the account that owns `nix-root`, keeps each server's current generation and
-removes the rest. It refuses unless all of these hold:
+**The guard.** `client-store-guard` (on the system path) holds every safety
+check in one place, so the clean-up and `deploy-client` never drift apart. It
+refuses unless all of these hold:
 
-- `realpath -e /srv/clients/nix-root` is not `/`, `/nix` or anything under
-  `/nix/`;
+- `realpath -e /srv/clients/nix-root` exists and is not `/`, `/nix` or
+  anything under `/nix/`;
 - `findmnt -no SOURCE /srv/clients` is `/dev/mapper/cryptstore[/@clients]`;
 - the marker `/srv/clients/.client-store` exists;
 - `/srv/clients/nix-root/nix/var/nix/db` exists (`--store` on a missing
-  directory silently creates a new, empty store).
+  directory silently creates a new, empty store); `--no-db` skips only this.
 
-It then takes the shared lock `/srv/clients/.client-store.lock` (`flock`, also
-held by `deploy-client` from the build to the profile switch) and runs, always
-with an explicit `--store`:
+**Weekly clean-up.** `client-store-gc.service`, started weekly by its timer
+(`Persistent=true`, so a missed run catches up), keeps each server's current
+generation and removes the rest. It has `RequiresMountsFor=/srv/clients`, so
+a catch-up run at boot waits for the store to unlock. Its `ExecStartPre` runs
+as root: it runs the guard, then creates `/srv/clients/.client-store.lock` if
+it is missing (owned by `sam-desktop`, group `users`, mode 0644), never on the
+root filesystem because the guard has passed. The main step runs as
+`sam-desktop` at low CPU and I/O priority: the guard again, then the shared
+lock (`flock`, also held by `deploy-client` from the build to the profile
+switch), then, always with an explicit `--store`:
 
 ```sh
 for p in "$S"/nix/var/nix/profiles/clients/*; do
@@ -691,9 +741,10 @@ NixOS VMs don't use this: each keeps its own store inside its disk image in
 
 #### Generations and garbage collection
 
-The pending `modules/core/nix-gc.nix` change (shared with laptop-intel) keeps
-the newest 5 system generations, matching the 5-entry boot menu, with no age
-rule, and prunes home-manager generations too. The weekly GC still removes
+`modules/core/nix-gc.nix` (shared with laptop-intel) keeps the newest 5
+system generations, matching the 5-entry boot menu, with no age rule, and
+prunes every user's home-manager profile to the newest 5 too, as that profile's
+owner. The weekly GC still removes
 anything without a GC root, which is why client builds that do land in the
 system store don't accumulate.
 

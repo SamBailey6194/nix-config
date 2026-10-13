@@ -139,7 +139,7 @@ Added encryption management tasks:
 # LUKS management
 just luks-status
 just enroll-tpm2 <device>
-just backup-luks-headers
+just backup-luks-headers <luks-uuid>   # or /dev/disk/by-uuid/<uuid>
 just test-luks-passphrase <device>
 
 # BTRFS management

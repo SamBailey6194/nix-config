@@ -284,10 +284,10 @@ time.**
   ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
 
 `hosts/devtower-intel/data-drives.nix` switches the home drive over as soon as
-its two new UUIDs are filled in. The store drive's configuration is still
-pending: today the file mounts the 870 EVO as `/nix` and unlocks it in the
-initrd, so the new mounts, after-boot unlock and quota caps must be merged
-before that drive is converted. The step-by-step procedure (order: OS drive
+its two new UUIDs are filled in, and the store drive the same way: its
+configuration (the `@docker`, `@vm` and `@clients` mounts, the after-boot
+unlock and the quota caps) is merged, and the system `/nix` stays on the OS
+drive. The step-by-step procedure (order: OS drive
 TPM2 and escrow secret, home, the 4TB pair, store) is in
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time).
 In-place conversion is not used. Remote Docker from the laptop comes after the

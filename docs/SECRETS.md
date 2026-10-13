@@ -243,8 +243,8 @@ escrow secret:
 | Secret | Container | Status |
 |--------|-----------|--------|
 | `luks-passphrase-devtower-intel-os.age` | `cryptroot`, Intel NVMe | declared |
-| `luks-passphrase-devtower-intel-home.age` | `crypthome`, Samsung 512GB | uncomment when converting the home drive |
-| `luks-passphrase-devtower-intel-store.age` | `cryptstore`, Samsung 870 EVO | pending: renamed from the commented `-data` entry |
+| `luks-passphrase-devtower-intel-home.age` | `crypthome`, Samsung 512GB | declared |
+| `luks-passphrase-devtower-intel-store.age` | `cryptstore`, Samsung 870 EVO | commented out until the store is converted (uncommented in [store step 7](BACKUP-AND-DATA-ENCRYPTION.md#store-samsung-870-evo-2tb-from-the-running-system)) |
 
 - **Recovery copies only.** agenix decrypts at activation, after root is
   mounted, with a host key that lives on the encrypted disk, so it can never

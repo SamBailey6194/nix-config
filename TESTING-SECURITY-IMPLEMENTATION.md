@@ -114,8 +114,9 @@ sudo just luks-status
 # Test passphrase (will prompt for LUKS passphrase)
 sudo just test-luks-passphrase /dev/nvme0n1p2
 
-# Backup LUKS headers
-sudo just backup-luks-headers
+# Back up a LUKS header (LUKS UUID or /dev/disk/by-uuid/<uuid>, from
+# `sudo blkid -s UUID -o value <partition>`; the recipe runs sudo itself)
+just backup-luks-headers <luks-uuid>
 
 # View backup
 ls -lh /var/lib/luks-backups/

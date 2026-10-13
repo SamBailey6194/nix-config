@@ -10,47 +10,51 @@ three capped btrfs subvolumes: `@docker` (`/var/lib/docker`, 950 GiB), `@vm`
 leaving about 60 GiB unallocated (see the store section of
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time)).
 
-**Config status:** this is the target design. The configuration for it (the
-three mounts, unlock after boot, quota caps, the generation rule and the client
-store clean-up below) is still pending and must be merged before the 870 EVO is
-converted. Today `data-drives.nix` still mounts it as `/nix`.
+**Config status:** the configuration for this (the three mounts, unlock after
+boot from `/etc/crypttab`, the quota caps re-applied at each boot by
+`store-quotas.service`, the generation rule and the client store below) is
+written. It takes effect for the 870 EVO once `dataDrives.store` in
+`hosts/devtower-intel/disks.nix` is filled in; nothing on it is mounted as
+`/nix`.
 
 ## Nix and Cargo
 
 `hosts/devtower-intel/disk-prevention.nix` enables low-space GC below 5 GiB,
 aiming for 15 GiB free. It disables `keep-derivations` and `keep-outputs`.
-The shared weekly `nix-gc-custom` retains the three newest system generations
-and other system generations up to 90 days old. Its timer now catches up after
-downtime, and now applies to every devtower-intel stage. Existing GC roots,
-including the Ubuntu `tidy-2026-10-06` pins, remain
+The shared weekly `nix-gc-custom` (`modules/core/nix-gc.nix`, devtower-intel
+and laptop-intel) keeps the newest 5 system generations, matching the 5-entry
+boot menu, with no age rule, and prunes every user's home-manager profile to
+the newest 5 as well; then it removes anything without a GC root. Its timer
+catches up after downtime, and it applies to every devtower-intel stage.
+Existing GC roots, including the Ubuntu `tidy-2026-10-06` pins, remain
 protected; this configuration does not release them.
 
-**Planned (shared `modules/core/nix-gc.nix`, devtower-intel and laptop-intel):**
-keep the newest 5 system generations, matching the 5-entry boot menu, with no
-age rule, and prune home-manager generations too. The weekly GC still removes
-anything without a GC root.
+**Client servers:** client systems are built into a separate Nix store,
+`/srv/clients/nix-root`, a plain directory in `@clients` and so inside its
+400 GiB cap (`hosts/devtower-intel/client-store.nix` and the `justfile`).
+`just deploy-client <name> <host> [--key FILE | --no-check-sigs]` builds there
+(`nix build --store /srv/clients/nix-root`, still using the binary cache) with
+a pending GC root, signs the result (default key
+`~/.config/nix/client-store-signing.key`), copies it to the server with
+`nix copy --from` and activates it there under `systemd-run`. Only after
+activation succeeds does it record the system as the new generation of the
+profile `nix/var/nix/profiles/clients/<name>` inside that store, so a failed
+deploy leaves that profile on the previous generation (the server itself may
+already have switched). Rollback generations live on each server itself.
 
-**Client servers (planned):** client systems are built into a separate Nix
-store, `/srv/clients/nix-root`, a plain directory in `@clients` and so inside
-its 400 GiB cap. `just deploy-client <name>` builds there
-(`nix build --store /srv/clients/nix-root`, still using the binary cache),
-copies the result to the server with `nix copy --from` and activates it. Only
-after the build and activation succeed does it record the system as the new
-generation of the profile `nix/var/nix/profiles/clients/<name>` inside that
-store, so a failed deploy leaves the previous generation current. Rollback
-generations live on each server itself.
-
-A weekly timer (`Persistent=true`) keeps every server's current generation:
-it deletes the older generations of each client profile
+The weekly `client-store-gc` timer (`Persistent=true`) keeps every server's
+current generation: it deletes the older generations of each client profile
 (`nix profile wipe-history --store /srv/clients/nix-root`), then
 garbage-collects that store only
-(`nix store gc --store /srv/clients/nix-root`). It refuses if the store's
-realpath is `/`, `/nix` or under `/nix/`, if `/srv/clients` is not mounted from
+(`nix store gc --store /srv/clients/nix-root`). Both it and `deploy-client`
+first run `client-store-guard`, which refuses if the store's realpath is `/`,
+`/nix` or under `/nix/`, if `/srv/clients` is not mounted from
 `/dev/mapper/cryptstore` (`@clients`), if the marker `/srv/clients/.client-store`
-is missing, or if the store's `nix/var/nix/db` doesn't exist. It shares a lock
-with `deploy-client` and never touches the system `/nix`. A plain
-`nixos-rebuild --target-host` would build into the system store on the NVMe
-instead, where the weekly GC removes it. Details are in
+is missing, or (clean-up only) if the store's `nix/var/nix/db` doesn't exist.
+It shares the lock `/srv/clients/.client-store.lock` with `deploy-client` and
+never touches the system `/nix`. A plain `nixos-rebuild --target-host` would
+build into the system store on the NVMe instead, where the weekly GC removes
+it. Details are in
 [BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#client-servers-nix-store-clients).
 
 The devtower-intel user environment and this repository's development shell

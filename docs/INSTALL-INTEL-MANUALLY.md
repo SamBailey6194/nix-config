@@ -519,8 +519,8 @@ backups and transcripts. Once this PC works, rotate those keys and update the
 agenix secrets on the laptop.
 
 **Next:** add TPM2 unlock and an escrow secret to the OS drive, then encrypt
-the data drives one at a time: home, then the two 4TB drives, then store
-(after its pending configuration is merged). Home and store get their own
+the data drives one at a time: home, then the two 4TB drives, then store.
+Home and store get their own
 LUKS2 passphrase and a TPM2 token
 ([BACKUP-AND-DATA-ENCRYPTION.md](BACKUP-AND-DATA-ENCRYPTION.md#encrypt-one-drive-at-a-time));
 the 4TB pair becomes VeraCrypt so Windows can read it

@@ -1,7 +1,7 @@
 # Handover: devtower-intel storage work
 
-**Written**: 13/10/2026, 00:30. Resume the same morning.
-**Branch**: `main`, pushed and clean at `4f4e318` (this file is not committed).
+**Updated**: 13/10/2026, after the home move and the store config.
+**Branch**: `main`; see `git log` for the latest commit.
 
 ## Where things stand
 
@@ -26,16 +26,17 @@ has been run on these commits yet.**
 - **OS drive** (Intel NVMe 256GB, `cryptroot`): keeps `/`, the system `/nix`
   and all generations, `/var/log`, `/.snapshots`.
 - **Home** (Samsung 512GB, serial `S1X1NYAG302936`; `sde` on 13/10, not `sdd`): LUKS2 `crypthome`, `@home` at `/home`.
-- **Store** (sda, 870 EVO 2TB = 1,863 GiB): one partition, one LUKS2
-  container `cryptstore`, three btrfs subvolumes with simple-quota caps,
-  unlocked after boot (crypttab, `nofail`), not needed to boot:
+- **Store** (870 EVO 2TB = 1,863 GiB, serial `S6PPNX0T910090T`): one
+  partition, one LUKS2 container `cryptstore`, three btrfs subvolumes with
+  simple-quota caps, unlocked after boot (crypttab, `nofail`), not needed to
+  boot:
   - `@docker` -> `/var/lib/docker`, 950 GiB
   - `@vm` -> `/var/lib/libvirt/images`, 450 GiB (`chattr +C`)
   - `@clients` -> `/srv/clients`, 400 GiB; `~60 GiB` left free
 - **Client servers**: separate Nix store at `/srv/clients/nix-root` (plain
-  directory in `@clients`). `just deploy-client <name>` records each server's
-  current generation; the weekly job deletes only **old** generations, then
-  GCs that store. Never touches the system `/nix`.
+  directory in `@clients`). `just deploy-client <name> <host>` records each
+  server's current generation; the weekly job deletes only **old**
+  generations, then GCs that store. Never touches the system `/nix`.
 - **Generations**: keep the newest 5 system generations (no 90-day rule), also
   prune home-manager generations. Shared `nix-gc.nix`, so laptop-intel too.
 - **4TB pair**: VeraCrypt mirror as in `docs/SHARED-DATA-DRIVES.md`, not RAID1.
@@ -66,31 +67,53 @@ has been run on these commits yet.**
 3. **Master key backup**: done via the KEYS recovery key instead of a copy.
    All 12 devtower-intel secrets rekeyed for it (host key), and the stick key
    alone decrypted `luks-passphrase-devtower-intel-os.age`.
-4. **Home drive (Samsung 512GB, by serial)**: same doc, Home section. Copy the Ubuntu home somewhere
-   other than the Seagate first.
-5. **Write the pending config** (below) and rebuild, before any sda work.
+4. **Home drive (Samsung 512GB, by serial)**: done (`fe9f33a`). `/home` is
+   `crypthome[/@home]` on the Samsung, TPM2 unlock at boot on 13/10 11:34,
+   `-home.age` escrow committed, dead Ubuntu boot entry (`Boot0006`)
+   removed. Skipped on purpose: selective Ubuntu file restore (home step 9)
+   and the `crypthome` header backup (home step 10). Left for later: delete
+   the Intel `@home` after pruning old generations (home step 12).
+5. **Pending config** (below): written, not yet rebuilt or committed. Run
+   `just check`, rebuild and commit it before any store-drive work.
 6. **4TB pair**: `docs/SHARED-DATA-DRIVES.md`, Conversion.
-7. **Store drive (sda)**: same backup doc, Store section. Copy out anything
-   wanted from `/mnt/ubuntu-nix` and `/mnt/ubuntu-docker` first (no usable
-   backup exists).
+7. **Store drive (870 EVO 2TB, serial `S6PPNX0T910090T`; `sdc` on 13/10,
+   not `sda`, which is now a 931.5G Windows-style disk)**: same backup doc,
+   Store section. Copy out anything wanted from `/mnt/ubuntu-nix` and
+   `/mnt/ubuntu-docker` first (no usable backup exists).
 8. **Remote access**: `wg-lan`, sshd hardening, Samba, Docker context.
 
-## Pending config changes (none written yet)
+## Pending config changes (written, not yet rebuilt or committed)
 
-- `hosts/devtower-intel/data-drives.nix`: drop the `/nix` mkForce for the
-  store drive; mount `@docker`, `@vm`, `@clients`; crypttab after-boot unlock
-  with `tpm2-device=auto,nofail`; `RequiresMountsFor` on docker and libvirtd.
-- `hosts/devtower-intel/disks.nix`: the three quota caps, plus a boot-time
-  oneshot that applies them.
-- `secrets/secrets.nix`: uncomment `-home`; rename `-data` to `-store`; fix
-  the "fallback" comments (escrow only).
-- `modules/core/nix-gc.nix`: keep newest 5, no age rule, home-manager too.
-- `justfile`: `deploy-client <name>` (guards, shared `flock`, build with
-  `--no-link`, sign, `nix copy --from`, activate, then set the client
-  profile); `backup-luks-headers` takes a by-uuid device.
-- Weekly client-store clean-up: systemd service + timer (`Persistent=true`).
-- `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/Business/"` ->
+All in the working tree; none of it has been through `just check` or a
+rebuild yet. The store parts take effect only once `dataDrives.store` is
+filled in.
+
+- Done: `hosts/devtower-intel/data-drives.nix`: no `/nix` mount and no initrd
+  unlock for the store; crypttab after-boot unlock
+  (`tpm2-device=auto,nofail,discard`); `nofail` mounts for `@docker`, `@vm`,
+  `@clients`; `RequiresMountsFor` on docker and libvirtd; the
+  `store-quotas.service` oneshot that re-applies the caps at boot.
+- Done: `hosts/devtower-intel/disks.nix`: the three caps (`storeQuotas`).
+- Done: `secrets/secrets.nix`: `-data` renamed to `-store` (still commented
+  out until store step 7); the "fallback" comments now say escrow only.
+- Done: `modules/core/nix-gc.nix`: keep newest 5 system generations, no age
+  rule, every user's home-manager profile pruned to 5 too.
+- Done: `justfile`: `deploy-client NAME HOST [--key FILE | --no-check-sigs]`
+  (`client-store-guard --no-db`, shared `flock`, build with `--out-link` to a
+  pending GC root, sign with `~/.config/nix/client-store-signing.key` by
+  default, `nix copy --from`, activate on the server under `systemd-run`, then
+  set the client profile and drop the pending root); `backup-luks-headers
+  DEVICE` takes a LUKS UUID or `/dev/disk/by-uuid/` path.
+- Done: `hosts/devtower-intel/client-store.nix` (new, imported by
+  `full.nix`): `client-store-guard`, and the weekly `client-store-gc`
+  service + timer (`Persistent=true`).
+- Done: comments in `hardware-configuration.nix` and `disk-prevention.nix`:
+  `/nix` stays on the OS drive.
+- Done: `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/Business/"` ->
   `~/.gitconfig-syntek`.
+- Done: `config/hypr/60-keybinds.lua`: SUPER + = / SUPER + - raise and lower
+  the volume by 5% (repeat while held), a keyboard fallback for the
+  SteelSeries volume roller; listed in both `KEYBINDS` files.
 - Later: `wg-lan` module and agenix keys, Mullvad bypass, sshd key-only on
   `wg-lan`, Samba, Docker published ports bound to 127.0.0.1 / tunnel IP.
 

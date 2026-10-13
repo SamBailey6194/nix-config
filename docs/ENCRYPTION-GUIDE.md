@@ -162,13 +162,16 @@ sudo luks-manage test-unlock /dev/nvme0n1p2
 **CRITICAL**: Always backup LUKS headers before making changes!
 
 ```bash
-# Backup all LUKS headers
-just backup-luks-headers
+# Back up one LUKS header: give its LUKS UUID or /dev/disk/by-uuid/ path,
+# never /dev/sdX or nvme names (they can change between boots)
+just backup-luks-headers <luks-uuid>      # sudo blkid -s UUID -o value <partition>
+just backup-luks-headers /dev/disk/by-uuid/<luks-uuid>
 
 # Manual backup to specific location
 sudo luks-manage backup-header /dev/nvme0n1p2 --output /backup/location
 
-# Backups stored at: /var/lib/luks-backups/
+# Backups stored at: /var/lib/luks-backups/ (inside the root LUKS container,
+# so also keep an encrypted copy on USB)
 # Format: <device>-header-<timestamp>.img
 ```
 
