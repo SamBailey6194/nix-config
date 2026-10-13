@@ -25,7 +25,7 @@ has been run on these commits yet.**
 
 - **OS drive** (Intel NVMe 256GB, `cryptroot`): keeps `/`, the system `/nix`
   and all generations, `/var/log`, `/.snapshots`.
-- **Home** (sdd, Samsung 512GB): LUKS2 `crypthome`, `@home` at `/home`.
+- **Home** (Samsung 512GB, serial `S1X1NYAG302936`; `sde` on 13/10, not `sdd`): LUKS2 `crypthome`, `@home` at `/home`.
 - **Store** (sda, 870 EVO 2TB = 1,863 GiB): one partition, one LUKS2
   container `cryptstore`, three btrfs subvolumes with simple-quota caps,
   unlocked after boot (crypttab, `nofail`), not needed to boot:
@@ -66,7 +66,7 @@ has been run on these commits yet.**
 3. **Master key backup**: done via the KEYS recovery key instead of a copy.
    All 12 devtower-intel secrets rekeyed for it (host key), and the stick key
    alone decrypted `luks-passphrase-devtower-intel-os.age`.
-4. **Home drive (sdd)**: same doc, Home section. Copy the Ubuntu home somewhere
+4. **Home drive (Samsung 512GB, by serial)**: same doc, Home section. Copy the Ubuntu home somewhere
    other than the Seagate first.
 5. **Write the pending config** (below) and rebuild, before any sda work.
 6. **4TB pair**: `docs/SHARED-DATA-DRIVES.md`, Conversion.

@@ -116,7 +116,8 @@ NTFS inside, the WD as the working drive and the Seagate as a scheduled mirror
   stays mounted exactly as before. Filling in only one of the two UUIDs fails
   the build.
 - **The old drive ESP goes too:** the Samsung home drive carries an old Ubuntu
-  ESP (the 1GB second partition, `sdd2` today). The whole drive is erased, and
+  ESP (the 1GB second partition; `sde2` on 13 October, but letters move
+  between boots, so go by serial). The whole drive is erased, and
   its firmware boot entry is removed afterwards (home step 11).
 - **Always use by-uuid paths** for the OS drive (LUKS UUID
   `3f44cce0-d46f-49ff-bbdf-306ef8a4e7c8`). NVMe numbering can swap with the
@@ -456,7 +457,8 @@ made from a text console with the desktop logged out, so nothing is writing to
    lists. The declarative config and agenix already provide them.
 10. **Finish:** do finishing steps 4 and 5 (push, header backup with
     `NAME=crypthome`).
-11. **Remove the dead Ubuntu boot entry.** Its ESP was `sdd2`, now erased:
+11. **Remove the dead Ubuntu boot entry.** Its ESP was the Samsung's second
+    partition, now erased:
 
     ```sh
     nix-shell -p efibootmgr --run 'efibootmgr -v'    # find the ubuntu entry pointing at the old ESP
