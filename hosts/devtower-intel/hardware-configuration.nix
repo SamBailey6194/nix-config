@@ -8,7 +8,8 @@
 #
 # UUIDs live in ./disks.nix. The Linux data drives (old Ubuntu home, store and
 # Docker, archive) are handled by ./data-drives.nix, which keeps their old
-# filesystems mounted until each is converted to its own LUKS2 container.
+# filesystems mounted until each is converted to its own LUKS2 container; the
+# two 4TB drives shared with Windows (VeraCrypt) by ./data-pair.nix.
 # Never mount Ubuntu's swap: zram replaces it.
 
 { config, lib, modulesPath, ... }:
@@ -26,6 +27,7 @@ in
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
     ./data-drives.nix
+    ./data-pair.nix
   ];
 
   # CPU - Intel Core i9-9900K (Desktop)
@@ -65,7 +67,10 @@ in
   # Mounted at boot rather than x-systemd.automount: Affinity's Wine sandbox
   # (own mount namespace) and Wine's drive-letter scan need it mounted already.
   # nofail + the device timeout keep a missing drive from blocking boot.
-  fileSystems."/mnt/davinci" = {
+  # Retired once the WD becomes the VeraCrypt data volume (disks.nix
+  # dataPair.data; ./data-pair.nix mounts it at /mnt/data with these options);
+  # delete this block and davinciUuid after the conversion.
+  fileSystems."/mnt/davinci" = lib.mkIf (disks.dataPair.data.partUuid == null) {
     device = "/dev/disk/by-uuid/${disks.davinciUuid}";
     fsType = "ntfs-3g";
     options = [ "nofail" "noatime" "norecover" "uid=1000" "gid=100" "fmask=0133" "dmask=0022" "windows_names" "x-systemd.device-timeout=10s" ];

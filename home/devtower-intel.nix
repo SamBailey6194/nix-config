@@ -3,15 +3,20 @@
 let
   link = config.lib.file.mkOutOfStoreSymlink;
 
-  # DavinciProj, the NTFS drive shared with Windows (hardware-configuration.nix,
-  # docs/DAVINCI-SHARED-DRIVE.md).
-  davinci = "/mnt/davinci";
+  # The NTFS drive shared with Windows: DavinciProj (hardware-configuration.nix,
+  # docs/DAVINCI-SHARED-DRIVE.md) until the WD becomes the VeraCrypt data
+  # volume, then /mnt/data (data-pair.nix, docs/SHARED-DATA-DRIVES.md), which
+  # keeps the DavinciProj tree at its root.
+  davinci =
+    if (import ../hosts/devtower-intel/disks.nix).dataPair.data.partUuid != null
+    then "/mnt/data" else "/mnt/davinci";
 
-  # The letter Windows gives DavinciProj (Disk Management), lower case, e.g. "e".
+  # The letter Windows gives DavinciProj (Disk Management), lower case, e.g. "e";
+  # for the data volume, the letter its VeraCrypt favourite mounts it at.
   # Affinity's Wine prefix then maps the same letter to the drive, so linked
   # resources saved on one OS resolve on the other. Wine only picks the letter
   # for paths under the drive root itself (no realpath), so open files through
-  # /mnt/davinci or ~/DavinciProj, never a symlink to a subfolder.
+  # the drive root (davinci above) or ~/DavinciProj, never a symlink to a subfolder.
   davinciDriveLetter = null;
 
   hasResolve = import ./modules/resolve-package.nix { inherit lib osConfig; } != null;

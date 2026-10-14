@@ -58,14 +58,22 @@ let
   # per device: sam-laptop, sam-framework, sam-desktop).
   mediaDir = "/run/media/${config.home.username}";
 
-  # The DavinciProj NTFS drive shared with Windows (docs/DAVINCI-SHARED-DRIVE.md),
-  # on hosts that mount it. Go through /mnt/davinci itself, not a symlink to a
-  # subfolder, so Affinity under Wine records the drive letter, not Z:\home\...
-  davinci = "/mnt/davinci";
-  davinciKeys = lib.optionals ((osConfig.fileSystems or { }) ? ${davinci}) [
-    { group = "Go to"; on = [ "g" "D" ]; desc = "DavinciProj drive (${davinci})"; run = "cd ${davinci}"; }
-    { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on DavinciProj"; run = "cd ${davinci}/Affinity"; }
-  ];
+  # The NTFS drive shared with Windows, on hosts that mount it: DavinciProj
+  # (docs/DAVINCI-SHARED-DRIVE.md), or on devtower-intel once converted the
+  # VeraCrypt data volume, which keeps the DavinciProj tree at its root
+  # (docs/SHARED-DATA-DRIVES.md; the host mounts one or the other, never both).
+  # Go through the drive root itself, not a symlink to a subfolder, so
+  # Affinity under Wine records the drive letter, not Z:\home\...
+  hostMounts = osConfig.fileSystems or { };
+  davinci = if hostMounts ? "/mnt/data" then "/mnt/data" else "/mnt/davinci";
+  davinciKeys = lib.optionals (hostMounts ? ${davinci}) (
+    if davinci == "/mnt/data" then [
+      { group = "Go to"; on = [ "g" "D" ]; desc = "Data drive (${davinci})"; run = "cd ${davinci}"; }
+      { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on the data drive"; run = "cd ${davinci}/Affinity"; }
+    ] else [
+      { group = "Go to"; on = [ "g" "D" ]; desc = "DavinciProj drive (${davinci})"; run = "cd ${davinci}"; }
+      { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on DavinciProj"; run = "cd ${davinci}/Affinity"; }
+    ]);
 
   # ── Keybinds ───────────────────────────────────────────────────────────
   #

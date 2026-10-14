@@ -11,8 +11,8 @@
 #                              /var/lib/libvirt/images and /srv/clients; the
 #                              system /nix stays on the OS drive
 #   archive Seagate 4TB     -> /mnt/archive (superseded: it becomes the VeraCrypt
-#                              mirror of the WD 4TB, docs/SHARED-DATA-DRIVES.md;
-#                              leave dataDrives.archive null)
+#                              mirror of the WD 4TB, docs/SHARED-DATA-DRIVES.md
+#                              and ./data-pair.nix; leave dataDrives.archive null)
 #
 # home unlocks in the initrd like cryptroot, because the system needs it to
 # boot; without a TPM2 token (or if the TPM refuses) the initrd asks for its
@@ -149,7 +149,16 @@ in
     })
 
     # ── archive: Seagate ST4000DM004 4TB ─────────────────────────────────
-    (lib.mkIf (!converted "archive") {
+    # The old ext4 archive until the Seagate becomes the VeraCrypt mirror
+    # (disks.nix dataPair.mirror; data-pair.nix). Once that is filled in, this
+    # block, archiveUuid and dataDrives.archive can be deleted.
+    {
+      assertions = [{
+        assertion = !(converted "archive" && disks.dataPair.mirror.partUuid != null);
+        message = "devtower-intel: the Seagate is either dataDrives.archive (LUKS) or dataPair.mirror (VeraCrypt), not both.";
+      }];
+    }
+    (lib.mkIf (!converted "archive" && disks.dataPair.mirror.partUuid == null) {
       fileSystems."/mnt/archive" = {
         device = byUuid disks.archiveUuid;
         fsType = "ext4";

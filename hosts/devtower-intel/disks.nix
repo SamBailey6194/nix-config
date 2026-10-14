@@ -10,7 +10,7 @@
   btrfsUuid = "2d379673-11ff-433c-b378-efece05dadf0";
 
   # Existing Ubuntu-side filesystems, mounted nofail until their drive is
-  # converted (dataDrives below; data-drives.nix)
+  # converted (dataDrives below; data-drives.nix; the Seagate's: dataPair.mirror)
   archiveUuid = "9f544f15-8e9a-45de-9951-d84f51b62e57"; # Seagate 4TB ext4 (/mnt/archive)
   ubuntuHomeUuid = "8eaacce9-a3bd-4e95-924c-feb9e2d050b4"; # Samsung 512GB ext4 (Ubuntu /home)
 
@@ -36,6 +36,22 @@
     clients = "400G"; # @clients -> /srv/clients
   };
 
+  # The two 4TB hard drives, each a VeraCrypt volume with NTFS inside, shared
+  # with Windows (docs/SHARED-DATA-DRIVES.md; data-pair.nix). Leave partUuid
+  # null until that drive's VeraCrypt volume exists and its passphrase file is
+  # in place; then
+  #   partUuid = blkid -s PARTUUID -o value /dev/disk/by-id/<byId>-part1
+  # VeraCrypt has no LUKS UUID and the NTFS UUID is hidden inside the volume,
+  # so the GPT partition UUID is what identifies it. The WD keeps its existing
+  # partition (VeraCrypt formats inside it), the Seagate gets a new one.
+  # byId is the whole drive (/dev/disk/by-id), for smartd and the commands above.
+  dataPair = {
+    data = { partUuid = null; byId = "ata-WDC_WD40EZRZ-00GXCB0_WD-WCC7K0FU5LY2"; }; # WD Blue 4TB, cryptdata -> /mnt/data
+    mirror = { partUuid = null; byId = "ata-ST4000DM004-2CV104_ZFN2J51Q"; }; # Seagate 4TB, cryptmirror -> /mnt/data-mirror
+  };
+
+  # Retired with the conversion above: /mnt/davinci goes when dataPair.data is
+  # filled in, archiveUuid's /mnt/archive when dataPair.mirror is.
   davinciUuid = "34201009200FD0B2"; # DavinciProj shared with Windows (NTFS)
   backupUuid = "883736aa-556a-4e5e-b42f-e58bd40f5668"; # Backup+ Hub BK, NA9R0S9H
 
