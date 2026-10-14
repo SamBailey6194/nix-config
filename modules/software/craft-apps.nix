@@ -2,7 +2,7 @@
 
 # ArtCraft "Craft" apps (https://getartcraft.com/apps): PhotoCraft,
 # VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft,
-# SoundCraft, WordCraft and DeckCraft.
+# SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft and GridCraft.
 # Native Rust/wgpu apps shipped as AppImages, wrapped in pkgs/craft-apps.
 #
 # Imported next to the Affinity apps, i.e. by every creative and full stage:

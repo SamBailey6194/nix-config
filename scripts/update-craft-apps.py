@@ -39,6 +39,9 @@ APPS = (
     "soundcraft",
     "wordcraft",
     "deckcraft",
+    "cadcraft",
+    "figcraft",
+    "gridcraft",
 )
 SOURCES = Path(__file__).resolve().parents[1] / "pkgs" / "craft-apps" / "sources.json"
 API = "https://api.github.com/repos/{owner}/{app}/releases/latest"

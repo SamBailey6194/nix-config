@@ -1,14 +1,14 @@
 # ArtCraft "Craft" apps (https://getartcraft.com/apps), packaged from the
 # upstream Linux x86_64 AppImages published on GitHub (storytold/<app>).
 #
-# Returns an attrset of ten packages (use pkgs.callPackages, plural, so the
+# Returns an attrset of thirteen packages (use pkgs.callPackages, plural, so the
 # result holds only derivations, each overridable):
 #   photocraft vectorcraft lightcraft pdfcraft designcraft effectcraft filmcraft
-#   soundcraft wordcraft deckcraft
+#   soundcraft wordcraft deckcraft cadcraft figcraft gridcraft
 #
 # Versions, URLs and hashes live in ./sources.json; refresh them with
 # `just update-craft` (scripts/update-craft-apps.py). Not packaged: ArtCraft
-# itself (no Linux build), craft-launcher, cadcraft and gridcraft.
+# itself (no Linux build) and craft-launcher.
 #
 # Each package wraps the AppImage with appimageTools.wrapType2 (an FHS env), so
 # the binaries' dlopen()ed libraries (wgpu/winit: Vulkan, EGL, Wayland,
@@ -17,10 +17,18 @@
 # are installed from the extracted AppImage. Wayland app_id is
 # ai.storyteller.<app>, matching the .desktop file id, so docks pick up the
 # icon; see modules/software/README.md for the window classes.
+#
+# Each AppImage also bundles a headless CLI (usr/bin/<app>-cli, e.g.
+# photocraft-cli). It is exposed as $out/bin/<app>-cli: a copy of the GUI's
+# bubblewrap launcher with only the /init entrypoint swapped, so it runs in the
+# same FHS env (same rootfs, libraries and /etc/profile) from the same single
+# extraction. Nothing here enables a control port: the GUI's --control flag and
+# the CLIs' control-port/token variables are left to the user.
 {
   lib,
   appimageTools,
   fetchurl,
+  writeShellScript,
   sources ? lib.importJSON ./sources.json,
 }:
 
@@ -36,6 +44,9 @@ let
     soundcraft = "Audio and MIDI recording, editing and mixing";
     wordcraft = "Word processor and document designer with Word file support";
     deckcraft = "Slide deck editor and presenter";
+    cadcraft = "Computer-aided design and drafting";
+    figcraft = "Interface design and prototyping";
+    gridcraft = "Spreadsheet editor";
   };
 
   mkCraftApp =
@@ -51,6 +62,15 @@ let
       contents = appimageTools.extract { inherit pname version src; };
       desktopId = "ai.storyteller.${pname}";
       envPrefix = lib.toUpper pname;
+      cliName = "${pname}-cli";
+      # Entrypoint for the CLI launcher, mirroring what the GUI's init does
+      # (source the FHS /etc/profile, then appimage-exec.sh -w, which exports
+      # APPDIR) but exec'ing the CLI instead of AppRun.
+      cliInit = writeShellScript "${pname}-${version}-cli-init" ''
+        source /etc/profile
+        export APPDIR=${contents}
+        exec ${contents}/usr/bin/${cliName} "$@"
+      '';
     in
     appimageTools.wrapType2 {
       inherit pname version src;
@@ -86,6 +106,19 @@ let
       '';
 
       extraInstallCommands = ''
+        # Headless CLI, only when the AppImage ships one (never invented). The
+        # GUI launcher symlinks its init script to /init inside the sandbox;
+        # the CLI launcher is the same script pointing /init at cliInit.
+        if [ -x ${contents}/usr/bin/${cliName} ]; then
+          init_re='--symlink /nix/store/[a-z0-9]\{32\}-${pname}-${version}-init /init'
+          if [ "$(grep -c -e "$init_re" $out/bin/${pname})" != 1 ]; then
+            echo "craft-apps: cannot find the /init symlink in the ${pname} launcher" >&2
+            exit 1
+          fi
+          sed -e "s|$init_re|--symlink ${cliInit} /init|" $out/bin/${pname} > $out/bin/${cliName}
+          chmod 555 $out/bin/${cliName}
+        fi
+
         install -Dm444 ${contents}/usr/share/applications/${desktopId}.desktop \
           $out/share/applications/${desktopId}.desktop
         # Point Exec/TryExec at the wrapped binary ($out/bin/${pname}); keep the

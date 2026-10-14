@@ -19,7 +19,7 @@ This directory contains purpose-specific software modules that can be mixed and 
 | `development.nix` | Dev tools & IDEs | VS Code, Docker, language servers | base-configuration |
 | `office.nix` | Office productivity | LibreOffice, PDF tools | base-configuration |
 | `creative.nix` | Creative suite | DaVinci Resolve, Blender, Reaper | Framework & DevTower only |
-| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft | every `configuration-creative.nix` / `configuration-full.nix` (so devtower-intel creative + full too) |
+| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft | every `configuration-creative.nix` / `configuration-full.nix` (so devtower-intel creative + full too) |
 | `local-llm.nix` | Local LLM inference (`services.localLlm.*`, off by default) | llama.cpp with CUDA + OpenBLAS, per-host CUDA architectures | `development.nix`; enabled on devtower-intel (dev stage and up) |
 
 ## Currently Installed on All Devices
@@ -63,9 +63,32 @@ devtower stage files, so `devtower-intel-creative` and `devtower-intel` get
 them too. It is a separate module rather than part of `creative.nix` because
 laptop-intel's creative stages do not import `creative.nix` (no dedicated GPU
 for DaVinci Resolve) but should still get these. ArtCraft itself has no Linux
-build and is not packaged; nor are craft-launcher, cadcraft and gridcraft.
-The ten apps: PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft,
-EffectCraft, FilmCraft, SoundCraft, WordCraft and DeckCraft.
+build and is not packaged; nor is craft-launcher. The thirteen apps:
+PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft,
+FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft and GridCraft.
+
+**Command-line tools**: every AppImage also bundles a headless CLI, put on
+PATH under its upstream name next to the GUI launcher. Each runs in the same
+FHS env (same extraction, libraries and `/etc/profile`) as its app; only the
+sandbox's `/init` entrypoint differs. They need no display, and none of them
+opens a control port: the `mcp --connect`/`--bridge` and `app`/`ui` modes only
+talk to a GUI you started yourself with `--control`.
+
+| App | CLI | Headless use (from `--help`) |
+|-----|-----|------------------------------|
+| PhotoCraft | `photocraft-cli` | `convert` (.pcraft, .psd, .png, .jpg, .tif, .webp, .exr), MCP server |
+| VectorCraft | `vectorcraft-cli` | `convert`, `info`, `run` with `--export`, MCP server (`mcp --headless`) |
+| LightCraft | `lightcraft-cli` | `render`, `run`, `merge` (HDR/panorama), `commands`, `controls` |
+| PdfCraft | `pdfcraft-cli` | `info`, `render`, `text`, `edit`, `combine` |
+| DesignCraft | `designcraft-cli` | `run`/`script` with `--export`, `commands`, `describe` |
+| EffectCraft | `effectcraft-cli` | `info`, `exec`, `run`, `render-frame`, `render`, `script` |
+| FilmCraft | `filmcraft-cli` | `exec`, `run`, `import`, `export`, `render` (one frame), `probe` |
+| SoundCraft | `soundcraft-cli` | `info`, `convert`, `run`/`script` with `--bounce` |
+| WordCraft | `wordcraft-cli` | `convert` (docx, doc, pdf, odt, rtf, html, md, tex, txt, png) |
+| DeckCraft | `deckcraft-cli` | `info`, `render`, `convert`, `run` (`--help` prints usage, exit 1) |
+| CADCraft | `cadcraft-cli` | `info`, `convert` (dxf, dwg, svg, png, pdf), `run` with `--save`/`--export` (`--help` prints usage, exit 1) |
+| FigCraft | `figcraft-cli` | `info`, `convert`, `export` (png, jpg, svg, webp, pdf, fig), `render`, `run` |
+| GridCraft | `gridcraft-cli` | `info`, `convert` (xlsx, csv, tsv, json, html), `eval`, `check`, `cat`, `run` |
 
 **Updating**: versions, URLs and SRI hashes are pinned in
 `pkgs/craft-apps/sources.json`. `just update-craft` re-pins every app to its
@@ -91,12 +114,20 @@ name; read from the binaries and desktop files, not from a running window:
 | SoundCraft | `soundcraft` | `ai.storyteller.soundcraft` | `ai.storyteller.soundcraft` | `ai.storyteller.soundcraft` |
 | WordCraft | `wordcraft` | `ai.storyteller.wordcraft` | `ai.storyteller.wordcraft` | `ai.storyteller.wordcraft` |
 | DeckCraft | `deckcraft` | `ai.storyteller.deckcraft` | `ai.storyteller.deckcraft` | `ai.storyteller.deckcraft` |
+| CADCraft | `cadcraft` | `ai.storyteller.cadcraft` | `ai.storyteller.cadcraft` | `ai.storyteller.cadcraft` |
+| FigCraft | `figcraft` | `ai.storyteller.figcraft` | `figcraft` | probably `figcraft` (see below) |
+| GridCraft | `gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` |
 
 PhotoCraft opens through Xwayland when it finds a pen tablet, or when
 Preferences > Performance > Linux display server says so
 (`PHOTOCRAFT_NATIVE_WAYLAND=1` keeps it on Wayland); its X11 class is then
 probably `photocraft`, as its `StartupWMClass` says. A window rule with the
 class regex `^(ai\.storyteller\.photocraft|photocraft)$` covers both.
+
+FigCraft's binary carries no `ai.storyteller.figcraft` string, unlike the
+others, so its app_id is probably `figcraft`, as its `StartupWMClass` says;
+`^(ai\.storyteller\.figcraft|figcraft)$` covers both until confirmed with
+`hyprctl clients`.
 
 ## How to Add/Remove Software
 
