@@ -130,13 +130,12 @@ Rebuilt and running since 13/10 17:15, with `dataDrives.store` filled in.
 - Later: `wg-lan` module and agenix keys, Mullvad bypass, sshd key-only on
   `wg-lan`, Samba, Docker published ports bound to 127.0.0.1 / tunnel IP.
 
-## Config for the 4TB pair (written, not committed)
+## Config for the 4TB pair (committed `51640a7`, inert until step 7)
 
 Evaluated only: with both `partUuid`s null every devtower-intel stage builds
 the same system as before (`/mnt/davinci`, `/mnt/archive`); not rebuilt.
 
-- `hosts/devtower-intel/data-pair.nix` (new, untracked: `git add` before a
-  rebuild): crypttab `tcrypt-veracrypt` lines by PARTUUID with passphrase
+- `hosts/devtower-intel/data-pair.nix`: crypttab `tcrypt-veracrypt` lines by PARTUUID with passphrase
   files in `/var/lib/desktop-secrets/`, `/mnt/data` at boot and `noauto`
   `/mnt/data-mirror` by `/dev/mapper/<name>`, the `data-mirror` service +
   daily timer (mounts both, guard checks, prune history, rsync, always locks
@@ -146,6 +145,28 @@ the same system as before (`/mnt/davinci`, `/mnt/archive`); not rebuilt.
   ext4 `/mnt/archive` only while their drive's `partUuid` is null.
 - `home/devtower-intel.nix`, `home/modules/file-manager.nix`:
   `~/DavinciProj` and Yazi `g D` / `g a` follow `/mnt/data`.
+
+## Queued after the drives (one flake update)
+
+Do these together once the 4TB pair's step 7 is done, not mid-conversion:
+
+- **Python:** keep only `python314` (default) and `python315` (opt-in, once
+  the update brings 3.15.0 final; the lock has 3.15.0rc2). Remove
+  `python313` from `modules/software/development.nix`. Older versions come
+  per project from `uv` (nix-ld makes its interpreters run) or a one-off
+  `python312` shell. Revisit 3.15 as default around 3.15.1/.2.
+- **Playwright 1.64:** only once nixpkgs has it (master was 1.63.0 on
+  14/10); then `just check-playwright` and bump consumers to the bundle's
+  version. syntek-media's `toolkit/card.py` pins 1.62.0 and expects a
+  downloaded Chromium: point it at the nixpkgs bundle before the course
+  media work.
+- **ElevenLabs base path:** declared in the shared MCP inventory (workflow
+  in progress on 14/10); it goes live with the next rebuild, which also
+  removes the hand-made `claude mcp add` entry (empty API key).
+- **AI client config audit:** compare `~/.claude.json`,
+  `~/.codex/config.toml`, Antigravity / `~/.gemini/*` and
+  `opencode.json` with what activation declares; list anything set by
+  hand and declare what should be reproducible.
 
 ## Still open
 
