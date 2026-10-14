@@ -312,7 +312,6 @@ in
         MemoryHigh = cfg.memoryHigh;
         MemoryMax = cfg.memoryMax;
         MemorySwapMax = "0";
-        MemoryOOMGroup = true;
         OOMPolicy = "kill";
         # Stop after OOM/failure rather than repeatedly reloading a failing model.
         Restart = lib.mkForce "no";

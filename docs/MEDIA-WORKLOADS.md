@@ -45,11 +45,12 @@ See [Local models](LOCAL-LLM.md) for the aggregate compute slice budget.
 
 All jobs in the slice share these ceilings. CPU and I/O weights also favour
 other work during contention. CPU saturation causes throttling, not an OOM
-kill. `MemoryOOMGroup=yes` and `OOMPolicy=kill` keep a failed job's children
-from lingering. At the slice's hard memory ceiling the kernel can kill a
-job; systemd-oomd can kill a job earlier after sustained memory pressure.
-oomd monitors the workload slices only, not the entire desktop/user session.
-An interrupted render or transcription can leave incomplete output.
+kill. `OOMPolicy=kill` sets the scope's `memory.oom.group`, so a failed job's
+children do not linger. At the slice's hard memory ceiling the kernel can
+kill a job; systemd-oomd can kill a job earlier after sustained memory
+pressure. oomd monitors the workload slices only, not the entire
+desktop/user session. An interrupted render or transcription can leave
+incomplete output.
 
 Adjust `workloads.memoryHigh`, `memoryMax`, `memorySwapMax` and `cpuQuota`
 in a host configuration. `400%` means four logical CPUs, not four times the

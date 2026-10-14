@@ -98,7 +98,6 @@ in
             --property=MemoryHigh=${lib.escapeShellArg cfg.memoryHigh} \
             --property=MemoryMax=${lib.escapeShellArg cfg.memoryMax} \
             --property=MemorySwapMax=${lib.escapeShellArg cfg.memorySwapMax} \
-            --property=MemoryOOMGroup=yes \
             --property=OOMPolicy=kill \
             -- "$@"
         '';
