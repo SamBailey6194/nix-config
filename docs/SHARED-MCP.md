@@ -88,7 +88,11 @@ in Claude Code's `~/.claude.json` and Antigravity's `mcp_config.json`, the
 `opencode.json`. Other variables in that entry are kept; a Codex `env_vars`
 name for it is removed, so nothing competes with the written value. Tools that
 read the entry, such as syntek-media's `python3 toolkit/media.py check --setup`,
-therefore see a base path containing any project under the home directory. The
+therefore see a base path containing any project under the home directory. On
+devtower-intel that includes the WD data drive through `~/Data`, a bind mount
+of `/mnt/data` ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#data-the-drive-in-the-home-folder)):
+both the server and `check --setup` resolve symlinks, so open media projects
+as `~/Data/...`, never through `/mnt/data` or a link to it. The
 launcher receives the same value as an argument and sets it itself, so the
 server's effective base path is always the one the clients show; neither the
 agenix secret, the credential file nor a client's inline value overrides it.

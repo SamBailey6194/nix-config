@@ -6,7 +6,8 @@
 > ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)). The configuration is
 > written (`hosts/devtower-intel/data-pair.nix`): once `dataPair.data.partUuid`
 > is filled in to `disks.nix`, `/mnt/davinci` is no longer mounted, and
-> `~/DavinciProj` and Yazi's `g D` / `g a` go to `/mnt/data`. The Windows
+> `~/DavinciProj` and Yazi's `g a` go to `/mnt/data`, and `g D` to `~/Data`,
+> the same drive bound into the home folder. The Windows
 > rules, the Affinity drive-letter mapping and the Resolve advice below still
 > apply after the move (use `/mnt/data` wherever this page says
 > `/mnt/davinci`); only the path and the unlocking change.

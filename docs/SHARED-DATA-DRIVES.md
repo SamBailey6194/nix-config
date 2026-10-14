@@ -65,19 +65,55 @@ The trade-off: anything changed since the last sync exists on the WD only.
 
 Keep the existing DavinciProj tree at the root, unchanged, so existing Resolve
 media paths and Affinity links (`E:\Affinity\...`) still resolve. Add the new
-folders beside it:
+folders beside it, in lowercase: NTFS ignores case, but git's `includeIf`
+rules (see [NixOS configuration](#nixos-configuration)) do not, so `Business/`
+would miss the `business/` rule.
 
 ```text
-<volume root>/
+<volume root>/        (= /mnt/data = ~/Data)
 ├── <existing DavinciProj folders, including Affinity/>
-├── Personal/        Documents/, Photos/, Videos/
-├── Business/        Documents/, Photos/, Videos/, plus the two Syntek repos:
-│   ├── syntek-business-docs/   business documents and Python scripts (git)
-│   └── syntek-content/         photos, videos and Python scripts (git)
-├── Craft/           PhotoCraft, VectorCraft, ... project files
-├── Archive/         *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
+├── business/        docs/, photos/, videos/, audio/
+├── personal/        docs/, photos/, videos/, audio/
+├── craft/           PhotoCraft, VectorCraft, ... project files
+├── archive/         *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
 └── .data-primary    marker file the mirror job checks for (WD only)
 ```
+
+Git repositories are not kept here; they live on the SSD in `~/Repos` (see
+[Repos on the SSD, media on ~/Data](#repos-on-the-ssd-media-on-data)).
+Finished and large media from a repo go to
+`<area>/{videos,audio,photos,docs}/<repo>/<piece>/`.
+
+### ~/Data: the drive in the home folder
+
+Once the WD is switched on, NixOS also binds `/mnt/data` to `~/Data`
+(`/home/sam-desktop/Data`). One copy of the data, two paths to it: a file
+changed through one path is the same file in the other, and nothing is copied
+or synced between them.
+
+**Work on media projects through `~/Data`**, for example
+`~/Data/business/videos/syntek-content/<piece>`. The ElevenLabs MCP only
+accepts input files inside its base path, the home directory
+([SHARED-MCP.md](SHARED-MCP.md)), and syntek-media's `check --setup` checks
+the project against the same base path. Both resolve symlinks first, so a
+link from the home folder into `/mnt/data` would still count as outside it; a
+bind mount has no link to resolve, so `~/Data` counts as inside.
+
+- **Only while the WD is mounted.** `~/Data` depends on `/mnt/data`: if the WD
+  isn't mounted, nothing is bound and `~/Data` is an empty, read-only folder
+  (owned by `sam-desktop`, mode 0555), so saving into it fails rather than
+  leaving files on `/home` that the WD would later hide. Starting `/mnt/data`
+  by hand later binds `~/Data` as well, and stopping it unbinds `~/Data`
+  first.
+- **Keep `/mnt/data` for Wine and Resolve paths.** `~/DavinciProj` (a link to
+  the drive root) and Affinity's drive letter stay on `/mnt/data`; Wine maps
+  the letter by path, so open Affinity files through those, as before.
+- **Scanned and copied once.** Jobs that walk `/home` skip `~/Data` (see
+  [NixOS configuration](#nixos-configuration)), so the 4TB are not read twice.
+- **Git:** a repo under `~/Data/business/` or `~/Data/personal/` gets the same
+  identity as under `/mnt/data/business/` or `/mnt/data/personal/` (separate
+  `includeIf` rules, because git sees the path as `~/Data/...`). Working repos
+  stay in `~/Repos` on the SSD.
 
 ## Conversion
 
@@ -165,7 +201,7 @@ mount -t ntfs-3g -o windows_names,norecover,uid=1000,gid=100,fmask=0133,dmask=00
 D=YYYY-MM-DD                                   # the date used in step 1
 rsync -rtS /mnt/archive/davinciproj-$D/ /mnt/data/
 rsync -rtS --checksum --dry-run --itemize-changes /mnt/archive/davinciproj-$D/ /mnt/data/
-mkdir -p /mnt/data/Personal /mnt/data/Business /mnt/data/Archive
+mkdir -p /mnt/data/{business,personal}/{docs,photos,videos,audio} /mnt/data/archive
 touch /mnt/data/.data-primary
 ```
 
@@ -175,9 +211,9 @@ Then the Unix-only folders, one archive each, each checked with
 ```sh
 set -o pipefail
 for d in pre-nixos-home pre-nixos-intel OldRepos docker-data nix static .Trash-1000; do
-  tar --xattrs --acls --numeric-owner -cpf - -C /mnt/archive "$d" | zstd -T0 > "/mnt/data/Archive/$d.tar.zst" \
+  tar --xattrs --acls --numeric-owner -cpf - -C /mnt/archive "$d" | zstd -T0 > "/mnt/data/archive/$d.tar.zst" \
     || { echo "FAILED: $d" >&2; break; }
-  zstd -dc "/mnt/data/Archive/$d.tar.zst" | tar --compare --numeric-owner -f - -C /mnt/archive \
+  zstd -dc "/mnt/data/archive/$d.tar.zst" | tar --compare --numeric-owner -f - -C /mnt/archive \
     || { echo "FAILED: $d" >&2; break; }
 done
 ```
@@ -188,12 +224,14 @@ print nothing; if it prints `FAILED` or `MISSING`, fix that before step 4:
 
 ```sh
 for d in $(ls -A /mnt/archive | grep -vx -e lost+found -e .pnpm-store -e "davinciproj-$D"); do
-  test -s "/mnt/data/Archive/$d.tar.zst" || echo "MISSING $d"
+  test -s "/mnt/data/archive/$d.tar.zst" || echo "MISSING $d"
 done
 ```
 
 (`davinciproj-$D` is already on the volume as plain files.) Sort personal and
-business files into `Personal/` and `Business/` later, on the new volume.
+business files into `personal/` and `business/` later, on the new volume.
+If the archives were already written to `Archive/`, rename the folder to
+`archive/` to match the layout.
 
 ### 4. Erase the Seagate and partition it for Windows (NixOS)
 
@@ -324,11 +362,13 @@ stays until the Seagate is switched on).
    findmnt -o SOURCE,FSTYPE,OPTIONS /mnt/data       # fuseblk, rw
    ls -A /mnt/data                                   # the DavinciProj tree, .data-primary
    readlink ~/DavinciProj                            # /mnt/data
+   findmnt ~/Data                                    # SOURCE /dev/mapper/cryptdata, fuseblk
+   ls -A ~/Data                                      # the same entries as /mnt/data
    findmnt /mnt/davinci                              # nothing
    systemctl status smartd
    ```
 
-   Yazi `g D` and `g a` now go to `/mnt/data` and `/mnt/data/Affinity`.
+   Yazi `g D` now goes to `~/Data` and `g a` to `/mnt/data/Affinity`.
    With the Seagate switched on as well:
 
    ```sh
@@ -412,9 +452,32 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
 - **Home:** `davinci` in `home/devtower-intel.nix` becomes `/mnt/data` once
   `dataPair.data` is filled in, so `~/DavinciProj` and the Affinity
   drive-letter mapping (`davinciDriveLetter`, the letter of the VeraCrypt
-  favourite) follow it. Yazi's `g D` / `g a` (`home/modules/file-manager.nix`)
-  go to `/mnt/data` and `/mnt/data/Affinity` on any host that mounts
-  `/mnt/data`.
+  favourite) follow it. Yazi's `g a` (`home/modules/file-manager.nix`) goes to
+  `/mnt/data/Affinity` on any host that mounts `/mnt/data`, and `g D` to
+  `~/Data` where the host binds it (otherwise to `/mnt/data`).
+- **`~/Data`** ([above](#data-the-drive-in-the-home-folder)): a bind mount of
+  `/mnt/data` at the user's home directory (`users.users.sam-desktop.home`)
+  plus `/Data`, only with `dataPair.data` filled in. Options `bind`, `nofail`
+  and `x-systemd.after=systemd-tmpfiles-setup.service`, plus
+  `depends = [ "/mnt/data" ]`, which NixOS writes as
+  `x-systemd.requires-mounts-for=/mnt/data`: Requires= and After= on
+  `mnt-data.mount`, so it binds only once the WD is mounted, is unbound when
+  `/mnt/data` stops, and unmounts first at shutdown. A `Wants=` drop-in on
+  `mnt-data.mount` binds it whenever `/mnt/data` is started, at boot or by
+  hand (not `x-systemd.wanted-by=`, which would make `nofail` meaningless). A
+  tmpfiles rule creates the empty mountpoint as `sam-desktop`'s, 0555, before
+  the mount: with the WD absent, writes into `~/Data` fail instead of landing
+  on `/home`, where the bind would later hide them. Mounted, `~/Data` shows the
+  drive's own 0755 (NTFS-3G ignores the chmod, `ntfs-3g(8)` `silent`).
+- **Exclusions:** the malware scanner's `excludePaths` and
+  `realTimeMonitoring.excludePaths` get `~/Data` on top of their defaults
+  (the full stage; it matches by path prefix, so the boot scan of `/home` and
+  the on-access monitor skip it). Nothing else walks `/home`: no restic job is
+  declared (restic.nix takes jobs at run time; restic-backup.nix, unused,
+  passes `--one-file-system`), snapper's btrfs snapshots stop at mount points,
+  and there is no locate or file indexer. A restic job added at run time for
+  `/home` should exclude `~/Data` (or use `--one-file-system`), since the
+  off-site backup of `/mnt/data` covers it.
 - **Mirror job** (`data-mirror.service`), only when both drives are switched
   on:
   1. Starts `/mnt/data` and `/mnt/data-mirror` itself, which unlocks the
@@ -448,44 +511,63 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
   never spinning up a sleeping drive just to poll it. smartd exits if a listed
   drive is missing. Failures of the mirror job and smartd show in
   `systemctl --failed`.
-- **syntek-studio GitHub config** for the repos in `Business/` (see
-  [Syntek repos on the data drive](#syntek-repos-on-the-data-drive)):
-  `includeIf."gitdir:/mnt/data/Business/".path = "~/.gitconfig-syntek"` in
-  `home/modules/git.nix`, beside the existing `~/Repos/syntek/` and
-  `/mnt/archive/OldRepos/syntek/` rules. `~/.gitconfig-syntek` sets the
+- **Git identity by area** for any repo kept on the drive (working repos
+  live in `~/Repos`, see
+  [Repos on the SSD, media on ~/Data](#repos-on-the-ssd-media-on-data)):
+  `includeIf."gitdir:/mnt/data/business/".path = "~/.gitconfig-syntek"` in
+  `home/modules/git.nix`, and the same for `~/Data/business/`, beside the
+  existing `~/Repos/syntek/` and `/mnt/archive/OldRepos/syntek/` rules;
+  `/mnt/data/personal/` and `~/Data/personal/` go to `~/.gitconfig-personal`
+  beside the personal rules. The paths are lowercase, as on the volume:
+  `gitdir` matching is case-sensitive even though NTFS is not. Git
+  matches the `.git` path as found and with symlinks resolved
+  (git-config(1), `gitdir`); a bind mount is not a symlink, so a repo opened
+  through `~/Data` needs its own rule. `~/.gitconfig-syntek` sets the
   syntek-studio identity (`Syntek-Studio`, `sam.bailey@syntekstudio.com`) and
   rewrites `git@github.com:` to `git@github-syntek:`, so pushes use the
   per-device syntek key (`~/.ssh/github-devtower-intel-syntek`). Without the
   rule, commits there get the default identity and pushes the wrong key.
   Check with `git config user.email` and `git remote -v` in each repo.
 
-### Syntek repos on the data drive
+### Repos on the SSD, media on ~/Data
 
-`syntek-business-docs` and `syntek-content` live in `/mnt/data/Business/`, so
-they are on the drive Windows can open and are copied to the mirror every
-night. GitHub remains their off-site copy. NTFS changes how they are used:
+Git repositories stay on the SSD in `~/Repos`, not on the data drive:
+`~/Repos/syntek/syntek-business-docs` (a syntek-author project),
+`~/Repos/syntek/syntek-content` (syntek-media), `~/Repos/personal/neovim-course`
+and later `~/Repos/personal/{ai-theology-book,silent-church-book,fantasy-books}`
+(syntek-author and syntek-media). GitHub is their off-site copy. NTFS-3G
+would get in their way:
 
-- **No executable bits** (the mount's `fmask=0133`). Set
-  `git config core.fileMode false` in both repos, or every file shows as
-  modified. Run scripts as `python script.py` or `uv run …`, not
+- **No reliable symlinks.** The syntek templates link `.agents` to `.claude`,
+  and Python environments rely on links too.
+- **No executable bits** (the mount's `fmask=0133`): every file would show as
+  modified unless `core.fileMode` is off, and scripts could not run as
   `./script.py`.
-- **No reliable symlinks**, so Python environments stay off the drive: with
-  uv, `UV_PROJECT_ENVIRONMENT=~/.cache/venvs/<repo>` (for example from the
-  repo's `.envrc`) keeps the environment on the SSD.
-- **Large media in git:** every committed version of a photo or video is kept
-  in full. Track them with Git LFS (or keep them beside the repo, outside git)
-  so the repos don't grow without limit.
 - **Speed:** a hard disk through NTFS-3G (FUSE) is slower than the SSD;
   `git status` over many media files takes noticeably longer.
-- **Ownership:** the mount is owned by `sam-desktop` (`uid=1000`), so git's
-  safe-directory check passes without exceptions.
+
+The trade-off: Windows cannot see the repos. If it ever needs one, clone it
+from GitHub there.
+
+**Media go to `~/Data`.** A repo holds only what GitHub needs. Outputs are
+made in the repo, in gitignored folders, and each finished piece is moved to
+`~/Data/<area>/{videos,audio,photos,docs}/<repo>/<piece>/`, for example
+`~/Data/business/videos/syntek-content/<piece>/`. There it is on the drive
+Windows can open, mirrored every night, and inside the ElevenLabs base path.
+
+- **Off-site gap:** media still in progress, in a repo's gitignored folders,
+  exist only on the SSD until they are moved to `~/Data`.
+- **Not done yet:** an "output root" setting in the syntek-media and
+  syntek-author templates, so outputs are written straight to
+  `~/Data/<area>/...` instead of being moved by hand.
 
 **From laptop-intel**, once the WireGuard link and sshd (see [Later](#later))
 are in place, the work runs on devtower-intel:
 
 - SSH in, or open the folder with Zed's SSH remote: the Python scripts run on
-  devtower-intel against its own drive, so nothing heavy crosses the network.
-- The Samba share of `/mnt/data/Business` is for browsing and opening files in
+  devtower-intel against its own repos and drive, so nothing heavy crosses
+  the network.
+- The Samba share of `/mnt/data/business` is for browsing and opening files in
   the laptop's file manager, not for running the scripts.
 - Only while devtower-intel is booted into NixOS; when it is in Windows, the
   laptop cannot reach the drive.

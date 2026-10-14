@@ -37,7 +37,7 @@
 # its journal); a missing file makes it ask instead, which nobody sees once
 # the login screen is up (`sudo systemd-tty-ask-password-agent --query`).
 
-{ config, lib, pkgs, utils, ... }:
+{ config, options, lib, pkgs, utils, ... }:
 
 let
   disks = import ./disks.nix;
@@ -82,6 +82,15 @@ let
     "${mapper} /dev/disk/by-partuuid/${pair.${name}.partUuid} ${passFile name} tcrypt-veracrypt,nofail,${extra}x-systemd.device-timeout=10s\n";
 
   mirrorMount = "${utils.escapeSystemdPath "/mnt/data-mirror"}.mount";
+
+  # ~/Data: /mnt/data bound into the home directory (docs/SHARED-DATA-DRIVES.md,
+  # "~/Data"), so media projects on the WD sit inside the home directory that
+  # the ElevenLabs MCP and syntek-media's `check --setup` accept as their base
+  # path. Both resolve symlinks, so a link would land back in /mnt/data; a bind
+  # mount has no link to resolve. One copy of the data, two paths to it.
+  user = config.users.users.sam-desktop;
+  dataHome = "${user.home}/Data";
+  dataHomeMount = "${utils.escapeSystemdPath dataHome}.mount";
 
   # Refuses unless both volumes are mounted, read-write, from their own mapper
   # devices, and the working drive (and only it) carries .data-primary. So an
@@ -149,7 +158,55 @@ in
         fsType = "ntfs-3g";
         options = ntfsOpts;
       };
+
+      # ~/Data (see dataHome above). depends adds RequiresMountsFor=/mnt/data
+      # (Requires= and After= its mount unit, systemd.unit(5)): if the WD isn't
+      # mounted, nothing is bound and ~/Data stays an empty folder; stopping
+      # /mnt/data stops this first; at shutdown this unmounts before /mnt/data
+      # (and /home, its parent). nofail: wanted by local-fs.target at boot
+      # without holding it up. After tmpfiles: the empty folder is created
+      # sam-desktop's (below) before anything is mounted on it, not root's.
+      fileSystems.${dataHome} = {
+        device = "/mnt/data";
+        fsType = "none";
+        depends = [ "/mnt/data" ];
+        options = [ "bind" "nofail" "x-systemd.after=systemd-tmpfiles-setup.service" ];
+      };
+      # Starting /mnt/data by hand later (see above) binds ~/Data too. Not
+      # x-systemd.wanted-by= on ~/Data: that drops the local-fs.target link and
+      # makes nofail meaningless (systemd.mount(5); the generator warns).
+      systemd.units."mnt-data.mount" = {
+        overrideStrategy = "asDropin";
+        text = ''
+          [Unit]
+          Wants=${dataHomeMount}
+        '';
+      };
+      # The empty mountpoint is sam-desktop's but 0555: with the WD absent
+      # (nofail), writes into ~/Data fail loudly instead of landing on /home,
+      # where the bind would later hide them (/mnt/data is root's, so it has
+      # no such gap). Mounted, the folder shows the NTFS root, sam-desktop's
+      # 0755 (uid=1000, gid=100, dmask=0022 above): a later tmpfiles run (each
+      # switch) chmods it, and NTFS-3G ignores chmod without error (silent, on
+      # by default with no permissions option or user mapping, ntfs-3g(8)).
+      systemd.tmpfiles.rules = [ "d ${dataHome} 0555 ${user.name} ${user.group} -" ];
     })
+
+    # Everything that walks /home skips ~/Data: the same files are already on
+    # /mnt/data, 4TB that would otherwise be read twice. The scanner (only in
+    # the full stage) checks exclusions by path prefix, for scans (the boot
+    # scan's /home) and for the on-access monitor. Its defaults are kept: a
+    # definition here replaces an option's default rather than adding to it.
+    # Restic and snapper need nothing: no backup job is declared (restic.nix
+    # takes its jobs at run time and none exists; restic-backup.nix, unused,
+    # passes --one-file-system), and btrfs snapshots stop at mount points.
+    (lib.optionalAttrs (options ? security.malwareScanner) (lib.mkIf dataOn {
+      security.malwareScanner = {
+        excludePaths = options.security.malwareScanner.excludePaths.default ++ [ dataHome ];
+        realTimeMonitoring.excludePaths =
+          options.security.malwareScanner.realTimeMonitoring.excludePaths.default ++ [ dataHome ];
+      };
+    }))
 
     # ── mirror: Seagate ST4000DM004 4TB, written only by the mirror job ──
     # noauto: not unlocked at boot. Only the mirror job pulls it in, through

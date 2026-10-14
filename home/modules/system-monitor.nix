@@ -74,11 +74,15 @@ let
   # /boot is a separate vfat partition everywhere, so it is always shown.
   # /nix/store, tmpfs and docker overlays never show up, because btop only
   # lists mounts that are also in /etc/fstab (use_fstab, on by default).
+  #
+  # Bind mounts are hidden too: they show the same disk again under a second
+  # path (devtower-intel's ~/Data is /mnt/data).
   fileSystems = if osConfig != null then osConfig.fileSystems else { };
   rootDevice = (fileSystems."/" or { device = null; }).device;
-  subvolumesOfRoot = lib.mapAttrsToList (_: fs: fs.mountPoint) (
+  hiddenMounts = lib.mapAttrsToList (_: fs: fs.mountPoint) (
     lib.filterAttrs (
-      _: fs: rootDevice != null && fs.mountPoint != "/" && fs.device == rootDevice
+      _: fs: fs.mountPoint != "/"
+        && ((rootDevice != null && fs.device == rootDevice) || builtins.elem "bind" fs.options)
     ) fileSystems
   );
 
@@ -256,10 +260,10 @@ in
       proc_filter_kernel = false;
       proc_follow_detailed = true;
     }
-    // lib.optionalAttrs (subvolumesOfRoot != [ ]) {
+    // lib.optionalAttrs (hiddenMounts != [ ]) {
       # "exclude=" on the first token turns the list into a deny-list.
       # Mountpoints are matched exactly and separated by spaces.
-      disks_filter = "exclude=" + lib.concatStringsSep " " subvolumesOfRoot;
+      disks_filter = "exclude=" + lib.concatStringsSep " " hiddenMounts;
     }
     // lib.optionalAttrs (netIface != null) {
       net_iface = netIface;

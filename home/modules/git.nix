@@ -73,6 +73,17 @@
       includeIf."gitdir:/mnt/archive/OldRepos/personal/" = {
         path = "~/.gitconfig-personal";
       };
+      # Any repo under personal/ on the data drive (devtower-intel,
+      # data-pair.nix), by its mount and through the ~/Data bind mount (see
+      # the business rules below). The volume layout is lowercase: NTFS
+      # ignores case, gitdir matching does not. Working repos live in
+      # ~/Repos; these only cover a repo kept with the media.
+      includeIf."gitdir:/mnt/data/personal/" = {
+        path = "~/.gitconfig-personal";
+      };
+      includeIf."gitdir:~/Data/personal/" = {
+        path = "~/.gitconfig-personal";
+      };
 
       # Syntek repos
       includeIf."gitdir:~/Repos/syntek/" = {
@@ -81,7 +92,15 @@
       includeIf."gitdir:/mnt/archive/OldRepos/syntek/" = {
         path = "~/.gitconfig-syntek";
       };
-      includeIf."gitdir:/mnt/data/Business/" = {
+      # Any repo under business/ on the data drive (lowercase, as above).
+      includeIf."gitdir:/mnt/data/business/" = {
+        path = "~/.gitconfig-syntek";
+      };
+      # The same folder through the ~/Data bind mount (devtower-intel,
+      # data-pair.nix). Git matches the .git path as found and with symlinks
+      # resolved (git-config(1), "gitdir"); a bind mount is not a symlink, so
+      # a repo opened through ~/Data never looks like /mnt/data to git.
+      includeIf."gitdir:~/Data/business/" = {
         path = "~/.gitconfig-syntek";
       };
 

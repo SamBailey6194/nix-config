@@ -528,7 +528,7 @@ the 4TB pair becomes VeraCrypt so Windows can read it
 Erasing the old home drive as that procedure does (overwriting it through the
 new encrypted container) also removes the plaintext keys above from it. They
 remain in the plaintext backup on BackupDrive and in
-`/mnt/archive/pre-nixos-home/` (later `Archive/pre-nixos-home.tar.zst` on the
+`/mnt/archive/pre-nixos-home/` (later `archive/pre-nixos-home.tar.zst` on the
 VeraCrypt drive), so rotating them is still necessary.
 
 ## Recovery

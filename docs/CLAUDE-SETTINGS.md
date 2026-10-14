@@ -66,6 +66,13 @@ Ubuntu's global Context7 instruction (`~/.claude/rules/context7.md`) and the
 `context7-mcp` skill are reproduced from `config/claude/rules` and
 `config/claude/skills`.
 
+Codex, OpenCode and Antigravity get the same two global instructions
+(`config/claude/rules/context7.md` and `config/agents/nix-source-policy.md`,
+which Claude loads as `~/.claude/rules/nix-source.md`) as one generated file
+each, from `home/modules/agent-skills.nix`: `~/.codex/AGENTS.md` (or under
+`CODEX_HOME` if one is declared), `~/.config/opencode/AGENTS.md` and
+`~/.gemini/config/AGENTS.md`. Edit the two sources, not the generated files.
+
 After the development-stage rebuild, start Claude inside `syntek-base` and verify
 `/config`, `/plugin`, `/mcp` and `/skills`. Confirm the project's skills appear,
 the old duplicate skill plugins stay disabled, and the status line and monitor

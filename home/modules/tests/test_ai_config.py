@@ -4,6 +4,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -538,6 +539,41 @@ class ClaudeSettingsTests(unittest.TestCase):
             text = (MODULES / name).read_text()
             self.assertNotIn("|| true", text, name)
             self.assertIn("warning:", text, name)
+
+
+class GlobalInstructionsTests(unittest.TestCase):
+    """Codex, OpenCode and agy get Claude's two global rules as one file each."""
+    NIX = (MODULES / "agent-skills.nix").read_text()
+    ROOT = MODULES.parents[1]
+
+    def test_every_client_gets_one_file_from_both_sources(self):
+        for source in ["config/claude/rules/context7.md", "config/agents/nix-source-policy.md"]:
+            self.assertIn(f"../../{source}", self.NIX)
+            self.assertIn(source, self.NIX.split("instructions = ''", 1)[1].split("'';", 1)[0])
+        for target in ['"${codexDir}/AGENTS.md".text = instructions;',
+                       '"${opencodeDir}/AGENTS.md".text = instructions;',
+                       '".gemini/config/AGENTS.md".text = instructions;']:
+            self.assertIn(target, self.NIX)
+        self.assertIn('envDir "CODEX_HOME" "${homeDir}/.codex"', self.NIX)
+        self.assertIn('envDir "OPENCODE_CONFIG_DIR" "${config.xdg.configHome}/opencode"', self.NIX)
+
+    def test_agy_gets_only_one_global_rules_file(self):
+        # agy reads AGENTS.md and GEMINI.md in ~/.gemini and ~/.gemini/config;
+        # declaring two would load the same rules twice.
+        nix = "\n".join(path.read_text() for path in MODULES.glob("*.nix"))
+        declared = re.findall(r'"([^"\s]*(?:AGENTS|GEMINI)\.md)"\.(?:text|source)', nix)
+        self.assertEqual([d for d in declared if "gemini" in d], [".gemini/config/AGENTS.md"])
+
+    def test_claude_keeps_its_two_rule_files(self):
+        self.assertIn('".claude/rules/nix-source.md".source = policy;', self.NIX)
+        self.assertIn('".claude/rules/context7.md".source = ../../config/claude/rules/context7.md;',
+                      (MODULES / "claude.nix").read_text())
+
+    def test_combined_file_fits_agy_rule_limit(self):
+        # agy truncates a rule file over 24,000 bytes (bundled rules guide).
+        size = sum((self.ROOT / name).stat().st_size for name in
+                   ["config/claude/rules/context7.md", "config/agents/nix-source-policy.md"])
+        self.assertLess(size + 400, 24000)
 
 
 if __name__ == "__main__":

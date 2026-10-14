@@ -50,7 +50,7 @@ Manager supplies the NixOS Claude host with its correct executable path.
 
 After the home drive has been converted, `/mnt/ubuntu-home` no longer exists:
 use `oldhome=/mnt/archive/pre-nixos-home/sam-dev` instead, or, once the 4TB
-drives are converted, an extracted copy of `Archive/pre-nixos-home.tar.zst`.
+drives are converted, an extracted copy of `archive/pre-nixos-home.tar.zst`.
 
 ```sh
 oldhome=/mnt/ubuntu-home/sam-dev

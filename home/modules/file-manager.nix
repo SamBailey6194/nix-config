@@ -64,11 +64,18 @@ let
   # (docs/SHARED-DATA-DRIVES.md; the host mounts one or the other, never both).
   # Go through the drive root itself, not a symlink to a subfolder, so
   # Affinity under Wine records the drive letter, not Z:\home\...
+  #
+  # Where the host also binds the data drive into the home folder (~/Data,
+  # devtower-intel's data-pair.nix), g D goes there instead: the path to work
+  # in, inside the home directory the ElevenLabs MCP accepts. g a stays on
+  # the drive root for Wine's drive letter.
   hostMounts = osConfig.fileSystems or { };
   davinci = if hostMounts ? "/mnt/data" then "/mnt/data" else "/mnt/davinci";
+  dataHome = "${config.home.homeDirectory}/Data";
+  dataDir = if hostMounts ? ${dataHome} then dataHome else davinci;
   davinciKeys = lib.optionals (hostMounts ? ${davinci}) (
     if davinci == "/mnt/data" then [
-      { group = "Go to"; on = [ "g" "D" ]; desc = "Data drive (${davinci})"; run = "cd ${davinci}"; }
+      { group = "Go to"; on = [ "g" "D" ]; desc = "Data drive (${dataDir})"; run = "cd ${dataDir}"; }
       { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on the data drive"; run = "cd ${davinci}/Affinity"; }
     ] else [
       { group = "Go to"; on = [ "g" "D" ]; desc = "DavinciProj drive (${davinci})"; run = "cd ${davinci}"; }

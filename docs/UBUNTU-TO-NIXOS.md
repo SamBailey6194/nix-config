@@ -256,7 +256,7 @@ each old mount goes when its drive's `dataPair` identifier is filled in to
 - **BackupDrive:** not usable at the moment
   ([status](BACKUP-AND-DATA-ENCRYPTION.md#backup-destination-identified-on-5-october-2026)).
   The Ubuntu home copy is at `/mnt/archive/pre-nixos-home/`, and later
-  `Archive/pre-nixos-home.tar.zst` on the shared data drive.
+  `archive/pre-nixos-home.tar.zst` on the shared data drive.
 - **Windows:** always shut down completely before switching systems. Disable
   Windows Fast Startup and hibernation before writing to its NTFS volumes.
 

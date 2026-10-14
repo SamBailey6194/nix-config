@@ -52,8 +52,17 @@ has been run on these commits yet.**
 - **Remote work from laptop-intel**: dedicated WireGuard link (`wg-lan`),
   SSH / Zed remote to run things on devtower-intel, Docker context over SSH,
   Samba bound to the tunnel only.
-- **Syntek repos**: `syntek-business-docs` and `syntek-content` live in
-  `/mnt/data/Business/` on the data drive, with the syntek-studio git config.
+- **Repos on the SSD** (replaces "Syntek repos on the data drive"):
+  `syntek-business-docs`, `syntek-content`, `neovim-course` and the later
+  book repos stay in `~/Repos`. On NTFS-3G the templates' symlinks
+  (`.agents` -> `.claude`) are unreliable, exec bits are lost and git is
+  slower; Windows cannot see the repos (clone from GitHub there if needed).
+- **Data layout, lowercase** (`/mnt/data` = `~/Data`): `business/` and
+  `personal/` (each `docs/ photos/ videos/ audio/`), `craft/`, `archive/`
+  (rename the step 3 `Archive/` by hand), DavinciProj unchanged at the root.
+  NTFS ignores case, git's `gitdir` does not. Finished media go to
+  `~/Data/<area>/{videos,audio,photos,docs}/<repo>/<piece>/`; repos hold only
+  what GitHub needs.
 
 ## Next steps, in order
 
@@ -122,8 +131,9 @@ Rebuilt and running since 13/10 17:15, with `dataDrives.store` filled in.
 - `hosts/devtower-intel/client-store.nix` (imported by `full.nix`):
   `client-store-guard`, and the weekly `client-store-gc` service + timer
   (`Persistent=true`).
-- `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/Business/"` ->
-  `~/.gitconfig-syntek`.
+- `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/business/"` and
+  `~/Data/business/` -> `~/.gitconfig-syntek`; `/mnt/data/personal/` and
+  `~/Data/personal/` -> `~/.gitconfig-personal` (lowercase, not committed).
 - `config/hypr/60-keybinds.lua`: SUPER + = / SUPER + - raise and lower the
   volume by 5% (repeat while held), a keyboard fallback for the SteelSeries
   volume roller.
@@ -144,7 +154,9 @@ the same system as before (`/mnt/davinci`, `/mnt/archive`); not rebuilt.
 - `hardware-configuration.nix` / `data-drives.nix`: `/mnt/davinci` and the
   ext4 `/mnt/archive` only while their drive's `partUuid` is null.
 - `home/devtower-intel.nix`, `home/modules/file-manager.nix`:
-  `~/DavinciProj` and Yazi `g D` / `g a` follow `/mnt/data`.
+  `~/DavinciProj` and Yazi `g a` follow `/mnt/data`; `g D` goes to `~/Data`,
+  the bind mount of `/mnt/data` (data-pair.nix) that keeps media projects
+  inside the ElevenLabs base path.
 
 ## Queued after the drives (one flake update)
 
@@ -184,10 +196,31 @@ Do these together once the 4TB pair's step 7 is done, not mid-conversion:
   `just rekey-secrets` on the laptop (after pulling) so the master and
   recovery keys can open them.
 
+- **Data layout and repos** (see `docs/SHARED-DATA-DRIVES.md`, Repos on the
+  SSD):
+  - Output root: a setting in syntek-media and syntek-author to write
+    outputs straight to `~/Data/<area>/...` (review requested from those
+    template sessions on 14/10).
+  - syntek-business-docs: move its PDFs, scans and zips (`library/src/...`)
+    to `~/Data/business/docs/`; decide whether to rewrite git history,
+    which holds sensitive documents (driving licence, client contract scan,
+    expenses zip).
+  - neovim-course media (Git LFS now) likely follow the same pattern.
+  - Off-site gap: in-progress gitignored media are only on the SSD until
+    moved to `~/Data`.
+  - Google Drive (personal, business Workspace): ciphertext backups only of
+    `docs/ photos/ videos/ audio/` (rclone crypt or restic, a key per area,
+    keys in agenix). Long term, self-hosted Forgejo and a media library
+    replace the VeraCrypt drives; remote access over WireGuard from
+    laptop-intel and the Framework. Keep paths host-neutral (`~/Data`): an
+    AMD + NVIDIA devtower will replace devtower-intel.
+  - ElevenLabs base path stays `/home/sam-desktop`; open media projects on
+    the drive through `~/Data`.
+
 ## Where to read
 
 - `docs/BACKUP-AND-DATA-ENCRYPTION.md`: OS, home and store procedures,
   config-status callout, client store, generations, remote Docker
-- `docs/SHARED-DATA-DRIVES.md`: 4TB pair, Syntek repos, Samba, remote access
+- `docs/SHARED-DATA-DRIVES.md`: 4TB pair, repos on the SSD, Samba, remote access
 - `docs/DISK-PREVENTION.md`: GC, Docker limits, client store summary
 - `docs/SECRETS.md`: LUKS escrow secrets section
