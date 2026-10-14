@@ -6,6 +6,13 @@
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
 
+> **The Neovim course has moved** to its own repository,
+> [SamBailey6194/neovim-course](https://github.com/SamBailey6194/neovim-course)
+> (private; start at `course/README.md`). Clone it beside this one, as
+> `~/Repos/personal/neovim-course`: its commands reach this config as
+> `../nix-config`. Its history up to the move is also in this repository's
+> log under `docs/NEOVIM-COURSE/`.
+
 ---
 
 Modern Neovim setup with Lua configuration, sharing LSP servers and linters with Zed.
