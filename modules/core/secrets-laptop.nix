@@ -78,7 +78,8 @@ in
 
     # ========================================================================
     # Claude Code secrets (CLAUDE_MONITOR_TOKEN, CONTEXT7_API_KEY,
-    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH, TYPESAFE_API_KEY)
+    # ELEVENLABS_API_KEY, TYPESAFE_API_KEY; an ELEVENLABS_MCP_BASE_PATH is
+    # ignored, as home/modules/mcp-servers.nix declares it)
     # Env file at /run/agenix/claude-secrets, read by home/modules/claude.nix
     # and the shared MCP launcher (home/modules/mcp-servers.nix).
     # with-typesafe reads only TYPESAFE_API_KEY for TypeSafe/Jev SDK commands.

@@ -11,10 +11,11 @@
 #     CLAUDE_MONITOR_TOKEN=...       # claude-code-monitor hook auth
 #     CONTEXT7_API_KEY=...           # Context7 MCP auth
 #     ELEVENLABS_API_KEY=...         # ElevenLabs MCP auth
-#     ELEVENLABS_MCP_BASE_PATH=/     # ElevenLabs MCP file root
 #     TYPESAFE_API_KEY=...           # TypeSafe/Jev SDK (with-typesafe command)
 # The MCP keys are read by the shared launcher (mcp-servers.nix) for Claude,
 # Codex and Antigravity alike, so no client config file holds them.
+# ElevenLabs' non-secret base path is declared in mcp-servers.nix instead (the
+# home directory), written into each client's entry and passed to the launcher.
 # settings.json itself is non-secret (the monitor token is read at hook runtime
 # from that file), so it is managed declaratively here. On a new device, edit the
 # agenix secret on first use; everything else is reproduced automatically.
@@ -238,6 +239,7 @@ in
 
   home.activation.claudeMcpServers = import ./mcp-activation.nix {
     inherit pkgs lib;
+    home = homeDir;
     client = "claude";
     browsers = osConfig.services.browserPolicies.enable or false;
     resolve = import ./resolve-package.nix { inherit lib osConfig; };

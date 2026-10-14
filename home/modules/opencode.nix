@@ -1,4 +1,4 @@
-{ pkgs, lib, osConfig ? null, ... }:
+{ config, pkgs, lib, osConfig ? null, ... }:
 
 # OpenCode v2: MCP servers shared with the other agents (./mcp-servers.nix) and,
 # on a host that serves a model itself, the local llama-server as a provider.
@@ -49,10 +49,11 @@
 
 let
   jqBin = "${pkgs.jq}/bin/jq";
-  mcp = import ./mcp-servers.nix { inherit pkgs lib; client = "opencode"; };
+  home = config.home.homeDirectory;
+  mcp = import ./mcp-servers.nix { inherit pkgs lib home; client = "opencode"; };
   # Managed names OpenCode does not get (e.g. claude-design), removed if present.
   retiredMcp = lib.subtractLists (builtins.attrNames mcp)
-    (builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib; all = true; }));
+    (builtins.attrNames (import ./mcp-servers.nix { inherit pkgs lib home; all = true; }));
 
   llm = if osConfig != null then osConfig.services.localLlm or null else null;
 
@@ -87,6 +88,8 @@ let
     servers = lib.mapAttrs (_: server:
       if server ? url then { type = "remote"; inherit (server) url; }
       else { type = "local"; inherit (server) command; timeout = 120000; }
+        # OpenCode's name for a local server's variables.
+        // lib.optionalAttrs (server ? env) { environment = server.env; }
     ) mcp;
     remove = retiredMcp;
     provider = if localProvider == { } then null else localProvider;

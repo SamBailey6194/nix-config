@@ -51,27 +51,36 @@ def capture_credentials(home):
         key = context.get("headers", {}).get("CONTEXT7_API_KEY")
         if key:
             keys.setdefault("CONTEXT7_API_KEY", key)
-        for key in ["ELEVENLABS_API_KEY", "ELEVENLABS_MCP_BASE_PATH"]:
-            value = servers.get("elevenlabs", {}).get("env", {}).get(key)
-            if value:
-                keys.setdefault(key, value)
+        # The base path is declared in the inventory, so only the key is kept.
+        value = servers.get("elevenlabs", {}).get("env", {}).get("ELEVENLABS_API_KEY")
+        if value:
+            keys.setdefault("ELEVENLABS_API_KEY", value)
     if keys:
         write(destination, json.dumps(keys, indent=2) + "\n", 0o600)
 
 
-def strip_credentials(entry):
-    """Remove inline keys (env values, Codex env_vars names) the launcher supplies."""
+def set_env(entry, declared):
+    """Remove inline keys the launcher supplies and set the declared variables.
+
+    Inline credentials go from env values and Codex env_vars names, and so do
+    forwarded names of declared variables, which would compete with the value
+    written here. The entry's other variables are kept.
+    """
     env = entry.get("env")
-    if isinstance(env, dict):
-        for key in CREDENTIALS:
-            env.pop(key, None)
-        if not env:
-            entry.pop("env")
+    if not isinstance(env, dict):
+        env = {}
+    for key in CREDENTIALS:
+        env.pop(key, None)
+    env.update(declared)
+    if env:
+        entry["env"] = env
+    else:
+        entry.pop("env", None)
     names = entry.get("env_vars")
     if isinstance(names, list):
         # Codex accepts plain names or { name, source } tables.
         names[:] = [var for var in names
-                    if (var.get("name") if isinstance(var, dict) else var) not in CREDENTIALS]
+                    if (var.get("name") if isinstance(var, dict) else var) not in CREDENTIALS | set(declared)]
         if not names:
             entry.pop("env_vars")
 
@@ -94,7 +103,8 @@ def sync(client, path, inventory, retired=()):
             for key in HTTP_KEYS + ("type",):
                 entry.pop(key, None)
             entry["command"], entry["args"] = server["command"][0], server["command"][1:]
-            strip_credentials(entry)
+            # Claude and Antigravity take an env object, Codex an env table.
+            set_env(entry, server.get("env", {}))
             if client == "codex":
                 entry.setdefault("startup_timeout_sec", 120)
             if client == "claude":
@@ -132,8 +142,8 @@ def main():
     client, inventory_file, *retired_file = sys.argv[1:]
     home = Path.home()
     paths = {
-        "claude": Path(os.environ.get("CLAUDE_CONFIG_DIR", str(home))) / ".claude.json",
-        "codex": Path(os.environ.get("CODEX_HOME", str(home / ".codex"))) / "config.toml",
+        "claude": Path(os.environ.get("CLAUDE_CONFIG_DIR") or home) / ".claude.json",
+        "codex": Path(os.environ.get("CODEX_HOME") or home / ".codex") / "config.toml",
         "antigravity": home / ".gemini/config/mcp_config.json",
     }
     try:

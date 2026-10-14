@@ -165,7 +165,8 @@ in
   # Claude Code Secrets (Per-Device)
   # Env file consumed by home/modules/claude.nix and the shared MCP launcher:
   # CLAUDE_MONITOR_TOKEN (monitor hook auth), CONTEXT7_API_KEY (Context7 MCP),
-  # ELEVENLABS_API_KEY + ELEVENLABS_MCP_BASE_PATH (ElevenLabs MCP).
+  # ELEVENLABS_API_KEY (ElevenLabs MCP; its base path is declared in
+  # home/modules/mcp-servers.nix, and a copy here is ignored).
   # TYPESAFE_API_KEY (TypeSafe/Jev SDK via the with-typesafe command).
   # Edit per device on first use.
   # ============================================================================

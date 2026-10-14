@@ -8,7 +8,12 @@
 # `resolve` (the davinci-resolve-studio package, ./resolve-package.nix) adds
 # Resolve's own server. `all` lists every optional entry by name only, without
 # dereferencing `resolve`, so retired-name lists stay complete on every host.
-{ pkgs, lib, client ? null, browsers ? false, resolve ? null, all ? false }:
+#
+# `home` is the user's home directory (config.home.homeDirectory). An entry's
+# `env` holds non-secret variables that registration writes into each client's
+# entry; the launcher receives the same values as arguments, so what a client
+# shows is what the server gets. Secrets never go here.
+{ pkgs, lib, home, client ? null, browsers ? false, resolve ? null, all ? false }:
 let
   uv = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
   launch = pkgs.writeShellScript "ai-mcp-launch" ''
@@ -30,7 +35,13 @@ let
 in forClient ({
   mcp-mermaid.command = [ (toString launch) "mermaid" "${pkgs.nodejs}/bin/node" "${pkgs.playwright-driver.browsers}" ];
   context7.command = [ (toString launch) "context7" "${pkgs.nodejs}/bin/npx" ];
-  elevenlabs.command = [ (toString launch) "elevenlabs" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" ];
+  # The file root is the home directory, so a project anywhere under it (such
+  # as syntek-media's `media.py check --setup`, which reads it from
+  # ~/.claude.json) is inside it.
+  elevenlabs = {
+    command = [ (toString launch) "elevenlabs" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" home ];
+    env.ELEVENLABS_MCP_BASE_PATH = home;
+  };
   perplexity-computer.url = "https://www.perplexity.ai/rest/computer/mcp";
   # Codex skips it and agy cannot complete its OAuth discovery.
   claude-design = {

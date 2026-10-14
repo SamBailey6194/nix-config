@@ -9,7 +9,7 @@ Codex, Antigravity CLI (`agy`) and OpenCode; Claude Design in Claude Code only:
 | Mermaid | Shared Node/Playwright launcher | None |
 | Context7 | Shared stdio launcher | `CONTEXT7_API_KEY`, if available |
 | Perplexity Computer | HTTP | Each client's OAuth login |
-| ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY` |
+| ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY`; base path declared (home directory) |
 | Claude Design (Claude Code only) | HTTP | Claude Code's authentication and account access |
 
 Claude Code, Codex and Antigravity also get two browser DevTools servers
@@ -64,9 +64,9 @@ It can also read `/mnt/ubuntu-home/sam-dev/.claude.json` on the migrated machine
 This private file is not a Home Manager store file. The launcher first sources
 `/run/agenix/claude-secrets`; its environment takes precedence over that local
 credential file. The encrypted host secrets for laptop-intel and devtower-intel
-carry `CLAUDE_MONITOR_TOKEN`, `CONTEXT7_API_KEY`, `ELEVENLABS_API_KEY` and
-`ELEVENLABS_MCP_BASE_PATH`; devtower-intel declares its copy in
-`hosts/devtower-intel/secrets.nix`. Keys are never copied into this repo
+carry `CLAUDE_MONITOR_TOKEN`, `CONTEXT7_API_KEY` and `ELEVENLABS_API_KEY`
+(an `ELEVENLABS_MCP_BASE_PATH` still in them is ignored; see below);
+devtower-intel declares its copy in `hosts/devtower-intel/secrets.nix`. Keys are never copied into this repo
 or evaluated into the Nix store.
 
 Once that agenix secret is readable, activation stops writing the plaintext
@@ -75,11 +75,32 @@ the keys it needs, removes the rest (including the monitor token), and gives
 Context7 its key in the environment rather than as an `--api-key` argument, so
 no key shows in the process list. For the servers it manages, registration
 removes inline `CONTEXT7_API_KEY`/`ELEVENLABS_API_KEY` values (and Codex
-`env_vars` names) and keeps every client file at mode 0600 or narrower.
+`env_vars` names), including empty ones, and keeps every client file at mode
+0600 or narrower.
 
-Ubuntu used `ELEVENLABS_MCP_BASE_PATH=/`; this is preserved, so all clients have
-the same file path behaviour. Relative files must still point to directories
-the current user can write. A newly provisioned device needs its own secret
+The ElevenLabs file root, `ELEVENLABS_MCP_BASE_PATH`, is not a secret: the
+inventory declares it as the user's home directory (`config.home.homeDirectory`,
+so `/home/sam-desktop` on devtower-intel and `/home/sam-laptop` on
+laptop-intel), and it is reproduced on every rebuild. Registration writes it
+into each client's ElevenLabs entry in that client's format: the `env` object
+in Claude Code's `~/.claude.json` and Antigravity's `mcp_config.json`, the
+`env` table in Codex's `config.toml`, and `environment` in OpenCode's
+`opencode.json`. Other variables in that entry are kept; a Codex `env_vars`
+name for it is removed, so nothing competes with the written value. Tools that
+read the entry, such as syntek-media's `python3 toolkit/media.py check --setup`,
+therefore see a base path containing any project under the home directory. The
+launcher receives the same value as an argument and sets it itself, so the
+server's effective base path is always the one the clients show; neither the
+agenix secret, the credential file nor a client's inline value overrides it.
+(Ubuntu used `/`; the home directory keeps every project reachable without
+exposing the whole filesystem.) Relative files must still point to directories
+the current user can write.
+
+Replacing the entry by hand (`claude mcp add ... elevenlabs -- uvx
+elevenlabs-mcp`, as `media.py` suggests) is not needed and is undone on the
+next activation: registration restores the managed command and arguments,
+removes the inline (possibly empty) `ELEVENLABS_API_KEY` and sets the declared
+base path, keeping any other variables you added. A newly provisioned device needs its own secret
 or private credential file; the inventory alone cannot provision an API key.
 
 Registration removes managed servers a client does not get (Claude Design

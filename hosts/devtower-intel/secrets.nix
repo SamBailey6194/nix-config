@@ -58,7 +58,8 @@ in
     #   CLAUDE_MONITOR_TOKEN      claude-code-monitor hook auth (claude.nix)
     #   CONTEXT7_API_KEY          Context7 MCP          (all clients, via the
     #   ELEVENLABS_API_KEY        ElevenLabs MCP         shared launcher in
-    #   ELEVENLABS_MCP_BASE_PATH  ElevenLabs file root   mcp-servers.nix)
+    #   ELEVENLABS_MCP_BASE_PATH  ignored: declared      mcp-servers.nix)
+    #                             in the inventory (home directory)
     #   TYPESAFE_API_KEY         TypeSafe/Jev SDK (with-typesafe command)
     # ========================================================================
     claude-secrets = {

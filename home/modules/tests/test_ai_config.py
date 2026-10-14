@@ -22,8 +22,10 @@ def load(name, filename):
 sync = load("mcp_sync", "mcp-sync.py")
 launch = load("mcp_launch", "mcp-launch.py")
 
+BASE = "/home/fixture"
 INVENTORY = {
-    "elevenlabs": {"command": ["/nix/server", "elevenlabs", "/nix/uvx"]},
+    "elevenlabs": {"command": ["/nix/server", "elevenlabs", "/nix/uvx", "/nix/python3", BASE],
+                   "env": {"ELEVENLABS_MCP_BASE_PATH": BASE}},
     "context7": {"command": ["/nix/server", "context7", "/nix/npx"]},
     "mcp-mermaid": {"command": ["/nix/server", "mermaid", "/nix/node"]},
     "perplexity-computer": {"url": "https://example.test/perplexity"},
@@ -52,6 +54,10 @@ class SharedMcpTests(unittest.TestCase):
                 servers = result["mcp_servers" if client == "codex" else "mcpServers"]
                 self.assertEqual(set(servers), set(INVENTORY) | {"custom"})
                 self.assertEqual(servers["elevenlabs"]["command"], "/nix/server")
+                # Each client's own env shape: a JSON object, or a Codex TOML table.
+                self.assertEqual(servers["elevenlabs"]["env"], {"ELEVENLABS_MCP_BASE_PATH": BASE})
+                self.assertEqual(servers["elevenlabs"]["args"][-1], BASE)
+                self.assertNotIn("env", servers["context7"])
                 self.assertTrue(servers["elevenlabs"]["disabled"])
                 self.assertFalse(servers["elevenlabs"]["enabled"])
                 self.assertEqual(result["model"], "custom")
@@ -95,6 +101,8 @@ class SharedMcpTests(unittest.TestCase):
             credentials = home / ".config/ai-mcp/credentials.json"
             self.assertEqual(json.loads(credentials.read_text())["ELEVENLABS_API_KEY"], "fixture-eleven")
             self.assertEqual(json.loads(credentials.read_text())["CONTEXT7_API_KEY"], "fixture-context")
+            # The base path is declared in the inventory, never captured.
+            self.assertNotIn("ELEVENLABS_MCP_BASE_PATH", json.loads(credentials.read_text()))
             self.assertEqual(credentials.stat().st_mode & 0o777, 0o600)
 
     def test_capture_skipped_when_agenix_secret_is_readable(self):
@@ -122,8 +130,35 @@ class SharedMcpTests(unittest.TestCase):
             servers = tomllib.loads(path.read_text())["mcp_servers"]
             self.assertEqual(servers["context7"]["env"], {"KEEP": "1"})
             self.assertNotIn("env_vars", servers["context7"])
-            self.assertNotIn("env", servers["elevenlabs"])
+            self.assertEqual(servers["elevenlabs"]["env"], {"ELEVENLABS_MCP_BASE_PATH": BASE})
             self.assertEqual(servers["custom"]["env"], {"CONTEXT7_API_KEY": "fixture"})
+
+    def test_manual_elevenlabs_entry_restored_in_every_client(self):
+        # As `claude mcp add --env ELEVENLABS_API_KEY="$UNSET" --env
+        # ELEVENLABS_MCP_BASE_PATH=... elevenlabs -- uvx elevenlabs-mcp` leaves it.
+        manual = {"type": "stdio", "command": "uvx", "args": ["elevenlabs-mcp"],
+                  "env": {"ELEVENLABS_API_KEY": "", "ELEVENLABS_MCP_BASE_PATH": "/elsewhere", "KEEP": "1"},
+                  "env_vars": ["ELEVENLABS_MCP_BASE_PATH", "ELEVENLABS_API_KEY", "OTHER"]}
+        with tempfile.TemporaryDirectory() as directory:
+            for client in ["claude", "codex", "antigravity"]:
+                path = Path(directory) / client
+                servers = {"elevenlabs": dict(manual, env=dict(manual["env"]), env_vars=list(manual["env_vars"])),
+                           "custom": {"command": "custom", "env": {"ELEVENLABS_MCP_BASE_PATH": "/custom"}}}
+                if client == "codex":
+                    import tomli_w
+                    path.write_text(tomli_w.dumps({"mcp_servers": servers}))
+                else:
+                    path.write_text(json.dumps({"mcpServers": servers}))
+                sync.sync(client, path, INVENTORY)
+                result = tomllib.loads(path.read_text()) if client == "codex" else json.loads(path.read_text())
+                servers = result["mcp_servers" if client == "codex" else "mcpServers"]
+                entry = servers["elevenlabs"]
+                self.assertEqual([entry["command"], *entry["args"]], INVENTORY["elevenlabs"]["command"])
+                self.assertEqual(entry["env"], {"ELEVENLABS_MCP_BASE_PATH": BASE, "KEEP": "1"})
+                self.assertEqual(entry["env_vars"], ["OTHER"])
+                self.assertEqual(servers["custom"], {"command": "custom", "env": {"ELEVENLABS_MCP_BASE_PATH": "/custom"}})
+                if client == "claude":
+                    self.assertEqual(entry["type"], "stdio")
 
     def test_antigravity_http_server_drops_legacy_url_keys(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -185,17 +220,38 @@ class SharedMcpTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), before)
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
+    def test_empty_config_dir_variable_means_home_not_working_directory(self):
+        with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as cwd:
+            inventory = Path(home) / "inventory.json"
+            inventory.write_text(json.dumps(INVENTORY))
+            env = {"CLAUDE_CONFIG_DIR": "", "CODEX_HOME": ""}
+            previous = os.getcwd()
+            os.chdir(cwd)
+            try:
+                with patch.dict(os.environ, env), patch.object(sync.Path, "home", return_value=Path(home)), \
+                        patch.object(sync, "capture_credentials"), \
+                        patch("sys.argv", ["mcp-sync", "claude", str(inventory)]):
+                    sync.main()
+            finally:
+                os.chdir(previous)
+            self.assertTrue((Path(home) / ".claude.json").exists())
+            self.assertEqual(list(Path(cwd).iterdir()), [])
+
 
 class LaunchTests(unittest.TestCase):
     SECRETS = {"CLAUDE_MONITOR_TOKEN": "m", "CONTEXT7_API_KEY": "c", "ELEVENLABS_API_KEY": "e"}
 
-    def run_launcher(self, *argv):
+    def run_launcher(self, *argv, credentials=None):
         calls = []
         with tempfile.TemporaryDirectory() as directory, \
                 patch.dict(os.environ, {"PATH": "/usr/bin", **self.SECRETS}, clear=True), \
                 patch.object(Path, "home", return_value=Path(directory)), \
                 patch.object(launch.sys, "argv", ["mcp-launch", *argv]), \
                 patch.object(launch.os, "execvpe", lambda file, args, env: calls.append((args, dict(env)))):
+            if credentials:
+                path = Path(directory) / ".config/ai-mcp/credentials.json"
+                path.parent.mkdir(parents=True)
+                path.write_text(json.dumps(credentials))
             launch.main()
         return calls[0]
 
@@ -208,11 +264,28 @@ class LaunchTests(unittest.TestCase):
         self.assertNotIn("ELEVENLABS_API_KEY", env)
 
     def test_elevenlabs_gets_only_its_own_key(self):
-        command, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3")
+        command, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3", BASE)
         self.assertEqual(env["ELEVENLABS_API_KEY"], "e")
-        self.assertEqual(env["ELEVENLABS_MCP_BASE_PATH"], "/")
         self.assertNotIn("CONTEXT7_API_KEY", env)
         self.assertNotIn("CLAUDE_MONITOR_TOKEN", env)
+
+    def test_elevenlabs_base_path_is_the_declared_argument(self):
+        # The agenix secret (sourced into the environment), the credential file
+        # and a client's inline env all lose to the inventory's argument.
+        with patch.dict(self.SECRETS, {"ELEVENLABS_MCP_BASE_PATH": "/"}):
+            command, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3", "/home/fixture",
+                                             credentials={"ELEVENLABS_MCP_BASE_PATH": "/credential"})
+        self.assertEqual(env["ELEVENLABS_MCP_BASE_PATH"], "/home/fixture")
+        self.assertEqual(command, ["/nix/uvx", "--python", "/nix/python3", "elevenlabs-mcp==0.12.2"])
+        self.assertNotIn("ELEVENLABS_MCP_BASE_PATH", self.run_launcher("context7", "/nix/npx")[1])
+        with self.assertRaises(SystemExit):
+            self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3")
+
+    def test_blank_inline_key_falls_back_to_credential_file(self):
+        with patch.dict(self.SECRETS, {"ELEVENLABS_API_KEY": ""}):
+            _, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3", "/home/fixture",
+                                       credentials={"ELEVENLABS_API_KEY": "file"})
+        self.assertEqual(env["ELEVENLABS_API_KEY"], "file")
 
     def test_browser_servers_get_no_secrets_and_a_session(self):
         command, env = self.run_launcher("brave", "/nix/npx", "/run/current-system/sw/bin/brave")
@@ -224,10 +297,20 @@ class LaunchTests(unittest.TestCase):
         self.assertFalse(set(self.SECRETS) & set(env))
 
 
+def opencode_server(server):
+    """As opencode.nix renders an inventory entry: `env` becomes `environment`."""
+    if "url" in server:
+        return {"type": "remote", **server}
+    rendered = {"type": "local", "command": server["command"], "timeout": 120000}
+    if "env" in server:
+        rendered["environment"] = server["env"]
+    return rendered
+
+
 class OpenCodeTests(unittest.TestCase):
     def merge(self, config, remove=()):
         defaults = {"schema": "https://opencode.ai/config.json", "remove": list(remove),
-                    "servers": {name: ({"type": "local", **server} if "command" in server else {"type": "remote", **server}) for name, server in INVENTORY.items()},
+                    "servers": {name: opencode_server(server) for name, server in INVENTORY.items()},
                     "permissions": [{"action": "edit", "resource": "*", "effect": "allow"}],
                     "provider": {"id": "llama-cpp", "model": "llama-cpp/qwen3.6-35b-a3b", "value": {"models": {
                         "qwen3.6-35b-a3b": {"modelID": "qwen3.6-35b-a3b", "limit": {"context": 262144}},
@@ -262,6 +345,19 @@ class OpenCodeTests(unittest.TestCase):
         self.assertNotIn("claude-design", result["mcp"]["servers"])
         self.assertIn("custom", result["mcp"]["servers"])
         self.assertEqual(self.merge({}, remove=["absent"]), self.merge({}))
+
+    def test_declared_environment_set_and_inline_keys_dropped(self):
+        source = {"mcp": {"elevenlabs": {"type": "local", "command": ["uvx", "elevenlabs-mcp"], "environment": {
+                              "ELEVENLABS_API_KEY": "", "ELEVENLABS_MCP_BASE_PATH": "/", "KEEP": "1"}},
+                          "servers": {"context7": {"type": "local", "environment": {"CONTEXT7_API_KEY": "fixture"}},
+                                      "custom": {"type": "local", "environment": {"ELEVENLABS_API_KEY": "fixture"}}}}}
+        result = self.merge(source)
+        self.assertEqual(result["mcp"]["elevenlabs"]["environment"], {"ELEVENLABS_MCP_BASE_PATH": BASE, "KEEP": "1"})
+        self.assertEqual(result["mcp"]["elevenlabs"]["command"], INVENTORY["elevenlabs"]["command"])
+        self.assertNotIn("environment", result["mcp"]["servers"]["context7"])
+        self.assertEqual(result["mcp"]["servers"]["custom"]["environment"], {"ELEVENLABS_API_KEY": "fixture"})
+        self.assertEqual(self.merge({})["mcp"]["servers"]["elevenlabs"]["environment"], {"ELEVENLABS_MCP_BASE_PATH": BASE})
+        self.assertEqual(self.merge(result), result)
 
     def test_fresh_config_allows_edits_and_has_all_shared_servers(self):
         result = self.merge({})

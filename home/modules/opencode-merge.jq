@@ -9,7 +9,15 @@
      elif .mcp[$s.key]? != null then ["mcp", $s.key]
      else ["mcp", "servers", $s.key] end) as $sp
     | (getpath($sp) // {}) as $old
-    | setpath($sp; (($old | del(.command, .args, .url, .type)) + $s.value)))
+    # Inline API keys are dropped (the shared launcher supplies them); declared
+    # variables are set over the entry's own, which are otherwise kept.
+    | ($old | del(.command, .args, .url, .type)
+       | if (.environment | type) == "object"
+         then del(.environment.CONTEXT7_API_KEY, .environment.ELEVENLABS_API_KEY) else . end) as $kept
+    | setpath($sp; $kept + $s.value
+        + (if ($kept.environment | type) == "object"
+           then {environment: ($kept.environment + ($s.value.environment // {}))} else {} end))
+    | if getpath($sp + ["environment"]) == {} then delpaths([$sp + ["environment"]]) else . end)
 | reduce ($d.remove // [])[] as $n (.;
     (if (.mcp.servers? | type) == "object" then del(.mcp.servers[$n]) else . end)
     | (if (.mcp? | type) == "object" then del(.mcp[$n]) else . end))

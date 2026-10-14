@@ -113,7 +113,8 @@ in
 
     # ========================================================================
     # Claude Code secrets (CLAUDE_MONITOR_TOKEN, CONTEXT7_API_KEY,
-    # ELEVENLABS_API_KEY, ELEVENLABS_MCP_BASE_PATH)
+    # ELEVENLABS_API_KEY; the ElevenLabs base path is declared in
+    # home/modules/mcp-servers.nix, not here)
     # Uncomment once devtower is installed and claude-secrets-devtower.age exists.
     # devtower-intel declares its own copy in hosts/devtower-intel/secrets.nix.
     # ========================================================================

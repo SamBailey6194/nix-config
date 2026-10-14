@@ -6,11 +6,12 @@ import sys
 
 # Everything the launcher may receive from /run/agenix/claude-secrets or the
 # captured credential file, and which of it each server needs. The rest is
-# removed, so no server sees another's key or the monitor token.
+# removed, so no server sees another's key or the monitor token. A secret's
+# ELEVENLABS_MCP_BASE_PATH is removed too: the inventory declares that one.
 SECRETS = {"CLAUDE_MONITOR_TOKEN", "CONTEXT7_API_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_MCP_BASE_PATH"}
 NEEDS = {
     "context7": {"CONTEXT7_API_KEY"},
-    "elevenlabs": {"ELEVENLABS_API_KEY", "ELEVENLABS_MCP_BASE_PATH"},
+    "elevenlabs": {"ELEVENLABS_API_KEY"},
 }
 CHROME_DEVTOOLS_MCP = "chrome-devtools-mcp@1.10.1"
 
@@ -37,8 +38,9 @@ def main():
     except (OSError, ValueError):
         credentials = {}
     for key, value in credentials.items():
-        if key in SECRETS:
-            os.environ.setdefault(key, value)
+        # An empty inherited value (a client's blank inline key) counts as unset.
+        if key in SECRETS and not os.environ.get(key):
+            os.environ[key] = value
     kind, executable, *args = sys.argv[1:]
     for key in SECRETS - NEEDS.get(kind, set()):
         os.environ.pop(key, None)
@@ -53,7 +55,11 @@ def main():
     elif kind == "elevenlabs":
         if not os.environ.get("ELEVENLABS_API_KEY"):
             sys.exit("ElevenLabs requires ELEVENLABS_API_KEY in /run/agenix/claude-secrets or ~/.config/ai-mcp/credentials.json")
-        os.environ.setdefault("ELEVENLABS_MCP_BASE_PATH", "/")
+        # The inventory's declared base path (the home directory), the value
+        # registration writes into every client's entry; nothing overrides it.
+        if len(args) < 2 or not args[1]:
+            sys.exit("ElevenLabs requires the declared base path argument (home/modules/mcp-servers.nix)")
+        os.environ["ELEVENLABS_MCP_BASE_PATH"] = args[1]
         command = [executable, "--python", args[0], "elevenlabs-mcp==0.12.2"]
     elif kind == "brave":
         graphical_environment()
