@@ -50,6 +50,9 @@
     # below). SoundCraft stays installed for editing.
     amberol
 
+    # Offline text-to-speech: syntek-media's scratch voice tracks for timing.
+    espeak-ng
+
     # PDF viewers
     zathura
 
