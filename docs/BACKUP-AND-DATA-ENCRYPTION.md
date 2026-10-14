@@ -586,7 +586,9 @@ configuration.
 9. **Check the result.** No prompt at boot or after. Then:
 
    ```sh
-   findmnt /var/lib/docker /var/lib/libvirt/images /srv/clients   # all /dev/mapper/cryptstore[/@...]
+   for m in /var/lib/docker /var/lib/libvirt/images /srv/clients; do findmnt "$m"; done
+   #   each /dev/mapper/cryptstore[/@...]; one findmnt per path, because with
+   #   two or more paths findmnt reads them as source and target, and prints nothing
    sudo btrfs qgroup show -re /var/lib/docker                    # three limits, usage counted
    lsattr -d /var/lib/libvirt/images                             # shows C
    systemctl status store-quotas.service docker.service libvirtd.service

@@ -57,13 +57,13 @@ has been run on these commits yet.**
 
 ## Next steps, in order
 
-1. **Rebuild** devtower-intel on `main` (`just rebuild`) and check it boots
-   and the new login apps land on ws3/4/11 with focus on ws2. If Teams steals
-   focus, its window belongs to a child process and the silent rule missed it.
+1. **Rebuild**: done (store switch-over, 13/10 17:15). Not re-checked: that
+   the login apps land on ws3/4/11 with focus on ws2. If Teams steals focus,
+   its window belongs to a child process and the silent rule missed it.
 2. **OS drive TPM2 + escrow secret**: done (TPM2 PCR 7 in keyslot 1,
    `-os.age` verified and committed, header backup
-   `luks/cryptroot-header-2026-10-13-tpm2.age` on KEYS). Left: reboot and
-   confirm there is no passphrase prompt.
+   `luks/cryptroot-header-2026-10-13-tpm2.age` on KEYS). Reboots at 11:34 and
+   17:15 unlocked `cryptroot` without a prompt.
 3. **Master key backup**: done via the KEYS recovery key instead of a copy.
    All 12 devtower-intel secrets rekeyed for it (host key), and the stick key
    alone decrypted `luks-passphrase-devtower-intel-os.age`.
@@ -73,49 +73,79 @@ has been run on these commits yet.**
    removed. Skipped on purpose: selective Ubuntu file restore (home step 9)
    and the `crypthome` header backup (home step 10). Left for later: delete
    the Intel `@home` after pruning old generations (home step 12).
-5. **Pending config** (below): written, not yet rebuilt or committed. Run
-   `just check`, rebuild and commit it before any store-drive work.
-6. **4TB pair**: `docs/SHARED-DATA-DRIVES.md`, Conversion.
-7. **Store drive (870 EVO 2TB, serial `S6PPNX0T910090T`; `sdc` on 13/10,
-   not `sda`, which is now a 931.5G Windows-style disk)**: same backup doc,
-   Store section. Copy out anything wanted from `/mnt/ubuntu-nix` and
-   `/mnt/ubuntu-docker` first (no usable backup exists).
+5. **Pending config**: done (`487b630`, `b85dcf1`; list below).
+6. **4TB pair**: `docs/SHARED-DATA-DRIVES.md`, Conversion. In progress
+   (13/10): step 1 copy running. The NixOS config is written, not committed
+   (list below) and inert until the `dataPair` PARTUUIDs are filled in; step 7
+   of the doc switches it on (passphrase files, `disks.nix`, `git add`,
+   `just rebuild --boot`, reboot, checks). The WD can be switched on right
+   after step 3.
+7. **Store drive (870 EVO 2TB, serial `S6PPNX0T910090T`)**: done
+   (`f2c0c4d`). `cryptstore` (LUKS2, TPM2 PCR 7, `-store.age` escrow checked)
+   holds `@docker` -> `/var/lib/docker`, `@vm` -> `/var/lib/libvirt/images`
+   (No_COW) and `@clients` -> `/srv/clients`, simple-quota caps 950G / 450G /
+   400G. Unlocked after boot without a prompt; `store-quotas` and Docker
+   started from it. The old Ubuntu `/nix` and Docker partitions were erased
+   without a copy, on purpose. The Intel `@docker` held only 328K.
+   - Skipped on purpose: the `cryptstore` header backup (store step 10).
+   - Left for later: delete the Intel `@docker` (store step 11).
+   - libvirtd's first idle shutdown after the switch hung 30 s and was forced
+     (exit 1, 17:18:22); the next cycle (17:21:50 -> 17:23:50) stopped
+     cleanly. Watch for "forcefull" in `journalctl -u libvirtd`; if it
+     recurs, enable libvirt debug logging for one cycle.
+   - Drive letters move between boots (the store was `sdc`, then `sda`);
+     everything uses UUIDs or serials.
 8. **Remote access**: `wg-lan`, sshd hardening, Samba, Docker context.
 
-## Pending config changes (written, not yet rebuilt or committed)
+## Config changes for the storage plan (committed)
 
-All in the working tree; none of it has been through `just check` or a
-rebuild yet. The store parts take effect only once `dataDrives.store` is
-filled in.
+Rebuilt and running since 13/10 17:15, with `dataDrives.store` filled in.
 
-- Done: `hosts/devtower-intel/data-drives.nix`: no `/nix` mount and no initrd
+- `hosts/devtower-intel/data-drives.nix`: no `/nix` mount and no initrd
   unlock for the store; crypttab after-boot unlock
   (`tpm2-device=auto,nofail,discard`); `nofail` mounts for `@docker`, `@vm`,
   `@clients`; `RequiresMountsFor` on docker and libvirtd; the
   `store-quotas.service` oneshot that re-applies the caps at boot.
-- Done: `hosts/devtower-intel/disks.nix`: the three caps (`storeQuotas`).
-- Done: `secrets/secrets.nix`: `-data` renamed to `-store` (still commented
-  out until store step 7); the "fallback" comments now say escrow only.
-- Done: `modules/core/nix-gc.nix`: keep newest 5 system generations, no age
-  rule, every user's home-manager profile pruned to 5 too.
-- Done: `justfile`: `deploy-client NAME HOST [--key FILE | --no-check-sigs]`
+- `hosts/devtower-intel/disks.nix`: the three caps (`storeQuotas`) and the
+  store's UUIDs.
+- `secrets/secrets.nix`: `-store` declared; the "fallback" comments now say
+  escrow only.
+- `modules/core/nix-gc.nix`: keep newest 5 system generations, no age rule,
+  every user's home-manager profile pruned to 5 too.
+- `justfile`: `deploy-client NAME HOST [--key FILE | --no-check-sigs]`
   (`client-store-guard --no-db`, shared `flock`, build with `--out-link` to a
   pending GC root, sign with `~/.config/nix/client-store-signing.key` by
   default, `nix copy --from`, activate on the server under `systemd-run`, then
-  set the client profile and drop the pending root); `backup-luks-headers
-  DEVICE` takes a LUKS UUID or `/dev/disk/by-uuid/` path.
-- Done: `hosts/devtower-intel/client-store.nix` (new, imported by
-  `full.nix`): `client-store-guard`, and the weekly `client-store-gc`
-  service + timer (`Persistent=true`).
-- Done: comments in `hardware-configuration.nix` and `disk-prevention.nix`:
-  `/nix` stays on the OS drive.
-- Done: `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/Business/"` ->
+  set the client profile and drop the pending root). `enroll-tpm2`,
+  `test-luks-passphrase`, `setup-tpm2` and `backup-luks-headers` take only a
+  LUKS UUID or `/dev/disk/by-uuid/` path.
+- `hosts/devtower-intel/client-store.nix` (imported by `full.nix`):
+  `client-store-guard`, and the weekly `client-store-gc` service + timer
+  (`Persistent=true`).
+- `home/modules/git.nix`: `includeIf."gitdir:/mnt/data/Business/"` ->
   `~/.gitconfig-syntek`.
-- Done: `config/hypr/60-keybinds.lua`: SUPER + = / SUPER + - raise and lower
-  the volume by 5% (repeat while held), a keyboard fallback for the
-  SteelSeries volume roller; listed in both `KEYBINDS` files.
+- `config/hypr/60-keybinds.lua`: SUPER + = / SUPER + - raise and lower the
+  volume by 5% (repeat while held), a keyboard fallback for the SteelSeries
+  volume roller.
 - Later: `wg-lan` module and agenix keys, Mullvad bypass, sshd key-only on
   `wg-lan`, Samba, Docker published ports bound to 127.0.0.1 / tunnel IP.
+
+## Config for the 4TB pair (written, not committed)
+
+Evaluated only: with both `partUuid`s null every devtower-intel stage builds
+the same system as before (`/mnt/davinci`, `/mnt/archive`); not rebuilt.
+
+- `hosts/devtower-intel/data-pair.nix` (new, untracked: `git add` before a
+  rebuild): crypttab `tcrypt-veracrypt` lines by PARTUUID with passphrase
+  files in `/var/lib/desktop-secrets/`, `/mnt/data` at boot and `noauto`
+  `/mnt/data-mirror` by `/dev/mapper/<name>`, the `data-mirror` service +
+  daily timer (mounts both, guard checks, prune history, rsync, always locks
+  the mirror again), smartd on both drives.
+- `hosts/devtower-intel/disks.nix`: `dataPair.{data,mirror}.{partUuid,byId}`.
+- `hardware-configuration.nix` / `data-drives.nix`: `/mnt/davinci` and the
+  ext4 `/mnt/archive` only while their drive's `partUuid` is null.
+- `home/devtower-intel.nix`, `home/modules/file-manager.nix`:
+  `~/DavinciProj` and Yazi `g D` / `g a` follow `/mnt/data`.
 
 ## Still open
 

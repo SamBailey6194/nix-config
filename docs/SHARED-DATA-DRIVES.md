@@ -7,8 +7,9 @@ gets a **VeraCrypt** volume with **NTFS** inside, and NixOS keeps the second
 drive as a scheduled one-way mirror of the first.
 
 This is the plan as of 12 October 2026. The procedure below is done by hand;
-the NixOS configuration for it (unlock, mounts, mirror timer) is still to be
-written, see [Configuration to add](#configuration-to-add).
+the NixOS configuration for it (unlock, mounts, mirror timer) is written but
+switched off until each drive's identifier is filled in (step 7), see
+[NixOS configuration](#nixos-configuration).
 
 | Drive | Serial | Recording | Role | Mapper name | NixOS mount |
 | --- | --- | --- | --- | --- | --- |
@@ -47,9 +48,10 @@ The trade-off: anything changed since the last sync exists on the WD only.
     "Mount selected volume upon logon").
   - **NixOS:** systemd-cryptsetup opens VeraCrypt volumes natively
     (`tcrypt-veracrypt` in `/etc/crypttab`, see `man crypttab`). The passphrase
-    comes from a root-only file on the encrypted OS disk, so it unlocks at boot
-    without a prompt, with the same trust as the TPM2 tokens: whoever can
-    unlock the OS disk can read it.
+    comes from a root-only file on the encrypted OS disk, so the WD unlocks
+    after boot without a prompt, and the Seagate only while the mirror job
+    runs. Same trust as the TPM2 tokens: whoever can unlock the OS disk can
+    read the files.
 - **NTFS on Linux** uses NTFS-3G with the options DavinciProj already uses:
   `windows_names`, `norecover`, `nofail`, owned by `sam-desktop`. The Windows
   rules in [DAVINCI-SHARED-DRIVE.md](DAVINCI-SHARED-DRIVE.md#before-switching-operating-systems)
@@ -90,19 +92,20 @@ a second copy of it somewhere else (encrypted off-site, for example) first.
 - Do the [home conversion](BACKUP-AND-DATA-ENCRYPTION.md#home-samsung-512gb-first-from-the-running-system)
   first. It refreshes `/mnt/archive/pre-nixos-home/`, which moves with the
   archive.
-- **Windows:** install VeraCrypt, and check Fast Startup is off.
+- **Windows:** check Fast Startup is off; VeraCrypt is installed there only
+  for step 8.
 - **Passphrases:** choose one per volume and store them in your password
   manager and offline before typing them in.
 - **USB stick** for the VeraCrypt header backups.
 
 ### 1. Copy DavinciProj to the archive drive (NixOS)
 
-Shut Windows down fully first. Close Resolve and Affinity, and make the drive
-read-only so nothing changes after the copy (a mount that is already read-only
-because Windows was hibernated or unclean is fine too):
+Shut Windows down fully first. Close Resolve and Affinity, and mount the drive
+read-only so nothing changes after the copy. NTFS-3G can't switch a mount to
+read-only in place (`remount,ro` fails), so unmount it and mount it again:
 
 ```sh
-sudo mount -o remount,ro /mnt/davinci
+sudo umount /mnt/davinci && sudo mount -o ro /mnt/davinci
 D=$(date +%F)
 sudo rsync -rtS /mnt/davinci/ /mnt/archive/davinciproj-$D/
 sudo rsync -rtS --checksum --dry-run --itemize-changes /mnt/davinci/ /mnt/archive/davinciproj-$D/
@@ -110,32 +113,42 @@ sudo rsync -rtS --checksum --dry-run --itemize-changes /mnt/davinci/ /mnt/archiv
 
 The dry run must list nothing.
 
-### 2. Create the VeraCrypt volume on the WD (Windows)
+### 2. Create the VeraCrypt volume on the WD (NixOS)
 
-1. Before opening anything else, in Disk Management find the WD (3.64TB,
-   DavinciProj), note its disk number and drive letter, and remove the drive
-   letter from the old NTFS partition. Don't open Resolve or Affinity in
-   Windows until the new volume is mounted: anything saved to the old
-   partition now is lost in the format.
-2. VeraCrypt → **Create Volume** → **Encrypt a non-system partition/drive** →
-   **Standard VeraCrypt volume** → select that disk's partition
-   (`\Device\HarddiskN\Partition1`, check the size).
-3. Choose **Create encrypted volume and format it**, not "Encrypt partition in
-   place".
-4. AES with SHA-512 (both supported by cryptsetup on Linux), the WD's
-   passphrase, default PIM, **files larger than 4GiB: yes**, filesystem
-   **NTFS**, and leave **Quick Format off**. The full format fills the whole
-   drive with ciphertext, overwriting the old plaintext. Expect several hours.
-5. If Windows says the disk needs formatting, **always choose Cancel**. It is
-   seeing the encrypted partition without VeraCrypt.
-6. Mount it in VeraCrypt at the letter DavinciProj had, then **Favorites → Add
-   Mounted Volume to Favorites**: tick "Mount selected volume upon logon" and
-   give it the label `Data`.
-7. **Tools → Backup Volume Header** to the USB stick.
-8. Shut Windows down fully.
+VeraCrypt is run once from a root `nix shell`, not installed: it is unfree, so
+the first run compiles it (5 to 10 minutes), and the next garbage collection
+removes it. NixOS itself only ever opens the volumes, with cryptsetup.
+`ntfs3g` provides the `mkfs.ntfs` VeraCrypt uses for the filesystem inside.
+
+```sh
+sudo -i
+NIXPKGS_ALLOW_UNFREE=1 nix shell --impure nixpkgs#veracrypt nixpkgs#ntfs3g nixpkgs#util-linux
+umount /mnt/davinci
+DISK=$(ls /dev/disk/by-id/ata-*WD-WCC7K0FU5LY2 | grep -v -- -part)
+test "$(udevadm info --query=property --property=ID_SERIAL_SHORT --value --name="$DISK")" = WD-WCC7K0FU5LY2 || exit 1
+lsblk -o NAME,SIZE,FSTYPE,PARTUUID,MOUNTPOINTS "$DISK"     # one 3.6T ntfs partition, nothing mounted
+test -z "$(lsblk -nro MOUNTPOINTS "$DISK" | tr -d '\n')" || exit 1
+PART="${DISK}-part1"
+read -r -p 'Type ERASE-WD-WCC7K0FU5LY2 to continue: ' CONFIRM && test "$CONFIRM" = ERASE-WD-WCC7K0FU5LY2 || exit 1
+veracrypt --text --create "$PART" --volume-type=normal \
+  --encryption=AES --hash=SHA-512 --filesystem=NTFS \
+  --pim=0 --keyfiles="" --random-source=/dev/urandom
+```
+
+It asks for the WD's passphrase twice. There is no `--quick`, so this is a full
+format: it fills the whole partition with ciphertext, overwriting the old
+plaintext, and takes several hours (about 350MiB/s on the outer tracks, slower
+towards the end). The volume goes inside the existing partition, so its
+PARTUUID doesn't change. Afterwards, back up the header to the USB stick and
+note the PARTUUID for step 7:
+
+```sh
+veracrypt --text --backup-headers "$PART"     # e.g. <stick>/veracrypt/wd-data-header.bin
+blkid -s PARTUUID -o value "$PART"
+```
 
 The old `/mnt/davinci` NTFS mount no longer finds its UUID; it is `nofail`, so
-NixOS boots normally.
+NixOS boots normally. Windows is not needed until step 8.
 
 ### 3. Copy the archive onto the WD (NixOS)
 
@@ -184,7 +197,8 @@ business files into `Personal/` and `Business/` later, on the new volume.
 
 ### 4. Erase the Seagate and partition it for Windows (NixOS)
 
-The archive contents now exist only on the WD. Still in the root shell:
+The archive contents now exist only on the WD. In a root shell (`sudo -i`,
+then `nix-shell` as in step 3):
 
 ```sh
 umount /mnt/archive
@@ -200,59 +214,243 @@ wipefs -a "$DISK"-part1                              # nothing left at the new s
 
 `/mnt/archive` will fail to mount from now on; it is `nofail`.
 
-### 5. Create the mirror's VeraCrypt volume (Windows)
+### 5. Create the mirror's VeraCrypt volume (NixOS)
 
-As step 2, on the Seagate's new partition, with the Seagate's passphrase and a
-full format. If Windows has given the new partition a drive letter, remove it
-in Disk Management first. Don't add it as a logon favourite. Back up its header too, then
-shut Windows down fully.
+As step 2, in a root `nix shell` with VeraCrypt, on the Seagate's new
+partition, with the Seagate's passphrase and a full format:
+
+```sh
+DISK=$(ls /dev/disk/by-id/ata-*ZFN2J51Q | grep -v -- -part)
+test "$(udevadm info --query=property --property=ID_SERIAL_SHORT --value --name="$DISK")" = ZFN2J51Q || exit 1
+test -z "$(lsblk -nro MOUNTPOINTS "$DISK" | tr -d '\n')" || exit 1
+PART="${DISK}-part1"
+veracrypt --text --create "$PART" --volume-type=normal \
+  --encryption=AES --hash=SHA-512 --filesystem=NTFS \
+  --pim=0 --keyfiles="" --random-source=/dev/urandom
+veracrypt --text --backup-headers "$PART"     # e.g. <stick>/veracrypt/seagate-mirror-header.bin
+blkid -s PARTUUID -o value "$PART"
+```
+
+The Seagate is SMR, so the full format may slow down part-way; let it finish.
 
 ### 6. First mirror copy (NixOS)
 
 ```sh
 sudo -i
 nix-shell -p cryptsetup ntfs3g rsync util-linux
-# open and mount cryptdata as in step 3, then:
+# cryptdata is already open and mounted at /mnt/data if the WD has been
+# switched on (step 7); otherwise open and mount it as in step 3. Then:
 MIRROR=$(ls /dev/disk/by-id/ata-*ZFN2J51Q-part1)
 cryptsetup open --type tcrypt --veracrypt "$MIRROR" cryptmirror
 mkdir -p /mnt/data-mirror
 mount -t ntfs-3g -o windows_names,norecover,uid=1000,gid=100,fmask=0133,dmask=0022 /dev/mapper/cryptmirror /mnt/data-mirror
-rsync -rtS --delete --exclude=/.data-primary /mnt/data/ /mnt/data-mirror/
-rsync -rtS --delete --exclude=/.data-primary --checksum --dry-run --itemize-changes /mnt/data/ /mnt/data-mirror/
+EX=(--exclude=/.data-primary --exclude=/.mirror-history --exclude='/System Volume Information' --exclude='/$RECYCLE.BIN')
+rsync -rtS --delete "${EX[@]}" /mnt/data/ /mnt/data-mirror/
+rsync -rtS --delete "${EX[@]}" --checksum --dry-run --itemize-changes /mnt/data/ /mnt/data-mirror/
 ```
 
-The dry run must list nothing. From here the two drives are the only copies of
-the archive, so the off-site backup (below) is the next priority.
+The excludes are the same list the nightly job uses: `.data-primary` marks
+the WD only, and `System Volume Information` and `$RECYCLE.BIN` belong to each
+volume, not to the data. The dry run must list nothing. From here the two
+drives are the only copies of the archive, so the off-site backup (below) is
+the next priority. Once the Seagate is switched on (step 7), refresh the mirror
+only with `sudo systemctl start data-mirror`, never by hand.
 
-## Configuration to add
+### 7. Switch NixOS over to the pair (NixOS)
 
-To be implemented in `hosts/devtower-intel/` once the drives are converted:
+The configuration in [NixOS configuration](#nixos-configuration) is already in
+the repository, inert until each drive's `partUuid` is filled in. Do this for
+both drives now, or for the WD alone earlier, straight after step 3 (it is then
+mounted at `/mnt/data` by the system while steps 4 to 6 run, and `/mnt/archive`
+stays until the Seagate is switched on).
 
-- **Passphrase files** in `/var/lib/desktop-secrets/` (root, `0400`), one per
-  volume.
-- **`/etc/crypttab`** entries, by partition UUID (`blkid -s PARTUUID`), since a
-  VeraCrypt volume has no LUKS UUID:
-  `cryptdata PARTUUID=<…> /var/lib/desktop-secrets/data.pass tcrypt-veracrypt,nofail,x-systemd.device-timeout=10s`,
-  and the same for `cryptmirror`.
-- **Mounts:** `/mnt/data` mounted at boot (Affinity's Wine sandbox needs it
-  already mounted), `/mnt/data-mirror` on demand, both with the DavinciProj
-  NTFS-3G options. Point `davinci`/`davinciDriveLetter` in
-  `home/devtower-intel.nix` and the Yazi `g D` / `g a` keys at `/mnt/data`.
-- **Retire** the `/mnt/davinci` mount in `hardware-configuration.nix`, the
-  archive blocks in `data-drives.nix` and `archive`/`archiveUuid`/`davinciUuid`
-  in `disks.nix`.
-- **Mirror job:** a systemd service and daily timer (`Persistent=true`, so a
-  day spent in Windows is caught up at the next boot) running
-  `rsync -rtS --delete --backup --backup-dir=.mirror-history/<date> --exclude=/.mirror-history --exclude=/.data-primary`,
-  then deleting `.mirror-history` folders older than 30 days. It refuses to run
-  unless both paths are mounted from the expected mapper devices and
-  `/mnt/data/.data-primary` exists, so an unmounted or empty working drive can
-  never wipe the mirror.
-- **Health:** smartd on both drives. The mirror job's failures show in
+1. **Close the volumes you opened by hand**, in the root shell (only the ones
+   being switched on):
+
+   ```sh
+   umount /mnt/data-mirror && cryptsetup close cryptmirror
+   umount /mnt/data && cryptsetup close cryptdata
+   ```
+
+2. **Create each passphrase file** (`data.pass` for the WD, `mirror.pass` for
+   the Seagate; root-only, not agenix). Type the passphrase at the prompt; it
+   is written without a trailing newline:
+
+   ```sh
+   sudo bash -c 'umask 077; IFS= read -rs -p "Passphrase: " p; echo; printf %s "$p" > /var/lib/desktop-secrets/data.pass'
+   sudo chmod 0400 /var/lib/desktop-secrets/data.pass
+   ```
+
+   systemd-cryptsetup reads only the first line of the file and drops its line
+   ending, so a newline added later by an editor does no harm, but spaces at
+   either end count as part of the passphrase.
+
+3. **Test the file the way boot uses it**, with the volume closed. Don't test
+   with `cryptsetup --key-file`: for a VeraCrypt volume that means a VeraCrypt
+   keyfile, not a passphrase.
+
+   ```sh
+   P=$(blkid -s PARTUUID -o value /dev/disk/by-id/ata-WDC_WD40EZRZ-00GXCB0_WD-WCC7K0FU5LY2-part1)
+   echo "$P"
+   sudo systemd-cryptsetup attach cryptdata /dev/disk/by-partuuid/$P /var/lib/desktop-secrets/data.pass tcrypt-veracrypt
+   sudo systemd-cryptsetup detach cryptdata
+   ```
+
+   For the Seagate: `ata-ST4000DM004-2CV104_ZFN2J51Q-part1`, `cryptmirror`
+   and `mirror.pass`.
+
+4. **Fill in `hosts/devtower-intel/disks.nix`**: the PARTUUID printed above
+   goes in `dataPair.data.partUuid` (WD) or `dataPair.mirror.partUuid`
+   (Seagate), as a string. The WD's PARTUUID is the one its NTFS partition
+   always had (VeraCrypt formatted inside it); the Seagate's is the new
+   partition from step 4.
+
+5. **Rebuild for the next boot and reboot**, with Resolve and Affinity closed.
+   `data-pair.nix` is a new file, and a Git flake can't see untracked files,
+   so `git add` it first:
+
+   ```sh
+   git add hosts/devtower-intel/data-pair.nix
+   just check devtower-intel
+   just rebuild --boot
+   systemctl reboot
+   ```
+
+6. **Check the result:**
+
+   ```sh
+   systemctl --failed                                # nothing listed
+   systemctl status systemd-cryptsetup@cryptdata mnt-data.mount
+   findmnt -o SOURCE,FSTYPE,OPTIONS /mnt/data       # fuseblk, rw
+   ls -A /mnt/data                                   # the DavinciProj tree, .data-primary
+   readlink ~/DavinciProj                            # /mnt/data
+   findmnt /mnt/davinci                              # nothing
+   systemctl status smartd
+   ```
+
+   Yazi `g D` and `g a` now go to `/mnt/data` and `/mnt/data/Affinity`.
+   With the Seagate switched on as well:
+
+   ```sh
+   findmnt /mnt/archive                              # nothing
+   systemctl list-timers data-mirror                 # next run 03:30 to 04:00
+   sudo systemctl start data-mirror                  # first run by hand
+   journalctl -u data-mirror -b                      # no "refusing", rsync status 0
+   findmnt /mnt/data-mirror                          # nothing: unmounted again
+   ls /dev/mapper                                    # no cryptmirror: locked again
+   ```
+
+   If `/mnt/data` gave up at boot (drive late, unlock slower than a minute),
+   check `journalctl -b -u systemd-cryptsetup@cryptdata`, then
+   `sudo systemctl start mnt-data.mount`.
+
+7. **Commit** `disks.nix` and the new files once it works.
+
+After the Seagate is switched on, the old blocks can be deleted:
+`/mnt/davinci` in `hardware-configuration.nix`, the ext4 `/mnt/archive`
+block and its assertion in `data-drives.nix`, and `davinciUuid`,
+`archiveUuid` and `dataDrives.archive` in `disks.nix`.
+
+### 8. Mount the WD in Windows (Windows, once)
+
+Install VeraCrypt in Windows first (Windows only; NixOS doesn't need it).
+
+1. If Windows says a disk needs formatting, **always choose Cancel**. It is
+   seeing an encrypted partition without VeraCrypt. If Disk Management has
+   given either drive's raw partition a letter, remove it.
+2. In VeraCrypt, select the WD's partition (3.64TB,
+   `\Device\HarddiskN\Partition1`) and mount it at the letter DavinciProj had,
+   then **Favorites → Add Mounted Volume to Favorites**: tick "Mount selected
+   volume upon logon" and give it the label `Data`.
+3. Don't add the Seagate: only NixOS writes the mirror.
+4. Open a project in Resolve and in Affinity to check their paths resolve,
+   then shut Windows down fully.
+
+## NixOS configuration
+
+`hosts/devtower-intel/data-pair.nix` (imported by `hardware-configuration.nix`
+beside `data-drives.nix`), switched on per drive by `dataPair` in
+`hosts/devtower-intel/disks.nix`:
+
+```nix
+dataPair = {
+  data   = { partUuid = null; byId = "ata-WDC_WD40EZRZ-00GXCB0_WD-WCC7K0FU5LY2"; }; # cryptdata -> /mnt/data
+  mirror = { partUuid = null; byId = "ata-ST4000DM004-2CV104_ZFN2J51Q"; };         # cryptmirror -> /mnt/data-mirror
+};
+```
+
+With both `partUuid`s null, every devtower-intel stage builds exactly the
+system it did before: `/mnt/davinci` and `/mnt/archive` as now, no new units.
+`byId` is the whole drive, used by smartd and the commands in step 7. Filling
+in `data` switches on the WD's unlock, `/mnt/data` and its smartd entry, and
+retires `/mnt/davinci`; filling in `mirror` switches on the Seagate's and
+retires the ext4 `/mnt/archive`. The mirror job needs both. An assertion stops
+the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
+
+- **`/etc/crypttab`**, by `/dev/disk/by-partuuid/<partUuid>`: a VeraCrypt
+  volume has no LUKS UUID, and crypttab(5) documents only `UUID=` and device
+  paths. Options `tcrypt-veracrypt,nofail,x-systemd.device-timeout=10s`, key
+  `/var/lib/desktop-secrets/{data,mirror}.pass`, unlocked after boot (not in
+  the initrd). A wrong passphrase fails `systemd-cryptsetup@<name>.service`; a
+  missing file makes it ask instead, which nobody sees once the login screen
+  is up (`sudo systemd-tty-ask-password-agent --query` answers it).
+  `cryptmirror` is also `noauto`: not unlocked at boot, only when the mirror
+  job mounts it, and locked again afterwards, so the mirror can't be changed
+  by mistake between runs and the SMR drive sits idle.
+- **Mounts**, by `/dev/mapper/cryptdata` and `/dev/mapper/cryptmirror`, not
+  the NTFS UUID: the mapper name is ours (crypttab), known now and unchanged if
+  a volume is ever re-created, while the NTFS UUID only exists after Windows
+  formats the volume and would be a second identifier to keep in step.
+  NTFS-3G with the DavinciProj options (`nofail`, `noatime`, `norecover`,
+  `uid=1000`, `gid=100`, `fmask=0133`, `dmask=0022`, `windows_names`) and
+  `x-systemd.device-timeout=1min`, long enough for VeraCrypt's slow unlock (the
+  mount gives up after it without retrying).
+  - `/mnt/data` is mounted at boot, not automounted: Affinity's Wine sandbox
+    and Wine's drive-letter scan need it mounted already.
+  - `/mnt/data-mirror` is `noauto`; its NTFS-3G process runs at idle I/O
+    priority and nice 19.
+- **Home:** `davinci` in `home/devtower-intel.nix` becomes `/mnt/data` once
+  `dataPair.data` is filled in, so `~/DavinciProj` and the Affinity
+  drive-letter mapping (`davinciDriveLetter`, the letter of the VeraCrypt
+  favourite) follow it. Yazi's `g D` / `g a` (`home/modules/file-manager.nix`)
+  go to `/mnt/data` and `/mnt/data/Affinity` on any host that mounts
+  `/mnt/data`.
+- **Mirror job** (`data-mirror.service`), only when both drives are switched
+  on:
+  1. Starts `/mnt/data` and `/mnt/data-mirror` itself, which unlocks the
+     mirror. A mount that fails (for example a volume NTFS-3G refuses) fails
+     the job.
+  2. Refuses to run unless both are NTFS-3G mounts of their own mapper
+     devices (compared by device number), read-write (read-only means Windows
+     left that volume hibernated, in Fast Startup or not shut down cleanly),
+     `/mnt/data/.data-primary` exists, the mirror has no `.data-primary`, and
+     `.mirror-history` is not a link. So an unmounted, empty or swapped drive
+     can never make `--delete` empty the mirror.
+  3. Deletes `.mirror-history/<YYYY-MM-DD>` folders more than 30 days old,
+     before the copy, on every run, whether or not the copy then succeeds.
+     Anything else in `.mirror-history` is left alone.
+  4. Copies, with `/mnt/data` read-only to the job and only the mirror
+     writable:
+     `rsync -rtS --delete --backup --backup-dir=.mirror-history/<date> --exclude=/.mirror-history --exclude=/.data-primary --exclude='/System Volume Information' --exclude='/$RECYCLE.BIN' /mnt/data/ /mnt/data-mirror/`.
+     Status 24 (files vanished during the copy) is only a warning; any other
+     failure logs `df -h` of both drives and fails the job.
+  5. Afterwards, whatever happened (a failed mount included), unmounts the
+     mirror and then locks it again. If something has `/mnt/data-mirror` open
+     at the time, that fails and shows as a failed unit.
+
+  It runs at idle I/O priority and nice 19, daily at 03:30 with up to 30 minutes'
+  random delay, and `Persistent=true`, so a day spent in Windows or switched
+  off is caught up at the next boot. Run it by hand with
+  `sudo systemctl start data-mirror`; read it with `journalctl -u data-mirror`.
+- **Health:** smartd, which nothing else in the repository configures, on the
+  switched-on drives only (by `byId`): short self-test daily at 02:00, long
+  test monthly on the 1st at 03:00, temperature warnings at 45 and 55°C, and
+  never spinning up a sleeping drive just to poll it. smartd exits if a listed
+  drive is missing. Failures of the mirror job and smartd show in
   `systemctl --failed`.
 - **syntek-studio GitHub config** for the repos in `Business/` (see
-  [Syntek repos on the data drive](#syntek-repos-on-the-data-drive)): add
-  `includeIf."gitdir:/mnt/data/Business/".path = "~/.gitconfig-syntek"` to
+  [Syntek repos on the data drive](#syntek-repos-on-the-data-drive)):
+  `includeIf."gitdir:/mnt/data/Business/".path = "~/.gitconfig-syntek"` in
   `home/modules/git.nix`, beside the existing `~/Repos/syntek/` and
   `/mnt/archive/OldRepos/syntek/` rules. `~/.gitconfig-syntek` sets the
   syntek-studio identity (`Syntek-Studio`, `sam.bailey@syntekstudio.com`) and

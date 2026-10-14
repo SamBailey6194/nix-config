@@ -246,7 +246,9 @@ encrypted, and `/mnt/ubuntu-nix` and `/mnt/ubuntu-docker` when the store drive
 is (below). Copy anything still wanted out of them first: BackupDrive is
 unusable, so erasing them accepts that loss.
 `/mnt/archive` and `/mnt/davinci` are replaced by `/mnt/data` and
-`/mnt/data-mirror`, the VeraCrypt pair ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)).
+`/mnt/data-mirror`, the VeraCrypt pair ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)):
+each old mount goes when its drive's `dataPair` identifier is filled in to
+`hosts/devtower-intel/disks.nix` (`hosts/devtower-intel/data-pair.nix`).
 
 - **Not reused:** the configuration doesn't reuse the Ubuntu store, and doesn't
   start Docker against the old data directory.

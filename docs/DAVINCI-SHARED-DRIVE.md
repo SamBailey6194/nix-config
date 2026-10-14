@@ -1,11 +1,15 @@
 # Sharing DavinciProj between Windows and NixOS
 
-> **Planned change (12 October 2026):** this drive becomes the working half of
+> **Being replaced (13 October 2026):** this drive becomes the working half of
 > an encrypted VeraCrypt pair with the Seagate archive drive, mounted at
 > `/mnt/data` instead of `/mnt/davinci`
-> ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)). The Windows rules, the
-> Affinity drive-letter mapping and the Resolve advice below still apply after
-> the move; only the path and the unlocking change.
+> ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)). The configuration is
+> written (`hosts/devtower-intel/data-pair.nix`): once `dataPair.data.partUuid`
+> is filled in to `disks.nix`, `/mnt/davinci` is no longer mounted, and
+> `~/DavinciProj` and Yazi's `g D` / `g a` go to `/mnt/data`. The Windows
+> rules, the Affinity drive-letter mapping and the Resolve advice below still
+> apply after the move (use `/mnt/data` wherever this page says
+> `/mnt/davinci`); only the path and the unlocking change.
 
 Keep the existing NTFS filesystem on the WD 4TB drive, serial
 `WD-WCC7K0FU5LY2`, label `DavinciProj`, UUID `34201009200FD0B2`.
