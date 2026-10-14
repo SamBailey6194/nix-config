@@ -878,7 +878,7 @@ scan PATH:
 
 # Scan with auto-quarantine
 scan-quarantine PATH:
-    malware-scanner scan {{PATH}} --quarantine
+    sudo malware-scanner scan {{PATH}} --quarantine
 
 # Run EICAR test to verify scanner is working
 test-scanner:
