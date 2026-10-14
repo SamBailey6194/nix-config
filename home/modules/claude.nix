@@ -55,6 +55,9 @@ let
     };
   };
 
+  # Plugins to install when missing (claudePlugins below).
+  enabledPlugins = builtins.attrNames (lib.filterAttrs (_: on: on) settings.enabledPlugins);
+
   monitorRepo = "https://github.com/bruceyxli/claude-code-monitor.git";
   monitorDir = "${homeDir}/Repos/claude-code-monitor";
   secretsFile = "/run/agenix/claude-secrets";
@@ -69,10 +72,13 @@ let
     }];
   }];
 
+  # config/claude/settings-base.json is the single authority for plain Claude
+  # settings (effort, workflows, UI, permissions, plugins and marketplaces).
+  # Only what needs Nix belongs here: store and home paths, hooks, the status
+  # line, and values tied to other modules. Change a plain setting in the JSON;
+  # a key set here would silently override it (`//` is shallow).
   settings = (lib.importJSON ../../config/claude/settings-base.json) // {
-    env."ENABLE_LSP_TOOL" = "1";
-    env."MCP_TIMEOUT" = "120000"; # Allow first-launch runtime package downloads.
-    model = "opus";
+    # Names the style file installed below (.claude/output-styles).
     outputStyle = "Concise";
 
     # Hook timeouts are in seconds. hook-handler.js exits by itself after 5s,
@@ -106,13 +112,6 @@ let
       type = "command";
       command = "bash ${homeDir}/.claude/statusline-command.sh";
     };
-
-    # Ultracode + xhigh effort + dynamic workflows, default model opus.
-    effortLevel = "xhigh";
-    ultracode = true;
-    enableWorkflows = true;
-    skipWorkflowUsageWarning = true;
-    skipAutoPermissionPrompt = true;
 
     # ── Auto mode environment context ───────────────────────────────────
     #
@@ -215,10 +214,12 @@ in
   # this hasn't run yet or fails — e.g. offline).
   home.activation.claudeCodeMonitor = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -d "${monitorDir}/.git" ]; then
-      ${pkgs.git}/bin/git clone --depth 1 ${monitorRepo} "${monitorDir}" || true
+      ${pkgs.git}/bin/git clone --depth 1 ${monitorRepo} "${monitorDir}" \
+        || echo "warning: claude: could not clone the Claude Code Monitor into ${monitorDir} (exit $?); its hooks stay inactive" >&2
     fi
     if [ -f "${monitorDir}/package.json" ] && [ ! -d "${monitorDir}/node_modules" ]; then
-      ( cd "${monitorDir}" && ${npmBin} ci --omit=dev ) || true
+      ( cd "${monitorDir}" && ${npmBin} ci --omit=dev ) \
+        || echo "warning: claude: npm ci failed in ${monitorDir} (exit $?); its hooks may not run" >&2
     fi
   '';
 
@@ -233,7 +234,8 @@ in
       ( cd "${mcpMermaidDir}" \
         && rm -rf node_modules package-lock.json \
         && ${npmBin} install --ignore-scripts --no-audit --no-fund \
-        && printf '%s' "$want" > "${mcpMermaidDir}/.pinned" ) || true
+        && printf '%s' "$want" > "${mcpMermaidDir}/.pinned" ) \
+        || echo "warning: mcp-mermaid: install into ${mcpMermaidDir} failed (exit $?); the MCP server will not start until a rebuild succeeds" >&2
     fi
   '';
 
@@ -255,7 +257,20 @@ in
       && ${pkgs.jq}/bin/jq -e '.claudeInChromeDefaultEnabled != false' "$f" >/dev/null 2>&1; then
       tmp=$(mktemp "$f.XXXXXX") \
         && ${pkgs.jq}/bin/jq '.claudeInChromeDefaultEnabled = false' "$f" > "$tmp" \
-        && chmod 600 "$tmp" && mv "$tmp" "$f" || rm -f "$tmp"
+        && chmod 600 "$tmp" && mv "$tmp" "$f" \
+        || { rm -f "$tmp"; echo "warning: claude: could not set claudeInChromeDefaultEnabled = false in $f" >&2; }
     fi
+  '';
+
+  # Install the plugins enabled in settings-base.json when missing. Best-effort
+  # (offline, or the read-only settings link: see claude-plugins.sh); each
+  # failure is a warning, and Claude Code installs enabled plugins from the
+  # declared marketplaces at the next session start anyway. Marketplace clones
+  # use git (over SSH for GitHub sources).
+  home.activation.claudePlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.gnugrep pkgs.jq pkgs.git pkgs.openssh ]}:$PATH \
+      ${pkgs.bash}/bin/bash ${./claude-plugins.sh} ${pkgs.claude-code}/bin/claude \
+      ${lib.escapeShellArgs enabledPlugins} \
+      || echo "warning: claude: plugin installer exited $?" >&2
   '';
 }

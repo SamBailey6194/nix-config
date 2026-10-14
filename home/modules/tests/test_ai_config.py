@@ -1,5 +1,7 @@
 """Run with the Nix Python tomli-w environment; all fixtures are temporary."""
+import contextlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -237,6 +239,27 @@ class SharedMcpTests(unittest.TestCase):
             self.assertTrue((Path(home) / ".claude.json").exists())
             self.assertEqual(list(Path(cwd).iterdir()), [])
 
+    def test_failure_warning_names_client_and_reason_without_contents(self):
+        with tempfile.TemporaryDirectory() as home:
+            inventory = Path(home) / "inventory.json"
+            inventory.write_text(json.dumps(INVENTORY))
+            config = Path(home) / ".gemini/config/mcp_config.json"
+            config.parent.mkdir(parents=True)
+            config.write_text('{"mcpServers": {"x": {"env": {"KEY": "fixture-secret"}}')
+            stderr = io.StringIO()
+            with patch.object(sync.Path, "home", return_value=Path(home)), \
+                    patch.object(sync, "capture_credentials"), \
+                    patch("sys.argv", ["mcp-sync", "antigravity", str(inventory)]), \
+                    contextlib.redirect_stderr(stderr):
+                self.assertEqual(sync.main(), 1)
+            message = stderr.getvalue()
+            self.assertIn("warning: shared MCP servers not registered for antigravity", message)
+            self.assertIn("JSONDecodeError", message)
+            self.assertIn("line 1", message)
+            self.assertNotIn("fixture-secret", message)
+            self.assertNotIn("fixture-secret", sync.describe(sync.tomllib.TOMLDecodeError("x", "a = fixture-secret", 4)))
+            self.assertIn("Permission denied", sync.describe(PermissionError(13, "Permission denied", "/fixture")))
+
 
 class LaunchTests(unittest.TestCase):
     SECRETS = {"CLAUDE_MONITOR_TOKEN": "m", "CONTEXT7_API_KEY": "c", "ELEVENLABS_API_KEY": "e"}
@@ -364,6 +387,157 @@ class OpenCodeTests(unittest.TestCase):
         self.assertEqual(set(result["mcp"]["servers"]), set(INVENTORY))
         self.assertEqual(result["permissions"][0]["action"], "edit")
         self.assertEqual(result["permissions"][0]["effect"], "allow")
+
+
+AGY_DEFAULTS = {
+    "colorScheme": "solarized dark",
+    "allow": ["command(git status)", "command(grep)", "command(gh pr view)", "command(gh pr list)",
+              "command(gh issue view)", "command(gh search)"],
+    "remove": ["command(gh)"],
+}
+
+
+class AntigravitySettingsTests(unittest.TestCase):
+    def run_merge(self, path):
+        result = subprocess.run(["bash", str(MODULES / "antigravity-settings.sh"), str(path),
+                                 json.dumps(AGY_DEFAULTS), str(MODULES / "antigravity-merge.jq")],
+                                text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        return result.stderr
+
+    def test_broad_gh_replaced_and_everything_else_kept(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "settings.json"
+            path.write_text(json.dumps({
+                "colorScheme": "light", "trustedWorkspaces": ["/fixture/repo"], "other": {"k": 1},
+                "permissions": {"allow": ["command(git status)", "command(gh)", "command(gh pr create)", "command(make)"],
+                                "deny": ["command(sudo)"], "ask": ["command(rm)"]}}))
+            path.chmod(0o644)
+            self.assertEqual(self.run_merge(path), "")
+            result = json.loads(path.read_text())
+            self.assertEqual(result["colorScheme"], "solarized dark")
+            self.assertEqual(result["trustedWorkspaces"], ["/fixture/repo"])
+            self.assertEqual(result["other"], {"k": 1})
+            self.assertEqual(result["permissions"]["deny"], ["command(sudo)"])
+            self.assertEqual(result["permissions"]["ask"], ["command(rm)"])
+            # Only the exact broad entry goes; user entries keep their order.
+            self.assertEqual(result["permissions"]["allow"],
+                             ["command(git status)", "command(gh pr create)", "command(make)", "command(grep)",
+                              "command(gh pr view)", "command(gh pr list)", "command(gh issue view)", "command(gh search)"])
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            before, inode = path.read_bytes(), path.stat().st_ino
+            self.assertEqual(self.run_merge(path), "")
+            self.assertEqual(path.read_bytes(), before)
+            self.assertEqual(path.stat().st_ino, inode)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def test_missing_file_and_directory_created_owner_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "antigravity-cli/settings.json"
+            self.assertEqual(self.run_merge(path), "")
+            result = json.loads(path.read_text())
+            self.assertEqual(result, {"colorScheme": "solarized dark",
+                                      "permissions": {"allow": AGY_DEFAULTS["allow"]}})
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_symlink_and_malformed_files_left_alone_with_warning(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cases = {"invalid": "{not json", "array": "[]", "two": "{}\n{}",
+                     "allow-object": json.dumps({"permissions": {"allow": {"x": 1}}}),
+                     "permissions-list": json.dumps({"permissions": ["command(gh)"]})}
+            for name, text in cases.items():
+                path = Path(directory) / name
+                path.write_text(text)
+                warning = self.run_merge(path)
+                self.assertIn("warning: antigravity:", warning, name)
+                self.assertEqual(path.read_text(), text, name)
+            target = Path(directory) / "target.json"
+            target.write_text(json.dumps({"permissions": {"allow": ["command(gh)"]}}))
+            link = Path(directory) / "link.json"
+            link.symlink_to(target)
+            self.assertIn("is a symlink", self.run_merge(link))
+            self.assertTrue(link.is_symlink())
+            self.assertIn("command(gh)", target.read_text())
+
+    def test_declared_allow_list_is_read_only_gh(self):
+        text = (MODULES / "antigravity.nix").read_text()
+        block = text[text.index("allow = ["):text.index("];", text.index("allow = ["))]
+        for write in ['"api"', '"auth status"', '"pr create"', '"pr merge"', "edit", "close", "delete"]:
+            self.assertNotIn(write, block)
+        self.assertIn('remove = [ "command(gh)" ]', text)
+        self.assertNotIn("ask", text[text.index("defaults = {"):text.index("in\n{")])
+
+
+FAKE_CLAUDE = """#!/usr/bin/env bash
+echo "$*" >> "$CALLS"
+case "$1 $2" in
+  "plugin list") [ -n "${LIST_FAILS:-}" ] && exit 1; echo '[{"id":"have@m","scope":"user"},{"id":"project@m","scope":"project"}]' ;;
+  "plugin install") echo "Installing..."; [ -n "${INSTALL_FAILS:-}" ] && { echo "Failed to update settings: EACCES"; exit 1; }; echo ok ;;
+esac
+"""
+
+
+class ClaudePluginTests(unittest.TestCase):
+    def run_installer(self, *plugins, **env):
+        with tempfile.TemporaryDirectory() as directory:
+            fake = Path(directory) / "claude"
+            fake.write_text(FAKE_CLAUDE)
+            fake.chmod(0o755)
+            calls = Path(directory) / "calls"
+            calls.touch()
+            result = subprocess.run(["bash", str(MODULES / "claude-plugins.sh"), str(fake), *plugins],
+                                    env={**os.environ, "CALLS": str(calls), **env}, text=True, capture_output=True)
+            return result, calls.read_text().splitlines()
+
+    def test_only_missing_user_plugins_installed(self):
+        result, calls = self.run_installer("have@m", "project@m", "new@m")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(calls, ["plugin list --json", "plugin install project@m --scope user",
+                                 "plugin install new@m --scope user"])
+        self.assertEqual(result.stderr, "")
+
+    def test_install_failure_warns_with_reason_and_does_not_fail(self):
+        result, _ = self.run_installer("new@m", "have@m", INSTALL_FAILS="1")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("warning: claude plugins: could not install new@m (exit 1): Failed to update settings: EACCES",
+                      result.stderr)
+        self.assertNotIn("have@m", result.stderr)
+
+    def test_list_failure_warns_and_installs_nothing(self):
+        result, calls = self.run_installer("new@m", LIST_FAILS="1")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("could not list installed plugins", result.stderr)
+        self.assertEqual(calls, ["plugin list --json"])
+
+
+class ClaudeSettingsTests(unittest.TestCase):
+    BASE = json.loads((MODULES.parents[1] / "config/claude/settings-base.json").read_text())
+
+    def test_plugins_and_marketplaces(self):
+        self.assertEqual(self.BASE["enabledPlugins"], {"codex@openai-codex": True,
+                                                       "lua-lsp@claude-plugins-official": True,
+                                                       "pyright-lsp@claude-plugins-official": True})
+        self.assertEqual(self.BASE["extraKnownMarketplaces"]["claude-plugins-official"]["source"],
+                         {"source": "github", "repo": "anthropics/claude-plugins-official"})
+        text = json.dumps(self.BASE)
+        for stale in ["syntek-marketplace", "claude-code-plugins", "dnd-dm-planner", "plugin-dev"]:
+            self.assertNotIn(stale, text)
+
+    def test_plain_settings_only_in_the_json(self):
+        nix = (MODULES / "claude.nix").read_text()
+        for key in ["effortLevel", "ultracode", "enableWorkflows", "skipWorkflowUsageWarning",
+                    "skipAutoPermissionPrompt", "model =", "ENABLE_LSP_TOOL", "MCP_TIMEOUT"]:
+            self.assertNotIn(key, nix)
+        self.assertEqual((self.BASE["effortLevel"], self.BASE["ultracode"], self.BASE["enableWorkflows"],
+                          self.BASE["skipWorkflowUsageWarning"], self.BASE["skipAutoPermissionPrompt"],
+                          self.BASE["model"], self.BASE["env"]),
+                         ("xhigh", True, True, True, True, "opus", {"ENABLE_LSP_TOOL": "1", "MCP_TIMEOUT": "120000"}))
+
+    def test_best_effort_activation_steps_warn_instead_of_hiding_failures(self):
+        for name in ["claude.nix", "mcp-activation.nix", "antigravity.nix"]:
+            text = (MODULES / name).read_text()
+            self.assertNotIn("|| true", text, name)
+            self.assertIn("warning:", text, name)
 
 
 if __name__ == "__main__":

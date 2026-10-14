@@ -1,5 +1,10 @@
 {
   "feedbackDrafts": "off",
+  "model": "opus",
+  "env": {
+    "ENABLE_LSP_TOOL": "1",
+    "MCP_TIMEOUT": "120000"
+  },
   "effortLevel": "xhigh",
   "ultracode": true,
   "promptSuggestionEnabled": false,
@@ -44,15 +49,17 @@
     ]
   },
   "enabledPlugins": {
-    "syntek-dev-suite@syntek-marketplace": false,
-    "syntek-doc-writer@syntek-marketplace": false,
-    "syntek-rust-security@syntek-marketplace": false,
-    "syntek-infra@syntek-marketplace": false,
-    "plugin-dev@claude-code-plugins": false,
-    "dnd-dm-planner@dnd-dm-planner": false,
-    "codex@openai-codex": true
+    "codex@openai-codex": true,
+    "lua-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
     "openai-codex": {
       "source": {
         "source": "github",

@@ -135,3 +135,16 @@ and agy could not complete its OAuth discovery. Per-device sign-ins on a new mac
 
 Codex registration follows [official OpenAI MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
 for stdio commands/arguments and HTTP URLs in `config.toml`.
+
+Registration is best-effort and never stops a rebuild. When a client's file
+cannot be updated (unparsable, a symlink, unwritable), activation prints
+`warning: shared MCP servers not registered for <client>: <reason>` and
+`warning: <client>: shared MCP server registration failed (exit N)`, and leaves
+the file as it was. The reason gives a parser error's position, never the
+file's contents, as these files can hold credentials.
+
+Antigravity's own settings (`~/.gemini/antigravity-cli/settings.json`, which
+agy rewrites) are merged by `home/modules/antigravity.nix`: colour scheme
+`solarized dark`, and an allow list of `git status`, `grep` and read-only `gh`
+subcommands in place of a blanket `command(gh)`, so agy asks before any other
+`gh` command. Its global skills directory is `~/.gemini/config/skills/`.

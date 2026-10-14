@@ -20,10 +20,26 @@ No copies of its project hook commands or repo-specific auto-mode trust settings
 are installed globally. Preserved experimental settings are version-dependent;
 check `/config` and `/doctor` after the staged upgrade.
 
-The six old Syntek, D&D and plugin-dev plugins are explicitly disabled globally.
-The prepared default keeps only `codex@openai-codex` enabled, using the Ubuntu
-Codex marketplace definition. Change `enabledPlugins` in the baseline to adjust
-this selection. No plugin caches or project skills have been deleted.
+The baseline JSON is the single authority for plain settings (effort,
+workflows, model, `env`, UI, permissions and plugins); `claude.nix` adds only
+what needs Nix: hook and status line paths, and the output style it installs.
+`MCP_TIMEOUT` (120 s) allows the first launch of an MCP server to download its
+runtime packages.
+
+Enabled plugins: `codex@openai-codex` (Ubuntu's Codex marketplace definition),
+and the `lua-lsp` and `pyright-lsp` code intelligence plugins from the official
+`claude-plugins-official` marketplace, which is declared in
+`extraKnownMarketplaces` so a fresh machine knows it. The old Syntek, D&D and
+plugin-dev entries are gone. Change `enabledPlugins` in the baseline to adjust
+the selection.
+
+The `claudePlugins` activation step runs `claude plugin install --scope user`
+for each enabled plugin that `claude plugin list` does not show. That command
+also writes the user settings file, which here is the read-only store link, so
+on claude-code 2.1.291 it exits 1 ("Failed to update settings") and leaves the
+link alone. The step then prints a warning and activation continues. Claude
+Code installs enabled plugins from declared marketplaces when the next session
+starts, so a missing plugin arrives then.
 
 Explicit prompts for ElevenLabs audio, music and voice generation are retained.
 Ubuntu's Claude-in-Chrome allowance is replaced by allowances for the

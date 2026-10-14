@@ -138,6 +138,28 @@ def sync(client, path, inventory, retired=()):
         write(path, data, mode)
 
 
+def describe(error):
+    """A one-line reason for a failure that never quotes file contents.
+
+    The configurations and the credential file can hold secrets, so parser
+    errors give only their position, an OSError its reason and path, and other
+    errors (raised here with fixed messages, or a TypeError naming types) their
+    message.
+    """
+    name = type(error).__name__
+    if isinstance(error, json.JSONDecodeError):
+        return f"{name}: {error.msg} at line {error.lineno} column {error.colno}"
+    if isinstance(error, tomllib.TOMLDecodeError):
+        line = getattr(error, "lineno", None)
+        return f"{name}: invalid TOML" + (f" at line {line} column {error.colno}" if line else "")
+    if isinstance(error, OSError):
+        reason = error.strerror or "error"
+        return f"{name}: {reason}" + (f" ({error.filename})" if error.filename else "")
+    if isinstance(error, UnicodeDecodeError):
+        return f"{name}: not valid {error.encoding} at byte {error.start}"
+    return f"{name}: {error}"
+
+
 def main():
     client, inventory_file, *retired_file = sys.argv[1:]
     home = Path.home()
@@ -151,8 +173,8 @@ def main():
         retired = json.loads(Path(retired_file[0]).read_text()) if retired_file else []
         sync(client, paths[client], json.loads(Path(inventory_file).read_text()), retired)
     except (OSError, ValueError, TypeError) as error:
-        # Parser errors may contain secrets; report only the exception type.
-        print(f"shared MCP: {client} configuration left unchanged ({type(error).__name__}); inspect its configuration locally", file=sys.stderr)
+        print(f"warning: shared MCP servers not registered for {client}: {describe(error)}; "
+              f"its configuration was left unchanged", file=sys.stderr)
         return 1
     return 0
 

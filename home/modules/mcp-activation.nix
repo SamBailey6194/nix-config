@@ -9,6 +9,11 @@ let
   file = pkgs.writeText "shared-mcp-servers.json" (builtins.toJSON inventory);
   retiredFile = pkgs.writeText "retired-mcp-servers.json" (builtins.toJSON retired);
   python = pkgs.python3.withPackages (p: [ p.tomli-w ]);
-in lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  ${python}/bin/python ${./mcp-sync.py} ${lib.escapeShellArg client} ${file} ${retiredFile} || true
+in
+# Best-effort: a failure never stops activation (it runs under set -e), but
+# mcp-sync.py says why on stderr and this line names the client, so it shows
+# in the rebuild output instead of passing silently.
+lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  ${python}/bin/python ${./mcp-sync.py} ${lib.escapeShellArg client} ${file} ${retiredFile} \
+    || echo ${lib.escapeShellArg "warning: ${client}: shared MCP server registration failed"}" (exit $?); fix the cause above and rebuild" >&2
 ''

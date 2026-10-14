@@ -11,7 +11,11 @@ in
     ".agents/skills/typesafe-ai".source = source;
     ".claude/skills/typesafe-ai".source = source;
     ".config/opencode/skills/typesafe-ai".source = source;
-    ".gemini/skills/typesafe-ai".source = source;
+    # Antigravity CLI (agy): global skills live in ~/.gemini/config/skills/
+    # (the root of its machine-wide customisations, per agy 1.3.0's bundled
+    # agy-customizations and migrate-workflows skills). ~/.gemini/skills/ was
+    # Gemini CLI's, which was removed (modules/software/development.nix).
+    ".gemini/config/skills/typesafe-ai".source = source;
     ".claude/rules/nix-source.md".source = policy;
     ".agents/skills/nix-source/SKILL.md".text = ''
       ---
