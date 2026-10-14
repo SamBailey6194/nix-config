@@ -10,9 +10,17 @@
   # Hyprland Wayland Compositor Configuration
 
   # Enable Hyprland
+  #
+  # The package comes from our nixpkgs, NOT the `hyprland` flake input. That
+  # input does not follow nixpkgs, so its build links an older glibc than
+  # the Mesa in /run/opengl-driver. When the nixpkgs bump to e7439b6 moved
+  # Mesa to 26.2.4 (built against glibc 2.43+), libgbm inside Hyprland could
+  # no longer load the system's dri_gbm.so ("GLIBC_2.43 not found") and
+  # Hyprland aborted at start with "Cannot create a GBM Allocator". The
+  # nixpkgs build always shares glibc and Mesa with the rest of the system.
   programs.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    package = pkgs.hyprland;
     xwayland.enable = true;
   };
 
