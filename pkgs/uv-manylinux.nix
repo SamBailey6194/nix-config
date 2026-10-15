@@ -92,9 +92,9 @@
 #
 # PLAYWRIGHT_BROWSERS_PATH only says *where* the browsers are. It cannot make a
 # wheel want the revisions that are actually there, and a resolver left to itself
-# takes the newest release — playwright 1.63.0 and patchright 1.62.3 at the time
-# of writing — which expect revisions this bundle does not ship. So point uv at a
-# constraints file as well.
+# takes the newest release, which can expect revisions this bundle does not ship
+# (playwright 1.63.0 and patchright 1.62.3 against the earlier 1.61 bundle). So
+# point uv at a constraints file as well.
 #
 # A constraint bounds a version *without adding a dependency edge*, so nothing
 # here drags playwright into an environment that did not already ask for it; it
@@ -125,7 +125,7 @@
 # patchright cannot be derived that way. It is a separate fork (Kaliiiiiiiiii-
 # Vinyzu/patchright-python, what Scrapling's StealthyFetcher drives) on its own
 # release cadence, and nixpkgs' python3Packages.patchright — 1.58.0 as of this
-# writing, against a bundle on the 1.61 line — is packaged independently of
+# writing, against a bundle on the 1.63 line — is packaged independently of
 # playwright-driver, so it tracks the bundle only by coincidence. Deriving from
 # it would pin the wrong revisions with a straight face. Hence a hand-maintained
 # literal, to be rechecked whenever `just check-playwright` reports a move.
@@ -139,10 +139,18 @@
 #       /tmp/pr/patchright/driver/package/browsers.json
 #     ls "$(nix eval --raw '.#nixosConfigurations.laptop-intel.pkgs.playwright-driver.browsers')"
 #
-# Verified for the pins below: playwright 1.61.0 and patchright 1.61.2 both ask
-# for chromium 1228, chromium_headless_shell 1228, firefox 1532, webkit 2311 and
-# ffmpeg 1011 — exactly what this bundle ships — and both launch Chromium
-# 149.0.7827.55 headless out of it on this host.
+# Verified for the pins below (15/10/2026, bundle 1.63.0): playwright 1.63.0 and
+# patchright 1.63.0 both ask for chromium 1243, chromium_headless_shell 1243,
+# firefox 1543, webkit 2359 and ffmpeg 1011 — exactly what this bundle ships
+# (winldd and android are Windows/Android-only and absent on Linux either way) —
+# and both launch Chromium 153.0.8010.12 headless out of it on this host.
+#
+# The floor matters too: scrapling 0.4.15's `fetchers` extra, which `scrapling[ai]`
+# (the Scrapling MCP server) pulls in, requires patchright>=1.62.1 and
+# playwright>=1.62.0, so the previous 1.61.2 pin made `uvx --from scrapling[ai]`
+# unresolvable. Scrapling 0.4.15 drives Chromium only (patchright for
+# StealthyFetcher, playwright for DynamicFetcher, both channel "chromium"); it
+# no longer uses camoufox.
 {
   lib,
   uv,
@@ -160,7 +168,7 @@
 
 let
   # Hand-maintained; nixpkgs' own patchright does not track the browser bundle.
-  patchrightVersion = "1.61.2";
+  patchrightVersion = "1.63.0";
 
   browserConstraints = writeText "uv-browser-constraints.txt" ''
     playwright==${python3Packages.playwright.version}
