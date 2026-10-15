@@ -27,5 +27,14 @@ in
       exec ${pkgs.ffmpeg}/bin/ffprobe "$@"
     '')
   ] ++ lib.optional config.software.heavyMediaTools.enable
-    (contained "rhubarb" "${rhubarb}/bin/rhubarb");
+    # Rhubarb itself finds res/ beside its real binary, but tools that look for
+    # res/sphinx/cmudict-en-us.dict beside the `rhubarb` on PATH (syntek-media's
+    # lipsync and check --setup) resolve to this wrapper's directory instead,
+    # so link the release's res/ in beside the wrapper too. The script is a real
+    # file here (not a link to another wrapper), so it resolves to this directory.
+    (pkgs.runCommand "rhubarb" { } ''
+      mkdir -p "$out/bin"
+      cp ${contained "rhubarb" "${rhubarb}/bin/rhubarb"}/bin/rhubarb "$out/bin/rhubarb"
+      ln -s ${rhubarb}/bin/res "$out/bin/res"
+    '');
 }
