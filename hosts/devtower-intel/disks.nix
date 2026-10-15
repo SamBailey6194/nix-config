@@ -46,8 +46,8 @@
   # partition (VeraCrypt formats inside it), the Seagate gets a new one.
   # byId is the whole drive (/dev/disk/by-id), for smartd and the commands above.
   dataPair = {
-    data = { partUuid = null; byId = "ata-WDC_WD40EZRZ-00GXCB0_WD-WCC7K0FU5LY2"; }; # WD Blue 4TB, cryptdata -> /mnt/data
-    mirror = { partUuid = null; byId = "ata-ST4000DM004-2CV104_ZFN2J51Q"; }; # Seagate 4TB, cryptmirror -> /mnt/data-mirror
+    data = { partUuid = "dca3a85f-a2b7-4ece-bf07-d2f43c7da4e9"; byId = "ata-WDC_WD40EZRZ-00GXCB0_WD-WCC7K0FU5LY2"; }; # WD Blue 4TB, cryptdata -> /mnt/data
+    mirror = { partUuid = "b0ca0856-b219-4240-8216-d1bf103ea6a3"; byId = "ata-ST4000DM004-2CV104_ZFN2J51Q"; }; # Seagate 4TB, cryptmirror -> /mnt/data-mirror
   };
 
   # Retired with the conversion above: /mnt/davinci goes when dataPair.data is
