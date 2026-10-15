@@ -874,7 +874,7 @@ vpn-app COMMAND:
 
 # Scan a file or directory for malware
 scan PATH:
-    malware-scanner scan {{PATH}}
+    sudo malware-scanner scan {{PATH}}
 
 # Scan with auto-quarantine
 scan-quarantine PATH:
