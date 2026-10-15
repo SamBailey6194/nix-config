@@ -67,8 +67,11 @@ let
   #
   # Where the host also binds the data drive into the home folder (~/Data,
   # devtower-intel's data-pair.nix), g D goes there instead: the path to work
-  # in, inside the home directory the ElevenLabs MCP accepts. g a stays on
-  # the drive root for Wine's drive letter.
+  # in, inside the home directory the ElevenLabs MCP accepts. On the data
+  # volume g a goes to the business area's design/ folder (Affinity and the
+  # image Craft apps, docs/SHARED-DATA-DRIVES.md), through ~/Data as well: a
+  # bind mount is the drive root itself (same device and inode), not a link,
+  # so Wine still finds the drive letter there.
   hostMounts = osConfig.fileSystems or { };
   davinci = if hostMounts ? "/mnt/data" then "/mnt/data" else "/mnt/davinci";
   dataHome = "${config.home.homeDirectory}/Data";
@@ -76,7 +79,7 @@ let
   davinciKeys = lib.optionals (hostMounts ? ${davinci}) (
     if davinci == "/mnt/data" then [
       { group = "Go to"; on = [ "g" "D" ]; desc = "Data drive (${dataDir})"; run = "cd ${dataDir}"; }
-      { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on the data drive"; run = "cd ${davinci}/Affinity"; }
+      { group = "Go to"; on = [ "g" "a" ]; desc = "Business design files (Affinity, Craft)"; run = "cd ${dataDir}/business/design"; }
     ] else [
       { group = "Go to"; on = [ "g" "D" ]; desc = "DavinciProj drive (${davinci})"; run = "cd ${davinci}"; }
       { group = "Go to"; on = [ "g" "a" ]; desc = "Affinity files on DavinciProj"; run = "cd ${davinci}/Affinity"; }

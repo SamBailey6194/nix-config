@@ -58,11 +58,13 @@ has been run on these commits yet.**
   (`.agents` -> `.claude`) are unreliable, exec bits are lost and git is
   slower; Windows cannot see the repos (clone from GitHub there if needed).
 - **Data layout, lowercase** (`/mnt/data` = `~/Data`): `business/` and
-  `personal/` (each `docs/ photos/ videos/ audio/`), `craft/`, `archive/`
+  `personal/` (each `docs/ photos/ videos/ audio/`), `archive/`
   (rename the step 3 `Archive/` by hand), DavinciProj unchanged at the root.
   NTFS ignores case, git's `gitdir` does not. Finished media go to
   `~/Data/<area>/{videos,audio,photos,docs}/<repo>/<piece>/`; repos hold only
   what GitHub needs.
+- **Per-area work folders** (replace `craft/`): `assets/ design/ film/ sound/`,
+  created after step 6's dry run, then one plain rsync (SHARED-DATA-DRIVES.md).
 
 ## Next steps, in order
 
@@ -154,9 +156,9 @@ the same system as before (`/mnt/davinci`, `/mnt/archive`); not rebuilt.
 - `hardware-configuration.nix` / `data-drives.nix`: `/mnt/davinci` and the
   ext4 `/mnt/archive` only while their drive's `partUuid` is null.
 - `home/devtower-intel.nix`, `home/modules/file-manager.nix`:
-  `~/DavinciProj` and Yazi `g a` follow `/mnt/data`; `g D` goes to `~/Data`,
-  the bind mount of `/mnt/data` (data-pair.nix) that keeps media projects
-  inside the ElevenLabs base path.
+  `~/DavinciProj` follows `/mnt/data`; `g D` goes to `~/Data`, the bind
+  mount of `/mnt/data` (data-pair.nix) that keeps media projects inside the
+  ElevenLabs base path, and `g a` to `~/Data/business/design`.
 
 ## Queued after the drives (one flake update)
 

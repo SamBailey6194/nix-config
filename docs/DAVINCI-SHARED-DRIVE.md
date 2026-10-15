@@ -5,12 +5,14 @@
 > `/mnt/data` instead of `/mnt/davinci`
 > ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md)). The configuration is
 > written (`hosts/devtower-intel/data-pair.nix`): once `dataPair.data.partUuid`
-> is filled in to `disks.nix`, `/mnt/davinci` is no longer mounted, and
-> `~/DavinciProj` and Yazi's `g a` go to `/mnt/data`, and `g D` to `~/Data`,
-> the same drive bound into the home folder. The Windows
-> rules, the Affinity drive-letter mapping and the Resolve advice below still
-> apply after the move (use `/mnt/data` wherever this page says
-> `/mnt/davinci`); only the path and the unlocking change.
+> is filled in to `disks.nix`, `/mnt/davinci` is no longer mounted,
+> `~/DavinciProj` goes to `/mnt/data`, `g D` to `~/Data` (the same drive bound
+> into the home folder) and Yazi's `g a` to `~/Data/business/design`. The
+> Windows rules, the Affinity drive-letter mapping and the Resolve advice below
+> still apply after the move (use `/mnt/data` wherever this page says
+> `/mnt/davinci`); the volume gains per-area folders
+> ([layout](SHARED-DATA-DRIVES.md#suggested-layout)), and Affinity and Resolve
+> work moves into them as described below.
 
 Keep the existing NTFS filesystem on the WD 4TB drive, serial
 `WD-WCC7K0FU5LY2`, label `DavinciProj`, UUID `34201009200FD0B2`.
@@ -29,7 +31,8 @@ Windows keeps its existing drive letter.
     instead of clearing its journal and writing to it.
   - `nofail` means a missing drive never blocks boot.
 - **Home folder:** `~/DavinciProj` links to the drive root. In Yazi, `g D` goes
-  to the drive and `g a` to its `Affinity` folder.
+  to the drive and `g a` to an `Affinity` folder on it (not created; on the
+  data volume `g a` goes to `business/design`).
 - **Ubuntu:** the drive has no entry in Ubuntu's fstab and is not mounted there
   today, so there is nothing to undo on that side.
 
@@ -68,17 +71,29 @@ of them. Avoid doing that on this drive.
 
 ## Suggested layout
 
-Keep whatever already exists. Add folders beside it rather than moving media:
+Keep whatever already exists (`Databases/`, `Media/`, `Projects/`,
+`Renders/`) and don't move it with a file manager. On the data volume the
+layout is per area, `business/` and `personal/`
+([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#suggested-layout)); the parts
+for these apps:
 
 ```text
-DavinciProj/
-├── <existing Resolve media, proxies, exports>
-└── Affinity/
-    ├── Photo/
-    ├── Designer/
-    ├── Publisher/
-    └── Assets/      exported brushes, assets, macros, palettes
+<volume root>/
+├── Databases/ Media/ Projects/ Renders/   existing, until moved in Resolve
+└── <area>/          business/ or personal/
+    ├── assets/      logos, fonts, icons, reusable graphics; exported Affinity assets
+    ├── design/      Affinity (.afphoto, .afdesign, .afpub) and Craft image files
+    ├── film/
+    │   ├── resolve-library/   this area's Resolve project library
+    │   ├── projects/          FilmCraft and EffectCraft project files
+    │   ├── media/             source footage
+    │   └── renders/           work-in-progress renders
+    ├── photos/      finished images
+    └── videos/      finished videos
 ```
+
+There is no `Affinity/` folder on the drive today; Affinity files start in
+`<area>/design/`.
 
 ## Affinity files
 
@@ -109,15 +124,21 @@ normally `Z:\mnt\davinci\...`, which Windows cannot resolve.
    in Designer, Photo and Publisher, so a linked image saved on one OS resolves
    on the other.
 
-**Open and save through the drive's real path.** Use `/mnt/davinci/Affinity`
-(Yazi `g a`) or `~/DavinciProj/Affinity`. Never use a symlink to a subfolder,
-such as a `~/Affinity` link: Wine works out the drive letter from the path as
-written, and a subfolder link records `Z:\home\...` instead. After the first
-save, Affinity's Resource Manager should show `E:\Affinity\...`.
+The letter maps the volume root, so on the data volume a file in
+`business/design/` is `E:\business\design\...` on both systems.
+
+**Open and save through the drive's real path.** On the data volume use
+`~/Data/<area>/design` (Yazi `g a` for business), `/mnt/data/<area>/design`
+or `~/DavinciProj/<area>/design`; `~/Data` is a bind mount of the root, not
+a link. Never use a symlink to a subfolder, such as a `~/Affinity` link: Wine
+works out the drive letter from the path as written, and a subfolder link
+records `Z:\home\...` instead. After the first save, Affinity's Resource
+Manager should show `E:\business\design\...`; if it shows `Z:\...`, open the
+file through `/mnt/data` instead.
 
 **Settings and assets stay per system.** On NixOS they live in
 `~/.local/share/affinity`. Move brushes, assets, macros and palettes between the
-two by exporting and importing them through `Affinity/Assets`. Embed resources
+two by exporting and importing them through `<area>/assets/`. Embed resources
 in a document when you don't need live links.
 
 ## Resolve projects and media
@@ -128,24 +149,58 @@ GPU through CUDA.
 - **Launching:** use the `resolve` (or `dvr`) alias, which sets
   `QT_QPA_PLATFORM=xcb`. Resolve cannot run as a native Wayland client, and the
   session defaults Qt apps to Wayland, so an app-launcher start may fail.
-- **Media Storage:** add `/mnt/davinci` itself, not `~/DavinciProj`.
-- **Path mapping:** in Preferences, set up a Mapped Mount pairing `/mnt/davinci`
-  with the Windows letter (for example `E:\`). That should let projects moved
-  between systems find their media without relinking. This hasn't been tested
-  here, so try it with a copy of one project first, and relink by hand if it
-  doesn't work.
-- **Project libraries:** keep one local library per system. Move projects by
-  exporting `.drp` (or `.dra` archives) to this drive and importing on the other
-  side. Sharing the filesystem does not create a shared project library.
+- **Media Storage:** add `/mnt/davinci` itself, not `~/DavinciProj`. On the
+  data volume, add `~/Data` (a bind mount of the root, so not a link).
+- **Path mapping:** in Preferences, set up a Mapped Mount pairing
+  `/mnt/davinci` (on the data volume, `~/Data`) with the Windows letter (for
+  example `E:\`), so the same media path means the same file on both
+  systems. That should let projects moved between systems find their media
+  without relinking. This hasn't been tested here, so try it with a copy of
+  one project first, and relink by hand if it doesn't work.
+- **Project libraries:** on the data volume, one disk-database library per
+  area, in `<area>/film/resolve-library/`, with that area's footage in
+  `<area>/film/media/`, work-in-progress renders in `<area>/film/renders/`
+  and finished videos in `<area>/videos/`; both systems add the same library.
+  Before the move, keep one local library per system and move projects by
+  exporting `.drp` (or `.dra` archives) to this drive and importing on the
+  other side. Sharing the filesystem does not by itself create a shared
+  project library.
+- **Cache and proxies on the SSD:** point the render cache, optimised media
+  and proxy media (Preferences, Media Storage, and the project's Master
+  Settings) at a folder on the SSD, not `film/`. They change constantly,
+  Resolve can rebuild them, and they are slow on the hard disk. If any land on
+  the drive, exclude them from the mirror and the backups.
 - **A library already on this drive:** if the Windows project library lives on
   DavinciProj, don't connect NixOS Resolve to it until both systems run the same
   Resolve version and it is backed up. Opening it from a newer Resolve can
   upgrade it beyond what the other side can read.
 - **Versions:** match them where possible, and back up a project before
   upgrading.
-- **Backup:** keep footage, exports, proxies and exported project files on the
-  drive, and back up the project libraries as well. Rendered exports are not a
-  backup of an editable timeline.
+- **Backup:** keep footage, exports and exported project files on the drive,
+  and back up the project libraries as well. Rendered exports are not a backup
+  of an editable timeline.
+
+### Moving projects into an area
+
+The existing `Databases/`, `Media/`, `Projects/` and `Renders/` stay at the
+volume root until they are moved from inside Resolve, so it keeps track of
+every path. Move each project once, on either system, then add the library
+on the other:
+
+1. Close every other app using the drive, and back up the existing library
+   (from the Project Manager's library list, or a copy of `Databases/` with
+   Resolve closed).
+2. **Project Manager:** add the area's library, a disk database in
+   `<area>/film/resolve-library/`.
+3. Move each project into it (export `.drp` from the old library and import
+   it into the new one), choosing the area by who it is for.
+4. Move its footage into `<area>/film/media/` and **relink** it in the Media
+   Pool; renders still needed go to `<area>/film/renders/` or, finished,
+   `<area>/videos/`.
+5. On the other OS, add the same library (with the mapped mount above), open
+   one moved project and check its media is online before moving the next.
+
+Once a root folder is empty in both systems, delete it.
 
 ## Backup and encryption
 

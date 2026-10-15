@@ -68,7 +68,12 @@ class FollowersTests(unittest.TestCase):
         fm = (ROOT / "home/modules/file-manager.nix").read_text()
         self.assertIn('dataDir = if hostMounts ? ${dataHome} then dataHome else davinci;', fm)
         self.assertIn('run = "cd ${dataDir}"', fm)
+        # g a: the data volume's business design/ folder, through ~/Data
+        # where bound; DavinciProj (unconverted) keeps g a as at HEAD.
+        self.assertIn('run = "cd ${dataDir}/business/design"', fm)
         self.assertIn('run = "cd ${davinci}/Affinity"', fm)
+        self.assertEqual(fm.count('on = [ "g" "a" ]'), 2)
+        self.assertNotIn("/mnt/data/Affinity", fm)
 
 
 if __name__ == "__main__":

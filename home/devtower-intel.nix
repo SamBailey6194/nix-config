@@ -14,9 +14,12 @@ let
   # The letter Windows gives DavinciProj (Disk Management), lower case, e.g. "e";
   # for the data volume, the letter its VeraCrypt favourite mounts it at.
   # Affinity's Wine prefix then maps the same letter to the drive, so linked
-  # resources saved on one OS resolve on the other. Wine only picks the letter
-  # for paths under the drive root itself (no realpath), so open files through
-  # the drive root (davinci above) or ~/DavinciProj, never a symlink to a subfolder.
+  # resources saved on one OS resolve on the other. The letter maps the volume
+  # root, so a file in <area>/design/ is <letter>:\<area>\design\... on both
+  # OSes. Wine only picks the letter for paths under the drive root itself (no
+  # realpath), so open files through the drive root (davinci above),
+  # ~/DavinciProj or ~/Data (a bind mount of the root), never a symlink to a
+  # subfolder.
   davinciDriveLetter = null;
 
   hasResolve = import ./modules/resolve-package.nix { inherit lib osConfig; } != null;

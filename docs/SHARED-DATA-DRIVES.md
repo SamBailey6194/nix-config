@@ -2,9 +2,9 @@
 
 The two 4TB hard drives hold personal and business documents, photos and
 videos, plus the working files for Affinity, DaVinci Resolve and the Craft
-apps (PhotoCraft, VectorCraft, ...). Windows (dual-boot on this PC) and NixOS both need them, so each one
-gets a **VeraCrypt** volume with **NTFS** inside, and NixOS keeps the second
-drive as a scheduled one-way mirror of the first.
+apps (PhotoCraft, VectorCraft, ...). Windows (dual-boot on this PC) and NixOS
+both need them, so each one gets a **VeraCrypt** volume with **NTFS** inside,
+and NixOS keeps the second drive as a scheduled one-way mirror of the first.
 
 This is the plan as of 12 October 2026. The procedure below is done by hand;
 the NixOS configuration for it (unlock, mounts, mirror timer) is written but
@@ -63,21 +63,60 @@ The trade-off: anything changed since the last sync exists on the WD only.
 
 ### Suggested layout
 
-Keep the existing DavinciProj tree at the root, unchanged, so existing Resolve
-media paths and Affinity links (`E:\Affinity\...`) still resolve. Add the new
-folders beside it, in lowercase: NTFS ignores case, but git's `includeIf`
-rules (see [NixOS configuration](#nixos-configuration)) do not, so `Business/`
-would miss the `business/` rule.
+Two areas, `business/` and `personal/`, each with the same folders. Working
+files sit in a folder per kind of work; finished output goes to `photos/`,
+`videos/` and `audio/` only. Everything is lowercase: NTFS ignores case, but
+git's `includeIf` rules (see [NixOS configuration](#nixos-configuration)) do
+not, so `Business/` would miss the `business/` rule.
 
 ```text
 <volume root>/        (= /mnt/data = ~/Data)
-├── <existing DavinciProj folders, including Affinity/>
-├── business/        docs/, photos/, videos/, audio/
-├── personal/        docs/, photos/, videos/, audio/
-├── craft/           PhotoCraft, VectorCraft, ... project files
+├── Databases/ Media/ Projects/ Renders/   existing DavinciProj folders, until moved
+├── business/
+│   ├── docs/        documents, decks, spreadsheets, PDFs (working and finished)
+│   ├── assets/      logos, brand marks, fonts, icons, reusable graphics
+│   ├── design/      image and design working files (Affinity, Craft apps)
+│   ├── film/
+│   │   ├── resolve-library/   this area's Resolve project library (disk database)
+│   │   ├── projects/          FilmCraft and EffectCraft project files
+│   │   ├── media/             source footage: camera cards, screen recordings
+│   │   └── renders/           work-in-progress renders
+│   ├── sound/
+│   │   ├── projects/          SoundCraft sessions
+│   │   └── recordings/        raw recordings and stems
+│   ├── photos/      finished images
+│   ├── videos/      finished videos
+│   └── audio/       finished audio
+├── personal/        the same folders as business/
 ├── archive/         *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
 └── .data-primary    marker file the mirror job checks for (WD only)
 ```
+
+| App | Working files | Finished form |
+| --- | --- | --- |
+| WordCraft, DeckCraft, GridCraft, PdfCraft | `docs/` | `docs/` (office files are their own output) |
+| Affinity (Designer, Photo, Publisher) | `design/` | `photos/`, or `assets/` for reusable graphics |
+| PhotoCraft, VectorCraft, LightCraft, DesignCraft, FigCraft, CADCraft | `design/` | `photos/`, or `assets/` for reusable graphics |
+| Logos, brand marks, fonts, icons | `assets/` (sources and exports) | `assets/` |
+| DaVinci Resolve | `film/resolve-library/`, `film/media/`, `film/renders/` | `videos/` |
+| FilmCraft, EffectCraft | `film/projects/`, `film/media/` | `videos/` |
+| SoundCraft | `sound/projects/`, `sound/recordings/` | `audio/` |
+
+- **DavinciProj folders stay at the root for now.** `Databases/`, `Media/`,
+  `Projects/` and `Renders/` keep their place, so existing Resolve projects
+  and media paths still resolve. Move them into an area from inside Resolve,
+  not with a file manager
+  ([DAVINCI-SHARED-DRIVE.md](DAVINCI-SHARED-DRIVE.md#moving-projects-into-an-area)).
+  There is no `Affinity/` folder on the drive; Affinity files start in
+  `<area>/design/`.
+- **Resolve's render cache and optimised/proxy media live on the SSD**, not in
+  `film/`: they change constantly, Resolve can rebuild them, and they are slow
+  on a hard disk. If any do land on the drive, exclude them from the mirror and
+  the backups.
+- **Same paths on both OSes.** Resolve's mapped mounts (Media Storage) make the
+  Windows drive letter and the Linux `~/Data` path equivalent. Affinity under
+  Wine maps a drive letter to the volume root, so its files are at
+  `<letter>:\<area>\design\...` on Windows and NixOS alike.
 
 Git repositories are not kept here; they live on the SSD in `~/Repos` (see
 [Repos on the SSD, media on ~/Data](#repos-on-the-ssd-media-on-data)).
@@ -105,9 +144,15 @@ bind mount has no link to resolve, so `~/Data` counts as inside.
   leaving files on `/home` that the WD would later hide. Starting `/mnt/data`
   by hand later binds `~/Data` as well, and stopping it unbinds `~/Data`
   first.
-- **Keep `/mnt/data` for Wine and Resolve paths.** `~/DavinciProj` (a link to
-  the drive root) and Affinity's drive letter stay on `/mnt/data`; Wine maps
-  the letter by path, so open Affinity files through those, as before.
+- **Wine and Resolve paths.** Affinity's drive letter maps the drive root
+  (`/mnt/data`, also reached through `~/DavinciProj`, a link to it). Wine
+  finds the letter by comparing each folder on the path with the drive root
+  (device and inode), and `~/Data` is the root itself rather than a link, so
+  `~/Data/business/design` (Yazi `g a`) should save as
+  `<letter>:\business\design\...` too; check the first save in Affinity's
+  Resource Manager, and use `/mnt/data/...` if it shows `Z:\home\...`. In
+  Resolve, map `~/Data` to the Windows letter
+  ([DAVINCI-SHARED-DRIVE.md](DAVINCI-SHARED-DRIVE.md#resolve-projects-and-media)).
 - **Scanned and copied once.** Jobs that walk `/home` skip `~/Data` (see
   [NixOS configuration](#nixos-configuration)), so the 4TB are not read twice.
 - **Git:** a repo under `~/Data/business/` or `~/Data/personal/` gets the same
@@ -205,6 +250,9 @@ mkdir -p /mnt/data/{business,personal}/{docs,photos,videos,audio} /mnt/data/arch
 touch /mnt/data/.data-primary
 ```
 
+The rest of the [layout](#suggested-layout) (`assets/`, `design/`, `film/`,
+`sound/`) is created after step 6's check, then carried to the mirror.
+
 Then the Unix-only folders, one archive each, each checked with
 `tar --compare` (no output and exit status 0 means it matches):
 
@@ -291,8 +339,19 @@ The excludes are the same list the nightly job uses: `.data-primary` marks
 the WD only, and `System Volume Information` and `$RECYCLE.BIN` belong to each
 volume, not to the data. The dry run must list nothing. From here the two
 drives are the only copies of the archive, so the off-site backup (below) is
-the next priority. Once the Seagate is switched on (step 7), refresh the mirror
-only with `sudo systemctl start data-mirror`, never by hand.
+the next priority.
+
+Once the dry run lists nothing, create the rest of the
+[layout](#suggested-layout) on the WD and carry it to the mirror with one
+plain copy, in the same shell:
+
+```sh
+mkdir -p /mnt/data/{business,personal}/{assets,design,film/{resolve-library,projects,media,renders},sound/{projects,recordings}}
+rsync -rtS --delete "${EX[@]}" /mnt/data/ /mnt/data-mirror/
+```
+
+Once the Seagate is switched on (step 7), refresh the mirror only with
+`sudo systemctl start data-mirror`, never by hand.
 
 ### 7. Switch NixOS over to the pair (NixOS)
 
@@ -368,7 +427,7 @@ stays until the Seagate is switched on).
    systemctl status smartd
    ```
 
-   Yazi `g D` now goes to `~/Data` and `g a` to `/mnt/data/Affinity`.
+   Yazi `g D` now goes to `~/Data` and `g a` to `~/Data/business/design`.
    With the Seagate switched on as well:
 
    ```sh
@@ -452,9 +511,10 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
 - **Home:** `davinci` in `home/devtower-intel.nix` becomes `/mnt/data` once
   `dataPair.data` is filled in, so `~/DavinciProj` and the Affinity
   drive-letter mapping (`davinciDriveLetter`, the letter of the VeraCrypt
-  favourite) follow it. Yazi's `g a` (`home/modules/file-manager.nix`) goes to
-  `/mnt/data/Affinity` on any host that mounts `/mnt/data`, and `g D` to
-  `~/Data` where the host binds it (otherwise to `/mnt/data`).
+  favourite) follow it; the letter maps the volume root. Yazi's `g D`
+  (`home/modules/file-manager.nix`) goes to `~/Data` where the host binds it
+  (otherwise to `/mnt/data`), and `g a` to `business/design` under the same
+  path, on any host that mounts `/mnt/data`.
 - **`~/Data`** ([above](#data-the-drive-in-the-home-folder)): a bind mount of
   `/mnt/data` at the user's home directory (`users.users.sam-desktop.home`)
   plus `/Data`, only with `dataPair.data` filled in. Options `bind`, `nofail`
@@ -577,7 +637,11 @@ are in place, the work runs on devtower-intel:
 - **Off-site, ciphertext only:** back up `/mnt/data` with client-side
   encryption (for example `rclone crypt` or restic) to Google Drive, later a
   Hetzner Storage Box. Personal and business data in separate encrypted
-  repositories with separate keys.
+  repositories with separate keys. Scope, per area: `docs/`, `assets/`,
+  `design/`, `film/resolve-library/`, `film/projects/`, `sound/projects/`,
+  `photos/`, `videos/` and `audio/`. `film/media/` and `sound/recordings/` are
+  large, so only if irreplaceable; `film/renders/` can be rendered again.
+  Exclude any Resolve cache or proxy folders that land on the drive.
 - **Network access:** Samba on NixOS, reachable only over WireGuard, for other
   devices with the right keys. It works only while NixOS is running. Bind it
   to the WireGuard interface only, with SMB3 and encryption required.
