@@ -148,7 +148,7 @@
         exit 1
       fi
 
-      # <account>/<project>, two levels down: personal/, syntek/, missional-gen/
+      # <account>/<project>, two levels down: personal/, syntek/, missional-gen/, premier/
       mapfile -t projects < <(
         find "$root" -mindepth 2 -maxdepth 2 -type d -printf '%P\n' 2>/dev/null | sort
       )

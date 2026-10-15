@@ -379,12 +379,16 @@ ssh-keygen -t ed25519 -C "$HOSTNAME@github-syntek" -f /tmp/github-syntek-$HOSTNA
 
 # Missional Gen GitHub account (sam-missional-gen)
 ssh-keygen -t ed25519 -C "$HOSTNAME@github-missionalgen" -f /tmp/github-missionalgen-$HOSTNAME -N ""
+
+# Premier GitHub account (Sam-Premier)
+ssh-keygen -t ed25519 -C "$HOSTNAME@github-premier" -f /tmp/github-premier-$HOSTNAME -N ""
 ```
 
-This creates 6 files in `/tmp/`:
+This creates 8 files in `/tmp/`:
 - `github-personal-$HOSTNAME`, `github-personal-$HOSTNAME.pub`
 - `github-syntek-$HOSTNAME`, `github-syntek-$HOSTNAME.pub`
 - `github-missionalgen-$HOSTNAME`, `github-missionalgen-$HOSTNAME.pub`
+- `github-premier-$HOSTNAME`, `github-premier-$HOSTNAME.pub`
 
 **Why per-device keys?**
 - Device loss only exposes keys for THAT device
@@ -420,6 +424,11 @@ agenix-helper edit github-ssh-syntek-$HOSTNAME
 # Encrypt missionalgen GitHub SSH key
 agenix-helper edit github-ssh-missionalgen-$HOSTNAME
 # Paste contents of /tmp/github-missionalgen-$HOSTNAME (private key)
+# Save and exit
+
+# Encrypt premier GitHub SSH key
+agenix-helper edit github-ssh-premier-$HOSTNAME
+# Paste contents of /tmp/github-premier-$HOSTNAME (private key)
 # Save and exit
 ```
 
@@ -461,6 +470,15 @@ Add the **public keys** (`.pub` files) to your GitHub accounts:
 5. Key: Paste contents of `/tmp/github-missionalgen-$HOSTNAME.pub`
 6. Click "Add SSH key"
 
+#### Premier Account (Sam-Premier)
+
+1. Switch to Sam-Premier account
+2. Go to: https://github.com/settings/keys
+3. Click "New SSH key"
+4. Title: `laptop-intel` (or current hostname)
+5. Key: Paste contents of `/tmp/github-premier-$HOSTNAME.pub`
+6. Click "Add SSH key"
+
 ### Step 7: Update secrets/secrets.nix with New Secrets
 
 Edit `secrets/secrets.nix` and add entries for your new encrypted secrets:
@@ -471,6 +489,7 @@ Edit `secrets/secrets.nix` and add entries for your new encrypted secrets:
   "github-ssh-personal-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   "github-ssh-syntek-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
   "github-ssh-missionalgen-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
+  "github-ssh-premier-laptop-intel.age".publicKeys = allUsers ++ [ laptop-intel ];
 }
 ```
 
@@ -481,6 +500,7 @@ Edit `secrets/secrets.nix` and add entries for your new encrypted secrets:
 rm /tmp/github-personal-$HOSTNAME
 rm /tmp/github-syntek-$HOSTNAME
 rm /tmp/github-missionalgen-$HOSTNAME
+rm /tmp/github-premier-$HOSTNAME
 ```
 
 ### Step 9: Rebuild System

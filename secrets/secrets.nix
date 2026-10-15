@@ -85,6 +85,10 @@ in
   # "github-ssh-missionalgen-devtower.age".publicKeys = allUsers ++ [ devtower ];
   "github-ssh-missionalgen-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
+  # Premier GitHub (Sam-Premier)
+  "github-ssh-premier-laptop-intel.age".publicKeys = laptopIntelKeys;
+  "github-ssh-premier-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
   # ============================================================================
   # Mullvad WireGuard VPN (Per-Device Configuration)
   # Phase 6: Multi-hop VPN with split tunneling and automatic rotation

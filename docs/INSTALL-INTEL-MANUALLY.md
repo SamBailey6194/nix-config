@@ -389,7 +389,7 @@ The full stage (`.#devtower-intel`) declares these agenix secrets in
 
 | Secret | Decrypted to |
 |---|---|
-| `github-ssh-personal`, `-syntek`, `-missionalgen` | `~/.ssh/github-devtower-intel-<account>` |
+| `github-ssh-personal`, `-syntek`, `-missionalgen`, `-premier` | `~/.ssh/github-devtower-intel-<account>` |
 | `claude-secrets` (monitor token, Context7 + ElevenLabs keys) | `/run/agenix/claude-secrets` |
 | `typesafe-api-key` (TypeSafe/Jev key, after provisioning) | `/run/agenix/typesafe-api-key` |
 | `aws-config` | `/run/agenix/aws-config`, linked to `~/.aws/config` |
@@ -477,6 +477,7 @@ ls -l ~/.ssh/github-devtower-intel-* ~/.aws/config ~/.aws/credentials
 ssh -T github-personal                 # Hi SamBailey6194!
 ssh -T github-syntek                   # Hi Syntek-Studio!
 ssh -T github-missionalgen             # Hi sam-missional-gen!
+ssh -T github-premier                  # Hi Sam-Premier!
 git pull --autostash                   # no GIT_SSH_COMMAND needed any more
 ```
 

@@ -38,6 +38,13 @@ let
       hostname = "github.com";
       identityFile = "~/.ssh/github-${hostname}-missionalgen";
     }
+    {
+      name = "premier";
+      host = "github-premier";
+      user = "git";
+      hostname = "github.com";
+      identityFile = "~/.ssh/github-${hostname}-premier";
+    }
   ];
 
   # Generate SSH config entry for a GitHub account

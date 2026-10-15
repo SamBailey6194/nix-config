@@ -198,6 +198,7 @@ Directory-based conditional includes auto-switch GitHub accounts:
 | `~/Repos/personal/` | SamBailey6194 | github-personal |
 | `~/Repos/syntek/` | syntek-studio | github-syntek |
 | `~/Repos/missional-gen/` | sam-missional-gen | github-missionalgen |
+| `~/Repos/premier/` | Sam-Premier | github-premier |
 
 Verify with: `git config user.email` in each directory.
 

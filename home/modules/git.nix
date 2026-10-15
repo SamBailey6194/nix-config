@@ -2,7 +2,7 @@
 
 {
   # Git configuration with multi-account support
-  # Manages personal, syntek, and missional-gen GitHub accounts
+  # Manages personal, syntek, missional-gen and premier GitHub accounts
 
   programs.git = {
     enable = true;
@@ -17,7 +17,7 @@
       # conditional includes (includeIf) below. This prevents the default
       # from overriding the includes, since Home Manager renders [user]
       # alphabetically after [includeIf] in the generated config.
-      # Repos outside ~/Repos/{personal,syntek,missional-gen}/ will require
+      # Repos outside ~/Repos/{personal,syntek,missional-gen,premier}/ will require
       # explicit git config before committing, preventing accidental identity leaks.
 
       # Core settings
@@ -112,6 +112,11 @@
         path = "~/.gitconfig-missional-gen";
       };
 
+      # Premier repos
+      includeIf."gitdir:~/Repos/premier/" = {
+        path = "~/.gitconfig-premier";
+      };
+
       # Aliases
       alias = {
         st = "status";
@@ -154,6 +159,15 @@
         email = sam@missionalgen.co.uk
 
     [url "git@github-missionalgen:"]
+        insteadOf = git@github.com:
+  '';
+
+  home.file.".gitconfig-premier".text = ''
+    [user]
+        name = Sam-Premier
+        email = sam.bailey@premier.org.uk
+
+    [url "git@github-premier:"]
         insteadOf = git@github.com:
   '';
 

@@ -63,7 +63,7 @@ fn main() -> Result<()> {
     };
 
     // Check GitHub SSH keys
-    let github_accounts = vec!["personal", "syntek", "missionalgen"];
+    let github_accounts = vec!["personal", "syntek", "missionalgen", "premier"];
     let mut all_valid = true;
 
     println!("{}", "GitHub SSH Keys:".bold());

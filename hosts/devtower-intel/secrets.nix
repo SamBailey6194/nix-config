@@ -52,6 +52,7 @@ in
     github-ssh-personal = githubKey "personal";       # SamBailey6194
     github-ssh-syntek = githubKey "syntek";           # syntek-studio
     github-ssh-missionalgen = githubKey "missionalgen"; # sam-missional-gen
+    github-ssh-premier = githubKey "premier";         # Sam-Premier
 
     # ========================================================================
     # Claude Code + shared MCP secrets (env file at /run/agenix/claude-secrets)
