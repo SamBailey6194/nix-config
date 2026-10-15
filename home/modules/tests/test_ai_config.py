@@ -31,6 +31,8 @@ INVENTORY = {
                    "env": {"ELEVENLABS_MCP_BASE_PATH": BASE}},
     "context7": {"command": ["/nix/server", "context7", "/nix/npx"]},
     "mcp-mermaid": {"command": ["/nix/server", "mermaid", "/nix/node"]},
+    "scrapling": {"command": ["/nix/server", "scrapling", "/nix/uvx", "/nix/python3", "1.63.0"]},
+    "playwright": {"command": ["/nix/server", "playwright", "/nix/playwright-mcp"]},
     "perplexity-computer": {"url": "https://example.test/perplexity"},
     "claude-design": {"url": "https://example.test/design"},
 }
@@ -265,17 +267,20 @@ class SharedMcpTests(unittest.TestCase):
 class LaunchTests(unittest.TestCase):
     SECRETS = {"CLAUDE_MONITOR_TOKEN": "m", "CONTEXT7_API_KEY": "c", "ELEVENLABS_API_KEY": "e"}
 
-    def run_launcher(self, *argv, credentials=None):
+    def run_launcher(self, *argv, credentials=None, agenix=None, environ=None):
         calls = []
         with tempfile.TemporaryDirectory() as directory, \
-                patch.dict(os.environ, {"PATH": "/usr/bin", **self.SECRETS}, clear=True), \
+                patch.dict(os.environ, {"PATH": "/usr/bin", **self.SECRETS, **(environ or {})}, clear=True), \
                 patch.object(Path, "home", return_value=Path(directory)), \
+                patch.object(launch, "AGENIX_SECRETS", Path(directory) / "claude-secrets"), \
                 patch.object(launch.sys, "argv", ["mcp-launch", *argv]), \
                 patch.object(launch.os, "execvpe", lambda file, args, env: calls.append((args, dict(env)))):
             if credentials:
                 path = Path(directory) / ".config/ai-mcp/credentials.json"
                 path.parent.mkdir(parents=True)
                 path.write_text(json.dumps(credentials))
+            if agenix is not None:
+                (Path(directory) / "claude-secrets").write_text(agenix)
             launch.main()
         return calls[0]
 
@@ -310,6 +315,54 @@ class LaunchTests(unittest.TestCase):
             _, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3", "/home/fixture",
                                        credentials={"ELEVENLABS_API_KEY": "file"})
         self.assertEqual(env["ELEVENLABS_API_KEY"], "file")
+
+    def test_scrapling_runs_pinned_package_with_bundle_playwright_and_no_secrets(self):
+        command, env = self.run_launcher("scrapling", "/nix/uvx", "/nix/python3", "1.63.0")
+        self.assertEqual(command, ["/nix/uvx", "--python", "/nix/python3", "--from", "scrapling[ai]==0.4.15",
+                                   "--with", "playwright==1.63.0", "scrapling", "mcp"])
+        self.assertFalse(set(self.SECRETS) & set(env))
+        self.assertNotIn("install", command)
+        with self.assertRaises(SystemExit):
+            self.run_launcher("scrapling", "/nix/uvx", "/nix/python3")
+
+    def test_scrapling_inventory_entry_uses_wrapped_uvx_and_bundle_version(self):
+        # One server name with syntek-media's and syntek-author's project
+        # entries; the Playwright pin is read from nixpkgs, never a literal.
+        nix = (MODULES / "mcp-servers.nix").read_text()
+        entry = next(line for line in nix.splitlines() if line.strip().startswith("scrapling.command"))
+        self.assertIn('"scrapling" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" pkgs.python3Packages.playwright.version', entry)
+        self.assertNotIn("clients", entry)
+        wrapper = (MODULES.parents[1] / "pkgs/uv-manylinux.nix").read_text()
+        pin = re.search(r'patchrightVersion = "(\d+)\.(\d+)\.(\d+)";', wrapper).groups()
+        # scrapling 0.4.15[fetchers] requires patchright>=1.62.1.
+        self.assertGreaterEqual(tuple(map(int, pin)), (1, 62, 1))
+
+    def test_every_agenix_file_key_removed_unless_the_server_needs_it(self):
+        # The wrapper sources the whole file; keys the launcher does not list
+        # (TYPESAFE_API_KEY, or one added later) must not reach any server.
+        agenix = "CONTEXT7_API_KEY=c\nexport FUTURE_KEY='x=y'\n# NOT_A_KEY=1\nTYPESAFE_API_KEY=t\n"
+        extra = {"TYPESAFE_API_KEY": "t", "FUTURE_KEY": "x=y"}
+        for argv in (("scrapling", "/nix/uvx", "/nix/python3", "1.63.0"), ("playwright", "/nix/playwright-mcp"),
+                     ("context7", "/nix/npx"), ("elevenlabs", "/nix/uvx", "/nix/python3", BASE)):
+            _, env = self.run_launcher(*argv, agenix=agenix, environ=extra)
+            self.assertFalse(set(extra) & set(env), argv[0])
+        _, env = self.run_launcher("context7", "/nix/npx", agenix=agenix, environ=extra)
+        self.assertEqual(env["CONTEXT7_API_KEY"], "c")
+        # Without the file, the listed TypeSafe key is still removed.
+        _, env = self.run_launcher("scrapling", "/nix/uvx", "/nix/python3", "1.63.0", environ=extra)
+        self.assertNotIn("TYPESAFE_API_KEY", env)
+        self.assertEqual(env["FUTURE_KEY"], "x=y")
+
+    def test_playwright_runs_nixpkgs_server_headed_only_with_a_session(self):
+        command, env = self.run_launcher("playwright", "/nix/playwright-mcp", environ={"WAYLAND_DISPLAY": "wayland-1"})
+        self.assertEqual(command, ["/nix/playwright-mcp"])
+        self.assertFalse(set(self.SECRETS) & set(env))
+        with patch.object(launch.Path, "glob", side_effect=lambda *_: iter(())):
+            command, _ = self.run_launcher("playwright", "/nix/playwright-mcp")
+        self.assertEqual(command, ["/nix/playwright-mcp", "--headless"])
+        nix = (MODULES / "mcp-servers.nix").read_text()
+        entry = next(line for line in nix.splitlines() if line.strip().startswith("playwright.command"))
+        self.assertIn('"playwright" "${pkgs.playwright-mcp}/bin/playwright-mcp"', entry)
 
     def test_browser_servers_get_no_secrets_and_a_session(self):
         command, env = self.run_launcher("brave", "/nix/npx", "/run/current-system/sw/bin/brave")

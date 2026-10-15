@@ -48,7 +48,14 @@
 ## [Unreleased]
 
 ### Added
-- Nothing yet
+- **Scrapling MCP server** (`scrapling`) for Claude Code, Codex, Antigravity and OpenCode: `uvx --from "scrapling[ai]==0.4.15" --with "playwright==<bundle>" scrapling mcp` through the shared launcher and the wrapped uv; no credentials. The `playwright` pin is `python3Packages.playwright.version` (1.63.0). Both browser fetchers (DynamicFetcher, StealthyFetcher) launch the nixpkgs Chromium 1243; `real_chrome` is unavailable on NixOS
+- **Playwright MCP server** (`playwright`) for every client: nixpkgs `playwright-mcp` through the shared launcher, on the same browser bundle; headed on the desktop session, headless without one; no credentials
+
+### Changed
+- **`pkgs/uv-manylinux.nix`**: `patchright` constraint 1.61.2 -> 1.63.0. Scrapling 0.4.15's `fetchers` extra needs `patchright>=1.62.1`, so 1.61.2 made `scrapling[ai]` unresolvable; 1.63.0 asks for exactly the 1.63.0 bundle's revisions (chromium 1243, firefox 1543, webkit 2359, ffmpeg 1011)
+
+### Fixed
+- **Shared MCP launcher**: every key in `/run/agenix/claude-secrets` is now removed unless the server needs it; `TYPESAFE_API_KEY` (and any unlisted key) previously reached every shared server
 
 ---
 

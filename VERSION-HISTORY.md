@@ -53,7 +53,10 @@
 ## [Unreleased]
 
 ### Technical Changes
-- Nothing yet
+- Scrapling MCP server (`scrapling`, `scrapling[ai]` 0.4.15) added to the shared inventory (`home/modules/mcp-servers.nix`, launcher kind `scrapling` in `home/modules/mcp-launch.py`), run through the wrapped uvx with `playwright==python3Packages.playwright.version`
+- `patchright` constraint in `pkgs/uv-manylinux.nix` moved 1.61.2 -> 1.63.0 to satisfy Scrapling's `patchright>=1.62.1` and match the 1.63.0 browser bundle revision for revision
+- Playwright MCP server (`playwright`, nixpkgs `playwright-mcp`) added to the shared inventory, launcher kind `playwright`
+- Shared MCP launcher removes every name set in `/run/agenix/claude-secrets` (read from the file) unless the server needs it, plus `TYPESAFE_API_KEY` explicitly
 
 ---
 

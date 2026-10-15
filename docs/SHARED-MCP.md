@@ -10,6 +10,8 @@ Codex, Antigravity CLI (`agy`) and OpenCode; Claude Design in Claude Code only:
 | Context7 | Shared stdio launcher | `CONTEXT7_API_KEY`, if available |
 | Perplexity Computer | HTTP | Each client's OAuth login |
 | ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY`; base path declared (home directory) |
+| Scrapling (`scrapling`) | Shared stdio launcher, `scrapling[ai]` 0.4.15 with the bundle's `playwright` | None |
+| Playwright (`playwright`) | Shared stdio launcher, nixpkgs `playwright-mcp` | None |
 | Claude Design (Claude Code only) | HTTP | Claude Code's authentication and account access |
 
 Claude Code, Codex and Antigravity also get two browser DevTools servers
@@ -51,8 +53,35 @@ itself, because Codex passes only a few environment variables to servers.
 `home/modules/mcp-servers.nix` is the single inventory. Shared commands use
 absolute Nix executables; Mermaid uses the existing pinned Playwright setup,
 and ElevenLabs uses the manylinux-aware uv wrapper plus PortAudio/libsndfile.
-Context7 and ElevenLabs need network access on first launch to install runtime
-packages. ElevenLabs is pinned; Context7 follows the existing Ubuntu npx setup.
+Context7, ElevenLabs and Scrapling need network access on first launch to install
+runtime packages. ElevenLabs and Scrapling are pinned; Context7 follows the
+existing Ubuntu npx setup.
+
+Scrapling runs `uvx --from "scrapling[ai]==0.4.15" --with "playwright==<bundle>"
+scrapling mcp` through the same uv wrapper (`pkgs/uv-manylinux.nix`), which
+fixes greenlet's `libstdc++` import, points `PLAYWRIGHT_BROWSERS_PATH` at the
+nixpkgs browser bundle and constrains `playwright`/`patchright` to the bundle's
+revisions. The `playwright` pin is read from `python3Packages.playwright`
+(1.63.0, `just check-playwright`), so it moves with the bundle. Its name,
+`scrapling`, is the one syntek-media and syntek-author use at project scope, so
+the two entries are one server. Never run `scrapling install`: the store is
+read-only and the browsers are already there. It lists 13 tools: `fetch`,
+`bulk_fetch` (DynamicFetcher, Playwright), `stealthy_fetch`,
+`bulk_stealthy_fetch` (StealthyFetcher, patchright), `make_request`,
+`bulk_get` (plain HTTP, curl_cffi), `open_session`, `open_request_session`,
+`session_fetch`, `session_make_request`, `list_sessions`, `close_session` and
+`screenshot`. Both browser fetchers launch the bundle's Chromium (revision
+1243); Scrapling 0.4.15 no longer uses camoufox. Only the `real_chrome` option
+does not work here, as it looks for Google Chrome at its FHS path; pass
+`executable_path` (or set `SCRAPLING_EXECUTABLE_PATH`) for another Chromium.
+
+Playwright is Microsoft's Playwright MCP as packaged by nixpkgs
+(`pkgs.playwright-mcp`), so it needs no npx download and its wrapper already
+points `PLAYWRIGHT_BROWSERS_PATH` at the same bundle and uses an isolated
+profile. The launcher finds the desktop session as it does for the DevTools
+servers and runs it headed there, adding `--headless` when there is none. It
+drives the bundle's Chromium, not the managed browsers, so every client gets it.
+It writes page snapshots to `.playwright-mcp/` in the client's working directory.
 Claude, Codex and OpenCode allow up to two minutes for local server startup;
 an explicit existing Codex timeout is retained.
 The [official ElevenLabs MCP](https://github.com/elevenlabs/elevenlabs-mcp)
@@ -71,7 +100,8 @@ or evaluated into the Nix store.
 
 Once that agenix secret is readable, activation stops writing the plaintext
 credential file (delete any earlier one). The launcher passes each server only
-the keys it needs, removes the rest (including the monitor token), and gives
+the keys it needs, removes the rest (including the monitor token, and every
+other name the agenix file sets, such as `TYPESAFE_API_KEY`), and gives
 Context7 its key in the environment rather than as an `--api-key` argument, so
 no key shows in the process list. For the servers it manages, registration
 removes inline `CONTEXT7_API_KEY`/`ELEVENLABS_API_KEY` values (and Codex
