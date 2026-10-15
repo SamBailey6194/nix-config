@@ -752,6 +752,9 @@ system store don't accumulate.
 
 ### Remote Docker from laptop-intel (planned)
 
+Superseded in part by [REMOTE-ACCESS.md](REMOTE-ACCESS.md), the agreed design
+for all remote access; the notes below remain for context.
+
 After the store is in place, laptop-intel can use Docker on this PC through a
 Docker context over SSH:
 

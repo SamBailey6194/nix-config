@@ -12,6 +12,7 @@
 - [Backup and data-drive encryption](BACKUP-AND-DATA-ENCRYPTION.md) — independent BackupDrive, verified restoration and the per-drive LUKS procedure (OS TPM2, home, store).
 - [Desktop connectivity](DESKTOP-CONNECTIVITY.md) — arwyn SSH, Mullvad readiness and accountability.
 - [Shared DaVinci drive](DAVINCI-SHARED-DRIVE.md) — Windows/NixOS NTFS access.
+- [Remote access](REMOTE-ACCESS.md) — laptop-intel using devtower-intel from anywhere: WireGuard, sshd, Samba shares, Zed/Neovim over SSH, Docker, LLMs (design).
 - [Shared encrypted data drives](SHARED-DATA-DRIVES.md) — the 4TB VeraCrypt pair (working drive + mirror) for Windows and NixOS, plus later Samba and remote Docker plans.
 - [Ubuntu migration](UBUNTU-TO-NIXOS.md) — disk UUIDs, preservation and the target drive layout.
 - [Disk prevention](DISK-PREVENTION.md) — Nix GC and generations, Docker storage, the client-store clean-up and agent skills.

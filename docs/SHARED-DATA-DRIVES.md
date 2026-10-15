@@ -641,6 +641,10 @@ are in place, the work runs on devtower-intel:
 
 ## Later
 
+The remote-access design (WireGuard, sshd, Samba shares, Docker, LLMs) is now
+in [REMOTE-ACCESS.md](REMOTE-ACCESS.md); it supersedes the notes below where
+they differ.
+
 - **Off-site, ciphertext only:** back up `/mnt/data` with client-side
   encryption (for example `rclone crypt` or restic) to Google Drive, later a
   Hetzner Storage Box. Personal and business data in separate encrypted

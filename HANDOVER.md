@@ -106,7 +106,9 @@ has been run on these commits yet.**
      recurs, enable libvirt debug logging for one cycle.
    - Drive letters move between boots (the store was `sdc`, then `sda`);
      everything uses UUIDs or serials.
-8. **Remote access**: `wg-lan`, sshd hardening, Samba, Docker context.
+8. **Remote access**: designed in `docs/REMOTE-ACCESS.md` (15/10): `wg-lan`
+   from anywhere, sshd, Samba shares, Zed/Neovim over SSH, Docker context,
+   LLMs. Open: router port forward / CGNAT check.
 
 ## Config changes for the storage plan (committed)
 
