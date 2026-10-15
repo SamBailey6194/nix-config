@@ -11,6 +11,7 @@ Codex, Antigravity CLI (`agy`) and OpenCode; Claude Design in Claude Code only:
 | Perplexity Computer | HTTP | Each client's OAuth login |
 | ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY`; base path declared (home directory) |
 | Scrapling (`scrapling`) | Shared stdio launcher, `scrapling[ai]` 0.4.15 with the bundle's `playwright` | None |
+| Playwright (`playwright`) | Shared stdio launcher, nixpkgs `playwright-mcp` | None |
 | Claude Design (Claude Code only) | HTTP | Claude Code's authentication and account access |
 
 Claude Code, Codex and Antigravity also get two browser DevTools servers
@@ -73,6 +74,14 @@ read-only and the browsers are already there. It lists 13 tools: `fetch`,
 1243); Scrapling 0.4.15 no longer uses camoufox. Only the `real_chrome` option
 does not work here, as it looks for Google Chrome at its FHS path; pass
 `executable_path` (or set `SCRAPLING_EXECUTABLE_PATH`) for another Chromium.
+
+Playwright is Microsoft's Playwright MCP as packaged by nixpkgs
+(`pkgs.playwright-mcp`), so it needs no npx download and its wrapper already
+points `PLAYWRIGHT_BROWSERS_PATH` at the same bundle and uses an isolated
+profile. The launcher finds the desktop session as it does for the DevTools
+servers and runs it headed there, adding `--headless` when there is none. It
+drives the bundle's Chromium, not the managed browsers, so every client gets it.
+It writes page snapshots to `.playwright-mcp/` in the client's working directory.
 Claude, Codex and OpenCode allow up to two minutes for local server startup;
 an explicit existing Codex timeout is retained.
 The [official ElevenLabs MCP](https://github.com/elevenlabs/elevenlabs-mcp)
@@ -91,7 +100,8 @@ or evaluated into the Nix store.
 
 Once that agenix secret is readable, activation stops writing the plaintext
 credential file (delete any earlier one). The launcher passes each server only
-the keys it needs, removes the rest (including the monitor token), and gives
+the keys it needs, removes the rest (including the monitor token, and every
+other name the agenix file sets, such as `TYPESAFE_API_KEY`), and gives
 Context7 its key in the environment rather than as an `--api-key` argument, so
 no key shows in the process list. For the servers it manages, registration
 removes inline `CONTEXT7_API_KEY`/`ELEVENLABS_API_KEY` values (and Codex

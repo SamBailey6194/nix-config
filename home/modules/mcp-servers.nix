@@ -46,6 +46,10 @@ in forClient ({
   # same name at project scope, so the two entries are one server. Its Playwright
   # pin is the bundle's (pkgs/uv-manylinux.nix), never a second literal.
   scrapling.command = [ (toString launch) "scrapling" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" pkgs.python3Packages.playwright.version ];
+  # Microsoft's Playwright MCP from nixpkgs (no npx), which drives the same
+  # browser bundle Scrapling and Mermaid use; its own Chromium, not the
+  # managed browsers, so every client gets it.
+  playwright.command = [ (toString launch) "playwright" "${pkgs.playwright-mcp}/bin/playwright-mcp" ];
   perplexity-computer.url = "https://www.perplexity.ai/rest/computer/mcp";
   # Codex skips it and agy cannot complete its OAuth discovery.
   claude-design = {

@@ -2,19 +2,34 @@
 import json
 import os
 from pathlib import Path
+import re
 import sys
 
 # Everything the launcher may receive from /run/agenix/claude-secrets or the
 # captured credential file, and which of it each server needs. The rest is
 # removed, so no server sees another's key or the monitor token. A secret's
 # ELEVENLABS_MCP_BASE_PATH is removed too: the inventory declares that one.
-SECRETS = {"CLAUDE_MONITOR_TOKEN", "CONTEXT7_API_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_MCP_BASE_PATH"}
+# Every other name the agenix file sets (TYPESAFE_API_KEY, or a key added
+# later) is removed as well, read from the file itself (file_secrets).
+AGENIX_SECRETS = Path("/run/agenix/claude-secrets")
+SECRETS = {"CLAUDE_MONITOR_TOKEN", "CONTEXT7_API_KEY", "ELEVENLABS_API_KEY", "ELEVENLABS_MCP_BASE_PATH",
+           "TYPESAFE_API_KEY"}
 NEEDS = {
     "context7": {"CONTEXT7_API_KEY"},
     "elevenlabs": {"ELEVENLABS_API_KEY"},
 }
 CHROME_DEVTOOLS_MCP = "chrome-devtools-mcp@1.10.1"
 SCRAPLING = "scrapling[ai]==0.4.15"
+
+
+def file_secrets():
+    """Names (never values) the wrapper exported from the agenix env file."""
+    try:
+        lines = AGENIX_SECRETS.read_text().splitlines()
+    except OSError:
+        return set()
+    names = (re.match(r"\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=", line) for line in lines)
+    return {name.group(1) for name in names if name}
 
 
 def graphical_environment():
@@ -43,7 +58,7 @@ def main():
         if key in SECRETS and not os.environ.get(key):
             os.environ[key] = value
     kind, executable, *args = sys.argv[1:]
-    for key in SECRETS - NEEDS.get(kind, set()):
+    for key in (SECRETS | file_secrets()) - NEEDS.get(kind, set()):
         os.environ.pop(key, None)
     if kind == "mermaid":
         os.environ["PLAYWRIGHT_BROWSERS_PATH"] = args[0]
@@ -70,6 +85,14 @@ def main():
             sys.exit("Scrapling requires the Playwright version argument (home/modules/mcp-servers.nix)")
         command = [executable, "--python", args[0], "--from", SCRAPLING,
                    "--with", f"playwright=={args[1]}", "scrapling", "mcp"]
+    elif kind == "playwright":
+        # nixpkgs' playwright-mcp, already wrapped with the bundle's
+        # PLAYWRIGHT_BROWSERS_PATH and an isolated profile. Headed on the
+        # desktop session, headless when there is none.
+        graphical_environment()
+        command = [executable]
+        if not (os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")):
+            command.append("--headless")
     elif kind == "brave":
         graphical_environment()
         command = [executable, "--yes", CHROME_DEVTOOLS_MCP, "--executable-path", args[0]]
