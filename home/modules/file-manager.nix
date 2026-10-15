@@ -123,7 +123,13 @@ let
     { group = "Select"; on = [ "<C-r>" ]; desc = "Invert selection"; docOnly = true; }
     { group = "Select"; on = [ "<Esc>" ]; desc = "Clear selection / cancel"; docOnly = true; }
 
-    { group = "Open"; on = [ "<Enter>" ]; desc = "Open (also o)"; docOnly = true; }
+    # Yazi's own Enter is `open`, and its preset open rules send folders to
+    # the `edit` opener first, i.e. Neovim (opener.edit below): Enter on a
+    # folder opened it in Neovim instead of going into it. smart-enter
+    # enters a hovered folder and opens anything else. `o` stays the plain
+    # `open`, so a folder can still be opened on purpose.
+    { group = "Open"; on = [ "<Enter>" ]; desc = "Enter folder, or open file(s)"; run = "plugin smart-enter"; }
+    { group = "Open"; on = [ "o" ]; desc = "Open, folders too (in Neovim)"; docOnly = true; }
     { group = "Open"; on = [ "O" ]; desc = "Open with... (pick: Neovim, Zed, ...)"; docOnly = true; }
     { group = "Open"; on = [ "<Tab>" ]; desc = "File info (spot)"; docOnly = true; }
 
@@ -248,6 +254,14 @@ in
     plugins = {
       ouch = pkgs.yaziPlugins.ouch;   # archive preview + compress (C)
       mount = pkgs.yaziPlugins.mount; # mount / unmount / eject UI (M)
+      # Enter: go into a folder, open a file. open_multi keeps Enter opening
+      # the whole selection (and picking several files in the file picker);
+      # without it only the hovered file is opened.
+      smart-enter = {
+        package = pkgs.yaziPlugins.smart-enter;
+        setup = true;
+        settings.open_multi = true;
+      };
     };
 
     settings = {

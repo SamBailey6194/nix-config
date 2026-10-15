@@ -2333,6 +2333,14 @@ in
 
         filesystem = {
           window = { position = 'left', width = ws.widths.filesystem },
+          -- A directory argument (`nvim some/dir`, or a folder opened from
+          -- Yazi's "Open with...") browses in place, not as the left panel:
+          -- the default put the tree at the left beside an empty [No Name]
+          -- window, so the first :q only closed the tree and it took a
+          -- second to leave. In place, ws.is_panel does not count it as a
+          -- panel and :q quits at once. The bare-start layout opens its
+          -- tree with :Neotree, which this does not touch.
+          hijack_netrw_behavior = 'open_current',
           follow_current_file = { enabled = true },
           -- Watch rather than poll, so a `nixos-rebuild` writing into the tree
           -- shows up without a manual refresh.
