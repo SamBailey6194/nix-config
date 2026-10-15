@@ -14,6 +14,7 @@ NEEDS = {
     "elevenlabs": {"ELEVENLABS_API_KEY"},
 }
 CHROME_DEVTOOLS_MCP = "chrome-devtools-mcp@1.10.1"
+SCRAPLING = "scrapling[ai]==0.4.15"
 
 
 def graphical_environment():
@@ -61,6 +62,14 @@ def main():
             sys.exit("ElevenLabs requires the declared base path argument (home/modules/mcp-servers.nix)")
         os.environ["ELEVENLABS_MCP_BASE_PATH"] = args[1]
         command = [executable, "--python", args[0], "elevenlabs-mcp==0.12.2"]
+    elif kind == "scrapling":
+        # The wrapped uvx supplies the greenlet library path, the nixpkgs browser
+        # bundle and its version constraints; the Playwright pin is the bundle's,
+        # passed from the inventory. Never `scrapling install`: the store is read-only.
+        if len(args) < 2 or not args[1]:
+            sys.exit("Scrapling requires the Playwright version argument (home/modules/mcp-servers.nix)")
+        command = [executable, "--python", args[0], "--from", SCRAPLING,
+                   "--with", f"playwright=={args[1]}", "scrapling", "mcp"]
     elif kind == "brave":
         graphical_environment()
         command = [executable, "--yes", CHROME_DEVTOOLS_MCP, "--executable-path", args[0]]

@@ -31,6 +31,7 @@ INVENTORY = {
                    "env": {"ELEVENLABS_MCP_BASE_PATH": BASE}},
     "context7": {"command": ["/nix/server", "context7", "/nix/npx"]},
     "mcp-mermaid": {"command": ["/nix/server", "mermaid", "/nix/node"]},
+    "scrapling": {"command": ["/nix/server", "scrapling", "/nix/uvx", "/nix/python3", "1.63.0"]},
     "perplexity-computer": {"url": "https://example.test/perplexity"},
     "claude-design": {"url": "https://example.test/design"},
 }
@@ -310,6 +311,27 @@ class LaunchTests(unittest.TestCase):
             _, env = self.run_launcher("elevenlabs", "/nix/uvx", "/nix/python3", "/home/fixture",
                                        credentials={"ELEVENLABS_API_KEY": "file"})
         self.assertEqual(env["ELEVENLABS_API_KEY"], "file")
+
+    def test_scrapling_runs_pinned_package_with_bundle_playwright_and_no_secrets(self):
+        command, env = self.run_launcher("scrapling", "/nix/uvx", "/nix/python3", "1.63.0")
+        self.assertEqual(command, ["/nix/uvx", "--python", "/nix/python3", "--from", "scrapling[ai]==0.4.15",
+                                   "--with", "playwright==1.63.0", "scrapling", "mcp"])
+        self.assertFalse(set(self.SECRETS) & set(env))
+        self.assertNotIn("install", command)
+        with self.assertRaises(SystemExit):
+            self.run_launcher("scrapling", "/nix/uvx", "/nix/python3")
+
+    def test_scrapling_inventory_entry_uses_wrapped_uvx_and_bundle_version(self):
+        # One server name with syntek-media's and syntek-author's project
+        # entries; the Playwright pin is read from nixpkgs, never a literal.
+        nix = (MODULES / "mcp-servers.nix").read_text()
+        entry = next(line for line in nix.splitlines() if line.strip().startswith("scrapling.command"))
+        self.assertIn('"scrapling" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" pkgs.python3Packages.playwright.version', entry)
+        self.assertNotIn("clients", entry)
+        wrapper = (MODULES.parents[1] / "pkgs/uv-manylinux.nix").read_text()
+        pin = re.search(r'patchrightVersion = "(\d+)\.(\d+)\.(\d+)";', wrapper).groups()
+        # scrapling 0.4.15[fetchers] requires patchright>=1.62.1.
+        self.assertGreaterEqual(tuple(map(int, pin)), (1, 62, 1))
 
     def test_browser_servers_get_no_secrets_and_a_session(self):
         command, env = self.run_launcher("brave", "/nix/npx", "/run/current-system/sw/bin/brave")

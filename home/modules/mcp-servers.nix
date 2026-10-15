@@ -42,6 +42,10 @@ in forClient ({
     command = [ (toString launch) "elevenlabs" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" home ];
     env.ELEVENLABS_MCP_BASE_PATH = home;
   };
+  # Scrapling's own server (scrapling[ai]); syntek-media and syntek-author use the
+  # same name at project scope, so the two entries are one server. Its Playwright
+  # pin is the bundle's (pkgs/uv-manylinux.nix), never a second literal.
+  scrapling.command = [ (toString launch) "scrapling" "${uv}/bin/uvx" "${pkgs.python3}/bin/python3" pkgs.python3Packages.playwright.version ];
   perplexity-computer.url = "https://www.perplexity.ai/rest/computer/mcp";
   # Codex skips it and agy cannot complete its OAuth discovery.
   claude-design = {
