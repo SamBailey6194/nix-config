@@ -105,11 +105,11 @@
     "browser_setup": {
       "flake": false,
       "locked": {
-        "lastModified": 1781263214,
-        "narHash": "sha256-YREmob75dTRUz7nfLivcifzUqBcsvaxO0/wScvTldqw=",
+        "lastModified": 1792078591,
+        "narHash": "sha256-JFjANldGYxVsy3Bdb3ovKGBHqw6xwsU9ICWvKfAEfBQ=",
         "ref": "refs/heads/main",
-        "rev": "6e9f306f967f3c8bbe68323a931bf42020a26233",
-        "revCount": 6,
+        "rev": "a443fd5cceaed699c951f291b60ce95a2e617a37",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github-personal/SamBailey6194/browser_setup.git"
       },
