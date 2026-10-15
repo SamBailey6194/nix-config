@@ -2332,7 +2332,31 @@ in
         },
 
         filesystem = {
-          window = { position = 'left', width = ws.widths.filesystem },
+          window = {
+            position = 'left',
+            width = ws.widths.filesystem,
+            -- neo-tree's own `q` closes the tree, and for a tree in place that
+            -- left Neovim open on an empty [No Name] window with no way back
+            -- to Yazi short of another :q. When that tree is all there is
+            -- (one window, one tab), `q` quits instead; anywhere else, the
+            -- left panel included, it still just closes the tree.
+            mappings = {
+              ['q'] = {
+                function(state)
+                  local tiled = vim.tbl_filter(function(w)
+                    return not is_float(w)
+                  end, vim.api.nvim_tabpage_list_wins(0))
+                  if state.current_position == 'current' and #tiled == 1
+                      and #vim.api.nvim_list_tabpages() == 1 then
+                    vim.cmd('confirm quit')
+                  else
+                    require('neo-tree.sources.common.commands').close_window(state)
+                  end
+                end,
+                desc = 'close_window (quits if the tree is all there is)',
+              },
+            },
+          },
           -- A directory argument (`nvim some/dir`, or a folder opened from
           -- Yazi's "Open with...") browses in place, not as the left panel:
           -- the default put the tree at the left beside an empty [No Name]
