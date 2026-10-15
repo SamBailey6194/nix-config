@@ -52,6 +52,24 @@ class DataHomeMountTests(unittest.TestCase):
         self.assertIn("realTimeMonitoring.excludePaths.default ++ [ dataHome ]", PAIR)
 
 
+class LockOrderTests(unittest.TestCase):
+    """Unmount before close: blockdev@.target is not installed on the host
+    (LoadState=not-found), so each mount requires its own unlock instead."""
+
+    def test_each_mount_requires_its_own_unlock(self):
+        self.assertIn('unlockedBy = mapper: "x-systemd.requires=systemd-cryptsetup@${mapper}.service";', PAIR)
+        self.assertIn('options = ntfsOpts ++ [ (unlockedBy "cryptdata") ];',
+                      block(PAIR, 'fileSystems."/mnt/data" = {'))
+        self.assertIn('options = [ "noauto" ] ++ ntfsOpts ++ [ (unlockedBy "cryptmirror") ];',
+                      block(PAIR, 'fileSystems."/mnt/data-mirror" = {'))
+
+    def test_mirror_job_stops_only_the_unlock(self):
+        stop = re.search(r'ExecStopPost = "([^"]*)";', PAIR).group(1)
+        self.assertTrue(stop.startswith("+"), stop)
+        self.assertTrue(stop.endswith("/bin/systemctl --no-block stop systemd-cryptsetup@cryptmirror.service"), stop)
+        self.assertNotIn("blockdev@", re.sub(r"(?m)^\s*#.*$", "", PAIR))
+
+
 class FollowersTests(unittest.TestCase):
     def test_git_identity_for_both_paths(self):
         git = (ROOT / "home/modules/git.nix").read_text()

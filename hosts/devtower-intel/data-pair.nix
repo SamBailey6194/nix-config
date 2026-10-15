@@ -62,6 +62,14 @@ let
   #
   # The device timeout covers VeraCrypt's deliberately slow key derivation as
   # well as the drive appearing; the mount gives up after it, without retrying.
+  #
+  # Each mount also requires its own systemd-cryptsetup@<name>.service
+  # (x-systemd.requires=, which adds Requires= and After=, systemd.mount(5)):
+  # stopping the unlock then stops the mount first, in the same transaction,
+  # and at shutdown the mount is gone before the volume is closed. The
+  # generators order both through blockdev@dev-mapper-<name>.target, but
+  # that template is not installed here (LoadState=not-found), so that
+  # ordering never happens: without this a close can run alongside the unmount.
   ntfsOpts = [
     "nofail"
     "noatime"
@@ -73,6 +81,8 @@ let
     "windows_names"
     "x-systemd.device-timeout=1min"
   ];
+
+  unlockedBy = mapper: "x-systemd.requires=systemd-cryptsetup@${mapper}.service";
 
   passFile = name: "/var/lib/desktop-secrets/${name}.pass";
 
@@ -156,7 +166,7 @@ in
       fileSystems."/mnt/data" = {
         device = "/dev/mapper/cryptdata";
         fsType = "ntfs-3g";
-        options = ntfsOpts;
+        options = ntfsOpts ++ [ (unlockedBy "cryptdata") ];
       };
 
       # ~/Data (see dataHome above). depends adds RequiresMountsFor=/mnt/data
@@ -222,7 +232,7 @@ in
       fileSystems."/mnt/data-mirror" = {
         device = "/dev/mapper/cryptmirror";
         fsType = "ntfs-3g";
-        options = [ "noauto" ] ++ ntfsOpts;
+        options = [ "noauto" ] ++ ntfsOpts ++ [ (unlockedBy "cryptmirror") ];
       };
       # NTFS-3G is a FUSE daemon: the disk writes come from it, not from rsync,
       # and it runs in the mount unit. mq-deadline honours I/O priorities.
@@ -275,12 +285,16 @@ in
             "+${config.systemd.package}/bin/systemctl start /mnt/data /mnt/data-mirror"
             "+${mirrorGuard}"
           ];
-          # Lock the mirror again afterwards, whatever the result. --no-block:
-          # when this unit is itself being stopped (shutdown), the unmount
-          # waits for it. Listing the blockdev@ target puts it in the same
-          # transaction, so the unmount (After= it) finishes before the close
-          # (Before= it); without it the two run at once.
-          ExecStopPost = "+${config.systemd.package}/bin/systemctl --no-block stop /mnt/data-mirror blockdev@dev-mapper-cryptmirror.target systemd-cryptsetup@cryptmirror.service";
+          # Lock the mirror again afterwards, whatever the result. Stopping the
+          # unlock is enough: the mount requires it (unlockedBy above), so the
+          # same transaction unmounts first and closes after. --no-block: when
+          # this unit is itself being stopped (shutdown), the unmount waits
+          # for it. No "-": with --no-block this fails only if the stop can't
+          # even be queued (a configuration error, which should fail the unit);
+          # whether the unmount and close then succeed shows on those units
+          # (`systemctl --failed`), not here, so this unit's result stays the
+          # copy's.
+          ExecStopPost = "+${config.systemd.package}/bin/systemctl --no-block stop systemd-cryptsetup@cryptmirror.service";
           Nice = 19;
           CPUSchedulingPolicy = "batch";
           IOSchedulingClass = "idle";

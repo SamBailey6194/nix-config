@@ -503,7 +503,12 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
   NTFS-3G with the DavinciProj options (`nofail`, `noatime`, `norecover`,
   `uid=1000`, `gid=100`, `fmask=0133`, `dmask=0022`, `windows_names`) and
   `x-systemd.device-timeout=1min`, long enough for VeraCrypt's slow unlock (the
-  mount gives up after it without retrying).
+  mount gives up after it without retrying), and
+  `x-systemd.requires=systemd-cryptsetup@<name>.service` (Requires= and
+  After=, `systemd.mount(5)`): stopping the unlock stops the mount first, and
+  at shutdown the drive is unmounted before it is closed. The generators'
+  own ordering, through `blockdev@dev-mapper-<name>.target`, does nothing
+  here: that template is not installed (`LoadState=not-found`).
   - `/mnt/data` is mounted at boot, not automounted: Affinity's Wine sandbox
     and Wine's drive-letter scan need it mounted already.
   - `/mnt/data-mirror` is `noauto`; its NTFS-3G process runs at idle I/O
@@ -557,9 +562,11 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
      `rsync -rtS --delete --backup --backup-dir=.mirror-history/<date> --exclude=/.mirror-history --exclude=/.data-primary --exclude='/System Volume Information' --exclude='/$RECYCLE.BIN' /mnt/data/ /mnt/data-mirror/`.
      Status 24 (files vanished during the copy) is only a warning; any other
      failure logs `df -h` of both drives and fails the job.
-  5. Afterwards, whatever happened (a failed mount included), unmounts the
-     mirror and then locks it again. If something has `/mnt/data-mirror` open
-     at the time, that fails and shows as a failed unit.
+  5. Afterwards, whatever happened (a failed mount included), stops
+     `systemd-cryptsetup@cryptmirror.service`, which unmounts the mirror and
+     then locks it again (the mount requires the unlock). If something has
+     `/mnt/data-mirror` open at the time, that fails and shows as a failed
+     unit (the mount or the unlock, not the job, whose result is the copy's).
 
   It runs at idle I/O priority and nice 19, daily at 03:30 with up to 30 minutes'
   random delay, and `Persistent=true`, so a day spent in Windows or switched
