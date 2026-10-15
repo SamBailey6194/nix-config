@@ -452,6 +452,9 @@ block and its assertion in `data-drives.nix`, and `davinciUuid`,
 
 ### 8. Mount the WD in Windows (Windows, once)
 
+The full Windows checklist, including the Resolve move, is
+[WINDOWS-DATA-DRIVES.md](WINDOWS-DATA-DRIVES.md).
+
 Install VeraCrypt in Windows first (Windows only; NixOS doesn't need it).
 
 1. If Windows says a disk needs formatting, **always choose Cancel**. It is
