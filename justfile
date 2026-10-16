@@ -1172,3 +1172,8 @@ downloads-record-choice PATTERN FILE:
 [positional-arguments]
 approve-download FILE:
     @download-sorter --approve "$1"
+
+# Restore a quarantined false positive to ~/Downloads/Restored by SHA-256
+[positional-arguments]
+restore-download FILE:
+    @download-sorter --approve "$1" --force

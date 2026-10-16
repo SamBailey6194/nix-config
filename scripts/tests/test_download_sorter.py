@@ -18,6 +18,13 @@ sorter = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sorter)
 
 
+def sorter_main_cleanup(history):
+    """The end-of-run cleanup in main(): forget files that no longer exist."""
+    for row in history.connection.execute("SELECT path FROM files").fetchall():
+        if not os.path.lexists(row["path"]):
+            history.forget(Path(row["path"]))
+
+
 class DownloadSorterTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -219,15 +226,175 @@ class DownloadSorterTests(unittest.TestCase):
         self.assertEqual(self.scan.call_count, 3)
         self.assertTrue((nested / "nested-file.txt").exists())
 
-    def test_threat_error_and_timeout_stop_rename_and_routing(self):
+    def test_scan_error_and_timeout_stop_rename_and_routing(self):
         original = self.file("Unsafe File.PDF")
-        for status in ("scan_blocked", "scan_error"):
-            with self.subTest(status=status):
-                self.scan.return_value = (status, "ClamAV rejected this scan")
-                self.settled_run(retry=True)
-                self.assertTrue(original.exists())
-                self.assertEqual(list(self.destination.iterdir()), [])
-                self.assertTrue(any(a["urgency"] == "critical" for a in self.alerts()))
+        self.scan.return_value = ("scan_error", "ClamAV rejected this scan")
+        self.settled_run(retry=True)
+        self.assertTrue(original.exists())
+        self.assertEqual(list(self.destination.iterdir()), [])
+        self.assertTrue(any(a["urgency"] == "critical" for a in self.alerts()))
+
+    def quarantined(self):
+        folder = self.root / "state/quarantine"
+        return sorted(folder.iterdir()) if folder.exists() else []
+
+    def test_threat_is_quarantined_without_permissions_and_alerts(self):
+        original = self.file("Unsafe File.PDF")
+        self.scan.return_value = ("scan_blocked", "snapshot.pdf: Eicar-Test-Signature FOUND")
+        self.settled_run()
+        self.assertFalse(original.exists())
+        self.assertEqual(list(self.destination.iterdir()), [])
+        [target] = self.quarantined()
+        self.assertEqual(target.name, "Unsafe File.PDF")
+        self.assertEqual(target.stat().st_mode & 0o7777, 0)
+        os.chmod(target, 0o600)
+        self.assertEqual(target.read_bytes(), b"download contents")
+        os.chmod(target, 0)
+        self.assertEqual(self.history.get(original), None)
+        self.assertEqual(self.history.get(target)["hold"], "threat")
+        [alert] = self.alerts()
+        self.assertEqual((alert["title"], alert["urgency"]), ("Threat quarantined", "critical"))
+        self.assertIn("Eicar-Test-Signature", alert["body"])
+        self.assertIn("--force", alert["body"])
+        [event] = self.events("quarantined")
+        self.assertEqual((event["source"], event["destination"]), (str(original), str(target)))
+        # Deleting the quarantined file retires its alert.
+        target.unlink()
+        sorter_main_cleanup(self.history)
+        self.assertEqual(self.alerts(), [])
+
+    def test_file_refused_by_clamonacc_is_quarantined_by_rename(self):
+        import errno
+
+        original = self.file("payload.exe")
+        refused = PermissionError(errno.EPERM, "Operation not permitted")
+        with patch.object(sorter, "copy_snapshot", side_effect=refused):
+            self.settled_run()
+        self.scan.assert_not_called()
+        self.assertFalse(original.exists())
+        [target] = self.quarantined()
+        row = self.history.get(target)
+        self.assertEqual((row["status"], row["hold"]), ("scan_blocked", "threat"))
+        import hashlib
+        self.assertEqual(row["digest"], hashlib.sha256(b"download contents").hexdigest())
+        [alert] = self.alerts()
+        self.assertIn("clamonacc", alert["body"])
+
+    def test_other_permission_errors_are_not_treated_as_threats(self):
+        import errno
+
+        original = self.file("locked.txt")
+        with patch.object(sorter, "copy_snapshot", side_effect=PermissionError(errno.EACCES, "denied")):
+            self.settled_run()
+        self.assertTrue(original.exists())
+        self.assertEqual(self.quarantined(), [])
+        self.assertEqual(self.events("processing_error")[0]["source"], str(original))
+
+    def test_threat_that_cannot_be_moved_is_disabled_in_place_and_left_alone(self):
+        import errno
+
+        original = self.file("stuck.bin")
+        self.scan.return_value = ("scan_blocked", "snapshot.bin: Win.Test FOUND")
+        with patch.object(sorter.os, "link", side_effect=OSError(errno.EXDEV, "cross-device")):
+            self.settled_run()
+        self.assertTrue(original.exists())
+        self.assertEqual(original.stat().st_mode & 0o7777, 0)
+        [alert] = self.alerts()
+        self.assertEqual(alert["title"], "Threat found — could not quarantine")
+        self.scan.reset_mock()
+        self.history.connection.execute("UPDATE files SET attempted=0")
+        self.settled_run()
+        self.scan.assert_not_called()
+        self.assertEqual(self.events("processing_error"), [])
+        os.chmod(original, 0o600)
+
+    def test_failed_unlink_removes_the_quarantine_link_and_disables_in_place(self):
+        import errno
+
+        original = self.file("sticky.bin")
+        self.scan.return_value = ("scan_blocked", "snapshot.bin: Win.Test FOUND")
+        real_unlink = Path.unlink
+
+        def unlink(path, *args, **kwargs):
+            if path == original:
+                raise PermissionError(errno.EACCES, "denied")
+            return real_unlink(path, *args, **kwargs)
+
+        with patch.object(Path, "unlink", unlink):
+            self.settled_run()
+        self.assertEqual(self.quarantined(), [])
+        self.assertEqual(original.stat().st_mode & 0o7777, 0)
+        [alert] = self.alerts()
+        self.assertNotIn("--approve", alert["body"])
+        os.chmod(original, 0o600)
+
+    def test_replaced_file_is_not_quarantined_in_place_of_the_refused_one(self):
+        import errno
+
+        original = self.file("swap.exe")
+        real_rename = os.rename
+
+        def rename(source, target):
+            Path(source).write_bytes(b"a different, newer download")
+            return real_rename(source, target)
+
+        refused = PermissionError(errno.EPERM, "Operation not permitted")
+        with patch.object(sorter, "copy_snapshot", side_effect=refused), patch.object(sorter.os, "rename", rename):
+            self.settled_run()
+        self.assertTrue(original.exists())
+        self.assertEqual(self.quarantined(), [])
+        self.assertEqual(self.events("quarantined"), [])
+
+    def test_failed_restore_leaves_the_quarantined_file_without_permissions(self):
+        self.file("Blocked.txt")
+        self.scan.return_value = ("scan_blocked", "snapshot.txt: PUA.Test FOUND")
+        self.settled_run()
+        [target] = self.quarantined()
+        (self.downloads / "Restored").write_bytes(b"not a folder")
+        with self.assertRaises((ValueError, FileExistsError)):
+            sorter.approve_download(self.history, target, self.settings, force=True)
+        self.assertEqual(target.stat().st_mode & 0o7777, 0)
+        self.assertEqual(self.history.connection.execute("SELECT * FROM approvals").fetchall(), [])
+        with patch.object(sorter.shutil, "move", side_effect=OSError("disk full")):
+            (self.downloads / "Restored").unlink()
+            with self.assertRaises(OSError):
+                sorter.approve_download(self.history, target, self.settings, force=True)
+        self.assertEqual(target.stat().st_mode & 0o7777, 0)
+        self.assertEqual(self.history.connection.execute("SELECT * FROM approvals").fetchall(), [])
+
+    def test_on_access_scanner_outage_raises_and_clears_a_critical_alert(self):
+        self.settings["onAccessUnit"] = "clamav-clamonacc.service"
+        self.settings["systemctl"] = shutil.which("false")
+        sorter.check_on_access(self.history, self.settings)
+        [alert] = self.alerts()
+        self.assertEqual((alert["title"], alert["urgency"]), ("On-access virus scanning is off", "critical"))
+        self.settings["systemctl"] = shutil.which("true")
+        sorter.check_on_access(self.history, self.settings)
+        self.assertEqual(self.alerts(), [])
+        del self.settings["onAccessUnit"]
+        self.settings["systemctl"] = shutil.which("false")
+        sorter.check_on_access(self.history, self.settings)
+        self.assertEqual(self.alerts(), [])
+
+    def test_restore_requires_force_and_releases_only_the_quarantined_bytes(self):
+        self.file("False Positive.txt")
+        self.scan.return_value = ("scan_blocked", "snapshot.txt: PUA.Test FOUND")
+        self.settled_run()
+        [target] = self.quarantined()
+        with self.assertRaisesRegex(ValueError, "--force"):
+            sorter.approve_download(self.history, target, self.settings)
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            sorter.approve_download(self.history, target, self.settings, force=True)
+        restored = self.downloads / "Restored" / "False Positive.txt"
+        self.assertIn(f"Restored: {target} -> {restored}", output.getvalue())
+        self.assertFalse(target.exists())
+        self.assertEqual(restored.read_bytes(), b"download contents")
+        self.assertEqual(self.alerts(), [])
+        self.scan.reset_mock()
+        self.settled_run(rename_only=True)
+        self.scan.assert_not_called()  # Released by approval of these exact bytes.
+        self.assertTrue((self.downloads / "Restored" / "false-positive.txt").exists())
+        self.assertEqual(len(self.events("released")), 1)
 
     def test_file_changed_during_scan_is_not_published(self):
         original = self.file("Changing File.PDF")
@@ -747,11 +914,13 @@ class LayeredScanTests(unittest.TestCase):
     def test_approval_is_refused_for_detected_threats_without_force(self):
         path = self.write("evil.bin", b"EVILSIGNATURE" + random_bytes(100))
         self.run_sorter()
-        self.assertEqual(self.history.get(path)["hold"], "threat")
+        self.assertFalse(path.exists())
+        quarantined = self.root / "state/quarantine/evil.bin"
+        self.assertEqual(self.history.get(quarantined)["hold"], "threat")
         with self.assertRaisesRegex(ValueError, "--force"):
-            sorter.approve_download(self.history, path, self.settings)
+            sorter.approve_download(self.history, quarantined, self.settings)
         with contextlib.redirect_stdout(io.StringIO()) as output:
-            sorter.approve_download(self.history, path, self.settings, force=True)
+            sorter.approve_download(self.history, quarantined, self.settings, force=True)
         self.assertIn("Forced", output.getvalue())
         self.run_sorter()
         self.assertTrue((self.destination / "evil.bin").exists())
@@ -992,17 +1161,22 @@ class LayeredScanTests(unittest.TestCase):
 
     def test_held_threat_is_not_downgraded_to_an_approvable_oversize_hold(self):
         path = self.write("evil.bin", b"EVILSIGNATURE" + random_bytes(100))
-        self.run_sorter()
-        self.assertEqual(self.history.get(path)["hold"], "threat")
+        # A threat held in Downloads by a version that did not quarantine.
+        signature = sorter.fingerprint(path)
+        self.history.remember(path, signature, "scan_blocked", None, sorter.scan_policy(self.settings), "threat")
         self.settings["autoScanCap"] = 50
         self.settings["maxFileSize"] = 50
         self.settings["chunkSize"] = 40
         self.settings["chunkOverlap"] = 8
         self.history.connection.execute("UPDATE files SET attempted=0")
         self.run_sorter()
-        self.assertEqual(self.history.get(path)["hold"], "threat")
+        # Quarantined without another scan, though now above autoScanCap.
+        self.assertEqual(self.scans(), [])
+        self.assertFalse(path.exists())
+        quarantined = self.root / "state/quarantine/evil.bin"
+        self.assertEqual(self.history.get(quarantined)["hold"], "threat")
         with self.assertRaisesRegex(ValueError, "--force"):
-            sorter.approve_download(self.history, path, self.settings)
+            sorter.approve_download(self.history, quarantined, self.settings)
 
     def test_large_transient_failures_back_off(self):
         path = self.downloads / "big.zip"
@@ -1070,11 +1244,13 @@ class RealClamAVTests(unittest.TestCase):
         self.assertTrue((self.source / "downloaded-file.txt").exists())
         self.assertEqual(self.history.connection.execute("SELECT COUNT(*) FROM alerts").fetchone()[0], 0)
 
-    def test_real_eicar_detection_preserves_file_and_raises_critical_issue(self):
+    def test_real_eicar_detection_is_quarantined_and_raises_critical_issue(self):
         original = self.process(self.eicar)
-        self.assertTrue(original.exists())
+        self.assertFalse(original.exists())
+        quarantined = self.root / "quarantine" / original.name
+        self.assertEqual(quarantined.stat().st_mode & 0o7777, 0)
         alert = self.history.connection.execute("SELECT * FROM alerts WHERE active=1").fetchone()
-        self.assertEqual(alert["urgency"], "critical")
+        self.assertEqual((alert["urgency"], alert["title"]), ("critical", "Threat quarantined"))
         self.assertIn("Eicar", alert["body"])
 
     @unittest.skipUnless(tool("bsdtar"), "bsdtar (libarchive) is not on PATH")

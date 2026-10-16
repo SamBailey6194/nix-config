@@ -11,12 +11,26 @@ let
     bsdtar = "${pkgs.libarchive}/bin/bsdtar";
     unsquashfs = "${pkgs.squashfsTools}/bin/unsquashfs";
     signatureDirectory = "/var/lib/clamav";
+    # Alert while the open-time scanner is down (modules/security/download-antivirus.nix).
+    onAccessUnit = if lib.attrByPath [ "services" "clamav" "clamonacc" "enable" ] false osConfig
+      then "clamav-clamonacc.service" else null;
+    systemctl = "${pkgs.systemd}/bin/systemctl";
     notifier = "${pkgs.libnotify}/bin/notify-send";
     soundPlayer = "${pkgs.pulseaudio}/bin/paplay";
     alertSound = "${pkgs.sound-theme-freedesktop}/share/sounds/freedesktop/stereo/dialog-warning.oga";
   });
   gib = 1024 * 1024 * 1024;
   mib = 1024 * 1024;
+  # Raised by systemd when a sorter run fails, including crashes the script
+  # cannot report itself. It shares the script's own "automation failed" stack
+  # tag, so the two replace each other instead of piling up while the timer
+  # keeps retrying every minute.
+  failureAlert = pkgs.writeShellScript "download-sorter-failed" ''
+    exec ${pkgs.libnotify}/bin/notify-send --app-name=download-sorter --urgency=critical \
+      --expire-time=0 --hint=string:x-dunst-stack-tag:${builtins.hashString "sha256" "automation-failed"} \
+      "Download scanning failed" \
+      "Downloads may not be scanned for malware until this is fixed. Details: journalctl --user -u download-sorter"
+  '';
   sorter = pkgs.writeShellScriptBin "download-sorter" ''
     exec ${pkgs.python3}/bin/python3 ${../../scripts/download-sorter.py} \
       --config ${settings} "$@"
@@ -148,14 +162,25 @@ in
         Description = "Scan, normalise and sort settled downloads";
         After = [ "graphical-session.target" ];
         PartOf = [ "graphical-session.target" ];
+        OnFailure = [ "download-sorter-failed.service" ];
       };
       Service = {
         Type = "oneshot";
         TimeoutStartSec = "infinity"; # Each scan has its own bounded timeout.
         Nice = 10;
+        # SIGHUP/SIGTERM (logout, systemctl stop) exit 129/143 after cleanup;
+        # not a failure, so OnFailure stays quiet.
+        SuccessExitStatus = "129 143";
         ExecStart = "${sorter}/bin/download-sorter${lib.optionalString (!cfg.automatic)
           (if cfg.automaticRenaming then " --rename-only" else " --scan-only")}";
         UMask = "0077";
+      };
+    };
+    systemd.user.services.download-sorter-failed = {
+      Unit.Description = "Alert that download scanning failed";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${failureAlert}";
       };
     };
     systemd.user.timers.download-sorter = {

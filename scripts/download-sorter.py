@@ -2,6 +2,7 @@
 """Scan, name and route downloads using deterministic rules and local SQLite history."""
 
 import argparse
+import errno
 import fcntl
 import fnmatch
 import hashlib
@@ -50,6 +51,13 @@ HELD_STATUSES = ("scan_partial", "scan_blocked", "scan_error")
 # a NULL hold is a transient failure (signatures, timeouts) that needs a retry.
 APPROVABLE_HOLDS = ("partial", "oversize", "unscannable")
 UNSCANNABLE_SIGNATURES = ("Heuristics.Limits.Exceeded", "Heuristics.Encrypted")
+# clamonacc (modules/security/download-antivirus.nix) makes the kernel refuse
+# to open a file in ~/Downloads with EPERM when clamd finds a threat in it.
+ON_ACCESS_DETAIL = ("ClamAV on-access scanning (clamonacc) refused to open this file because clamd "
+                    "found a threat in it. Details: journalctl -u clamav-clamonacc -u clamav-daemon")
+# Restored false positives go to a subfolder: clamonacc watches only the top
+# of ~/Downloads, so the restored copy can be opened and released by digest.
+RESTORED_FOLDER = "Restored"
 ARCHIVE_MAGIC = ((0, b"PK\x03\x04"), (0, b"7z\xbc\xaf\x27\x1c"), (0, b"Rar!\x1a\x07"),
                  (0, b"\x1f\x8b"), (0, b"\xfd7zXZ\x00"), (0, b"BZh"), (0, b"\x28\xb5\x2f\xfd"),
                  (0, b"MSCF"), (0, b"xar!"), (0, b"hsqs"), (0, b"070701"), (0, b"070707"),
@@ -981,7 +989,13 @@ def process_file(path, signature, destination, rule, uncertainty, history, setti
     staging = Path(settings["staging"])
     staging.mkdir(parents=True, exist_ok=True, mode=0o700)
     with tempfile.NamedTemporaryFile(prefix="snapshot-", dir=staging, suffix=filename_extension(path.name)) as snapshot:
-        digest = copy_snapshot(path, snapshot, signature)
+        try:
+            digest = copy_snapshot(path, snapshot, signature)
+        except PermissionError as error:
+            if error.errno != errno.EPERM:
+                raise
+            quarantine(path, signature, ON_ACCESS_DETAIL, history, settings, policy)
+            return
         hold = None
         if cached and cached["digest"] == digest:
             status, detail = "clean", "Previously scanned, unchanged content"
@@ -995,6 +1009,9 @@ def process_file(path, signature, destination, rule, uncertainty, history, setti
                 history.event(status, path, digest=digest, detail=detail)
         if fingerprint(path) != signature:
             raise OSError("Download changed during scanning; rename and routing were stopped")
+        if hold == "threat":
+            quarantine(path, signature, detail, history, settings, policy, snapshot, digest)
+            return
         history.remember(path, signature, status, digest, policy, hold)
         if status != "clean":
             history.hold(path, status, detail, digest, hold)
@@ -1037,6 +1054,111 @@ def process_file(path, signature, destination, rule, uncertainty, history, setti
             path = destination
         if uncertainty:
             history.issue(path, "routing_uncertain", uncertainty, digest)
+
+
+def quarantine_folder(settings):
+    return Path(settings.get("quarantine") or Path(settings["staging"]).parent / "quarantine")
+
+
+def quarantine(path, signature, detail, history, settings, policy, snapshot=None, digest=None):
+    """Move a detected threat out of Downloads into a private folder, with no permissions.
+
+    A scanned snapshot is linked in (staging shares the state folder), so the
+    quarantined bytes are exactly those ClamAV saw. A file clamonacc refused
+    to open cannot be read, so it is renamed instead.
+    """
+    folder = quarantine_folder(settings)
+    folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+    target = available_name(folder / path.name)
+    if fingerprint(path) != signature:
+        raise OSError("Download changed before quarantine; it was left in place to be scanned again")
+    contained = True
+    linked = False
+    try:
+        if snapshot is not None:
+            os.link(snapshot.name, target)
+            linked = True
+            # Keep the download's own modification time on the snapshot's bytes.
+            os.utime(target, ns=(signature[3], signature[3]))
+            if fingerprint(path) != signature:
+                raise OSError("Download changed before quarantine; it was left in place to be scanned again")
+            path.unlink()
+        else:
+            os.rename(path, target)
+            # rename() changes only ctime; anything else means another file
+            # replaced the refused one between the check and the rename.
+            if (fingerprint(target) or [])[:4] != signature[:4]:
+                if not os.path.lexists(path):
+                    os.rename(target, path)
+                raise OSError("Download changed before quarantine; it was left in place to be scanned again")
+    except OSError as error:
+        if linked:
+            target.unlink(missing_ok=True)
+        if error.errno not in (errno.EXDEV, errno.EPERM, errno.EACCES):
+            raise
+        # Another filesystem, or the move was refused: keep it in place, unusable.
+        contained = False
+        target = path
+    if digest is None and contained:
+        # Outside Downloads, clamonacc no longer refuses to open it.
+        with open(target, "rb") as moved:
+            digest = hashlib.file_digest(moved, "sha256").hexdigest()
+    os.chmod(target, 0)
+    history.event("scan_blocked", path, digest=digest, detail=detail)
+    if contained:
+        history.forget(path)
+        history.event("quarantined", path, target, digest, detail)
+        title = "Threat quarantined"
+        where = f"Moved to {target} with all permissions removed."
+        release = f"Only for a confirmed false positive: download-sorter --approve {shlex.quote(str(target))} --force"
+    else:
+        title = "Threat found — could not quarantine"
+        where = "Could not move it out of Downloads; all its permissions were removed in place."
+        release = "It cannot be released from here; delete it and download it again if it was a false positive."
+    history.remember(target, fingerprint(target), "scan_blocked", digest, policy, "threat")
+    history.alert(target, "quarantined", title,
+                  f"{path}\n{where}\n{detail}\nDelete it: rm -f {shlex.quote(str(target))}\n{release}")
+
+
+def restore_quarantined(history, file, settings, force):
+    """Return a confirmed false positive to Downloads/Restored, approved by SHA-256."""
+    source, _ = validate_settings(settings)
+    row = history.get(file)
+    if not row or row["hold"] != "threat":
+        raise ValueError(f"Not a quarantined download: {file}")
+    if not force:
+        raise ValueError("ClamAV detected a threat in this download; it was not restored. Use --force only "
+                         "after confirming the detection is a false positive.")
+    # ctime is left out: removing the staged snapshot (a second link) changes it.
+    # The SHA-256 below is what binds the restore to the scanned bytes.
+    if json.loads(row["signature"])[:4] != (fingerprint(file) or [])[:4]:
+        raise ValueError("The quarantined file changed; nothing was restored")
+    folder = source / RESTORED_FOLDER
+    folder.mkdir(exist_ok=True)
+    if not stat.S_ISDIR(folder.lstat().st_mode):
+        raise ValueError(f"{folder} must be a folder, not a file or symlink; nothing was restored")
+    original = history.connection.execute(
+        "SELECT source FROM events WHERE kind='quarantined' AND destination=? ORDER BY id DESC LIMIT 1",
+        (str(file),)).fetchone()
+    target = available_name(folder / (Path(original["source"]).name if original else file.name))
+    os.chmod(file, 0o600)
+    try:
+        with file.open("rb") as incoming:
+            digest = hashlib.file_digest(incoming, "sha256").hexdigest()
+        if row["digest"] and row["digest"] != digest:
+            raise ValueError("Quarantined contents differ from the scanned snapshot; nothing was restored")
+        shutil.move(file, target)
+    except BaseException:
+        if os.path.lexists(file):
+            os.chmod(file, 0)
+        raise
+    with history.connection:
+        history.connection.execute("INSERT OR REPLACE INTO approvals VALUES (?, ?, ?, ?, ?, ?)",
+                                   (digest, str(target), time.time(), row["status"], "threat", 1))
+    history.forget(file)
+    history.event("restored", file, target, digest, "forced past a ClamAV detection")
+    print(f"Restored: {file} -> {target}\nSHA-256: {digest}\nForced past a ClamAV detection"
+          "\nIt is released on the next run only while its contents still match this digest.")
 
 
 def scan_policy(settings):
@@ -1126,6 +1248,14 @@ def sort_downloads(settings, history=None, dry_run=False, rename_only=False, ret
             if time.time() - signature[3] / 1e9 < settings.get("minimumAge", 120):
                 continue
             approved = history.approved(row["digest"])
+            if row["hold"] == "threat" and not approved:
+                # Unchanged bytes ClamAV already detected. Quarantine those held
+                # by older versions without another scan; a threat that could
+                # not be moved has no permissions left and stays held.
+                if stat.S_IMODE(path.lstat().st_mode) != 0:
+                    quarantine(path, signature, "ClamAV detected a threat in this download earlier.",
+                               history, settings, policy, digest=row["digest"])
+                continue
             large = signature[2] > setting(settings, "maxFileSize")
             if not retry and not approved and row["status"] in HELD_STATUSES:
                 # Layered scans of large files are expensive: hold their verdict
@@ -1192,6 +1322,25 @@ def deliver_alerts(history, settings):
     return not failed
 
 
+def check_on_access(history, settings):
+    """Raise a critical alert while clamonacc, the open-time scanner, is not running."""
+    unit = settings.get("onAccessUnit")
+    if not unit:
+        return
+    try:
+        active = subprocess.run([settings.get("systemctl", "systemctl"), "is-active", "--quiet", unit],
+                                check=False, timeout=10, stdin=subprocess.DEVNULL,
+                                capture_output=True).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        active = False
+    if active:
+        history.clear_alerts(unit)
+    else:
+        history.alert(unit, "on_access_down", "On-access virus scanning is off",
+                      f"{unit} is not running, so files in Downloads can be opened before they are "
+                      f"scanned. Scheduled scans continue.\nDetails: journalctl -u {unit}")
+
+
 def record_choice(history, file, pattern, settings):
     source, _ = validate_settings(settings)
     file = expand_path(str(file)).absolute()
@@ -1221,6 +1370,9 @@ def approve_download(history, file, settings, force=False):
     signature = fingerprint(file)
     if signature is None:
         raise ValueError("Approve a regular file, not a symlink or directory")
+    if quarantine_folder(settings).resolve() in file.resolve().parents:
+        restore_quarantined(history, file, settings, force)
+        return
     row = history.get(file)
     if not row or row["status"] not in HELD_STATUSES:
         raise ValueError(f"Not currently held by the download sorter: {file}")
@@ -1271,7 +1423,8 @@ def main():
     parser.add_argument("--issues", action="store_true", help="Show active critical alerts")
     parser.add_argument("--record-choice", type=Path, help="Record where you manually filed a previously scanned download")
     parser.add_argument("--pattern", help="Filename glob for --record-choice")
-    parser.add_argument("--approve", type=Path, help="Release a held download whose SHA-256 still matches")
+    parser.add_argument("--approve", type=Path, help="Release a held download whose SHA-256 still matches, "
+                        "or restore a quarantined one (with --force) to Downloads/Restored")
     parser.add_argument("--force", action="store_true",
                         help="With --approve, also release a file in which ClamAV detected a threat")
     parser.add_argument("--state", type=Path, default=Path(os.environ.get(
@@ -1287,6 +1440,7 @@ def main():
         if args.state == source or source in args.state.parents:
             raise ValueError("SQLite state and staging must be outside the download directory")
         settings["staging"] = str(args.state.parent / "staging")
+        settings["quarantine"] = str(args.state.parent / "quarantine")
         if args.scan_only:
             args.rename_only = True
             settings["normalizeNames"] = False
@@ -1321,6 +1475,7 @@ def main():
                 approve_download(history, args.approve, settings, args.force)
                 return 0
             sort_downloads(settings, history, rename_only=args.rename_only, retry=args.retry)
+            check_on_access(history, settings)
             # Retain the audit trail while retiring observations of removed files.
             for row in history.connection.execute("SELECT path FROM files").fetchall():
                 if not os.path.lexists(row["path"]):

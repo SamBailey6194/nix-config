@@ -5,6 +5,34 @@ notifications. It does not use AI, models, network classification services or
 filename guesses. Home Manager generates each machine's settings from the
 shared module; systemd runs it, and `just` provides manual commands.
 
+## Browser downloads
+
+Every browser downloads into `~/Downloads`. The managed policies in
+`modules/security/browser-policies` lock `DownloadDirectory` (Gecko
+`${home}/Downloads`, Brave `/home/${user_name}/Downloads`) and turn
+`PromptForDownloadLocation` off in Brave, LibreWolf, Firefox Developer Edition
+and Zen, so there is no "ask where to save" and no other download folder.
+Save Page As, Save Link As and Save Image As still open a file picker in every
+browser; files saved that way outside `~/Downloads` are not scanned. The Gecko
+browsers also lock
+`browser.download.start_downloads_in_tmp_dir` off: LibreWolf otherwise keeps a
+file opened straight from the download panel in `/tmp`, outside both scanners.
+
+Two scanners then cover `~/Downloads`:
+
+- **On access (clamonacc).** `modules/security/download-antivirus.nix` runs
+  `clamonacc` with `OnAccessPrevention` on each normal user's `~/Downloads`. When
+  a file there is opened, clamd scans it first and the kernel refuses the open
+  (`Operation not permitted`) if it finds a threat. Following ClamAV's
+  documented setup for blocking, it watches the folder itself, not its
+  subfolders, and files over 5 MiB (`OnAccessMaxFileSize`, ClamAV's default)
+  are opened unscanned: with blocking on, clamonacc asks for a scan on every
+  read, so a larger limit makes reading big files very slow. The unit restarts
+  on failure, and while it is not running each scheduled run raises a critical
+  "On-access virus scanning is off" alert. See `journalctl -u clamav-clamonacc`.
+- **Scheduled (this script).** Scans everything, including subfolders and
+  large files, with the checks described below.
+
 ## Automatic behaviour
 
 Desktop stages and above enable the download processor and hourly ClamAV
@@ -31,18 +59,31 @@ raise persistent critical desktop notifications. Critical alerts also attempt
 to play the desktop warning sound and are written to the journal and SQLite.
 The existing Dunst configuration displays critical notifications in red until
 dismissed. Unresolved issues repeat hourly. Failed notification delivery stays
-queued for the next timer run, and causes a nonzero service exit.
+queued for the next timer run, and causes a nonzero service exit. Any failed run,
+including a crash the script cannot report itself, also triggers
+`download-sorter-failed.service` (systemd `OnFailure=`), a critical "Download
+scanning failed" notification that replaces itself rather than piling up.
 
-Blocked scans leave the original file untouched. The script does not delete or
-quarantine files. Resolving a notification does not grant scan approval; only
+A ClamAV detection (a `threat` hold) is quarantined: the scanned bytes move to
+`~/.local/state/download-sorter/quarantine/` with all permissions removed and
+the original leaves Downloads. A file that clamonacc refused to open is moved
+there too, since that refusal means clamd found a threat. A "Threat
+quarantined" alert names the original and quarantined paths and repeats hourly
+until the quarantined file is deleted or restored (see "Held downloads and
+approval"). If a threat cannot be moved (for example, another filesystem), its
+permissions are removed in place instead, with a "could not quarantine" alert;
+such a file cannot be released, only deleted. Threats held in Downloads by an
+earlier version are quarantined on the next run without another scan.
+
+Other blocked scans leave the original file untouched, and nothing is ever
+deleted. Resolving a notification does not grant scan approval; only
 `download-sorter --approve` does (see "Held downloads and approval").
 Failed/blocked scans are retried after five minutes; `downloads-retry` requests
 an immediate fresh scan of settled downloads. Held results for files larger
 than `maxFileSize` are kept until the contents or scan policy change, or a
 retry is requested, because each layered scan can take a long time; transient
 errors on such files are retried after an hour, doubling with each consecutive
-failure up to 64 hours. A held ClamAV detection stays a `threat` hold even if
-the file later exceeds a lowered `autoScanCap`.
+failure up to 64 hours.
 
 ## Large downloads: layered scanning
 
@@ -152,13 +193,20 @@ a hold reason:
 | `partial` | Some members, or raw container bytes, were chunk-scanned | `--approve` |
 | `oversize` | Larger than `autoScanCap`; not scanned | `--approve` |
 | `unscannable` | Encrypted, unsafe or duplicate paths, archive bomb limits, unsupported format, ClamAV `Heuristics.Limits.Exceeded`/`Heuristics.Encrypted` only | `--approve` |
-| `threat` | Any other ClamAV detection | `--approve --force` |
+| `threat` | Any other ClamAV detection, or refused by clamonacc; quarantined | `--approve QUARANTINED --force` restores it |
 | none | Transient failure (stale/missing signatures, timeout, space) | Not approvable; fix and retry |
 
 ```sh
 just approve-download "$HOME/Downloads/DaVinci_Resolve_Studio_21.1.1_Linux.zip"
-download-sorter --approve /absolute/path --force  # Only for a confirmed false positive.
+# Only for a confirmed false positive:
+just restore-download "$HOME/.local/state/download-sorter/quarantine/file.exe"
 ```
+
+Restoring checks the quarantined file still matches the scanned SHA-256, then
+moves it to `~/Downloads/Restored/` and approves those bytes. clamonacc watches
+only the top of `~/Downloads`, so the restored file can be opened there; the next
+run releases it by digest as a clean download. To discard a quarantined file,
+delete it (`rm -f`); its alert clears on the next run.
 
 Approval refuses files that are not currently held, changed since they were
 held, or differ from the scanned snapshot. It computes the file's SHA-256
@@ -274,6 +322,7 @@ just downloads-retry          # Fresh scan after resolving a problem.
 just downloads-history        # Last 50 recorded events.
 just downloads-issues         # Active critical issues.
 just approve-download FILE    # Release a held download by its SHA-256.
+just restore-download FILE    # Restore a quarantined false positive.
 journalctl --user -u download-sorter.service
 ```
 
