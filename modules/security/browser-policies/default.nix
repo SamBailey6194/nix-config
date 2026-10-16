@@ -3,10 +3,31 @@
 let
   cfg = config.services.browserPolicies;
   bs = inputs.browser_setup;
-  firefoxPolicies = (lib.importJSON (bs + "/policies/firefox-developer/policies.json")).policies;
-  librewolfPolicies = (lib.importJSON (bs + "/policies/librewolf/policies.json")).policies;
-  zenPolicies = (lib.importJSON (bs + "/policies/zen/policies.json")).policies;
-  bravePolicies = (lib.importJSON (bs + "/policies/brave/managed/syntek-accountability.json")) // {
+  # Downloads land in ~/Downloads, the folder the download sorter and
+  # clamonacc scan (modules/security/download-antivirus.nix). These policies
+  # lock the download folder and turn off "ask where to save". Save Page/Link
+  # As still opens a file picker in every browser; that path is not covered.
+  # Gecko expands ${home}; Chromium on Linux does not, but has ${user_name}.
+  downloadPolicies = {
+    DownloadDirectory = "\${home}/Downloads";
+    PromptForDownloadLocation = false;
+  };
+  # LibreWolf (Arkenfox) defaults this to true: files opened straight from the
+  # download panel are kept in /tmp, outside both scanners. Locked off for
+  # every Gecko browser, so they are written to ~/Downloads instead.
+  geckoDownloadPolicies = downloadPolicies // {
+    Preferences."browser.download.start_downloads_in_tmp_dir" = {
+      Value = false;
+      Status = "locked";
+    };
+  };
+  withGeckoDownloads = policies: lib.recursiveUpdate policies geckoDownloadPolicies;
+  firefoxPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/firefox-developer/policies.json")).policies;
+  librewolfPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/librewolf/policies.json")).policies;
+  zenPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/zen/policies.json")).policies;
+  bravePolicies = (lib.importJSON (bs + "/policies/brave/managed/syntek-accountability.json")) // downloadPolicies // {
+    # Every normal user's home is /home/<name> (modules/users).
+    DownloadDirectory = "/home/\${user_name}/Downloads";
     # Additional local development bypasses present on the Ubuntu desktop.
     ProxyBypassList = "localhost;127.0.0.1;::1;<local>;*.ddev.site;*.localhost";
   };
