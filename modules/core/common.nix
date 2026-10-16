@@ -46,6 +46,13 @@
     # SSL/TLS
     openssl
 
+    # Keystores and app signing
+    jdk_headless # keytool (also puts java on PATH)
+    apksigner # check which cert signed an .apk/.aab
+
+    # Vulnerability scanning (container images, filesystems, SBOMs)
+    grype
+
     # Build tools
     gcc
     gnumake
