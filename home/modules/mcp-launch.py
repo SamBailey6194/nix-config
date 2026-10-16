@@ -93,6 +93,15 @@ def main():
         command = [executable]
         if not (os.environ.get("WAYLAND_DISPLAY") or os.environ.get("DISPLAY")):
             command.append("--headless")
+    elif kind == "code-review-graph":
+        # The pinned uvx wrapper (pkgs/code-review-graph.nix). No --repo: the
+        # server follows the client's working directory.
+        command = [executable, "serve"]
+    elif kind == "graphify":
+        # graphify-mcp (pkgs/graphify) with no graph argument: it reads
+        # ./graphify-out/graph.json when present and otherwise serves any
+        # project passed to its tools as project_path.
+        command = [executable]
     elif kind == "brave":
         graphical_environment()
         command = [executable, "--yes", CHROME_DEVTOOLS_MCP, "--executable-path", args[0]]

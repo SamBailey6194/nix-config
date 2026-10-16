@@ -45,8 +45,9 @@ rust/fuzz/artifacts/
 # .direnv auto generated folder from .envrc
 .direnv/
 
-# Code review graph
+# Code graphs (code-review-graph, graphify)
 .code-review-graph/
+graphify-out/
 
 # Python bytecode from configuration tests/helpers
 __pycache__/

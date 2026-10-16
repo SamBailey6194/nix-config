@@ -4,6 +4,11 @@ let
   source = ../../config/agent-skills/typesafe-ai;
   policy = ../../config/agents/nix-source-policy.md;
   context7 = ../../config/claude/rules/context7.md;
+  # graphify's own skill, per client variant (they differ only in how they
+  # dispatch subagents), patched to use the Nix interpreter — see
+  # pkgs/graphify/default.nix. Linked here rather than by `graphify install`,
+  # which would copy them into place and edit ~/.claude/CLAUDE.md.
+  graphifySkills = (pkgs.callPackage ../../pkgs/graphify { }).skillsDir;
 
   # Claude loads context7.md (claude.nix) and the policy (below) as two rules
   # from ~/.claude/rules/. Codex, OpenCode and Antigravity each read one global
@@ -55,6 +60,17 @@ in
     # agy-customizations and migrate-workflows skills). ~/.gemini/skills/ was
     # Gemini CLI's, which was removed (modules/software/development.nix).
     ".gemini/config/skills/typesafe-ai".source = source;
+    # Codex reads ~/.agents/skills; its variant uses spawn_agent (multi_agent,
+    # on by default in Codex 0.160). agy gets Claude's, as graphify's own
+    # `antigravity install` does. OpenCode also reads the ~/.claude and ~/.agents
+    # copies, but ~/.config/opencode/skills registers later and wins
+    # (opencode.ai/v2/docs/skills, Precedence), so it loads its own variant —
+    # for local llama.cpp models too. No .graphify_version stamp: without one
+    # graphify never re-copies them.
+    ".agents/skills/graphify".source = "${graphifySkills}/codex";
+    ".claude/skills/graphify".source = "${graphifySkills}/claude";
+    ".config/opencode/skills/graphify".source = "${graphifySkills}/opencode";
+    ".gemini/config/skills/graphify".source = "${graphifySkills}/claude";
     ".claude/rules/nix-source.md".source = policy;
     "${codexDir}/AGENTS.md".text = instructions;
     "${opencodeDir}/AGENTS.md".text = instructions;

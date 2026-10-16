@@ -57,6 +57,10 @@
 - `patchright` constraint in `pkgs/uv-manylinux.nix` moved 1.61.2 -> 1.63.0 to satisfy Scrapling's `patchright>=1.62.1` and match the 1.63.0 browser bundle revision for revision
 - Playwright MCP server (`playwright`, nixpkgs `playwright-mcp`) added to the shared inventory, launcher kind `playwright`
 - Shared MCP launcher removes every name set in `/run/agenix/claude-secrets` (read from the file) unless the server needs it, plus `TYPESAFE_API_KEY` explicitly
+- code-review-graph 2.3.9 (`pkgs/code-review-graph.nix`, pinned uvx wrapper) added to `environment.systemPackages` and the shared MCP inventory, launcher kind `code-review-graph` (`serve`, no `--repo`); the wrapper sets `CRG_HOME=$XDG_STATE_HOME/code-review-graph`
+- graphify 0.9.91 (`pkgs/graphify`, nixpkgs derivation bumped via `overridePythonAttrs` plus `mcp`/`starlette`/`watchdog`/`pypdf`/`markdownify`/`faster-whisper`/`yt-dlp`/`openai`/`tiktoken`, and `graphify/hooks.py` `_pinned_python` patched to prefer the profile interpreter) added to `environment.systemPackages`, the shared MCP inventory (launcher kind `graphify`, `graphify-mcp`) and `home/modules/agent-skills.nix`; `pkgs/graphify/patch-skill.py` replaces the skill's interpreter discovery with `/run/current-system/sw/bin/graphify-python` and fails the build if upstream changes those blocks
+- `config/claude/settings-base.json`: allow both code-graph servers, ask for `apply_refactor_tool`
+- `bun` added to `modules/software/development.nix`
 
 ---
 

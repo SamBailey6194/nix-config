@@ -16,6 +16,10 @@
 { pkgs, lib, home, client ? null, browsers ? false, resolve ? null, all ? false }:
 let
   uv = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
+  # The same derivations modules/software/development.nix puts on PATH, so the
+  # CLI and the MCP server are always one version.
+  code-review-graph = pkgs.callPackage ../../pkgs/code-review-graph.nix { };
+  graphify = pkgs.callPackage ../../pkgs/graphify { };
   launch = pkgs.writeShellScript "ai-mcp-launch" ''
     if [ -r /run/agenix/claude-secrets ]; then
       set -a
@@ -50,6 +54,14 @@ in forClient ({
   # browser bundle Scrapling and Mermaid use; its own Chromium, not the
   # managed browsers, so every client gets it.
   playwright.command = [ (toString launch) "playwright" "${pkgs.playwright-mcp}/bin/playwright-mcp" ];
+  # Code graphs. Neither is pinned to a repository: each follows the directory
+  # the client starts in (code-review-graph its git root, graphify the directory
+  # itself), and every tool also takes the project as an argument. Neither
+  # builds a graph until asked. syntek-base and others register
+  # `code-review-graph` at project scope under the same name, so the two
+  # entries are one server.
+  code-review-graph.command = [ (toString launch) "code-review-graph" "${code-review-graph}/bin/code-review-graph" ];
+  graphify.command = [ (toString launch) "graphify" "${graphify}/bin/graphify-mcp" ];
   perplexity-computer.url = "https://www.perplexity.ai/rest/computer/mcp";
   # Codex skips it and agy cannot complete its OAuth discovery.
   claude-design = {

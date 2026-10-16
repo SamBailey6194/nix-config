@@ -33,6 +33,8 @@ INVENTORY = {
     "mcp-mermaid": {"command": ["/nix/server", "mermaid", "/nix/node"]},
     "scrapling": {"command": ["/nix/server", "scrapling", "/nix/uvx", "/nix/python3", "1.63.0"]},
     "playwright": {"command": ["/nix/server", "playwright", "/nix/playwright-mcp"]},
+    "code-review-graph": {"command": ["/nix/server", "code-review-graph", "/nix/code-review-graph"]},
+    "graphify": {"command": ["/nix/server", "graphify", "/nix/graphify-mcp"]},
     "perplexity-computer": {"url": "https://example.test/perplexity"},
     "claude-design": {"url": "https://example.test/design"},
 }
@@ -343,7 +345,8 @@ class LaunchTests(unittest.TestCase):
         agenix = "CONTEXT7_API_KEY=c\nexport FUTURE_KEY='x=y'\n# NOT_A_KEY=1\nTYPESAFE_API_KEY=t\n"
         extra = {"TYPESAFE_API_KEY": "t", "FUTURE_KEY": "x=y"}
         for argv in (("scrapling", "/nix/uvx", "/nix/python3", "1.63.0"), ("playwright", "/nix/playwright-mcp"),
-                     ("context7", "/nix/npx"), ("elevenlabs", "/nix/uvx", "/nix/python3", BASE)):
+                     ("context7", "/nix/npx"), ("elevenlabs", "/nix/uvx", "/nix/python3", BASE),
+                     ("code-review-graph", "/nix/code-review-graph"), ("graphify", "/nix/graphify-mcp")):
             _, env = self.run_launcher(*argv, agenix=agenix, environ=extra)
             self.assertFalse(set(extra) & set(env), argv[0])
         _, env = self.run_launcher("context7", "/nix/npx", agenix=agenix, environ=extra)
@@ -363,6 +366,25 @@ class LaunchTests(unittest.TestCase):
         nix = (MODULES / "mcp-servers.nix").read_text()
         entry = next(line for line in nix.splitlines() if line.strip().startswith("playwright.command"))
         self.assertIn('"playwright" "${pkgs.playwright-mcp}/bin/playwright-mcp"', entry)
+
+    def test_code_graph_servers_follow_the_client_directory_and_get_no_secrets(self):
+        # No --repo or graph path: each server serves the project it starts in.
+        command, env = self.run_launcher("code-review-graph", "/nix/code-review-graph")
+        self.assertEqual(command, ["/nix/code-review-graph", "serve"])
+        self.assertFalse(set(self.SECRETS) & set(env))
+        command, env = self.run_launcher("graphify", "/nix/graphify-mcp")
+        self.assertEqual(command, ["/nix/graphify-mcp"])
+        self.assertFalse(set(self.SECRETS) & set(env))
+        # The inventory runs the same packages development.nix puts on PATH.
+        nix = (MODULES / "mcp-servers.nix").read_text()
+        for name, exe in (("code-review-graph", '"${code-review-graph}/bin/code-review-graph"'),
+                          ("graphify", '"${graphify}/bin/graphify-mcp"')):
+            entry = next(line for line in nix.splitlines() if line.strip().startswith(f"{name}.command"))
+            self.assertIn(exe, entry)
+            self.assertNotIn("clients", entry)
+        dev = (MODULES.parents[1] / "modules/software/development.nix").read_text()
+        self.assertIn("pkgs.callPackage ../../pkgs/code-review-graph.nix { }", dev)
+        self.assertIn("pkgs.callPackage ../../pkgs/graphify { }", dev)
 
     def test_browser_servers_get_no_secrets_and_a_session(self):
         command, env = self.run_launcher("brave", "/nix/npx", "/run/current-system/sw/bin/brave")

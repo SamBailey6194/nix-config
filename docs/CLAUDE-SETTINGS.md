@@ -52,6 +52,11 @@ session is started with `claude --chrome`.
 On Resolve hosts, `davinci-resolve` (see [SHARED-MCP.md](SHARED-MCP.md)) has
 `run_script_unsafe` and `launch_resolve` denied, and `run_script`,
 `update_dctl`, `generate_lut`, `delete_dctl` and `delete_lut` set to ask.
+The code-graph servers `code-review-graph` and `graphify` are allowed: their
+tools read the graph, and the only files they write are the graph itself
+(`.code-review-graph/`, `graphify-out/`). The exception is code-review-graph's
+`apply_refactor_tool`, which edits source files and is set to ask (ask rules
+take precedence over allow).
 
 The status line, monitor lifecycle hooks and memory-write guard remain. Monitor
 hooks use the new home directory and read credentials at runtime from

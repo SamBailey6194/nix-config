@@ -37,6 +37,16 @@ let
   # OpenCode v2 (2.0.18); nixpkgs is still on the 1.x line. Prebuilt npm binary,
   # self-updater off — see the file.
   opencode = pkgs.callPackage ../../pkgs/opencode.nix { };
+
+  # Code graphs for coding agents. code-review-graph is not in nixpkgs, so it is
+  # a pinned uvx wrapper; graphify is nixpkgs' derivation bumped to 0.9.91, with
+  # its MCP extra and patched skills. Both are also the shared MCP servers
+  # (home/modules/mcp-servers.nix) and graphify's skills are linked per client
+  # (home/modules/agent-skills.nix) — the same files, so one version everywhere.
+  # graphify must stay system-wide: its skills record the profile path
+  # /run/current-system/sw/bin/graphify-python (see pkgs/graphify/default.nix).
+  code-review-graph = pkgs.callPackage ../../pkgs/code-review-graph.nix { };
+  graphify = pkgs.callPackage ../../pkgs/graphify { };
 in
 {
   # Development tools and environment
@@ -85,10 +95,12 @@ in
 
     # Node.js — fnm for per-project version management
     # Usage: fnm install 20, fnm use 20, or auto-switch via .node-version
-    nodejs              # System-level Node.js (latest LTS, for global tools)
+    nodejs              # System-level Node.js (latest LTS, for global tools);
+                        #   includes npm and npx, so no separate npm package
     fnm                 # Fast Node Manager (per-project Node.js versions)
     yarn
     pnpm
+    bun                 # JS runtime + package manager (projects with bun.lock)
 
     # Python — uv handles version management and virtual environments
     # Usage: uv python install 3.12, uv venv, uv pip install ...
@@ -166,6 +178,12 @@ in
                                 #   block above). Local Qwen via llama-server on
                                 #   devtower-intel; hosted providers: `opencode
                                 #   auth login` (credentials in its SQLite db).
+    code-review-graph           # SQLite code graph: blast radius of a change
+                                #   (MIT; 2.3.9 via uvx, see pkgs/). Per repo:
+                                #   `code-review-graph build`, then `update`.
+    graphify                    # Code + docs knowledge graph, `/graphify` skill
+                                #   (Apache-2.0/MIT; 0.9.91). Also graphify-mcp
+                                #   and graphify-python.
 
     # REMOVED 20/09/2026: gemini-cli-bin (and gemini-cli). Google retired Gemini
     # CLI for unpaid, Pro and Ultra accounts in favour of Antigravity CLI, and

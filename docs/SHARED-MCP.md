@@ -12,6 +12,8 @@ Codex, Antigravity CLI (`agy`) and OpenCode; Claude Design in Claude Code only:
 | ElevenLabs | Shared stdio launcher, official package 0.12.2 | `ELEVENLABS_API_KEY`; base path declared (home directory) |
 | Scrapling (`scrapling`) | Shared stdio launcher, `scrapling[ai]` 0.4.15 with the bundle's `playwright` | None |
 | Playwright (`playwright`) | Shared stdio launcher, nixpkgs `playwright-mcp` | None |
+| code-review-graph (`code-review-graph`) | Shared stdio launcher, `pkgs/code-review-graph.nix` (2.3.9 via uvx) | None |
+| graphify (`graphify`) | Shared stdio launcher, `graphify-mcp` from `pkgs/graphify` (0.9.91) | None |
 | Claude Design (Claude Code only) | HTTP | Claude Code's authentication and account access |
 
 Claude Code, Codex and Antigravity also get two browser DevTools servers
@@ -74,6 +76,55 @@ read-only and the browsers are already there. It lists 13 tools: `fetch`,
 1243); Scrapling 0.4.15 no longer uses camoufox. Only the `real_chrome` option
 does not work here, as it looks for Google Chrome at its FHS path; pass
 `executable_path` (or set `SCRAPLING_EXECUTABLE_PATH`) for another Chromium.
+
+The two code-graph servers run the same packages that
+`modules/software/development.nix` puts on PATH, so the CLI and the server are
+one version. Neither is pinned to a repository: each starts in the client's
+working directory (code-review-graph uses its git root, graphify reads
+`graphify-out/` in that directory), and every tool also takes the project as an
+argument (`repo_root`, `project_path`). Neither builds a graph until asked.
+graphify reports a missing graph; code-review-graph's `get_minimal_context_tool`
+reports `not_ready`, but most of its other query tools create an empty
+`.code-review-graph/graph.db` and answer with zero nodes. Build one per project
+with `code-review-graph build` (then `update`, which the project hooks run) or
+`/graphify .` in any client. Outside a git repository code-review-graph refuses
+tool calls without a `repo_root`: its per-user state lives in
+`$XDG_STATE_HOME/code-review-graph` (`CRG_HOME`), not `~/.code-review-graph`,
+which made the home directory look like a project. code-review-graph keeps its SQLite graph in
+`<repo>/.code-review-graph/`, graphify writes `graphify-out/`; add both to the
+project's `.gitignore`. syntek-base and others also register
+`code-review-graph` at project scope (`uvx code-review-graph serve`, unpinned);
+the names match, so the two entries are one server, and the project's wins
+where both apply.
+
+code-review-graph is a pinned `uvx --from "code-review-graph==2.3.9"` wrapper
+through the wrapped uv: nixpkgs cannot build it, as it needs
+`tree-sitter-language-pack<1` and nixpkgs has 1.4.1. Its first run needs network
+access to fill the uv cache. Do not run `code-review-graph install` for these
+clients: it would write a server entry pinned to one repository into
+`~/.codex/config.toml` and `~/.gemini/antigravity/mcp_config.json`, and global
+Codex and OpenCode hooks that build a graph in every repository they touch. Per
+repository, `code-review-graph install --platform claude --no-instructions`
+remains fine.
+
+graphify is nixpkgs' derivation bumped to 0.9.91 with its `mcp`, `watch`,
+`pdf`, `video` and `gemini`/`openai` extras (Whisper fetches its model into
+`~/.cache/huggingface` the first time a folder holds audio or video).
+`graphify hook install` pins `/run/current-system/sw/bin/graphify-python` in the
+git hooks and merge driver, rather than a store path a garbage collection would
+delete. Its `/graphify` skill is linked into every client
+(`home/modules/agent-skills.nix`), with the variant graphify's own installer
+would pick: Claude's for Claude Code and agy, Codex's (`spawn_agent`) in
+`~/.agents/skills`, OpenCode's (`@agent`) for OpenCode, local models included.
+The skill is patched (`pkgs/graphify/patch-skill.py`) to run its pipeline with
+`/run/current-system/sw/bin/graphify-python`; upstream's text would otherwise
+fetch graphify from PyPI with `uv tool run` and fall back to
+`uv tool install` / `pip install`. Do not run `graphify install`: it would
+replace the links with copies and edit `~/.claude/CLAUDE.md`. Leiden clustering
+is not packaged (it needs graspologic-native 1.3.1 on Python 3.13+; nixpkgs has
+1.2.5), so graphify uses networkx's Louvain, which it falls back to on its own.
+Semantic extraction of docs, papers and images runs through the client's own
+model; code is parsed locally with no model at all.
 
 Playwright is Microsoft's Playwright MCP as packaged by nixpkgs
 (`pkgs.playwright-mcp`), so it needs no npx download and its wrapper already

@@ -24,7 +24,9 @@
   "permissions": {
     "allow": [
       "mcp__brave-devtools__*",
-      "mcp__firefox-developer__*"
+      "mcp__firefox-developer__*",
+      "mcp__code-review-graph__*",
+      "mcp__graphify__*"
     ],
     "deny": [
       "mcp__claude-in-chrome__*",
@@ -45,7 +47,8 @@
       "mcp__davinci-resolve__update_dctl",
       "mcp__davinci-resolve__generate_lut",
       "mcp__davinci-resolve__delete_dctl",
-      "mcp__davinci-resolve__delete_lut"
+      "mcp__davinci-resolve__delete_lut",
+      "mcp__code-review-graph__apply_refactor_tool"
     ]
   },
   "enabledPlugins": {
