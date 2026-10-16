@@ -8,22 +8,23 @@
 #
 # Never list a real CVE here, even a patched one: a CVE that applies but is
 # patched is hidden from vulnix by the patch file name or not at all, and is
-# reviewed from the scan output instead. A section only hides anything while
-# vulnix's CVEs for that package are a subset of its `cve` list, so packages
-# that also carry real CVEs (openssl, ffmpeg, gimp...) keep showing until those
-# clear. Versioned sections expire with the version; re-check the pname-only
-# ones when the product they collide with changes.
+# reviewed from the scan output instead. vulnix hides each listed CVE on its
+# own; a package with other CVEs still shows, and prints the section's comment
+# beside those remaining CVEs. So when a package also has real CVEs (openssl,
+# ffmpeg, gimp...), the comment must start "Whitelists <CVE> only:" so it is
+# not read as explaining them. Versioned sections expire with the version;
+# re-check the pname-only ones when the product they collide with changes.
 #
 # Syntax: https://github.com/nix-community/vulnix#whitelisting
 
 # ---- Wrong platform ----
 ["openssl-3.5.8"]
 cve = ["CVE-2026-54875"]
-comment = "SM2 timing only on ARM64/RISC-V; host is x86_64"
+comment = "Whitelists CVE-2026-54875 only: SM2 timing on ARM64/RISC-V, host is x86_64"
 
 ["cjson"]
 cve = ["CVE-2026-16554"]
-comment = "32-bit size_t only; host is x86_64"
+comment = "Whitelists CVE-2026-16554 only: 32-bit size_t, host is x86_64"
 
 ["gcc-16.2.0"]
 cve = ["CVE-2023-4039"]
@@ -35,12 +36,12 @@ comment = "Arm CMSE codegen only; libclang on x86_64"
 
 ["gimp"]
 cve = ["CVE-2025-8672"]
-comment = "macOS TCC issue only"
+comment = "Whitelists CVE-2025-8672 only: macOS TCC issue"
 
 # ---- Code not present / not built ----
 ["avahi"]
 cve = ["CVE-2021-26720"]
-comment = "Debian packaging script; not shipped by NixOS"
+comment = "Whitelists CVE-2021-26720 only: Debian packaging script, not shipped by NixOS"
 
 ["lua-5.2.4"]
 cve = ["CVE-2021-43519"]
@@ -52,23 +53,23 @@ comment = "Bug introduced in Lua 5.4.2"
 
 ["libpng-1.2.59"]
 cve = ["CVE-2025-66293"]
-comment = "Simplified API added in 1.6.0; absent in 1.2"
+comment = "Whitelists CVE-2025-66293 only: simplified API added in 1.6.0, absent in 1.2"
 
 ["binutils-2.46"]
 cve = ["CVE-2026-6846"]
-comment = "XCOFF target not built; still bump to 2.47"
+comment = "Whitelists CVE-2026-6846 only: XCOFF target not built"
 
 ["ffmpeg-7.1.5"]
 cve = ["CVE-2026-30998", "CVE-2026-30999", "CVE-2026-66041", "CVE-2026-66040", "CVE-2026-107660"]
-comment = "zmq/quirc/mbedtls not built; pngenc eXIf not in 7.1"
+comment = "Whitelists CVE-2026-30998/30999/66040/66041/107660 only: zmq, quirc, mbedtls not built; pngenc eXIf not in 7.1"
 
 ["ffmpeg-8.1.2"]
 cve = ["CVE-2026-66041", "CVE-2026-107660"]
-comment = "quirc and mbedtls not built"
+comment = "Whitelists CVE-2026-66041/107660 only: quirc and mbedtls not built"
 
 ["ffmpeg-9.0.1"]
 cve = ["CVE-2025-25468", "CVE-2025-25469", "CVE-2026-107660"]
-comment = "d5873be included (git-date bound); mbedtls not built"
+comment = "Whitelists CVE-2025-25468/25469, CVE-2026-107660 only: fix d5873be included (git-date bound); mbedtls not built"
 
 # ---- Version / CPE misparse ----
 ["cups-2.4.19"]
