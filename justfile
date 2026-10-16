@@ -499,13 +499,17 @@ preview-update:
     echo "Apply with:   just rebuild"
     echo "Discard with: git checkout flake.lock"
 
-# Scan the RUNNING system's closure for known CVEs (the security half of
-# "do I need to update?"). Advisory only — expect false positives, since it
-# matches package names/versions against the NVD rather than tracking backports.
+# Scan the RUNNING system's runtime closure for known CVEs (the security half of
+# "do I need to update?"). Advisory only: vulnix matches package names and
+# versions against the NVD, so checked false positives are whitelisted in
+# config/vulnix/whitelist.toml. --closure scans what the system ships, not the
+# compilers and jars used to build it (`--system` does both). Exit code 2 means
+# unwhitelisted findings, not a broken recipe. Extra arguments go to vulnix,
+# e.g. `just audit-cves --show-whitelisted` or `--json`.
 #
-# Scan the running system's closure for known CVEs
-audit-cves:
-    nix run nixpkgs#vulnix -- --system
+# Scan the running system's runtime closure for known CVEs
+audit-cves *args:
+    nix run nixpkgs#vulnix -- --closure /run/current-system --whitelist "{{justfile_directory()}}/config/vulnix/whitelist.toml" {{args}}
 
 # Compare the running system against a built ./result with nvd (friendlier
 # output than `nix store diff-closures`). Run `just build` first.

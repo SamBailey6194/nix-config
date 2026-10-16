@@ -1,0 +1,367 @@
+# vulnix whitelist for `just audit-cves`: false positives only.
+#
+# vulnix matches NVD product names and versions against Nix package names, so
+# unrelated products collide (TeX Live's `moodle`, `notes` and `python`
+# packages, the Jenkins Git plugin vs git, KiTTY vs kitty, other products
+# called "storage manager"). Every entry was checked on 2026-10-16 against NVD
+# and the nixpkgs derivation of the running system (nixpkgs 55bfb4d).
+#
+# Never list a real CVE here, even a patched one: a CVE that applies but is
+# patched is hidden from vulnix by the patch file name or not at all, and is
+# reviewed from the scan output instead. A section only hides anything while
+# vulnix's CVEs for that package are a subset of its `cve` list, so packages
+# that also carry real CVEs (openssl, ffmpeg, gimp...) keep showing until those
+# clear. Versioned sections expire with the version; re-check the pname-only
+# ones when the product they collide with changes.
+#
+# Syntax: https://github.com/nix-community/vulnix#whitelisting
+
+# ---- Wrong platform ----
+["openssl-3.5.8"]
+cve = ["CVE-2026-54875"]
+comment = "SM2 timing only on ARM64/RISC-V; host is x86_64"
+
+["cjson"]
+cve = ["CVE-2026-16554"]
+comment = "32-bit size_t only; host is x86_64"
+
+["gcc-16.2.0"]
+cve = ["CVE-2023-4039"]
+comment = "AArch64 stack-protector only"
+
+["clang-17.0.0"]
+cve = ["CVE-2024-7883"]
+comment = "Arm CMSE codegen only; libclang on x86_64"
+
+["gimp"]
+cve = ["CVE-2025-8672"]
+comment = "macOS TCC issue only"
+
+# ---- Code not present / not built ----
+["avahi"]
+cve = ["CVE-2021-26720"]
+comment = "Debian packaging script; not shipped by NixOS"
+
+["lua-5.2.4"]
+cve = ["CVE-2021-43519"]
+comment = "Bug introduced in Lua 5.4.2"
+
+["lua-5.2.4-env"]
+cve = ["CVE-2021-43519"]
+comment = "Bug introduced in Lua 5.4.2"
+
+["libpng-1.2.59"]
+cve = ["CVE-2025-66293"]
+comment = "Simplified API added in 1.6.0; absent in 1.2"
+
+["binutils-2.46"]
+cve = ["CVE-2026-6846"]
+comment = "XCOFF target not built; still bump to 2.47"
+
+["ffmpeg-7.1.5"]
+cve = ["CVE-2026-30998", "CVE-2026-30999", "CVE-2026-66041", "CVE-2026-66040", "CVE-2026-107660"]
+comment = "zmq/quirc/mbedtls not built; pngenc eXIf not in 7.1"
+
+["ffmpeg-8.1.2"]
+cve = ["CVE-2026-66041", "CVE-2026-107660"]
+comment = "quirc and mbedtls not built"
+
+["ffmpeg-9.0.1"]
+cve = ["CVE-2025-25468", "CVE-2025-25469", "CVE-2026-107660"]
+comment = "d5873be included (git-date bound); mbedtls not built"
+
+# ---- Version / CPE misparse ----
+["cups-2.4.19"]
+cve = ["CVE-2022-26691"]
+comment = "apple:cups CPE; fixed in openprinting 2.4.2"
+
+["dbus-1"]
+cve = ["CVE-2022-42010", "CVE-2022-42011", "CVE-2022-42012"]
+comment = "NixOS config drv; real dbus is 1.16.2"
+
+["openvswitch-4.0.0"]
+cve = ["CVE-2023-5366"]
+comment = "Malformed date bound; fixed Oct 2023"
+
+["libiff-0-unstable-2024-03-02"]
+cve = ["CVE-2021-32298"]
+comment = "Range through 20190123; snapshot is 2024"
+
+# ---- Name collisions (non-TeX) ----
+["zlib"]
+cve = ["CVE-2023-6992", "CVE-2026-27820"]
+comment = "Cloudflare zlib fork / Ruby zlib gem"
+
+["ninja"]
+cve = ["CVE-2021-4336"]
+comment = "ITRS monitor-ninja, not Ninja build"
+
+["snappy"]
+cve = ["CVE-2023-28115", "CVE-2023-41330"]
+comment = "KnpLabs PHP snappy"
+
+["ada"]
+cve = ["CVE-2024-9410"]
+comment = "Ada.cx SaaS, not ada URL parser"
+
+["composer"]
+cve = ["CVE-2023-1596", "CVE-2025-3510"]
+comment = "tagDiv Composer WordPress plugin"
+
+["php-calendar"]
+cve = ["CVE-2022-4455"]
+comment = "sproctor/php-calendar web app"
+
+["kotlin"]
+cve = ["CVE-2023-26154"]
+comment = "PubNub SDK, not Kotlin compiler"
+
+["orc"]
+cve = ["CVE-2025-47436"]
+comment = "Apache ORC, not GStreamer orc"
+
+["libmpeg2"]
+cve = ["CVE-2022-37416"]
+comment = "Ittiam Android libmpeg2"
+
+["malcontent"]
+cve = ["CVE-2026-24845", "CVE-2026-28407"]
+comment = "Chainguard malcontent scanner"
+
+["git"]
+cve = ["CVE-2021-21684", "CVE-2022-30947", "CVE-2022-36882", "CVE-2022-36883", "CVE-2022-36884", "CVE-2022-38663"]
+comment = "Jenkins Git plugin"
+
+["kitty"]
+cve = ["CVE-2023-48795", "CVE-2024-23749", "CVE-2024-25003", "CVE-2024-25004"]
+comment = "9bis KiTTY (Windows PuTTY fork)"
+
+["codex"]
+cve = ["CVE-2021-43635"]
+comment = "Codex Electron notes app"
+
+["shellcheck"]
+cve = ["CVE-2021-28794"]
+comment = "VS Code extension"
+
+["swiftformat"]
+cve = ["CVE-2021-28791"]
+comment = "VS Code extension"
+
+["swiftlint"]
+cve = ["CVE-2021-28790"]
+comment = "VS Code extension"
+
+["vhs"]
+cve = ["CVE-2021-28381"]
+comment = "TYPO3 VHS extension"
+
+["terraform"]
+cve = ["CVE-2021-36230"]
+comment = "Terraform Enterprise server only"
+
+["storage-manager"]
+cve = [
+  "CVE-2021-32506", "CVE-2021-32507", "CVE-2021-32508", "CVE-2021-32509", "CVE-2021-32510",
+  "CVE-2021-32511", "CVE-2021-32512", "CVE-2021-32513", "CVE-2021-32514", "CVE-2021-32515",
+  "CVE-2021-32516", "CVE-2021-32517", "CVE-2021-32518", "CVE-2021-32519", "CVE-2021-32520",
+  "CVE-2021-32521", "CVE-2021-32522", "CVE-2021-32523", "CVE-2021-32524", "CVE-2021-32525",
+  "CVE-2021-32526", "CVE-2021-32527", "CVE-2021-32528",
+  "CVE-2025-22476", "CVE-2025-43994", "CVE-2025-43995", "CVE-2025-46425",
+  "CVE-2026-2237",
+]
+comment = "QSAN/Dell/Synology products; own Rust crate"
+
+["malware-scanner"]
+cve = ["CVE-2022-1995", "CVE-2024-25902"]
+comment = "miniOrange WordPress plugin; own Rust crate"
+
+# ---- Name collisions (TeX Live packages via texliveFull) ----
+["markdown"]
+cve = ["CVE-2026-40890"]
+comment = "gomarkdown Go lib; TeX markdown package"
+
+["moodle-1.0-tex"]
+cve = [
+  "CVE-2021-20183", "CVE-2021-20184", "CVE-2021-20186", "CVE-2021-20187", "CVE-2021-32473",
+  "CVE-2021-32474", "CVE-2021-32475", "CVE-2021-32476", "CVE-2021-32478", "CVE-2021-36392",
+  "CVE-2021-36393", "CVE-2021-36394", "CVE-2021-36395", "CVE-2021-36396", "CVE-2021-36397",
+  "CVE-2021-36400", "CVE-2021-36401", "CVE-2021-36402", "CVE-2021-36403", "CVE-2021-40691",
+  "CVE-2021-40693", "CVE-2021-40694", "CVE-2021-43558", "CVE-2021-43559", "CVE-2021-43560",
+  "CVE-2022-0333", "CVE-2022-0334", "CVE-2022-0335", "CVE-2022-0985", "CVE-2022-45152",
+  "CVE-2022-50943", "CVE-2023-35132", "CVE-2023-35133", "CVE-2023-5539", "CVE-2023-5540",
+  "CVE-2023-5545", "CVE-2023-5548", "CVE-2023-5549", "CVE-2023-5550", "CVE-2023-5551",
+  "CVE-2024-1439", "CVE-2024-33996", "CVE-2024-33997", "CVE-2024-33998", "CVE-2024-34000",
+  "CVE-2024-34001", "CVE-2024-34002", "CVE-2024-34003", "CVE-2024-34004", "CVE-2024-34005",
+  "CVE-2024-34006", "CVE-2024-38275", "CVE-2024-38276", "CVE-2024-43425", "CVE-2024-43427",
+  "CVE-2024-43428", "CVE-2024-43429", "CVE-2024-43431", "CVE-2024-43432", "CVE-2024-43434",
+  "CVE-2024-43435", "CVE-2024-43437", "CVE-2024-43439", "CVE-2024-43440", "CVE-2024-45689",
+  "CVE-2024-45690", "CVE-2024-45691", "CVE-2024-48896", "CVE-2024-48897", "CVE-2024-48898",
+  "CVE-2024-48901", "CVE-2025-32045", "CVE-2025-3635", "CVE-2025-3636", "CVE-2025-3637",
+  "CVE-2025-3638", "CVE-2025-3640", "CVE-2025-3641", "CVE-2025-3642", "CVE-2025-3643",
+  "CVE-2025-3644", "CVE-2025-3645", "CVE-2025-3647", "CVE-2025-67847", "CVE-2025-67848",
+  "CVE-2025-67850", "CVE-2025-67851", "CVE-2025-67852", "CVE-2025-67853", "CVE-2025-67855",
+  "CVE-2025-67856", "CVE-2025-67857", "CVE-2026-102577", "CVE-2026-102578", "CVE-2026-102579",
+  "CVE-2026-102580", "CVE-2026-102581", "CVE-2026-102582", "CVE-2026-102583", "CVE-2026-102586",
+  "CVE-2026-102587", "CVE-2026-102588", "CVE-2026-26045", "CVE-2026-26046", "CVE-2026-26047",
+]
+comment = "Moodle LMS; TeX moodle quiz package"
+
+["navigator-1.1-tex"]
+cve = ["CVE-2021-44228", "CVE-2021-45046"]
+comment = "Log4j; TeX package has no Java"
+
+["notes-1.0.1-tex"]
+cve = [
+  "CVE-2021-25355", "CVE-2021-25367", "CVE-2021-25402", "CVE-2021-25405", "CVE-2021-25492",
+  "CVE-2021-25493", "CVE-2021-25494", "CVE-2021-25495", "CVE-2021-25496", "CVE-2021-25497",
+  "CVE-2021-25498", "CVE-2022-36831", "CVE-2024-20868", "CVE-2024-34621", "CVE-2024-34622",
+  "CVE-2024-34623", "CVE-2024-34624", "CVE-2024-34625", "CVE-2024-34626", "CVE-2024-34627",
+  "CVE-2024-34628", "CVE-2024-34629", "CVE-2024-34630", "CVE-2024-34631", "CVE-2024-34632",
+  "CVE-2024-34633", "CVE-2024-34634", "CVE-2024-34635", "CVE-2024-34656", "CVE-2024-34657",
+  "CVE-2024-34658", "CVE-2024-34660", "CVE-2025-20913", "CVE-2025-20914", "CVE-2025-20915",
+  "CVE-2025-20916", "CVE-2025-20917", "CVE-2025-20918", "CVE-2025-20919", "CVE-2025-20920",
+  "CVE-2025-20921", "CVE-2025-20922", "CVE-2025-20924", "CVE-2025-20925", "CVE-2025-20927",
+  "CVE-2025-20928", "CVE-2025-20929", "CVE-2025-20930", "CVE-2025-20931", "CVE-2025-20932",
+  "CVE-2025-20933", "CVE-2025-20950", "CVE-2025-20976", "CVE-2025-20977", "CVE-2025-21036",
+  "CVE-2025-21037", "CVE-2025-21057", "CVE-2025-21066", "CVE-2025-21067", "CVE-2025-21068",
+  "CVE-2025-21069", "CVE-2025-21070", "CVE-2026-21107",
+]
+comment = "Samsung Notes Android app"
+
+["plantuml-0.6.0-tex"]
+cve = ["CVE-2022-1231", "CVE-2022-1379", "CVE-2023-3431", "CVE-2023-3432", "CVE-2026-0858"]
+comment = "PlantUML Java; TeX wrapper only"
+
+["python-0.22-tex"]
+cve = [
+  "CVE-2021-23336", "CVE-2021-3426", "CVE-2021-3733", "CVE-2022-0391", "CVE-2022-26488",
+  "CVE-2022-45061", "CVE-2022-48560", "CVE-2022-48564", "CVE-2022-48565", "CVE-2022-48566",
+  "CVE-2023-24329", "CVE-2023-27043", "CVE-2023-36632", "CVE-2023-40217", "CVE-2024-49050",
+  "CVE-2024-6232", "CVE-2024-7592", "CVE-2024-9287", "CVE-2025-12084", "CVE-2025-12781",
+  "CVE-2025-13462", "CVE-2025-13836", "CVE-2025-13837", "CVE-2025-49714", "CVE-2025-6075",
+  "CVE-2026-0864", "CVE-2026-15308", "CVE-2026-3087", "CVE-2026-3644", "CVE-2026-4224",
+  "CVE-2026-4360", "CVE-2026-4519", "CVE-2026-6019", "CVE-2026-7210",
+]
+comment = "CPython CVEs; TeX python package, no interpreter"
+
+["web"]
+cve = ["CVE-2025-8220", "CVE-2026-2750"]
+comment = "Engeman Web / Centreon; Knuth WEB"
+
+["talk-2.0-tex"]
+cve = [
+  "CVE-2021-32676", "CVE-2021-32689", "CVE-2021-39222", "CVE-2021-41180", "CVE-2021-41181",
+  "CVE-2022-24887", "CVE-2022-24890", "CVE-2022-35932", "CVE-2022-39212", "CVE-2022-41926",
+  "CVE-2023-22473", "CVE-2023-39957",
+]
+comment = "Nextcloud Talk"
+
+["astro-2.20-tex"]
+cve = [
+  "CVE-2024-56140", "CVE-2024-56159", "CVE-2025-55303", "CVE-2025-61925", "CVE-2025-64525",
+  "CVE-2025-64757", "CVE-2025-64764", "CVE-2025-64765", "CVE-2025-65019", "CVE-2025-66202",
+  "CVE-2026-33769", "CVE-2026-41067", "CVE-2026-45028", "CVE-2026-50146", "CVE-2026-54298",
+  "CVE-2026-54299",
+]
+comment = "Astro JS framework; TeX Metafont font"
+
+["accessibility-2.0.3-tex"]
+cve = ["CVE-2022-27837"]
+comment = "Samsung Android component"
+
+["bookshelf"]
+cve = ["CVE-2021-24478"]
+comment = "WordPress plugin"
+
+["contour-2.14-tex"]
+cve = ["CVE-2023-22834", "CVE-2023-44487"]
+comment = "Palantir/projectcontour; TeX outline package"
+
+["currency-0.4-tex"]
+cve = ["CVE-2025-10930"]
+comment = "Drupal module"
+
+["directory-1.20-tex"]
+cve = ["CVE-2023-2813"]
+comment = "WordPress theme"
+
+["download-1.2-tex"]
+cve = ["CVE-2026-57828"]
+comment = "Phoca Download Joomla component"
+
+["emoji-0.2.2-tex"]
+cve = ["CVE-2023-30858"]
+comment = "Deno module"
+
+["extract-1.9a-tex"]
+cve = ["CVE-2024-47877"]
+comment = "codeclysm Go library"
+
+["fancybox-1.4-tex"]
+cve = ["CVE-2025-3662"]
+comment = "WordPress plugin"
+
+["forest-2.1.5-tex"]
+cve = ["CVE-2025-12924", "CVE-2025-12925", "CVE-2025-63687"]
+comment = "rymcu forest Java app"
+
+["frame-1.0-tex"]
+cve = ["CVE-2025-58899"]
+comment = "WordPress theme"
+
+["gitlog-0.0.beta-tex"]
+cve = ["CVE-2021-26541"]
+comment = "npm gitlog"
+
+["gmp-1.0-tex"]
+cve = ["CVE-2021-43618"]
+comment = "GNU MP; TeX gmp has no C code"
+
+["image-gallery-1.0j-tex"]
+cve = ["CVE-2022-1327", "CVE-2024-35721"]
+comment = "WordPress plugins"
+
+["newspaper-1.0-tex"]
+cve = ["CVE-2022-2167", "CVE-2022-2627", "CVE-2022-3477", "CVE-2024-3815"]
+comment = "tagDiv Newspaper WordPress theme"
+
+["options-1.0-tex"]
+cve = ["CVE-2022-0916"]
+comment = "Logitech Options"
+
+["panda-0.3-tex"]
+cve = ["CVE-2025-60050"]
+comment = "WordPress theme"
+
+["poetry-2.2-tex"]
+cve = ["CVE-2026-34591"]
+comment = "python-poetry; TeX verse package"
+
+["psgo-0.17-tex"]
+cve = ["CVE-2022-1227"]
+comment = "containers/psgo Go library"
+
+["recipe-0.9-tex"]
+cve = ["CVE-2022-34792", "CVE-2022-34793", "CVE-2022-34794"]
+comment = "Jenkins Recipe plugin"
+
+["responsive-0.1a-tex"]
+cve = ["CVE-2024-35654"]
+comment = "WordPress theme"
+
+["slideshow-1.0-tex"]
+cve = ["CVE-2022-1299"]
+comment = "WordPress plugin"
+
+["tap-0.77-tex"]
+cve = ["CVE-2023-41940"]
+comment = "Jenkins TAP plugin"
+
+["tasks-1.4a-tex"]
+cve = ["CVE-2022-39349"]
+comment = "Tasks.org Android app"
+
+["verse-2.4c-tex"]
+cve = ["CVE-2021-27768", "CVE-2021-27788", "CVE-2023-28013", "CVE-2023-37496"]
+comment = "HCL Verse webmail"
