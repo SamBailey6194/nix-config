@@ -93,24 +93,46 @@ The old library is at `<letter>:\Databases`, its footage in
    `<letter>:\<area>\film\media\<project>`, open the project and **relink**
    the offline clips to the new folder.
 5. Set the project's **render location** to `<letter>:\<area>\film\renders\`.
-   Keep the render cache and optimised media on the SSD (Resolve's default
-   cache location), not on this drive.
+   Keep the render cache and optimised media on the SSD, not on this drive:
+   in **Preferences → System → Media Storage** put an SSD folder (e.g.
+   `C:\ResolveCache`) **first** (Resolve caches to the first location) and
+   `<letter>:\` second, and remove `<letter>:\Media`. A Media Storage entry
+   on the drive is how empty `CacheClip` folders ended up in
+   `personal\film\media\` on the first move.
 6. When every project opens and plays: remove the old library from Resolve's
    list, then delete `<letter>:\Databases` and `<letter>:\Media` (the copy in
    `archive\` stays, and the NixOS mirror keeps 30 days of history).
 
 ## 8. Back in NixOS
 
-- Tell Claude (or set it yourself) the letter from step 4: it goes in
-  `davinciDriveLetter` in `home/devtower-intel.nix`, so Affinity under Wine
-  sees the drive at the same letter, then rebuild.
-- In Resolve on NixOS, add the same two libraries at
-  `~/Data/business/film/resolve-library` and
-  `~/Data/personal/film/resolve-library`, and set the mapped mount
-  (`<letter>:\` on Windows equals `~/Data` on Linux) so media paths resolve.
+Done on 17/10/2026 with the letter **F:**.
+
+- `davinciDriveLetter = "f"` in `home/devtower-intel.nix` (lower case, as
+  Wine wants it), so Affinity under Wine sees the drive at the same letter;
+  then rebuild with any Affinity app closed.
 - `findmnt /mnt/data` should show it mounted read-write. If it is read-only
   or missing, Windows was hibernated or not shut down cleanly: boot Windows,
   shut down properly, and try again.
+- **Resolve libraries:** Project Manager → Project Libraries → Add Project
+  Library → Local, pointing at the `resolve-library` folder itself (it holds
+  `Resolve Projects/`): `Personal` at `~/Data/personal/film/resolve-library`
+  and `Business` at `~/Data/business/film/resolve-library`. Resolve keeps the
+  list in `~/.local/share/DaVinciResolve/configs/.dblist`, one
+  `Name:path:*:::DISK` line per library; that file can be edited instead,
+  but only while Resolve is closed.
+- **Media Storage and mapped mount** (Preferences → System → Media Storage):
+  `/home/sam-desktop/Videos` first (the SSD, so new projects cache there),
+  `/home/sam-desktop/Data` second, and in **Mapped Mounts** type `F:\` in the
+  `/home/sam-desktop/Data` row, then **Save**. Check it was kept: in
+  `configs/config.dat` that row's `Site.1.FS.<n>.MappedRoot` reads `F:\`. The
+  first attempt was not saved, the clips stayed offline, and `Test` was
+  relinked by hand; it now stores Linux paths
+  (`/home/sam-desktop/Data/personal/film/media/...`).
+- **Still to do in Windows:** in Media Storage, the SSD folder first and
+  `F:\` second, with `F:\` mapped to `/home/sam-desktop/Data`; then open
+  `Test` (Personal) and check its clips are online, relinking there if not.
+  With the mapping on both sides, a project saved on either system should
+  find its media on the other.
 
 ## Day-to-day rules
 

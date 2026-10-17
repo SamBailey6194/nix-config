@@ -20,7 +20,7 @@ let
   # realpath), so open files through the drive root (davinci above),
   # ~/DavinciProj or ~/Data (a bind mount of the root), never a symlink to a
   # subfolder.
-  davinciDriveLetter = null;
+  davinciDriveLetter = "f";
 
   hasResolve = import ./modules/resolve-package.nix { inherit lib osConfig; } != null;
 in

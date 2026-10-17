@@ -56,6 +56,7 @@
 - **bun** in the development packages, beside pnpm
 
 ### Changed
+- **devtower-intel data volume at F:**: `davinciDriveLetter = "f"`, the letter Windows VeraCrypt mounts the WD at, so Affinity's Wine prefix maps `f:` to `/mnt/data`. The Windows checklist and Resolve notes record the Personal and Business libraries, the SSD-first Media Storage and the `F:\` mapped mount, with the Windows half still to do
 - **`pkgs/uv-manylinux.nix`**: `patchright` constraint 1.61.2 -> 1.63.0. Scrapling 0.4.15's `fetchers` extra needs `patchright>=1.62.1`, so 1.61.2 made `scrapling[ai]` unresolvable; 1.63.0 asks for exactly the 1.63.0 bundle's revisions (chromium 1243, firefox 1543, webkit 2359, ffmpeg 1011)
 
 ### Fixed

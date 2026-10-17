@@ -149,14 +149,22 @@ GPU through CUDA.
 - **Launching:** use the `resolve` (or `dvr`) alias, which sets
   `QT_QPA_PLATFORM=xcb`. Resolve cannot run as a native Wayland client, and the
   session defaults Qt apps to Wayland, so an app-launcher start may fail.
+  Start it from the Hyprland session (alias or launcher), not through
+  `systemd-run --user`: the systemd user environment has no `XCURSOR_THEME`
+  or `XCURSOR_SIZE`, and Resolve then draws an oversized fallback cursor.
 - **Media Storage:** add `/mnt/davinci` itself, not `~/DavinciProj`. On the
-  data volume, add `~/Data` (a bind mount of the root, so not a link).
-- **Path mapping:** in Preferences, set up a Mapped Mount pairing
-  `/mnt/davinci` (on the data volume, `~/Data`) with the Windows letter (for
-  example `E:\`), so the same media path means the same file on both
-  systems. That should let projects moved between systems find their media
-  without relinking. This hasn't been tested here, so try it with a copy of
-  one project first, and relink by hand if it doesn't work.
+  data volume, add `~/Data` (a bind mount of the root, so not a link). Keep an
+  SSD folder (`~/Videos`) first: Resolve caches to the first location.
+- **Path mapping:** in Preferences → System → Media Storage → Mapped Mounts,
+  give the `~/Data` (or `/mnt/davinci`) row the Windows letter, `F:\` on the
+  data volume, and on Windows give `F:\` the Linux path, so the same media
+  path means the same file on both systems. Resolve stores it per storage
+  location as `Site.1.FS.<n>.MappedRoot` in `configs/config.dat`; if that is
+  empty after **Save**, the mapping was not kept and clips stay offline.
+  Relinking by hand works too, but it rewrites the clip paths for the system
+  you relink on, so the other one then needs its mapping (or a relink).
+  The mapping between the two systems is not yet confirmed from the Windows
+  side ([WINDOWS-DATA-DRIVES.md](WINDOWS-DATA-DRIVES.md#8-back-in-nixos)).
 - **Project libraries:** on the data volume, one disk-database library per
   area, in `<area>/film/resolve-library/`, with that area's footage in
   `<area>/film/media/`, work-in-progress renders in `<area>/film/renders/`
