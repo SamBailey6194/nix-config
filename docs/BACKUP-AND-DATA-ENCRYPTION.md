@@ -13,8 +13,9 @@
 
 Device letters are temporary. Mount by UUID and recheck model/serial in the live
 installer. Neither partition needs formatting to make a backup.
-The Intel NixOS configuration also mounts this filesystem at `/mnt/backup`,
-on demand and without preventing boot if the USB drive is disconnected.
+The Intel NixOS configuration defines `/mnt/backup` for this filesystem; mount
+it by hand (`sudo systemctl start mnt-backup.mount`). It is `noauto`, so a
+disconnected USB drive neither blocks boot nor leaves an automount point behind.
 
 **Status on 12 October 2026: BackupDrive is not usable.** It fails to mount
 (`/mnt/backup: No such device`), so don't rely on it for any step below until

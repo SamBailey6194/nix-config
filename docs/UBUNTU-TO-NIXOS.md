@@ -238,7 +238,7 @@ Every devtower-intel stage, minimal included, mounts:
 | `/mnt/ubuntu-nix` | old Ubuntu `/nix`, ext4 | read-only |
 | `/mnt/ubuntu-docker` | old Docker data, ext4 | read-only |
 | `/mnt/davinci` | DavinciProj, NTFS (ntfs-3g) | read-write for `sam-desktop`; mounted at boot with `norecover`. See [its page](DAVINCI-SHARED-DRIVE.md) |
-| `/mnt/backup` | BackupDrive, ext4 | read-write, on demand when attached |
+| `/mnt/backup` | BackupDrive, ext4 | read-write, mounted by hand when attached (`noauto`) |
 
 All use `nofail`, so a missing drive never blocks boot. The first four are the
 old Ubuntu filesystems. `/mnt/ubuntu-home` goes when the home drive is

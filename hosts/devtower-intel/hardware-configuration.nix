@@ -76,10 +76,14 @@ in
     options = [ "nofail" "noatime" "norecover" "uid=1000" "gid=100" "fmask=0133" "dmask=0022" "windows_names" "x-systemd.device-timeout=10s" ];
   };
 
+  # Mounted by hand (`sudo systemctl start mnt-backup.mount`), not
+  # x-systemd.automount: the idle autofs mount point breaks bwrap sandboxes
+  # (Codex etc.) with "remount /newroot/mnt/backup: No such device" whenever
+  # the drive is absent, because bwrap remounts every submount read-only.
   fileSystems."/mnt/backup" = {
     device = "/dev/disk/by-uuid/${disks.backupUuid}";
     fsType = "ext4";
-    options = [ "nofail" "noatime" "x-systemd.automount" "x-systemd.device-timeout=10s" ];
+    options = [ "noauto" "nofail" "noatime" "x-systemd.device-timeout=10s" ];
   };
 
   # No swap partition (zram replaces it)
