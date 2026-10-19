@@ -1,5 +1,55 @@
 { config, pkgs, lib, osConfig ? null, ... }:
 
+let
+  # Waybar's network module has no link-speed placeholder, so the bar's
+  # network item is this script instead: "eno1 (1 Gbps): 192.168.1.183/24
+  # -> 192.168.1.1". It follows the lowest-metric default route, so it shows
+  # whichever interface traffic actually leaves by. Ethernet speed comes from
+  # sysfs, wifi speed from the current tx bitrate.
+  waybarNetwork = pkgs.writeShellApplication {
+    name = "waybar-network";
+    runtimeInputs = [ pkgs.iproute2 pkgs.iw pkgs.jq pkgs.gawk ];
+    text = ''
+      route=$(ip -j route show default | jq -c 'sort_by(.metric // 0) | .[0] // empty')
+      if [ -z "$route" ]; then
+        jq -cn '{text: "⚠ Disconnected", tooltip: "No default route", class: "disconnected"}'
+        exit 0
+      fi
+
+      dev=$(jq -r '.dev' <<<"$route")
+      gw=$(jq -r '.gateway // empty' <<<"$route")
+      addr=$(ip -j -4 addr show dev "$dev" \
+        | jq -r '[.[].addr_info[]? | select(.family == "inet") | "\(.local)/\(.prefixlen)"] | first // empty')
+
+      class=ethernet
+      essid=""
+      speed=""
+      if [ -d "/sys/class/net/$dev/wireless" ]; then
+        class=wifi
+        link=$(iw dev "$dev" link 2>/dev/null || true)
+        essid=$(awk -F': ' '/SSID:/ { print $2; exit }' <<<"$link")
+        speed=$(awk '/tx bitrate:/ { printf "%s Mbps", $3; exit }' <<<"$link")
+      else
+        # Virtual interfaces (wg, tun) report -1 or refuse the read.
+        mbps=$(cat "/sys/class/net/$dev/speed" 2>/dev/null || echo -1)
+        if [ "$mbps" -gt 0 ]; then
+          speed=$(awk -v m="$mbps" 'BEGIN { if (m >= 1000) printf "%g Gbps", m / 1000; else printf "%d Mbps", m }')
+        fi
+      fi
+
+      text=$dev
+      [ -n "$speed" ] && text="$text ($speed)"
+      text="$text: ''${addr:-(No IP)}"
+      [ -n "$gw" ] && text="$text -> $gw"
+
+      tooltip="$dev via ''${gw:-no gateway}"
+      [ -n "$essid" ] && tooltip="$tooltip, SSID $essid"
+
+      jq -cn --arg text "$text" --arg tooltip "$tooltip" --arg class "$class" \
+        '{text: $text, tooltip: $tooltip, class: $class}'
+    '';
+  };
+in
 {
   # Hyprland Wayland Compositor Configuration
   # Uses modular .lua files from config/hypr/ for Hyprland settings
@@ -319,7 +369,7 @@
         modules-center = [ "clock" ];
         modules-right = [
           "pulseaudio"
-          "network"
+          "custom/network"
           "cpu"
           "memory"
           "temperature"
@@ -352,8 +402,11 @@
         };
 
         clock = {
-          format = "{:%H:%M}";
-          format-alt = "{:%A, %d %B %Y (%H:%M:%S)}";
+          # Long form, e.g. "Monday, 19 October 2026 (08:51:11)". The seconds
+          # need a 1s refresh; waybar's clock default is 60s.
+          interval = 1;
+          format = "{:%A, %d %B %Y (%H:%M:%S)}";
+          format-alt = "{:%H:%M}";
           tooltip-format = "<tt><small>{calendar}</small></tt>";
           calendar = {
             mode = "year";
@@ -402,13 +455,11 @@
           format-icons = [ "" "" "" "" "" ];
         };
 
-        network = {
-          format-wifi = " {essid} ({signalStrength}%)";
-          format-ethernet = " {ipaddr}/{cidr}";
-          tooltip-format = " {ifname} via {gwaddr}";
-          format-linked = " {ifname} (No IP)";
-          format-disconnected = "⚠ Disconnected";
-          format-alt = "{ifname}: {ipaddr}/{cidr}";
+        # See waybarNetwork at the top of this file.
+        "custom/network" = {
+          exec = lib.getExe waybarNetwork;
+          return-type = "json";
+          interval = 5;
         };
 
         pulseaudio = {
@@ -472,7 +523,7 @@
       #memory,
       #temperature,
       #backlight,
-      #network,
+      #custom-network,
       #pulseaudio,
       #tray {
         padding: 0 10px;
