@@ -102,6 +102,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + ALT + 1-9, 0`   | Switch to workspace 31-40     |
 | `SUPER + .`, then `1-9, 0` (+ `SHIFT` / `CTRL` / `ALT`) | Move window to that workspace (same banks) |
 | `SUPER + .`, then `Esc`  | Cancel the move               |
+| Numpad `1-9, 0`          | Same as the top-row numbers in every bind above, NumLock on or off |
 | `SUPER + ,`              | Move the focused workspace between centre and left monitors |
 | `SUPER + S`              | Toggle scratchpad             |
 | `SUPER + SHIFT + S`      | Move to scratchpad            |

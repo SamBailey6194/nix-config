@@ -98,6 +98,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 |----------------------|-------------------------|
 | `SUPER + 1-9, 0`    | Switch to workspace 1-10 |
 | `SUPER + SHIFT + 1-9, 0` | Move window to workspace 1-10 |
+| Numpad `1-9, 0`      | Same as the top-row numbers, NumLock on or off |
 | `SUPER + S`          | Toggle scratchpad       |
 | `SUPER + SHIFT + S`  | Move to scratchpad      |
 | `SUPER + Scroll`     | Cycle workspaces        |

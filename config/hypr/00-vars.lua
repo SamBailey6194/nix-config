@@ -237,6 +237,20 @@ M.workspaceAssignments = {
     },
 }
 
+-- ── Number keys ───────────────────────────────────────────────────────
+--
+-- Every workspace number bind fires from the numpad as well as the top row.
+-- The numpad is bound by XKB keycode (evdev code + 8; `wev` shows them), not
+-- keysym, because NumLock and SHIFT both turn KP_1 into KP_End and so on: a
+-- keycode bind works either way.
+M.numpadCodes = { 87, 88, 89, 83, 84, 85, 79, 80, 81, [0] = 90 }
+
+-- The keys for digit n (0-9): the top-row key and its numpad twin. Bind (and
+-- unbind) through this so the two can never drift apart.
+function M.number_keys(n)
+    return { tostring(n), "code:" .. M.numpadCodes[n] }
+end
+
 -- Register every assignment above as a window rule.
 --
 -- `prefix` disambiguates the rule names, since a device that re-registers the

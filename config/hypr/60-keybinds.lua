@@ -268,10 +268,12 @@ hl.bind(mod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
 -- workspaces 11-20 and moves windows through a submap instead
 -- (devices/devtower-intel.lua). hl.unbind matches on these key strings
 -- (spaces and case ignored), so keep the two files' spellings in step.
+-- vars.number_keys adds the numpad twin of each key (00-vars.lua).
 for i = 1, 10 do
-    local key = i % 10 -- 10 maps to key 0
-    hl.bind(mod .. " + " .. key,             hl.dsp.focus({ workspace = i }))
-    hl.bind(mod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i }))
+    for _, key in ipairs(vars.number_keys(i % 10)) do -- 10 maps to key 0
+        hl.bind(mod .. " + " .. key,         hl.dsp.focus({ workspace = i }))
+        hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+    end
 end
 
 -- Special workspace (scratchpad)

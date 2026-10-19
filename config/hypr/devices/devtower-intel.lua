@@ -219,15 +219,20 @@ hl.env("DEV_LAYOUT_POOL_LAST", "40")
 local mod = vars.mod
 local banks = { { "", 0 }, { "SHIFT + ", 10 }, { "CTRL + ", 20 }, { "ALT + ", 30 } }
 
+-- Every number key below also has its numpad twin (vars.number_keys).
 for i = 1, 10 do
-    hl.unbind(mod .. " + SHIFT + " .. i % 10)
+    for _, key in ipairs(vars.number_keys(i % 10)) do
+        hl.unbind(mod .. " + SHIFT + " .. key)
+    end
 end
 
 -- Bank 1 (SUPER + number -> 1-10) is already bound by 60-keybinds.lua.
 for b = 2, #banks do
     local prefix, offset = banks[b][1], banks[b][2]
     for i = 1, 10 do
-        hl.bind(mod .. " + " .. prefix .. i % 10, hl.dsp.focus({ workspace = offset + i }))
+        for _, key in ipairs(vars.number_keys(i % 10)) do
+            hl.bind(mod .. " + " .. prefix .. key, hl.dsp.focus({ workspace = offset + i }))
+        end
     end
 end
 
@@ -236,7 +241,9 @@ hl.bind(mod .. " + period", hl.dsp.submap("move-window"),
 hl.define_submap("move-window", "reset", function()
     for _, bank in ipairs(banks) do
         for i = 1, 10 do
-            hl.bind(bank[1] .. i % 10, hl.dsp.window.move({ workspace = bank[2] + i }))
+            for _, key in ipairs(vars.number_keys(i % 10)) do
+                hl.bind(bank[1] .. key, hl.dsp.window.move({ workspace = bank[2] + i }))
+            end
         end
     end
     hl.bind("escape", hl.dsp.submap("reset"))

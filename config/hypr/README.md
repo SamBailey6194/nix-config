@@ -282,7 +282,8 @@ Highlights:
 - `SUPER + SHIFT + H/J/K/L`: move windows
 
 ### Workspaces
-- `SUPER + 1-9, 0`: switch to workspace 1-10
+- `SUPER + 1-9, 0`: switch to workspace 1-10 (the numpad works too, NumLock
+  on or off)
 - `SUPER + SHIFT + 1-9, 0`: move window to workspace 1-10 (devtower-intel:
   switch to 11-20; moving uses `SUPER + period` — see
   [devtower-intel](#devtower-intel))
