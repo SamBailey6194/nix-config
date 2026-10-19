@@ -255,7 +255,7 @@ in
 
     environment.systemPackages = [ cfg.package ] ++ lib.optional cfg.serverEnable (pkgs.writeShellApplication {
       name = "local-llm-control";
-      runtimeInputs = [ pkgs.python3 pkgs.systemd pkgs.sudo ];
+      runtimeInputs = [ pkgs.python3 pkgs.systemd ];
       text = ''
         exec ${pkgs.python3}/bin/python ${../../scripts/local-llm-control.py} "$@"
       '';

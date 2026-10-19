@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import shlex
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('llm_control', Path(__file__).parents[1] / 'local-llm-control.py')
 control = importlib.util.module_from_spec(spec)
@@ -36,6 +37,24 @@ class LocalModelControlTests(unittest.TestCase):
     def test_unknown_model_is_rejected(self):
         with self.assertRaises(ValueError):
             control.select_model(self.base, 'missing', [])
+
+    def test_elevation_uses_nixos_wrapper_independent_of_path(self):
+        arguments = ['local-llm-control', 'start', 'first', '--threads', '6']
+        with patch.object(control.os, 'geteuid', return_value=1000), \
+                patch.dict(control.os.environ, {'PATH': '/nix/store/unwrapped-sudo/bin'}), \
+                patch.object(control.sys, 'argv', arguments), \
+                patch.object(control.os, 'execv') as execute:
+            control.elevate()
+        execute.assert_called_once_with('/run/wrappers/bin/sudo', [
+            '/run/wrappers/bin/sudo', control.sys.executable,
+            str(Path(control.__file__).resolve()), *arguments[1:],
+        ])
+
+    def test_root_does_not_elevate_again(self):
+        with patch.object(control.os, 'geteuid', return_value=0), \
+                patch.object(control.os, 'execv') as execute:
+            control.elevate()
+        execute.assert_not_called()
 
 
 if __name__ == '__main__':

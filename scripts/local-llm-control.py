@@ -52,7 +52,9 @@ def systemctl(*arguments):
 
 def elevate():
     if os.geteuid() != 0:
-        os.execvp('sudo', ['sudo', sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]])
+        # NixOS grants privileges through this wrapper, not the store binary.
+        sudo = '/run/wrappers/bin/sudo'
+        os.execv(sudo, [sudo, sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]])
 
 
 def main():
