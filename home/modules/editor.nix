@@ -728,6 +728,7 @@ in
         terraform = true;         # Terraform / OpenTofu HCL, terraform-ls
         nginx = true;             # nginx.conf, nginx-language-server
         toml = true;              # TOML — grammar only, no server exists
+        log = true;               # Log files — syntax highlighting only
         alpinejs-snippets = true; # Alpine.js — snippets only, no LSP exists
         emmet = true;             # Emmet — the server Blade's list above names
         nix = true;               # Nix — grammar + nixd

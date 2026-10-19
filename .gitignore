@@ -4,6 +4,9 @@
 *~
 .DS_Store
 
+# Playwright browser snapshots and logs
+.playwright-mcp/
+
 # Backup files from install.sh
 *.bak
 

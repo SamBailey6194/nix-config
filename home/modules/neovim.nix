@@ -652,9 +652,10 @@ in
       -- ── Filetypes Neovim does not detect on its own ──────────────────
       -- Slint has no built-in ftplugin, and *.blade.php would otherwise be read
       -- as plain PHP, losing the blade treesitter grammar and the blade-only
-      -- server attachments above.
+      -- server attachments above. Generic log highlighting ships with Neovim
+      -- but needs an explicit filetype mapping for *.log files.
       vim.filetype.add({
-        extension = { slint = 'slint' },
+        extension = { slint = 'slint', log = 'log' },
         pattern = {
           ['.*%.blade%.php'] = 'blade',
           ['.*/docker%-compose[^/]*%.ya?ml'] = 'yaml.docker-compose',
