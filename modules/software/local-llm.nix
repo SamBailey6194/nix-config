@@ -301,7 +301,10 @@ in
             "--cache-type-k" model.cacheType "--cache-type-v" model.cacheType
           ] ++ model.extraArgs);
           proxy = "http://127.0.0.1:\${PORT}";
-          concurrencyLimit = 1;
+          # Admit overlapping foreground/background client requests so the
+          # upstream server can queue them behind its single inference slot.
+          # A limit of 1 rejects the second request with HTTP 429 immediately.
+          concurrencyLimit = 10;
           inherit (model) aliases;
         }) cfg.models;
       };

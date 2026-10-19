@@ -32,6 +32,11 @@ def select_model(base, model, flags):
             raise ValueError(f'{arg.split("=", 1)[0]} is managed: keep full context, one slot and the OpenCode endpoint')
     settings = copy.deepcopy(base['settings'])
     selected = settings['models'][model]
+    # Older installed catalogues capped HTTP admission at one as well as
+    # inference. Allow the single-slot server to queue overlapping client
+    # requests, including before the next rebuild deploys the new catalogue.
+    if selected.get('concurrencyLimit') == 1:
+        selected['concurrencyLimit'] = 10
     selected['cmd'] += (' ' + shlex.join(flags)) if flags else ''
     settings['models'] = {model: selected}
     return settings

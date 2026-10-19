@@ -102,6 +102,14 @@ only the selected model through the unchanged loopback endpoint
 `http://127.0.0.1:8080/v1`; select `llama-cpp/<model-id>` in OpenCode too.
 A first weight download/full-context allocation can take a long time.
 
+The router admits up to ten outstanding requests per model, while llama-server
+still processes one inference request at a time (`--parallel 1`). Overlapping
+foreground and background client requests can wait in the server queue rather
+than immediately receiving HTTP 429. More than ten outstanding requests can
+still be rejected, and queueing does not make prompt processing faster. The
+control helper upgrades the old HTTP admission limit of one when selecting a
+model, including with an older installed catalogue.
+
 Extra flags are passed literally, including quoted values, and appended to that
 model's default command. Thread counts, batch sizes, GPU layers and cache types
 can be tuned. Model identity, host/port, one slot and native context are managed
