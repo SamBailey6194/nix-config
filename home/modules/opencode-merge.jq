@@ -4,6 +4,7 @@
 | (if has("$schema") then . else {"$schema": $d.schema} + . end)
 | (if has("permissions") or has("permission") then .
    else .permissions = $d.permissions end)
+| (if has("lsp") or $d.lsp == null then . else .lsp = $d.lsp end)
 | reduce ($d.servers | to_entries[]) as $s (.;
     (if .mcp.servers[$s.key]? != null then ["mcp", "servers", $s.key]
      elif .mcp[$s.key]? != null then ["mcp", $s.key]

@@ -96,6 +96,14 @@ let
     # OpenCode v2 ordered permission rules. Its edit permission covers writing
     # files and patches; the external-directory policy still applies.
     permissions = [ { action = "edit"; resource = "*"; effect = "allow"; } ];
+    # LSP is off unless `lsp` is set; an object keeps OpenCode's built-in
+    # servers on. Rust is pinned so rustup's unconfigured proxy is never used.
+    lsp = {
+      rust = {
+        command = [ "${pkgs.rust-analyzer}/bin/rust-analyzer" ];
+        extensions = [ ".rs" ];
+      };
+    };
   };
 
   # Input (jq -s): every JSON document in the file, so none for a missing or

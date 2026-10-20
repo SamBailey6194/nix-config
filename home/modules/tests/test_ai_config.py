@@ -411,6 +411,8 @@ class OpenCodeTests(unittest.TestCase):
         defaults = {"schema": "https://opencode.ai/config.json", "remove": list(remove),
                     "servers": {name: opencode_server(server) for name, server in INVENTORY.items()},
                     "permissions": [{"action": "edit", "resource": "*", "effect": "allow"}],
+                    "lsp": {"rust": {"command": ["/nix/store/rust-analyzer/bin/rust-analyzer"],
+                                     "extensions": [".rs"]}},
                     "provider": {"id": "llama-cpp", "model": "llama-cpp/qwen3.6-35b-a3b", "value": {"models": {
                         "qwen3.6-35b-a3b": {"modelID": "qwen3.6-35b-a3b", "limit": {"context": 262144}},
                         "gpt-oss-20b": {"modelID": "gpt-oss-20b", "limit": {"context": 131072}},
@@ -463,6 +465,14 @@ class OpenCodeTests(unittest.TestCase):
         self.assertEqual(set(result["mcp"]["servers"]), set(INVENTORY))
         self.assertEqual(result["permissions"][0]["action"], "edit")
         self.assertEqual(result["permissions"][0]["effect"], "allow")
+        self.assertEqual(result["lsp"]["rust"]["extensions"], [".rs"])
+
+    def test_own_lsp_setting_is_kept(self):
+        for own in (False, {"rust": {"disabled": True}}):
+            with self.subTest(own=own):
+                result = self.merge({"lsp": own})
+                self.assertEqual(result["lsp"], own)
+                self.assertEqual(self.merge(result), result)
 
 
 AGY_DEFAULTS = {
@@ -592,7 +602,8 @@ class ClaudeSettingsTests(unittest.TestCase):
     def test_plugins_and_marketplaces(self):
         self.assertEqual(self.BASE["enabledPlugins"], {"codex@openai-codex": True,
                                                        "lua-lsp@claude-plugins-official": True,
-                                                       "pyright-lsp@claude-plugins-official": True})
+                                                       "pyright-lsp@claude-plugins-official": True,
+                                                       "rust-analyzer-lsp@claude-plugins-official": True})
         self.assertEqual(self.BASE["extraKnownMarketplaces"]["claude-plugins-official"]["source"],
                          {"source": "github", "repo": "anthropics/claude-plugins-official"})
         text = json.dumps(self.BASE)

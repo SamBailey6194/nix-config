@@ -145,7 +145,8 @@ in
     intelephense                # PHP LSP; also serves Blade via Zed's blade extension
     laravel-ls                  # Laravel routes, views, config keys, env vars
 
-    # Rust — rust-analyzer comes from rustup (rustup component add rust-analyzer)
+    # Rust — rust-analyzer is a per-user package (home/modules/claude.nix), which
+    # sits ahead of rustup's proxy on PATH for the editors and AI clients
 
     # Slint (UI markup)
     slint-lsp                   # Slint LSP (wired into Zed and Neovim)

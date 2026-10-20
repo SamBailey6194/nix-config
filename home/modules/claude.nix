@@ -166,6 +166,10 @@ in
   home.packages = [
     pkgs.claude-code
     pkgs.jq # used by the statusline + block-auto-memory hooks
+    # rust-analyzer-lsp runs a bare `rust-analyzer`; rustup's proxy in the
+    # system profile fails until a default toolchain is set, and this per-user
+    # profile comes first on PATH.
+    pkgs.rust-analyzer
   ];
 
   home.file = {
