@@ -93,6 +93,12 @@ let
           type = "command";
           command = "${pkgs.python3}/bin/python3 ${../../scripts/nix-source-guard.py}";
           timeout = 5;
+        } {
+          # Deny globs in settings-base.json miss -an clusters, --no-ver
+          # abbreviations and -c core.hooksPath=...; this catches those.
+          type = "command";
+          command = "${pkgs.python3}/bin/python3 ${../../scripts/git-no-verify-guard.py}";
+          timeout = 5;
         }];
       } {
         matcher = "Write";

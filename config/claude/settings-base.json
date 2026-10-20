@@ -26,9 +26,16 @@
       "mcp__brave-devtools__*",
       "mcp__firefox-developer__*",
       "mcp__code-review-graph__*",
-      "mcp__graphify__*"
+      "mcp__graphify__*",
+      "Bash(git add *)",
+      "Bash(git switch *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ],
     "deny": [
+      "Bash(git commit *--no-verify*)",
+      "Bash(git push *--no-verify*)",
+      "Bash(git commit -n*)",
       "mcp__claude-in-chrome__*",
       "mcp__davinci-resolve__run_script_unsafe",
       "mcp__davinci-resolve__launch_resolve"
@@ -48,7 +55,11 @@
       "mcp__davinci-resolve__generate_lut",
       "mcp__davinci-resolve__delete_dctl",
       "mcp__davinci-resolve__delete_lut",
-      "mcp__code-review-graph__apply_refactor_tool"
+      "mcp__code-review-graph__apply_refactor_tool",
+      "Bash(git push *--force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * +*)"
     ]
   },
   "enabledPlugins": {
