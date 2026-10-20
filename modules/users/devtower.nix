@@ -15,6 +15,7 @@
       "libvirtd"       # virtualization (when enabled)
       "render"         # GPU access (AMD Radeon)
       "input"          # input devices (Go XLR)
+      "cdrom"          # optical drive access (MakeMKV)
     ];
     shell = pkgs.zsh;
 

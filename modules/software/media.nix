@@ -27,6 +27,10 @@
     # rhythmbox        # GNOME music player
     # clementine       # Qt music player
 
+    # Disc ripping and transcoding (STORAGE-AND-MEDIA-ARCHITECTURE.md)
+    makemkv            # Lossless optical disc rip to MKV (unfree)
+    handbrake          # H.264/H.265 transcoding for Jellyfin direct play
+
     # Audio tools
     audacity           # Audio editing
     # ardour           # Digital audio workstation
@@ -34,4 +38,7 @@
     # Screenshot tools (already in base, but noted here)
     # grim, slurp, swappy are in desktop/hyprland
   ];
+
+  # MakeMKV talks to optical drives through SCSI generic devices (/dev/sg*)
+  boot.kernelModules = [ "sg" ];
 }

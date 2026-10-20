@@ -38,6 +38,9 @@
     mkcert
     nss.tools # needed for Firefox cert trust
 
+    # File type identification (magic bytes)
+    file
+
     # Archive tools
     unzip
     zip
