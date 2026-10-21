@@ -21,6 +21,12 @@
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     after = [ "graphical-session.target" "pipewire.service" ];
+    # The UI opens in the browser via xdg-open; without these the unit's
+    # minimal PATH fails with "Error Opening URL: No such file or directory".
+    path = [
+      "/run/current-system/sw"
+      "/etc/profiles/per-user/sam-desktop"
+    ];
     serviceConfig = {
       ExecStart = "${config.services.goxlr-utility.package}/bin/goxlr-daemon";
       Restart = "on-failure";

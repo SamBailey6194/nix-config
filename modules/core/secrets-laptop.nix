@@ -47,13 +47,15 @@ in
       mode = "0600";
     };
 
-    github-ssh-premier = {
-      file = ../../secrets/github-ssh-premier-${hostname}.age;
-      path = "/home/${username}/.ssh/github-${hostname}-premier";
-      owner = username;
-      group = "users";
-      mode = "0600";
-    };
+    # No laptop Premier key yet (secrets/github-ssh-premier-<host>.age is
+    # missing, which fails evaluation). Restore with its secrets.nix entry.
+    # github-ssh-premier = {
+    #   file = ../../secrets/github-ssh-premier-${hostname}.age;
+    #   path = "/home/${username}/.ssh/github-${hostname}-premier";
+    #   owner = username;
+    #   group = "users";
+    #   mode = "0600";
+    # };
 
     # ========================================================================
     # LUKS Passphrase (fallback when TPM2 auto-unlock fails)

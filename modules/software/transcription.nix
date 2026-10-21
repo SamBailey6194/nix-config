@@ -7,6 +7,9 @@ let
   '';
 in
 {
+  # software.meetingNotes options; enabled per host (CUDA build, device names)
+  imports = [ ./meeting-notes.nix ];
+
   # Imported by the shared desktop module, so stages 2-6 on every device get
   # both tools, while minimal installation images avoid the Python/Qt closure.
   # Hosts can opt out with software.heavyMediaTools.enable (media-jobs.nix).

@@ -86,7 +86,9 @@ in
   "github-ssh-missionalgen-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # Premier GitHub (Sam-Premier)
-  "github-ssh-premier-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # Laptop key not created yet: restore this line (and the declaration in
+  # modules/core/secrets-laptop.nix) when encrypting it.
+  # "github-ssh-premier-laptop-intel.age".publicKeys = laptopIntelKeys;
   "github-ssh-premier-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
@@ -184,6 +186,10 @@ in
   # public recipients, without decrypting the existing Claude/MCP bundles.
   "typesafe-api-key-laptop-intel.age".publicKeys = laptopIntelKeys;
   "typesafe-api-key-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # Hugging Face read token for meeting-notes' Pyannote speaker labelling
+  # (software.meetingNotes). Plain token, no KEY= prefix. Optional per device.
+  "huggingface-token-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
   # oama OAuth Clients (Per-Device)
