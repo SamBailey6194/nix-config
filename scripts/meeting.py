@@ -23,8 +23,9 @@ def ask(question, default=None):
     try:
         answer = input(f"{question}{hint}: ").strip()
     except (EOFError, KeyboardInterrupt):
-        print()
-        sys.exit(130)
+        # Backing out before anything starts is not a failure for `just`
+        print("\nCancelled.")
+        sys.exit(0)
     return answer
 
 
