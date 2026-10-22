@@ -1,6 +1,8 @@
 # Handover: devtower-intel storage work
 
-**Updated**: 13/10/2026, after the home move and the store config.
+**Updated**: 13/10/2026, after the home move and the store config; data layout,
+repos and off-site backup brought in line with `docs/SHARED-DATA-DRIVES.md`
+on 22/10/2026.
 **Branch**: `main`; see `git log` for the latest commit.
 
 ## Where things stand
@@ -56,15 +58,28 @@ has been run on these commits yet.**
   `syntek-business-docs`, `syntek-content`, `neovim-course` and the later
   book repos stay in `~/Repos`. On NTFS-3G the templates' symlinks
   (`.agents` -> `.claude`) are unreliable, exec bits are lost and git is
-  slower; Windows cannot see the repos (clone from GitHub there if needed).
+  slower; Windows cannot see the repos (clone from GitHub there if needed,
+  or, once syntek-business-docs and syntek-content have left GitHub, from
+  their bundle in `business/git/`).
 - **Data layout, lowercase** (`/mnt/data` = `~/Data`): `business/` and
-  `personal/` (each `docs/ photos/ videos/ audio/`), `archive/`
-  (rename the step 3 `Archive/` by hand), DavinciProj unchanged at the root.
-  NTFS ignores case, git's `gitdir` does not. Finished media go to
-  `~/Data/<area>/{videos,audio,photos,docs}/<repo>/<piece>/`; repos hold only
-  what GitHub needs.
+  `personal/` (each `docs/ photos/ videos/ audio/` plus the work folders
+  below; `business/` also has `git/`, `receipts-inbox/` and
+  `_gdrive_staging/`), `archive/` (rename the step 3 `Archive/` by hand),
+  DavinciProj unchanged at the root. NTFS ignores case, git's `gitdir` does
+  not. Finished output from a business repo is filed by type, then client
+  and family (`business/<type>/clients/<client>/<family>/` or
+  `business/<type>/syntek/<family>/`), with no folder named after the repo;
+  the `personal/` layout is still open. Large media and renders stay out of
+  git.
 - **Per-area work folders** (replace `craft/`): `assets/ design/ film/ sound/`,
   created after step 6's dry run, then one plain rsync (SHARED-DATA-DRIVES.md).
+- **Off-site backup of `business/`** (22/10, not built): two independent
+  nightly restic backups from the desktop, Hetzner Storage Box BX11 (SFTP)
+  and Infomaniak Swiss Backup (Swift), USB restic repository later; git
+  bundles of syntek-business-docs and syntek-content into `business/git/`
+  first; keep 7 daily, 5 weekly, 12 monthly, 7 yearly. kDrive is a one-way
+  viewing copy, not a backup. `personal/` gets its own repository and key,
+  not settled yet. Details: SHARED-DATA-DRIVES.md, Off-site backup.
 
 ## Next steps, in order
 
@@ -202,21 +217,28 @@ Do these together once the 4TB pair's step 7 is done, not mid-conversion:
 
 - **Data layout and repos** (see `docs/SHARED-DATA-DRIVES.md`, Repos on the
   SSD):
-  - Output root: a setting in syntek-media and syntek-author to write
-    outputs straight to `~/Data/<area>/...` (review requested from those
-    template sessions on 14/10).
+  - Output root: an export job in syntek-media and syntek-author that
+    writes finished output straight into the layout above, sorted by type,
+    client and family (review requested from those template sessions on
+    14/10). Open: which files it never exports (proposal:
+    syntek-business-docs' `accounting/accountant-docs/` and its
+    credential-named files).
   - syntek-business-docs: move its PDFs, scans and zips (`library/src/...`)
     to `~/Data/business/docs/`; decide whether to rewrite git history,
     which holds sensitive documents (driving licence, client contract scan,
     expenses zip).
   - neovim-course media (Git LFS now) likely follow the same pattern.
   - Off-site gap: in-progress gitignored media are only on the SSD until
-    moved to `~/Data`.
-  - Google Drive (personal, business Workspace): ciphertext backups only of
-    `docs/ photos/ videos/ audio/` (rclone crypt or restic, a key per area,
-    keys in agenix). Long term, self-hosted Forgejo and a media library
-    replace the VeraCrypt drives; remote access over WireGuard from
-    laptop-intel and the Framework. Keep paths host-neutral (`~/Data`): an
+    moved to `~/Data`; for syntek-business-docs and syntek-content it
+    closes once the business backup runs (it backs up both repo folders).
+  - Leaving GitHub: syntek-business-docs and syntek-content go only after
+    two green nights on both backup targets and a restore test from each;
+    then the Google Drive Actions and their service account go, the GitHub
+    repos are archived, `origin` removed, and the repos deleted after 30
+    days. The templates stay on GitHub.
+  - Off-site for `personal/`: not settled (own restic repository and key).
+  - Remote access over WireGuard from laptop-intel and the Framework
+    (`docs/REMOTE-ACCESS.md`). Keep paths host-neutral (`~/Data`): an
     AMD + NVIDIA devtower will replace devtower-intel.
   - ElevenLabs base path stays `/home/sam-desktop`; open media projects on
     the drive through `~/Data`.
@@ -225,6 +247,7 @@ Do these together once the 4TB pair's step 7 is done, not mid-conversion:
 
 - `docs/BACKUP-AND-DATA-ENCRYPTION.md`: OS, home and store procedures,
   config-status callout, client store, generations, remote Docker
-- `docs/SHARED-DATA-DRIVES.md`: 4TB pair, repos on the SSD, Samba, remote access
+- `docs/SHARED-DATA-DRIVES.md`: 4TB pair, data layout, repos on the SSD,
+  off-site backup and the kDrive viewing copy
 - `docs/DISK-PREVENTION.md`: GC, Docker limits, client store summary
 - `docs/SECRETS.md`: LUKS escrow secrets section

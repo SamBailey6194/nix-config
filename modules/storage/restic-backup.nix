@@ -62,9 +62,9 @@ let
       # Pruning/retention policy
       pruneOpts = repoCfg.pruneOpts or [
         "--keep-daily 7"
-        "--keep-weekly 4"
-        "--keep-monthly 6"
-        "--keep-yearly 2"
+        "--keep-weekly 5"
+        "--keep-monthly 12"
+        "--keep-yearly 7"
       ];
 
       # Exclude patterns
@@ -184,9 +184,9 @@ in {
             type = types.listOf types.str;
             default = [
               "--keep-daily 7"
-              "--keep-weekly 4"
-              "--keep-monthly 6"
-              "--keep-yearly 2"
+              "--keep-weekly 5"
+              "--keep-monthly 12"
+              "--keep-yearly 7"
             ];
             description = "Retention policy for old backups";
           };

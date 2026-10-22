@@ -63,8 +63,8 @@ enum Commands {
         #[arg(short, long, default_value = "daily")]
         schedule: String,
 
-        /// Retention policy (e.g., "7d,4w,6m,2y")
-        #[arg(long, default_value = "7d,4w,6m,2y")]
+        /// Retention policy (e.g., "7d,5w,12m,7y")
+        #[arg(long, default_value = "7d,5w,12m,7y")]
         retention: String,
     },
 

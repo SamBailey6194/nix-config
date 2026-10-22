@@ -1013,7 +1013,7 @@ restic-check REPO:
 
 # Prune old snapshots
 restic-prune REPO:
-    restic-repo {{REPO}} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+    restic-repo {{REPO}} forget --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 7 --prune
 
 # ZFS Management
 # ----------------------------------------------------------------------------

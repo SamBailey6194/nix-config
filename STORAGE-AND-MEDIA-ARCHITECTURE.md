@@ -1,7 +1,7 @@
 # Storage, Media, and Backup Architecture
 
-**Document Version**: 1.1.0  
-**Last Updated**: 2026-10-20  
+**Document Version**: 1.2.0  
+**Last Updated**: 2026-10-22  
 **Status**: 📋 Active Architectural Blueprint  
 
 ---
@@ -10,14 +10,17 @@
 
 This document outlines the personal data sovereignty and media architecture for `sam-desktop` and associated household devices. The goal is to systematically transition away from proprietary commercial cloud ecosystems (Google One, Netflix, Prime, Disney+) in favour of a self-hosted, privacy-first, and highly resilient infrastructure.
 
-The desktop is the **working and ripping machine**; always-on household services (Jellyfin, Immich) run on a **separate off-site Linux server** (see Section 5), because the desktop dual-boots and its data drive is NTFS.
+The desktop is the **working and ripping machine**; always-on household services (Jellyfin, Immich) will run on a **separate Linux host**, a NAS or a cloud server (see Section 5), because the desktop dual-boots and its data drive is NTFS.
+
+**Deferred:** Immich and Jellyfin are not set up until that NAS or cloud server exists. Sections 4 to 7 keep the design for then; nothing in them is being built now.
 
 ### Core Principles
 1. **Data Sovereignty**: Complete ownership of personal documents, family memories, business files, and media.
-2. **3-2-1 Backup Rule**: 3 copies of data, 2 distinct media formats (internal NVMe/SSD + external USB), 1 offsite encrypted copy.
-3. **Selective Encryption**: 
-   - **Readable where practical** (local USB drives and kDrive for emergency plug-and-read access).
-   - **Encrypted where necessary** (offsite cold storage using zero-knowledge client-side encryption).
+2. **3-2-1 Backup Rule**: the WD data drive, its nightly mirror on the Seagate, and two independent encrypted off-site restic repositories (Hetzner Storage Box and Infomaniak Swiss Backup), with a USB restic repository later. The drive pair and its mirror job are in [docs/SHARED-DATA-DRIVES.md](docs/SHARED-DATA-DRIVES.md).
+3. **Encryption**:
+   - **Readable on the desktop only**: the WD and its mirror are VeraCrypt volumes. The WD is unlocked by NixOS and by Windows; the mirror only by NixOS, while the mirror job runs.
+   - **Encrypted everywhere else**: every backup (off-site and USB) is a restic repository with client-side encryption. Personal and business data get separate repositories and keys.
+   - **kDrive is a viewing copy, not a backup**: finished business files, one way, for the phone and tablet (see Section 3).
 4. **Subscription Elimination**: Replacing monthly cloud storage and streaming fees (£30–£50/month) with low-cost physical media, self-hosted Jellyfin, and dedicated offsite backup nodes.
 
 ---
@@ -34,29 +37,33 @@ The primary data drive is a 3.7 TB usable encrypted partition (`/dev/mapper/cryp
 
 Mount options: `uid=1000,gid=100,fmask=0133,dmask=0022,windows_names,nofail,noatime`. Files appear as `0644` and folders as `0755`, owned by `sam-desktop`; `windows_names` stops Linux creating names Windows cannot open. Because of `nofail`, the drive may be absent until unlocked: anything that depends on it must use `RequiresMountsFor=/mnt/data`.
 
+The full layout and what goes where is in [docs/SHARED-DATA-DRIVES.md](docs/SHARED-DATA-DRIVES.md#suggested-layout); this is a summary plus the media folders that document does not cover.
+
 ```
 ~/Data/
-├── personal/            # Curated personal archive & active personal files
-│   ├── docs/            # PDFs, contracts, notes, certificates, projects
-│   ├── photos/          # Curated photo library & historical archives
-│   ├── videos/          # Family videos, clips, steelseries-moments
-│   ├── audio/           # Sound clips, music, voice recordings
-│   ├── design/          # PSD, AI, Sketch, Figma files
-│   └── assets/          # 3D models, fonts, archive packs
+├── Databases/ Media/ Projects/ Renders/   # DavinciProj folders, until moved into an area from Resolve
 ├── business/            # Syntek & company records, client work, accounts
-│   ├── film/            # DaVinci Resolve projects, media, renders
-│   └── docs/            # Client documentation, legal, invoicing
+│   ├── docs/            # Documents, decks, spreadsheets, PDFs (working and finished)
+│   ├── assets/          # Logos, brand marks, fonts, icons, reusable graphics
+│   ├── design/          # Affinity and Craft-app working files
+│   ├── film/            # resolve-library/, projects/, media/, renders/
+│   ├── sound/           # projects/, recordings/
+│   ├── photos/ videos/ audio/   # Finished output, by client or syntek, then family
+│   ├── git/             # Nightly git bundles of the business repos
+│   ├── receipts-inbox/  # Supplier PDFs fetched from the mailbox, before filing
+│   └── _gdrive_staging/ # Read-only copy of Google Drive, while leaving Google
+├── personal/            # The same folders as business/, without the last three
 ├── immich/              # Local copy of Immich uploads pulled from the server (planned)
 │   ├── sam/             # Sam's mobile camera roll backups
 │   └── heather/         # Heather's mobile camera roll backups
 ├── jellyfin/            # Master copy of the media library (rip output, F:\jellyfin\ on Windows)
 │   ├── movies/          # Film library (Title (Year)/Title (Year).mkv)
 │   └── shows/           # Series library (Show/Season XX/SXXEXX.mkv)
-├── archive/             # Static cold snapshots & historical backups
-└── CacheClip/           # DaVinci Resolve temporary render cache
+├── archive/             # *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
+└── .data-primary        # Marker file the mirror job checks for (WD only)
 ```
 
-`jellyfin/` and `immich/` do not exist yet; create them when ripping starts.
+`jellyfin/` and `immich/` do not exist yet: create `jellyfin/` when ripping starts, and `immich/` only once Immich runs on the NAS or cloud server. Resolve's render cache and optimised/proxy media belong on the SSD, not on this drive; a `CacheClip/` folder on the drive should move there. Until it does, leave it out of the backups; the mirror job does not exclude it, so it is mirrored too.
 
 ### Naming Conventions
 * **Directories / Folders**: Strict `kebab-case` (`camera-uploads/`, `steelseries-moments/`, `code-institute/`, `house-maintenance/`).
@@ -75,71 +82,62 @@ Mount options: `uid=1000,gid=100,fmask=0133,dmask=0022,windows_names,nofail,noat
 
 ---
 
-## 3. Tiered Backup Strategy
+## 3. Backup Strategy
 
-Different data types require different backup frequencies, formats, and encryption targets.
+The settled design for `business/` (22 October 2026, not built yet) is in [docs/SHARED-DATA-DRIVES.md](docs/SHARED-DATA-DRIVES.md#off-site-backup-and-the-kdrive-viewing-copy); that document wins where this summary differs.
 
 ```
-                                  ┌─────────────────────────────┐
-                                  │ Primary Storage: ~/Data/    │
-                                  └──────────────┬──────────────┘
-                                                 │
-          ┌──────────────────────────────────────┼──────────────────────────────────────┐
-          ▼                                      ▼                                      ▼
-┌───────────────────────────────┐ ┌───────────────────────────────┐ ┌───────────────────────────────┐
-│     Tier 1: Readable Cloud    │ │     Tier 2: Readable USB      │ │    Tier 3: Encrypted Cloud    │
-│      (Infomaniak kDrive)      │ │     (External Hard Drive)     │ │   (Hetzner / Swiss Backup)    │
-├───────────────────────────────┤ ├───────────────────────────────┤ ├───────────────────────────────┤
-│ • Tool: Rclone Sync           │ │ • Tool: Rsync / Rclone        │ │ • Tool: Restic                │
-│ • Unencrypted / Plaintext     │ │ • Tool: Plug-and-read mirror  │ │ • Client-side AES-256-GCM     │
-│ • Docs only (< 20 GB)         │ │ • Full ~/Data/ mirror         │ │ • Deduplicated snapshots      │
-│ • Read-only access from phone │ │ • Offline physical safety     │ │ • Point-in-time prune history │
-└───────────────────────────────┘ └───────────────────────────────┘ └───────────────────────────────┘
+                       ┌─────────────────────────────┐
+                       │ WD data drive: /mnt/data    │──── nightly mirror (rsync, 30-day history) ───► Seagate
+                       └──────────────┬──────────────┘
+                                      │ restic, nightly from 02:00, each target backed up from the desktop
+          ┌───────────────────────────┼───────────────────────────┐
+          ▼                           ▼                           ▼
+┌──────────────────────┐   ┌──────────────────────┐   ┌──────────────────────┐
+│ Hetzner Storage Box  │   │ Infomaniak           │   │ USB disk (later)     │
+│ BX11, SFTP port 23   │   │ Swiss Backup, Swift  │   │ local restic repo    │
+│ daily read-only      │   │ no immutability      │   │ unplugged between    │
+│ snapshots            │   │                      │   │ runs                 │
+└──────────────────────┘   └──────────────────────┘   └──────────────────────┘
+
+        Not a backup: rclone sync (WebDAV) ──► kDrive viewing copy of finished business files
 ```
 
 ### Backup Matrix
 
-| Target Destination | Purpose | Tools Used | Included Paths | Excluded Paths |
+| Target | Purpose | Tool | Included | Excluded |
 | :--- | :--- | :--- | :--- | :--- |
-| **Infomaniak kDrive** | Rapid document lookup on phone/laptop anywhere | `rclone sync` | • `personal/docs/`<br>• `business/docs/` | ❌ `jellyfin/`<br>❌ `immich/`<br>❌ Video libraries |
-| **External USB Disk** | Emergency plug-and-read hardware copy | `rsync -av --delete` | • `personal/`<br>• `business/`<br>• `immich/`<br>• `jellyfin/` | Temporary caches |
-| **Hetzner Storage Box / Swiss Backup** | Zero-knowledge cold disaster recovery | `restic` | • `personal/`<br>• `business/`<br>• `immich/upload/`<br>• Jellyfin metadata | `thumbs/`, `encoded-video/`, `CacheClip/` |
-| **Off-site server → backup target** | Recovery of server state | `restic` (from the server) | • Immich Postgres dumps<br>• Immich `upload/`<br>• Jellyfin config/metadata | Transcode & thumbnail caches |
+| **Seagate mirror** | Local copy one night behind, keeps replaced files 30 days | `rsync` (`data-mirror.service`) | The whole WD volume | `.data-primary`, `System Volume Information`, `$RECYCLE.BIN` |
+| **Hetzner Storage Box** and **Infomaniak Swiss Backup** | Encrypted off-site disaster recovery, two independent repositories | `restic` (`services.restic.backups`, one entry per target) | `business/` (with the git bundles) and the syntek-business-docs and syntek-content repo folders; `film/media/` and `sound/recordings/` only if irreplaceable | `film/renders/`, Resolve cache and proxy folders |
+| **USB disk** (later) | Offline encrypted copy | `restic` (local repository) | As the off-site targets | As the off-site targets |
+| **Infomaniak kDrive** | Viewing finished files on the phone and tablet. **Not a backup** | `rclone sync` over WebDAV, one way | `business/{docs,videos,audio,photos}/` | `_gdrive_staging/`, `receipts-inbox/`, `git/`, `assets/`, `design/`, `film/`, `sound/` |
+| **Server → backup target** (deferred, with the server) | Recovery of server state | `restic` (from the server) | Immich Postgres dumps, Immich `upload/`, Jellyfin config/metadata | Transcode & thumbnail caches |
 
-The off-site server is not a backup: its disks hold the live copy. The desktop's `~/Data/jellyfin/` remains the master copy of the media library, and Immich uploads should be pulled back to `~/Data/immich/` so the 3-2-1 rule still holds.
+- **Retention**: `forget --prune` keeping 7 daily, 5 weekly, 12 monthly and 7 yearly snapshots.
+- **Checks**: `restic check --read-data-subset=10%` every Sunday at 03:00 on each repository, and a quarterly restore test from each target.
+- **Not settled yet**: `personal/`, `immich/`, `jellyfin/`, `archive/` and the DavinciProj folders. `personal/` gets a restic repository and key of its own, never shared with `business/`.
+
+Once it exists, the server is not a backup: its disks hold the live copy. The desktop's `~/Data/jellyfin/` remains the master copy of the media library, and Immich uploads should be pulled back to `~/Data/immich/` so they fall under the desktop's backups once the personal side is settled.
 
 ### Key Tool Commands
 
-#### 1. Rclone to kDrive (Lightweight Document Sync)
+#### 1. Rclone to kDrive (viewing copy, one way)
 ```bash
-rclone sync ~/Data/personal/docs/ kdrive:personal-docs/ \
+rclone sync /mnt/data/business/docs/ kdrive:business/docs/ \
     --local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot" \
     --transfers 4 -P
 ```
 
-#### 2. Restic to Hetzner Storage Box (Encrypted Snapshot)
-```bash
-# Repository initialized over SFTP: sftp:uXXXXXX@uXXXXXX.your-storagebox.de:backup-restic
-restic -r sftp:uXXXXXX@uXXXXXX.your-storagebox.de:backup-restic backup \
-    ~/Data/personal/ \
-    ~/Data/business/ \
-    ~/Data/immich/upload/ \
-    --exclude "~/Data/CacheClip" \
-    --exclude "**/.cache"
-```
+Deletions follow, and an edit made on the phone is overwritten by the next sync. Whether to narrow `docs/` to `docs/clients/` and `docs/syntek/` (to keep working documents off kDrive) is still open.
 
-#### 3. USB Physical Mirror
-```bash
-rsync -avh --delete --modify-window=1 \
-    /home/sam-desktop/Data/ \
-    /run/media/sam-desktop/BACKUP_USB/Data/
-```
+#### 2. Restic backups
+Declared as `services.restic.backups` entries, not run by hand. Repository passwords, the Swift `OS_*` variables and the Storage Box SSH key are agenix secrets read through `passwordFile`, `environmentFile` and the ssh config; never put a secret in `repository`, `rcloneConfig` or `extraOptions`, which land in the Nix store. The schedule, bundle step and exclusions are in [docs/SHARED-DATA-DRIVES.md](docs/SHARED-DATA-DRIVES.md#off-site-backup-and-the-kdrive-viewing-copy).
 
 ---
 
 ## 4. Self-Hosted Household Services
 
-Both services run on the off-site server (Section 5). Nothing below runs on the desktop.
+**Deferred** until the NAS or cloud server exists (Section 5). Both services will run there; nothing below runs on the desktop. Ripping (C) does not depend on them.
 
 ### A. Immich Photo Management
 * **Multi-User Topology**:
@@ -172,9 +170,9 @@ Both services run on the off-site server (Section 5). Nothing below runs on the 
 
 ---
 
-## 5. Off-Site Server (Jellyfin + Immich)
+## 5. Server for Jellyfin + Immich (deferred)
 
-**Status**: 🔲 Provider not yet chosen. Target OS: NixOS, managed as a host in this repository.
+**Status**: 🔲 Deferred. Either a NAS (the `nas` host, Phase 12) or a cloud server; nothing is ordered or built, and Immich and Jellyfin wait for it. Target OS: NixOS, managed as a host in this repository. The research below covers the cloud option and was not repeated for a NAS.
 
 ### Requirements
 * Always on, independent of the desktop's dual boot.
@@ -215,6 +213,8 @@ Sources: `clouvider.com/dedicated-servers/`, `console.clouvider.co.uk/cart/…`,
 
 ## 6. Network Access & Remote Connectivity
 
+The server half of this section is deferred with the server (Section 5). It assumes a cloud server with a static public IP; a NAS at home would instead need a router port forward and dynamic DNS, as `wg-lan` does in [docs/REMOTE-ACCESS.md](docs/REMOTE-ACCESS.md).
+
 ```
 [Mobile / Laptop / TV]
         │ (WireGuard tunnel)
@@ -223,8 +223,8 @@ Sources: `clouvider.com/dedicated-servers/`, `console.clouvider.co.uk/cart/…`,
         ├── Jellyfin  ──► Streaming Media (port 8096, WireGuard/allow-listed only)
         └── Immich    ──► Mobile Camera Roll Sync (port 2283, WireGuard/allow-listed only)
         ▲
-        │ rsync / restic over WireGuard or SSH
-[sam-desktop (NixOS)] ── Samba (SMB) ──► LAN shares for laptops (ports 139, 445)
+        │ rsync (library sync) over WireGuard or SSH
+[sam-desktop (NixOS)] ── Samba (SMB3, wg-lan only) ──► laptop-intel, Framework
 ```
 
 1. **Plain WireGuard (No Third-Party Brokers)**:
@@ -232,9 +232,9 @@ Sources: `clouvider.com/dedicated-servers/`, `console.clouvider.co.uk/cart/…`,
    * Remote mobile devices connect using the official WireGuard app via QR code (`qrencode`).
    * Jellyfin and Immich ports are not opened publicly (`openFirewall = false`); allow them on the WireGuard interface only.
    * TVs that cannot run WireGuard need either a home-side WireGuard gateway or a reverse proxy with TLS and authentication; decide when the server is provisioned.
-2. **Samba (LAN File Sharing)**:
-   * Shares `personal`, `business`, and `jellyfin` from the desktop across the local network.
-   * Compatible with Windows Explorer, macOS Finder, Linux, and iOS/Android Files apps.
+2. **Samba (desktop, over WireGuard only)**:
+   * Designed in [docs/REMOTE-ACCESS.md](docs/REMOTE-ACCESS.md): reachable only over the `wg-lan` tunnel, SMB3 with encryption required, never on the LAN or the internet.
+   * Shares `business`, `personal`, `archive` (read-only) and `repos`. A `jellyfin` share is not part of that design; add it there if it is needed.
 
 ---
 
@@ -251,7 +251,7 @@ Sources: `clouvider.com/dedicated-servers/`, `console.clouvider.co.uk/cart/…`,
 
 `nixpkgs.config.allowUnfree = true` (needed for MakeMKV) is already set in `modules/core/common.nix`.
 
-### B. Jellyfin (Server Host)
+### B. Jellyfin (Server Host, deferred)
 ```nix
 services.jellyfin = {
   enable = true;
@@ -271,39 +271,43 @@ hardware.graphics = {
 users.users.jellyfin.extraGroups = [ "render" "video" ];
 ```
 
-### C. Immich (Server Host)
+### C. Immich (Server Host, deferred)
 Use the NixOS `services.immich` module on the server: it manages Postgres (with the required vector extension) and Redis/Valkey on the server's own Linux filesystem. Keep `services.immich.mediaLocation` on bulk storage and the database on SSD/NVMe. Configure exact options from the current NixOS module documentation when the host is created.
 
 ### D. Samba Sharing Configuration (Desktop)
+Sketch only; the share list and access rules are in [docs/REMOTE-ACCESS.md](docs/REMOTE-ACCESS.md#samba-shares).
 ```nix
 services.samba = {
   enable = true;
-  openFirewall = true;
+  openFirewall = false; # opened on wg-lan only, below
   settings = {
     global = {
-      "workgroup" = "WORKGROUP";
       "server string" = "sam-desktop";
       "security" = "user";
-      "hosts allow" = "192.168.1. 10.100.0. 127.0.0.1";
+      "interfaces" = "wg-lan";
+      "bind interfaces only" = "yes";
+      "server min protocol" = "SMB3";
+      "server smb encrypt" = "required";
+      "hosts allow" = "10.200.0.";
       "hosts deny" = "0.0.0.0/0";
     };
-    personal = {
-      path = "/home/sam-desktop/Data/personal";
-      browseable = "yes";
+    business = {
+      path = "/mnt/data/business";
       "read only" = "no";
       "valid users" = "sam-desktop";
     };
-    jellyfin = {
-      path = "/home/sam-desktop/Data/jellyfin";
-      browseable = "yes";
+    personal = {
+      path = "/mnt/data/personal";
       "read only" = "no";
       "valid users" = "sam-desktop";
     };
   };
 };
+
+networking.firewall.interfaces.wg-lan.allowedTCPPorts = [ 445 ];
 ```
 
-### E. WireGuard Server Configuration (Server Host)
+### E. WireGuard Server Configuration (Server Host, deferred)
 ```nix
 networking.wireguard.interfaces.wg0 = {
   ips = [ "10.100.0.1/24" ];
@@ -321,7 +325,7 @@ networking.wireguard.interfaces.wg0 = {
       publicKey = "<HEATHER_MOBILE_PUBLIC_KEY>";
       allowedIPs = [ "10.100.0.3/32" ];
     }
-    # sam-desktop (library sync and backups)
+    # sam-desktop (library sync; its backups go to the Storage Box and Swiss Backup, not here)
     {
       publicKey = "<SAM_DESKTOP_PUBLIC_KEY>";
       allowedIPs = [ "10.100.0.4/32" ];
@@ -343,10 +347,17 @@ networking.firewall.allowedUDPPorts = [ 51820 ];
 - [ ] **1-Week Observation Window**: Ensure all files are intact locally.
 - [ ] **Google Drive Purge**: Delete files from Drive, empty trash bin, confirm total usage under 15 GB, and cancel Google One.
 - [ ] **Custom Domain & Email**: Acquire domain, configure Infomaniak mail, run IMAP import from `samabailey6194@gmail.com`.
-- [ ] **Local USB Mirror**: Set up rsync job to external drive.
+- [ ] **Data drive pair**: VeraCrypt conversion and nightly Seagate mirror ([docs/SHARED-DATA-DRIVES.md](docs/SHARED-DATA-DRIVES.md), Conversion).
 - [ ] **Start Ripping**: Create `~/Data/jellyfin/{movies,shows}/` and rip discs locally.
-- [ ] **Choose Server Provider**: Confirm open questions in Section 5 with Clouvider / Infomaniak, then order.
-- [ ] **Provision Server**: Install NixOS (`nixos-anywhere`), add as a host in this repository with WireGuard and agenix secrets.
+- [ ] **Business off-site backup**: Storage Box BX11 and Swiss Backup restic repositories, git bundles, weekly checks, quarterly restore tests (design settled 22/10/2026).
+- [ ] **kDrive viewing copy**: one-way `rclone sync` of finished business files.
+- [ ] **Personal off-site backup**: its own restic repository and key (not settled).
+- [ ] **USB backup**: local restic repository, unplugged between runs.
+
+**Deferred until a NAS or cloud server exists:**
+
+- [ ] **Choose NAS or cloud server**: for a cloud server, confirm the open questions in Section 5 with Clouvider / Infomaniak, then order.
+- [ ] **Provision Server**: Install NixOS (`nixos-anywhere` for a cloud server), add as a host in this repository with WireGuard and agenix secrets.
 - [ ] **Jellyfin Deployment**: Enable Jellyfin on the server; sync `~/Data/jellyfin/` to it.
 - [ ] **Immich Deployment**: Configure Immich for Sam & Heather on the server; sync `~/Data/personal/photos/` as an external library.
-- [ ] **Encrypted Offsite Backup**: Initialise Restic repos for the desktop and the server on a separate provider (Hetzner Storage Box / Swiss Backup).
+- [ ] **Server backup**: restic from the server to a provider other than the server's.

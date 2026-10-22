@@ -6,7 +6,9 @@ apps (PhotoCraft, VectorCraft, ...). Windows (dual-boot on this PC) and NixOS
 both need them, so each one gets a **VeraCrypt** volume with **NTFS** inside,
 and NixOS keeps the second drive as a scheduled one-way mirror of the first.
 
-This is the plan as of 12 October 2026. The procedure below is done by hand;
+This is the plan as of 12 October 2026, with the
+[off-site backup](#off-site-backup-and-the-kdrive-viewing-copy) settled on
+22 October 2026. The procedure below is done by hand;
 the NixOS configuration for it (unlock, mounts, mirror timer) is written but
 switched off until each drive's identifier is filled in (step 7), see
 [NixOS configuration](#nixos-configuration).
@@ -64,10 +66,11 @@ The trade-off: anything changed since the last sync exists on the WD only.
 ### Suggested layout
 
 Two areas, `business/` and `personal/`, each with the same folders. Working
-files sit in a folder per kind of work; finished output goes to `photos/`,
-`videos/` and `audio/` only. Everything is lowercase: NTFS ignores case, but
-git's `includeIf` rules (see [NixOS configuration](#nixos-configuration)) do
-not, so `Business/` would miss the `business/` rule.
+files sit in a folder per kind of work; finished output goes to `docs/`,
+`photos/`, `videos/` and `audio/`. Everything is lowercase: NTFS ignores
+case, but git's `includeIf` rules (see
+[NixOS configuration](#nixos-configuration)) do not, so `Business/` would
+miss the `business/` rule.
 
 ```text
 <volume root>/        (= /mnt/data = ~/Data)
@@ -86,8 +89,11 @@ not, so `Business/` would miss the `business/` rule.
 │   │   └── recordings/        raw recordings and stems
 │   ├── photos/      finished images
 │   ├── videos/      finished videos
-│   └── audio/       finished audio
-├── personal/        the same folders as business/
+│   ├── audio/       finished audio
+│   ├── git/         nightly git bundles of the business repos
+│   ├── receipts-inbox/   supplier PDFs fetched from the mailbox, before filing
+│   └── _gdrive_staging/  read-only copy of Google Drive, while leaving Google
+├── personal/        the same folders as business/, without the last three
 ├── archive/         *.tar.zst of Unix-only material (pre-NixOS backups, old repos)
 └── .data-primary    marker file the mirror job checks for (WD only)
 ```
@@ -119,9 +125,11 @@ not, so `Business/` would miss the `business/` rule.
   `<letter>:\<area>\design\...` on Windows and NixOS alike.
 
 Git repositories are not kept here; they live on the SSD in `~/Repos` (see
-[Repos on the SSD, media on ~/Data](#repos-on-the-ssd-media-on-data)).
-Finished and large media from a repo go to
-`<area>/{videos,audio,photos,docs}/<repo>/<piece>/`.
+[Repos on the SSD, media on ~/Data](#repos-on-the-ssd-media-on-data)); only
+the nightly bundles of the business repos land in `business/git/`. Finished
+output from a business repo is filed by type into
+`business/{docs,photos,videos,audio}/`, then by client and family, with no
+folder named after the repo; the layout for `personal/` repos is still open.
 
 ### ~/Data: the drive in the home folder
 
@@ -131,7 +139,7 @@ changed through one path is the same file in the other, and nothing is copied
 or synced between them.
 
 **Work on media projects through `~/Data`**, for example
-`~/Data/business/videos/syntek-content/<piece>`. The ElevenLabs MCP only
+`~/Data/business/film/projects/<piece>`. The ElevenLabs MCP only
 accepts input files inside its base path, the home directory
 ([SHARED-MCP.md](SHARED-MCP.md)), and syntek-media's `check --setup` checks
 the project against the same base path. Both resolve symlinks first, so a
@@ -540,12 +548,14 @@ the Seagate being both `dataDrives.archive` (LUKS) and `dataPair.mirror`.
 - **Exclusions:** the malware scanner's `excludePaths` and
   `realTimeMonitoring.excludePaths` get `~/Data` on top of their defaults
   (the full stage; it matches by path prefix, so the boot scan of `/home` and
-  the on-access monitor skip it). Nothing else walks `/home`: no restic job is
-  declared (restic.nix takes jobs at run time; restic-backup.nix, unused,
-  passes `--one-file-system`), snapper's btrfs snapshots stop at mount points,
-  and there is no locate or file indexer. A restic job added at run time for
-  `/home` should exclude `~/Data` (or use `--one-file-system`), since the
-  off-site backup of `/mnt/data` covers it.
+  the on-access monitor skip it). Nothing else walks `/home`: the off-site
+  backups take the drive from `/mnt/data`, so far `business/` only, and from
+  `/home` only the two repo folders in `~/Repos/syntek/` (see
+  [Off-site backup](#off-site-backup-and-the-kdrive-viewing-copy));
+  restic-backup.nix, unused, passes `--one-file-system`; snapper's btrfs
+  snapshots stop at mount points; and there is no locate or file indexer. A
+  restic job for all of `/home` (restic.nix takes jobs at run time) should
+  exclude `~/Data` or use `--one-file-system`.
 - **Mirror job** (`data-mirror.service`), only when both drives are switched
   on:
   1. Starts `/mnt/data` and `/mnt/data-mirror` itself, which unlocks the
@@ -605,8 +615,11 @@ Git repositories stay on the SSD in `~/Repos`, not on the data drive:
 `~/Repos/syntek/syntek-business-docs` (a syntek-author project),
 `~/Repos/syntek/syntek-content` (syntek-media), `~/Repos/personal/neovim-course`
 and later `~/Repos/personal/{ai-theology-book,silent-church-book,fantasy-books}`
-(syntek-author and syntek-media). GitHub is their off-site copy. NTFS-3G
-would get in their way:
+(syntek-author and syntek-media). GitHub is their off-site copy, except for
+syntek-business-docs and syntek-content: they leave GitHub once the
+[off-site backup](#off-site-backup-and-the-kdrive-viewing-copy) has shown it
+can restore them. The templates themselves, syntek-author and syntek-media,
+stay on GitHub. NTFS-3G would get in their way:
 
 - **No reliable symlinks.** The syntek templates link `.agents` to `.claude`,
   and Python environments rely on links too.
@@ -617,19 +630,38 @@ would get in their way:
   `git status` over many media files takes noticeably longer.
 
 The trade-off: Windows cannot see the repos. If it ever needs one, clone it
-from GitHub there.
+from GitHub there, or, for the two business repos once they are off GitHub,
+from their bundle in `business/git/`.
 
-**Media go to `~/Data`.** A repo holds only what GitHub needs. Outputs are
-made in the repo, in gitignored folders, and each finished piece is moved to
-`~/Data/<area>/{videos,audio,photos,docs}/<repo>/<piece>/`, for example
-`~/Data/business/videos/syntek-content/<piece>/`. There it is on the drive
-Windows can open, mirrored every night, and inside the ElevenLabs base path.
+**Media go to `~/Data`.** Large media and renders stay out of git. Outputs
+are made in the repo, in gitignored folders, and each finished file from a
+business repo is filed by type into
+`~/Data/business/{docs,photos,videos,audio}/`, then by client and family,
+with no folder named after the repo (the layout for `personal/` is still
+open):
+
+- **A client's work** goes to `<type>/clients/<client>/<family>/`, for example
+  `~/Data/business/docs/clients/C009-premier/legal/`. Client folders are keyed
+  by syntek-business-docs' client list (`client-list.csv`), because one
+  client's slug can differ from one document family to the next.
+- **Syntek's own work** goes to `<type>/syntek/<family>/`, for example
+  `~/Data/business/docs/syntek/business/`. syntek-content's pieces go under
+  `videos/syntek/`, `audio/syntek/` or `photos/syntek/`; the folders below
+  that are still open.
+
+There it is on the drive Windows can open, mirrored every night, and inside
+the ElevenLabs base path.
 
 - **Off-site gap:** media still in progress, in a repo's gitignored folders,
-  exist only on the SSD until they are moved to `~/Data`.
-- **Not done yet:** an "output root" setting in the syntek-media and
-  syntek-author templates, so outputs are written straight to
-  `~/Data/<area>/...` instead of being moved by hand.
+  exist only on the SSD until they are moved to `~/Data`. For
+  syntek-business-docs and syntek-content this closes once the business backup
+  runs, because it also backs up both repo folders, ignored folders included.
+- **Not done yet:** an export job (the "output root") in the syntek-author and
+  syntek-media templates, so finished output is written straight into this
+  layout, sorted by type, client and family, instead of being moved by hand.
+  Which files it never exports is still open; the proposal is
+  syntek-business-docs' `accounting/accountant-docs/` and its
+  credential-named files.
 
 **From laptop-intel**, once the WireGuard link and sshd (see [Later](#later))
 are in place, the work runs on devtower-intel:
@@ -642,20 +674,96 @@ are in place, the work runs on devtower-intel:
 - Only while devtower-intel is booted into NixOS; when it is in Windows, the
   laptop cannot reach the drive.
 
+## Off-site backup and the kDrive viewing copy
+
+Settled for `business/` on 22 October 2026; nothing is built yet. Not covered
+yet: `personal/` (it will get a restic repository and key of its own, see
+[Later](#later)), `archive/` and the DavinciProj folders at the volume root.
+Vendor facts below were read on hetzner.com and infomaniak.com on
+22 October 2026; prices exclude VAT, and Infomaniak may bill in CHF.
+
+**Two nightly backups**, one `services.restic.backups` entry per target, from
+02:00 with `Persistent=true`, so a night missed while the PC is off or in
+Windows runs at the next NixOS boot:
+
+1. **Bundles first,** made once before either backup starts (how the two
+   entries share this step is not decided yet): `git bundle create --all` for
+   syntek-business-docs and syntek-content into `/mnt/data/business/git/`,
+   then `git bundle verify` on each; a bundle that fails stops the backups. A
+   bundle holds the full history, rides the nightly mirror to the Seagate, and
+   restores with `git clone <name>.bundle`.
+2. **Back up** `/mnt/data/business` and both repo folders in `~/Repos/syntek/`
+   (uncommitted work, and in-progress media in ignored folders). Leave out
+   `film/renders/` (it can be rendered again) and any Resolve cache or proxy
+   folders that land on the drive; `film/media/` and `sound/recordings/` are
+   large, so they go in only if irreplaceable.
+3. **Prune** with `forget --prune`, keeping 7 daily, 5 weekly, 12 monthly and
+   7 yearly snapshots.
+
+**Two independent off-site targets, and a USB disk later**, each backed up
+from the desktop, not one repository copied into the other with
+`restic copy`, so a fault in one cannot spread. The NixOS module has no
+`restic copy` either.
+
+| Target | Plan | Access | Guard against deletion |
+| --- | --- | --- | --- |
+| Hetzner Storage Box | BX11: 1TB, €3.20/month | SFTP on port 23 with an OpenSSH key; "External Reachability" switched on | automatic daily snapshots (up to 10 on a BX11), which the desktop cannot delete |
+| Infomaniak Swiss Backup | 200GB plus 1 Swift device, about €2.67/month after a 90-day trial | Swift, the only protocol Infomaniak documents for restic | none: Swift has no immutability |
+| USB disk (later) | | a local restic repository | unplugged between runs |
+
+A compromised desktop holds credentials that can delete both off-site
+repositories; the Storage Box's automatic snapshots are read-only over SFTP,
+and are the one copy it cannot delete.
+
+**Secrets.** A separate password per repository and the Swift credentials
+(the `OS_*` variables) are agenix secrets encrypted to devtower-intel and the
+KEYS recovery key, read through `passwordFile` and `environmentFile`. The
+Storage Box SSH key is an agenix secret too, named by its path in the ssh
+config or `sftp.command`. Never put a secret's value in `rcloneConfig`,
+`repository` or `extraOptions`, which end up in the world-readable Nix store.
+No off-site paper copy was chosen, so the KEYS stick, which shares a house
+with the desktop, is the only way back into the backups if the desktop is
+lost.
+
+**Checks.** Every Sunday at 03:00, `restic check --read-data-subset=10%` on
+each repository. Every quarter, a restore test from each target: restore
+`latest` to a scratch directory, clone each bundle, run `git fsck --full`,
+and compare the refs with the live repos. Any failure raises a desktop
+notification.
+
+**WireGuard** cannot wrap either target: neither runs it. A later relay VPS at
+Hetzner could carry the backup over WireGuard and reach the Storage Box inside
+Hetzner's network, so "External Reachability" could stay off; that matters
+because the box's password login cannot be disabled. It would not cover Swiss
+Backup. Never route it through arwyn-1, which belongs to another deployment.
+
+**Leaving GitHub.** syntek-business-docs and syntek-content leave GitHub only
+after two green nights on both targets and a restore test from each. Then
+syntek-business-docs' two Google Drive Actions and their service account go,
+both GitHub repositories are archived, `origin` is removed, and the GitHub
+repositories are deleted after 30 days with nothing missed.
+
+**The kDrive viewing copy is not a backup.** `rclone sync` over WebDAV (rclone
+has no kDrive backend, and kDrive offers no rsync) copies
+`business/{docs,videos,audio,photos}/` one way to kDrive for the phone and
+tablet, so deletions follow. It never takes `_gdrive_staging/`,
+`receipts-inbox/`, `git/` or the work folders (`assets/`, `design/`, `film/`,
+`sound/`). kDrive is not end-to-end encrypted, it is read-only only by
+convention (an edit made on the phone is overwritten by the next sync), it
+allows 1,000 subfolders per kDrive, and Infomaniak tolerates WebDAV without
+supporting it. `docs/` also holds working documents (see the
+[layout](#suggested-layout)), so they reach kDrive too unless the sync is
+narrowed to `docs/clients/` and `docs/syntek/`: still open.
+
 ## Later
 
 The remote-access design (WireGuard, sshd, Samba shares, Docker, LLMs) is now
 in [REMOTE-ACCESS.md](REMOTE-ACCESS.md); it supersedes the notes below where
 they differ.
 
-- **Off-site, ciphertext only:** back up `/mnt/data` with client-side
-  encryption (for example `rclone crypt` or restic) to Google Drive, later a
-  Hetzner Storage Box. Personal and business data in separate encrypted
-  repositories with separate keys. Scope, per area: `docs/`, `assets/`,
-  `design/`, `film/resolve-library/`, `film/projects/`, `sound/projects/`,
-  `photos/`, `videos/` and `audio/`. `film/media/` and `sound/recordings/` are
-  large, so only if irreplaceable; `film/renders/` can be rendered again.
-  Exclude any Resolve cache or proxy folders that land on the drive.
+- **Off-site for `personal/`:** not settled yet. It will get a restic
+  repository and key of its own, apart from `business/`
+  ([Off-site backup](#off-site-backup-and-the-kdrive-viewing-copy)).
 - **Network access:** Samba on NixOS, reachable only over WireGuard, for other
   devices with the right keys. It works only while NixOS is running. Bind it
   to the WireGuard interface only, with SMB3 and encryption required.

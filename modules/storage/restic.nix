@@ -65,9 +65,9 @@ in {
       type = types.attrs;
       default = {
         daily = 7;
-        weekly = 4;
-        monthly = 6;
-        yearly = 2;
+        weekly = 5;
+        monthly = 12;
+        yearly = 7;
       };
       description = "Default retention policy for pruning";
     };

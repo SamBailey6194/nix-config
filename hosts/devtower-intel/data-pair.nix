@@ -207,9 +207,12 @@ in
     # the full stage) checks exclusions by path prefix, for scans (the boot
     # scan's /home) and for the on-access monitor. Its defaults are kept: a
     # definition here replaces an option's default rather than adding to it.
-    # Restic and snapper need nothing: no backup job is declared (restic.nix
-    # takes its jobs at run time and none exists; restic-backup.nix, unused,
-    # passes --one-file-system), and btrfs snapshots stop at mount points.
+    # Restic and snapper need nothing here: the off-site backups take the
+    # drive from /mnt/data, never through ~/Data, and from /home only the
+    # ~/Repos/syntek repo folders (docs/SHARED-DATA-DRIVES.md, Off-site
+    # backup); restic-backup.nix, unused, passes --one-file-system; btrfs
+    # snapshots stop at mount points. A restic job for all of /home must
+    # still exclude ~/Data or use --one-file-system.
     (lib.optionalAttrs (options ? security.malwareScanner) (lib.mkIf dataOn {
       security.malwareScanner = {
         excludePaths = options.security.malwareScanner.excludePaths.default ++ [ dataHome ];
