@@ -95,6 +95,7 @@
     wayland-protocols
     wayland-utils
     wl-clipboard
+    xclip               # X11 clipboard, for XWayland apps and tools that only know xclip
 
     # Hyprland ecosystem
     hyprpaper           # Wallpaper daemon
