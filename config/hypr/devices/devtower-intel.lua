@@ -97,6 +97,7 @@ local assignments = {
     { "mail-aerc", { class = "^(aerc)$" }, 4 },
     { "mail-aerc-keybinds", { class = "^(aerc-keybinds)$" }, 4 },
     { "mail-claws", { class = "^(claws-mail)$" }, 4 },
+    { "mail-calendar", { class = "^(khal)$" }, 4 },
     -- 5-10: LibreOffice. Wayland app ids per module (unverified). The Start
     -- Center keeps its own id, so it opens with Writer.
     { "office-startcenter", { class = "^(libreoffice-startcenter)$" }, 5 },
@@ -217,6 +218,11 @@ hl.env("DEV_LAYOUT_POOL_LAST", "40")
 -- CTRL + 1 -> ws 21, ALT + 1 -> ws 31). The submap resets after one move;
 -- Escape cancels.
 local mod = vars.mod
+hl.bind(mod .. " + SHIFT + C", function()
+    hl.dispatch(hl.dsp.focus({ workspace = 4 }))
+    hl.exec_cmd("kitty --class khal -e khal interactive")
+end, { description = "Calendar: khal alongside mail on workspace 4" })
+
 local banks = { { "", 0 }, { "SHIFT + ", 10 }, { "CTRL + ", 20 }, { "ALT + ", 30 } }
 
 -- Every number key below also has its numpad twin (vars.number_keys).

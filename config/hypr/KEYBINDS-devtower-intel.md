@@ -25,6 +25,7 @@ laptop-intel uses `KEYBINDS.md`; this sheet replaces it on devtower-intel
 | `SUPER + SHIFT + E`  | Backup mail client: Claws Mail (ws 4) |
 | `SUPER + T`          | Teams (ws 11)           |
 | `SUPER + C`          | Zoom (ws 11)            |
+| `SUPER + SHIFT + C`  | Calendar: khal (ws 4)   |
 | `SUPER + R`          | RustDesk                |
 | `SUPER + M`          | System monitor (btop)   |
 | `SUPER + SHIFT + M`  | Backup monitor (htop)   |

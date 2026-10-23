@@ -19,6 +19,7 @@ in
 {
   imports = [
     ./secrets.nix
+    ./calendar.nix
     ./client-store.nix
     ../../modules/boot/refind
   ];
