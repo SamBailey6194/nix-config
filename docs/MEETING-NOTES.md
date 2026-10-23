@@ -140,6 +140,34 @@ Speaker labelling runs on the CPU.
 Both heavy steps run through `resource-run`, inside `workload.slice` and its
 memory and CPU caps ([Media tools](MEDIA-WORKLOADS.md)). Recording does not.
 
+## Filing and backup
+
+On devtower-intel, from the dev stage, a user timer
+(`meeting-notes-filing`, `home/modules/meeting-notes-filing.nix`) runs
+syntek-business-docs' `file_meeting_notes.py run --notify` every 15 minutes.
+It copies each finished meeting's `notes.md` and `transcript.md` into the
+client's `meeting-notes/` folder, by the client name the title starts with
+(so title meetings "Urban Saints – aice review"). It notifies once when it
+files a meeting or first holds one; a meeting still held after that is only
+listed by `status`. It never commits and never files Premier, whose meetings
+must not be recorded on this PC at all (its contract forbids storing its data
+on personal equipment).
+The procedure, client aliases and review steps are in that repo's
+`library/workflows/local/01-file-meeting-notes/`. The timer skips until both
+that script and `~/Documents/Meetings/` exist; a failed run raises a critical
+notification.
+
+```bash
+systemctl --user list-timers meeting-notes-filing
+journalctl --user -u meeting-notes-filing
+python3 -I ~/Repos/syntek/syntek-business-docs/library/workflows/local/01-file-meeting-notes/file_meeting_notes.py status
+```
+
+The recordings themselves stay on the SSD. `~/Documents/Meetings/` is in the
+business off-site backup design
+([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#off-site-backup-and-the-kdrive-viewing-copy)),
+which is not built yet, so until it runs nothing backs them up.
+
 ## Consent
 
 Tell people you are recording, and why. Keep recordings and transcripts only

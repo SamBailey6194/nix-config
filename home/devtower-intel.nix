@@ -25,6 +25,10 @@ let
   hasResolve = import ./modules/resolve-package.nix { inherit lib osConfig; } != null;
 in
 {
+  # Files finished meetings into syntek-business-docs (only where
+  # software.meetingNotes is on: the dev stage and up).
+  imports = [ ./modules/meeting-notes-filing.nix ];
+
   # Keep Cargo artifacts outside any repository Nix might copy as a flake.
   home.sessionVariables.CARGO_TARGET_DIR = "${config.xdg.cacheHome}/cargo-target";
   programs.zsh.envExtra = ''

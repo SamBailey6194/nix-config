@@ -656,6 +656,9 @@ the ElevenLabs base path.
   exist only on the SSD until they are moved to `~/Data`. For
   syntek-business-docs and syntek-content this closes once the business backup
   runs, because it also backs up both repo folders, ignored folders included.
+  The same holds for meeting recordings in `~/Documents/Meetings/`, which
+  nothing backs up until then; only their filed notes and transcripts reach
+  syntek-business-docs.
 - **Not done yet:** an export job (the "output root") in the syntek-author and
   syntek-media templates, so finished output is written straight into this
   layout, sorted by type, client and family, instead of being moved by hand.
@@ -692,10 +695,15 @@ Windows runs at the next NixOS boot:
    then `git bundle verify` on each; a bundle that fails stops the backups. A
    bundle holds the full history, rides the nightly mirror to the Seagate, and
    restores with `git clone <name>.bundle`.
-2. **Back up** `/mnt/data/business` and both repo folders in `~/Repos/syntek/`
-   (uncommitted work, and in-progress media in ignored folders). Leave out
-   `film/renders/` (it can be rendered again) and any Resolve cache or proxy
-   folders that land on the drive; `film/media/` and `sound/recordings/` are
+2. **Back up** `/mnt/data/business`, both repo folders in `~/Repos/syntek/`
+   (uncommitted work, and in-progress media in ignored folders) and
+   `~/Documents/Meetings/` (the meeting recordings, transcripts and notes,
+   which are on the SSD only; see [Meeting notes](MEETING-NOTES.md)). Premier
+   meetings are never recorded on this PC (its contract forbids storing its
+   data on personal equipment), so there is no Premier exclude: a folder
+   name holds only the first 60 characters of the title and cannot be
+   matched reliably. Leave out `film/renders/` (it can be rendered again)
+   and any Resolve cache or proxy folders that land on the drive; `film/media/` and `sound/recordings/` are
    large, so they go in only if irreplaceable.
 3. **Prune** with `forget --prune`, keeping 7 daily, 5 weekly, 12 monthly and
    7 yearly snapshots.
