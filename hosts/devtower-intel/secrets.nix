@@ -34,6 +34,8 @@ in
   imports = [
     ../../modules/core/typesafe-secret.nix
     ../../modules/core/oama-secret.nix # aerc OAuth clients (home/modules/aerc.nix)
+    ../../modules/core/mail-aerc-secrets.nix # aerc Infomaniak device passwords
+    ../../modules/core/business-docs-secrets.nix # mail scripts' and calendar passwords (root-only)
   ];
 
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];

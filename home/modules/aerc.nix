@@ -11,9 +11,21 @@
 # ACCOUNTS
 #
 #   personal   samabailey6194@gmail.com      Gmail          (oama: google)
-#   syntek     sam.bailey@syntekstudio.com   Google Workspace (oama: google)
 #   premier    sam.bailey@premier.org.uk     Microsoft 365, a client's tenant
 #                                            (oama: microsoft)
+#   syntek     sam.bailey@syntekstudio.com   Infomaniak     (device password)
+#   syntek-<mailbox>  <mailbox>@syntekstudio.com, the same: contact, dev,
+#                     finance, git, info, support
+#
+# AUTHENTICATION - INFOMANIAK
+#
+# Infomaniak has no OAuth2 for IMAP/SMTP: each mailbox signs in with a
+# device password, one per mailbox and device, which agenix decrypts to
+# /run/agenix/mail-<mailbox>-aerc (modules/core/mail-aerc-secrets.nix) and
+# aerc reads with `cat`. Full-stage hosts only; without the file that account
+# shows a login error. Readable by the user aerc runs as, so by any process
+# running as that user too: they are never the root-only passwords the
+# syntek-business-docs mail scripts use.
 #
 # AUTHENTICATION - WHY oama IS HERE BUT NOT IN email.nix
 #
@@ -37,7 +49,7 @@
 #
 # aerc only ever READS aerc.conf, binds.conf and accounts.conf, so all three
 # come from the store. accounts.conf holds no secret - every credential is a
-# command - which is what makes `unsafe-accounts-conf` (below) safe.
+# command (`oama access` or a `cat` of an agenix file) - which is what makes `unsafe-accounts-conf` (below) safe.
 #
 # KEYBINDS ARE DECLARATIVE TOO
 #
@@ -77,42 +89,68 @@ let
     trash = "Deleted Items";
   };
 
-  # The aerc tab names. aerc orders tabs as accounts.conf lists them, which
-  # Home Manager sorts by name.
-  mailAccounts = {
-    personal = gmail // { address = "samabailey6194@gmail.com"; primary = true; };
-    syntek = gmail // { address = "sam.bailey@syntekstudio.com"; };
-    premier = microsoft365 // { address = "sam.bailey@premier.org.uk"; };
+  # Infomaniak: IMAP 993 (SSL/TLS) and SMTP 587 (STARTTLS), as Infomaniak
+  # recommends, signing in with a device password (`secret`). Unlike Gmail
+  # and Microsoft 365 it files no copy of mail sent over SMTP, so aerc copies
+  # each sent message to `sent` itself.
+  infomaniak = mailbox: {
+    flavor = "plain";
+    address = "${lib.replaceStrings [ "-" ] [ "." ] mailbox}@syntekstudio.com";
+    secret = "mail-${mailbox}-aerc";
+    imap = { host = "mail.infomaniak.com"; port = 993; tls.enable = true; };
+    smtp = { host = "mail.infomaniak.com"; port = 587; tls = { enable = true; useStartTls = true; }; };
+    # Folder names as Infomaniak's IMAP LIST shows them (checked 23/10/2026);
+    # the archive is "Archives", plural.
+    drafts = "Drafts";
+    sent = "Sent";
+    archive = "Archives";
+    trash = "Trash";
   };
 
-  # Shared by every account: OAuth2 via oama.
+  # The aerc tab names. aerc orders tabs as accounts.conf lists them, which
+  # Home Manager sorts by name, so the syntek-* mailboxes sit together.
+  mailAccounts = {
+    personal = gmail // { address = "samabailey6194@gmail.com"; primary = true; };
+    premier = microsoft365 // { address = "sam.bailey@premier.org.uk"; };
+    syntek = infomaniak "sam-bailey";
+  } // lib.listToAttrs (map
+    (mailbox: lib.nameValuePair "syntek-${mailbox}" (infomaniak mailbox))
+    [ "contact" "dev" "finance" "git" "info" "support" ]);
+
+  # OAuth2 via oama, or a device password for accounts with a `secret`.
   #
-  # `sent = null` is deliberate: HM turns folders.sent into aerc's copy-to,
-  # and Gmail and Microsoft 365 both file a copy of everything sent over SMTP
-  # themselves, so copying it again would leave every message in Sent twice.
+  # `sent = null` on the OAuth2 accounts is deliberate: HM turns folders.sent
+  # into aerc's copy-to, and Gmail and Microsoft 365 both file a copy of
+  # everything sent over SMTP themselves, so copying it again would leave
+  # every message in Sent twice.
   #
   # `trash` is NOT an aerc setting (HM's folders.trash goes nowhere either):
   # it is used by the delete keybinds further down.
-  mkAccount = _: a: {
-    inherit (a) address flavor;
-    inherit realName;
-    primary = a.primary or false;
-    userName = a.address;
-    # A list, not a string: HM splits a string on spaces itself, and aerc gets
-    # the command joined back with spaces either way.
-    passwordCommand = [ oama "access" a.address ];
-    folders = {
-      inbox = "INBOX";
-      sent = null;
-      inherit (a) drafts;
-    };
-    aerc = {
-      enable = true;
-      imapAuth = "xoauth2";
-      smtpAuth = "xoauth2";
-      extraAccounts.archive = a.archive;
-    };
-  };
+  mkAccount = _: a:
+    let password = a ? secret; in
+    {
+      inherit (a) address flavor;
+      inherit realName;
+      primary = a.primary or false;
+      userName = a.address;
+      # A list, not a string: HM splits a string on spaces itself, and aerc
+      # gets the command joined back with spaces either way.
+      passwordCommand =
+        if password then [ "${pkgs.coreutils}/bin/cat" "/run/agenix/${a.secret}" ]
+        else [ oama "access" a.address ];
+      folders = {
+        inbox = "INBOX";
+        sent = a.sent or null;
+        inherit (a) drafts;
+      };
+      aerc = {
+        enable = true;
+        imapAuth = if password then null else "xoauth2";
+        smtpAuth = if password then "plain" else "xoauth2";
+        extraAccounts.archive = a.archive;
+      };
+    }
+    // lib.optionalAttrs (a ? imap) { inherit (a) imap smtp; };
 
   # ── oama ────────────────────────────────────────────────────────────────
 
@@ -487,7 +525,7 @@ in
     extraConfig = {
       general = {
         # accounts.conf is a store symlink, so it cannot be 0600. It holds no
-        # credentials: each account's are `oama access` commands.
+        # credentials: each account's are `oama access` or `cat` commands.
         unsafe-accounts-conf = true;
       };
 

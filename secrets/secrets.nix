@@ -192,6 +192,69 @@ in
   "huggingface-token-devtower-intel.age".publicKeys = devtowerIntelKeys;
 
   # ============================================================================
+  # Infomaniak Mail Device Passwords (per device)
+  # Plain password on one line each. One per mailbox, job and device, so each
+  # can be revoked alone: Infomaniak Manager > Mail Service > address >
+  # Devices > Add a device. Premier mail is excluded (contract clauses
+  # 11.2.13 / 11.3.7).
+  #
+  # Script passwords (modules/core/business-docs-secrets.nix): read, drafts and
+  # sort for the syntek-business-docs mail scripts, run as systemd services
+  # that get the file through LoadCredential; root-only at
+  # /run/agenix/mail-<mailbox>-<job>, so no LLM session running as the user
+  # can read them. sort is the one-off history move (it deletes mail): once a
+  # mailbox's move is done, delete its .age file, its line here and its device.
+  # ============================================================================
+
+  "mail-sam-bailey-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-info-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-support-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-contact-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-dev-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-git-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-finance-read-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  "mail-sam-bailey-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-info-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-support-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-contact-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-dev-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-git-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-finance-drafts-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  "mail-sam-bailey-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-info-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-support-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-contact-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-dev-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-git-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-finance-sort-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # Infomaniak calendar for the same scripts (CalDAV, sync.infomaniak.com):
+  # the Infomaniak user's application password, root-only like the above. It
+  # is the account's sync login, so it reaches contacts (CardDAV) too.
+  "calendar-caldav-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # aerc's own device passwords (modules/core/mail-aerc-secrets.nix), one per
+  # mailbox and device, readable by the user aerc runs as. Separate from the
+  # root-only script passwords above so each can be revoked alone.
+  "mail-sam-bailey-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-info-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-support-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-contact-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-dev-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-git-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "mail-finance-aerc-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
+  # "mail-sam-bailey-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-info-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-support-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-contact-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-dev-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-git-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+  # "mail-finance-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
+
+  # ============================================================================
   # oama OAuth Clients (Per-Device)
   # The app registrations aerc signs in through (home/modules/aerc.nix):
   # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MICROSOFT_CLIENT_ID. Not the mail

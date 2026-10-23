@@ -19,15 +19,17 @@ Claws keeps its own accounts and OAuth sign-in, set up through its GUI
 
 ## Deleting
 
-aerc's own delete expunges, which does the wrong thing on both providers: on
-Gmail it only removes the Inbox label (the message is archived, not binned),
-and on Microsoft 365 it skips Deleted Items. So in this setup:
+aerc's own delete expunges, which does the wrong thing on Gmail and
+Microsoft 365: on Gmail it only removes the Inbox label (the message is
+archived, not binned), and on Microsoft 365 it skips Deleted Items. So in this
+setup every account moves to its trash instead:
 
-| Where                          | `d` / `D`                                        |
-|--------------------------------|--------------------------------------------------|
-| Any folder, Gmail accounts     | Move to `[Gmail]/Bin`                            |
-| Any folder, `premier`          | Move to `Deleted Items`                          |
-| Inside the Bin / Deleted Items | Delete for good (`d` asks first)                 |
+| Where                                | `d` / `D`                                  |
+|--------------------------------------|--------------------------------------------|
+| Any folder, `personal` (Gmail)       | Move to `[Gmail]/Bin`                      |
+| Any folder, `premier`                | Move to `Deleted Items`                    |
+| Any folder, `syntek*` (Infomaniak)   | Move to `Trash`                            |
+| Inside the Bin / Deleted Items / Trash | Delete for good (`d` asks first)         |
 
 Gmail names the Bin after the account's display language: `[Gmail]/Bin` in
 English (UK), `[Gmail]/Trash` in English (US). If an account shows the other
@@ -36,15 +38,57 @@ A move to a folder that does not exist just fails, so nothing is lost.
 
 ## Accounts
 
-| aerc tab   | Address                       | Provider                  | oama service |
-|------------|-------------------------------|---------------------------|--------------|
-| `personal` | samabailey6194@gmail.com      | Gmail                     | `google`     |
-| `syntek`   | sam.bailey@syntekstudio.com   | Google Workspace          | `google`     |
-| `premier`  | sam.bailey@premier.org.uk     | Microsoft 365 (client)    | `microsoft`  |
+| aerc tab          | Address                       | Provider               | Sign-in                   |
+|-------------------|-------------------------------|------------------------|---------------------------|
+| `personal`        | samabailey6194@gmail.com      | Gmail                  | oama `google`             |
+| `premier`         | sam.bailey@premier.org.uk     | Microsoft 365 (client) | oama `microsoft`          |
+| `syntek`          | sam.bailey@syntekstudio.com   | Infomaniak             | `mail-sam-bailey-aerc`    |
+| `syntek-<mailbox>`| `<mailbox>@syntekstudio.com`  | Infomaniak             | `mail-<mailbox>-aerc`     |
 
-To add or change one, edit `accounts.email.accounts` in `aerc.nix`.
+The `syntek-<mailbox>` tabs are `contact`, `dev`, `finance`, `git`, `info` and
+`support`. To add or change an account, edit `mailAccounts` in `aerc.nix`.
 
-## How sign-in works
+## Infomaniak accounts
+
+Infomaniak has no OAuth2 for mail clients: each mailbox signs in with a
+**device password**, made in Infomaniak Manager → Mail Service → the address
+→ Devices → Add a device. Make one per mailbox **and per device**, so losing
+the laptop means revoking only the laptop's passwords. aerc connects to
+`mail.infomaniak.com`, IMAP 993 (SSL/TLS) and SMTP 587 (STARTTLS), with the
+full address as the username, and copies sent mail to `Sent` itself.
+
+Store each one, a single line with only the password:
+
+```bash
+just edit-secret mail-sam-bailey-aerc-devtower-intel   # mail-<mailbox>-aerc-<host>
+```
+
+`modules/core/mail-aerc-secrets.nix` decrypts it to
+`/run/agenix/mail-<mailbox>-aerc`, owned by you, once the `.age` file is
+committed and the full stage rebuilt. aerc reads it with `cat`.
+
+These are **not** the passwords the syntek-business-docs mail scripts use.
+Those are separate devices (`mail-<mailbox>-{read,drafts,sort}`,
+`modules/core/business-docs-secrets.nix`), readable by root only and passed to
+the scripts' systemd services, so no LLM session running as you can read
+them. aerc's passwords are readable by you, and so by anything running as
+you, the same as the oama tokens.
+
+To check a password without rebuilding, in your own terminal (the password
+goes from agenix straight into Python and is never shown):
+
+```bash
+cd ~/Repos/personal/nix-config/secrets
+agenix -d mail-contact-aerc-devtower-intel.age -i ~/.ssh/id_ed25519_agenix \
+  | python3 -I -c 'import imaplib, sys
+p = sys.stdin.readline().rstrip("\r\n")
+m = imaplib.IMAP4_SSL("mail.infomaniak.com")
+m.login("contact@syntekstudio.com", p)
+print("login OK")
+m.logout()'
+```
+
+## How sign-in works (Gmail and Microsoft 365)
 
 Gmail and Microsoft 365 accept only OAuth2 for IMAP and SMTP. aerc can use an
 OAuth2 token but cannot get or renew one, so **oama** does that:
@@ -62,7 +106,7 @@ error.
 
 ## One-time setup
 
-### 1. Google OAuth client (covers both Google accounts)
+### 1. Google OAuth client (personal Gmail)
 
 In the [Google Cloud console](https://console.cloud.google.com/), signed in as
 the personal Gmail account:
@@ -76,11 +120,6 @@ the personal Gmail account:
    again every week. The app stays unverified. That is fine for your own
    accounts: at sign-in, choose *Advanced → Go to aerc-mail (unsafe)*.
 4. **Clients → Create client → Desktop app**. Keep the client ID and secret.
-
-For syntekstudio.com, if the Workspace limits third-party apps, allow this
-client in the Admin console: **Security → Access and data control → API
-controls → Manage App Access → Configure new app**, find it by client ID and set
-its access to *Trusted*.
 
 ### 2. Microsoft client (Premier's Microsoft 365)
 
@@ -132,7 +171,6 @@ machine:
 
 ```bash
 oama authorize google samabailey6194@gmail.com
-oama authorize google sam.bailey@syntekstudio.com --nohint      # Workspace account
 oama authorize microsoft sam.bailey@premier.org.uk --device     # prints a code + URL
 ```
 
@@ -146,6 +184,7 @@ printed URL. Sign in as the matching account each time. Then open aerc with
 |--------------------------------------------|---------------------------------------------------------------------------|
 | Every account fails to log in              | `ls /run/agenix/oama-clients`. Missing means not the full stage, or the `.age` file is not committed |
 | One account fails                          | `oama access <address>` should print a token. If not, run `oama authorize` again |
+| One `syntek*` account fails                | `ls -l /run/agenix/mail-<mailbox>-aerc`. Missing means not the full stage, or the `.age` file is not committed; if present, test the password (Infomaniak accounts) |
 | Google: `invalid_grant` after a week       | The consent screen is still in *Testing*. Publish it (step 1.3), then authorise again |
 | Microsoft: `AADSTS65001` / consent needed  | Premier's admin has to consent to the app (step 2)                        |
 | Microsoft: sending fails, `5.7.139`        | Authenticated SMTP is off for the mailbox (step 2)                        |
@@ -161,6 +200,8 @@ oama logs through syslog, so its messages are in the journal:
 | aerc accounts, settings, keys | `home/modules/aerc.nix`                  |
 | oama config                   | `home/modules/aerc.nix` (`oamaConfig`)   |
 | OAuth client secret           | `modules/core/oama-secret.nix`, `secrets/secrets.nix` |
+| Infomaniak passwords (aerc)   | `modules/core/mail-aerc-secrets.nix`, `secrets/secrets.nix` |
+| Infomaniak passwords (scripts)| `modules/core/business-docs-secrets.nix`, `secrets/secrets.nix` |
 | `SUPER + E` layout            | `config/hypr/60-keybinds.lua`            |
 | Workspace 6 rules             | `config/hypr/00-vars.lua`                |
 | devtower-intel's ws 4 rules   | `config/hypr/devices/devtower-intel.lua` |
