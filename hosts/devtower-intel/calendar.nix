@@ -44,7 +44,6 @@ let
     username = "SB25145"
     password.fetch = ["command", "${readPassword}"]
     auth = "basic"
-    verify = true
 
     [storage syntek_local]
     type = "filesystem"
