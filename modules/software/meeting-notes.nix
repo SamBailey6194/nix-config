@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, options, pkgs, ... }:
 
 # software.meetingNotes: the `meeting-notes` command (pkgs/meeting-notes).
 # Records the user's microphone and the call output as separate tracks,
@@ -98,30 +98,37 @@ in
         else if config.users.users ? sam-laptop then "sam-laptop"
         else "sam-framework";
     in
-    {
+    lib.mkMerge [
       # Pyannote's gated model needs a Hugging Face read token. Optional: until
       # the secret exists, remote speakers stay as "Them" (or HF_TOKEN is used).
-      age.secrets = lib.optionalAttrs hasHfSecret {
-        huggingface-token = {
-          file = hfSecret;
-          owner = user;
-          mode = "0400";
-        };
-      };
-
-      environment.systemPackages = [
-        (pkgs.callPackage ../../pkgs/meeting-notes {
-          inherit (cfg) cudaCapabilities;
-          settings = {
-            inherit (cfg) micSource remoteSinks selfName outputDir asrModel language
-              diariseModel summariser;
-            defaultOutput = "auto";
-            hfTokenFile = "/run/agenix/huggingface-token";
-            local = { url = cfg.localUrl; model = cfg.localModel; };
-            resourceRun = "/run/current-system/sw/bin/resource-run";
+      # Only where agenix is imported (`age` must exist even under a false
+      # mkIf) and has a key to decrypt with: stages before full set no
+      # age.identityPaths, and agenix asserts on a secret it cannot open.
+      (lib.optionalAttrs (options ? age) {
+        age.secrets = lib.mkIf (hasHfSecret && config.age.identityPaths != [ ]) {
+          huggingface-token = {
+            file = hfSecret;
+            owner = user;
+            mode = "0400";
           };
-        })
-      ];
-    }
+        };
+      })
+
+      {
+        environment.systemPackages = [
+          (pkgs.callPackage ../../pkgs/meeting-notes {
+            inherit (cfg) cudaCapabilities;
+            settings = {
+              inherit (cfg) micSource remoteSinks selfName outputDir asrModel language
+                diariseModel summariser;
+              defaultOutput = "auto";
+              hfTokenFile = "/run/agenix/huggingface-token";
+              local = { url = cfg.localUrl; model = cfg.localModel; };
+              resourceRun = "/run/current-system/sw/bin/resource-run";
+            };
+          })
+        ];
+      }
+    ]
   );
 }
