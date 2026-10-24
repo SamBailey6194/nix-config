@@ -77,7 +77,31 @@ let
   # Only what needs Nix belongs here: store and home paths, hooks, the status
   # line, and values tied to other modules. Change a plain setting in the JSON;
   # a key set here would silently override it (`//` is shallow).
-  settings = (lib.importJSON ../../config/claude/settings-base.json) // {
+  baseSettings = lib.importJSON ../../config/claude/settings-base.json;
+
+  # Private mods marketplace, added here rather than in the JSON because it
+  # points at a home checkout (only the sam-desktop machines have it) and needs
+  # this comment. A directory source on purpose: while the mods are being
+  # fine-tuned, edits to the checkout go live with /reload-plugins, with no
+  # commit, push or home-manager switch.
+  # After the trial, switch the source to
+  #   { source = "github"; repo = "SamBailey6194/claude-code-mods"; }
+  # The repo is private, so that needs a github.com git credential on the
+  # machine (`gh auth setup-git`); it must not become public.
+  modsCheckout = "/home/sam-desktop/Repos/personal/claude-code-mods";
+  hasMods = homeDir == "/home/sam-desktop";
+
+  settings = baseSettings // {
+    extraKnownMarketplaces = baseSettings.extraKnownMarketplaces
+      // lib.optionalAttrs hasMods {
+        claude-code-mods.source = { source = "directory"; path = modsCheckout; };
+      };
+    enabledPlugins = baseSettings.enabledPlugins
+      // lib.optionalAttrs hasMods {
+        "hello@claude-code-mods" = true;
+        "session-panel@claude-code-mods" = true;
+      };
+
     # Names the style file installed below (.claude/output-styles).
     outputStyle = "Concise";
 
