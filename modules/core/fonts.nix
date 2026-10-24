@@ -14,6 +14,25 @@ let
   inter-static = pkgs.runCommand "inter-static-${pkgs.inter.version}" { } ''
     install -Dm444 -t "$out/share/fonts/opentype" ${pkgs.inter.src}/extras/otf/*.otf
   '';
+
+  # Segoe UI is proprietary and only licensed alongside Windows, so it can't be
+  # installed here. Selawik is Microsoft's own OFL-licensed stand-in for it:
+  # metric-compatible, so layouts designed for Segoe UI keep their line breaks.
+  # Five upright weights (Light, Semilight, Regular, Semibold, Bold), no italics.
+  # The fontconfig aliases below make requests for "Segoe UI" resolve to it.
+  selawik = pkgs.stdenvNoCC.mkDerivation rec {
+    pname = "selawik";
+    version = "1.01";
+    src = pkgs.fetchzip {
+      url = "https://github.com/microsoft/Selawik/releases/download/${version}/Selawik_Release.zip";
+      stripRoot = false;
+      hash = "sha256-BbjXJ8HFXrRklMOnGXyZIZeQ5Oksda4AqQXHmNqN6AQ=";
+    };
+    installPhase = ''
+      install -Dm444 -t "$out/share/fonts/truetype" *.ttf
+    '';
+    meta.license = pkgs.lib.licenses.ofl;
+  };
 in
 {
   # Font configuration shared across all systems
@@ -48,6 +67,7 @@ in
       inter-static         # static faces, families "Inter" + "Inter Display"
       montserrat           # Thin..Black + italics (otf/ttf)
       poppins              # Thin..Black + italics (ttf, plus "Poppins Latin")
+      selawik              # open Segoe UI substitute, aliased as "Segoe UI"
 
       # Icon fonts (for terminal prompts and UI)
       nerd-fonts.fira-code
@@ -81,6 +101,25 @@ in
               <glob>*.woff2</glob>
             </rejectfont>
           </selectfont>
+
+          <!-- Segoe UI is not installable (see selawik above); hand its
+               family names to Selawik's matching weights instead. -->
+          <alias binding="same">
+            <family>Segoe UI</family>
+            <prefer><family>Selawik</family></prefer>
+          </alias>
+          <alias binding="same">
+            <family>Segoe UI Light</family>
+            <prefer><family>Selawik Light</family></prefer>
+          </alias>
+          <alias binding="same">
+            <family>Segoe UI Semilight</family>
+            <prefer><family>Selawik Semilight</family></prefer>
+          </alias>
+          <alias binding="same">
+            <family>Segoe UI Semibold</family>
+            <prefer><family>Selawik Semibold</family></prefer>
+          </alias>
         </fontconfig>
       '';
     };
