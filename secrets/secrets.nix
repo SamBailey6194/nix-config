@@ -254,6 +254,9 @@ in
   # "mail-git-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
   # "mail-finance-aerc-laptop-intel.age".publicKeys = laptopIntelKeys;
 
+  # Infomaniak API token to manage sieve scripts in advanced mode
+  "infomaniak-sieve-api-devtower-intel.age".publicKeys = devtowerIntelKeys;
+
   # ============================================================================
   # oama OAuth Clients (Per-Device)
   # The app registrations aerc signs in through (home/modules/aerc.nix):
