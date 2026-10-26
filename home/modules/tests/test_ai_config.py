@@ -603,7 +603,8 @@ class ClaudeSettingsTests(unittest.TestCase):
         self.assertEqual(self.BASE["enabledPlugins"], {"codex@openai-codex": True,
                                                        "lua-lsp@claude-plugins-official": True,
                                                        "pyright-lsp@claude-plugins-official": True,
-                                                       "rust-analyzer-lsp@claude-plugins-official": True})
+                                                       "rust-analyzer-lsp@claude-plugins-official": True,
+                                                       "typescript-lsp@claude-plugins-official": True})
         self.assertEqual(self.BASE["extraKnownMarketplaces"]["claude-plugins-official"]["source"],
                          {"source": "github", "repo": "anthropics/claude-plugins-official"})
         text = json.dumps(self.BASE)

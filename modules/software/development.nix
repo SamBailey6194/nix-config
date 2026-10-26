@@ -22,24 +22,13 @@ let
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
 
-  # AI agent CLIs. antigravity-cli is nixpkgs' derivation bumped to the release
-  # Google currently serves, wrapped with its auto-updater off; perplexity-cli is
-  # not in nixpkgs at all. See the files for why. A callPackage here rather than
-  # an overlay beside codex's in modules/core/base-configuration.nix: that file is
-  # only imported by the full configs, so an overlay would leave stages 3–5 on
-  # 1.2.3 with the updater live. This is the only consumer of
-  # pkgs/antigravity-cli.nix: home/modules/antigravity.nix does not call it, it
-  # only imports home/modules/mcp-activation.nix with client = "antigravity",
-  # which writes the shared MCP server list to ~/.gemini/config/mcp_config.json.
+  # AI agent CLIs. Keep nixpkgs' Antigravity CLI with its self-updater off;
+  # perplexity-cli is not in nixpkgs. Home Manager configures their MCP servers.
   antigravity-cli = pkgs.callPackage ../../pkgs/antigravity-cli.nix { };
   perplexity-cli = pkgs.callPackage ../../pkgs/perplexity-cli.nix { };
 
-  # OpenCode v2 (2.0.18); nixpkgs is still on the 1.x line. Prebuilt npm binary,
-  # self-updater off — see the file.
-  opencode = pkgs.callPackage ../../pkgs/opencode.nix { };
-
   # Code graphs for coding agents. code-review-graph is not in nixpkgs, so it is
-  # a pinned uvx wrapper; graphify is nixpkgs' derivation bumped to 0.9.91, with
+  # a pinned uvx wrapper; graphify uses nixpkgs' version and source, with
   # its MCP extra and patched skills. Both are also the shared MCP servers
   # (home/modules/mcp-servers.nix) and graphify's skills are linked per client
   # (home/modules/agent-skills.nix) — the same files, so one version everywhere.
@@ -169,14 +158,14 @@ in
     # sign-in) or OPENAI_API_KEY.
     codex                       # OpenAI Codex CLI (Apache-2.0)
     antigravity-cli             # Google Antigravity CLI, binary `agy` (unfree;
-                                #   1.3.0, see the let block above). Auth:
+                                #   nixpkgs version, wrapped above). Auth:
                                 #   Google sign-in on first `agy` run (tokens in
                                 #   the Secret Service keyring) or GEMINI_API_KEY.
     perplexity-cli              # Perplexity Search API CLI, binary `pplx` (unfree,
                                 #   binary-only). Auth: `pplx auth login` or
                                 #   PERPLEXITY_API_KEY.
-    opencode                    # OpenCode v2 agent CLI (MIT; 2.0.18, see the let
-                                #   block above). Local Qwen via llama-server on
+    opencode                    # OpenCode agent CLI from nixpkgs (MIT).
+                                #   Local Qwen via llama-server on
                                 #   devtower-intel; hosted providers: `opencode
                                 #   auth login` (credentials in its SQLite db).
     code-review-graph           # SQLite code graph: blast radius of a change

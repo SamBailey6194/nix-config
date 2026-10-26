@@ -25,7 +25,7 @@ python3Packages.buildPythonApplication {
     makeWrapperArgs+=( "''${qtWrapperArgs[@]}" )
   '';
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ ffmpeg wl-clipboard wtype xclip xdotool ]}"
+    "--prefix" "PATH" ":" (lib.makeBinPath [ ffmpeg wl-clipboard wtype xclip xdotool ])
   ];
 
   # Upstream assumes a mutable checkout with run.sh and a venv. Installed

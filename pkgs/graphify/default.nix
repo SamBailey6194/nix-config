@@ -4,10 +4,7 @@
 # answers "what does this change touch"; graphify also reads docs and media and
 # answers "how do these parts fit together".
 #
-# nixpkgs carries it (pkgs/by-name/gr/graphify) at 0.9.74. This bumps nixpkgs' own
-# derivation to 0.9.91 rather than re-packaging it: between the two tags upstream
-# changed no dependency except raising the tree-sitter floor to 0.25 (nixpkgs has
-# 0.25.2), so the bump only moves `version` and `src`. On top of the bump:
+# Uses nixpkgs' version and source, with these integrations:
 #
 #   - the extras the skill can reach: `mcp` (mcp, starlette) for `graphify-mcp`,
 #     the stdio server in home/modules/mcp-servers.nix; `watch` (watchdog);
@@ -45,18 +42,10 @@
 # system-wide, and home/stages/dev.nix (which links the skills) is only ever used
 # with a system that imports development.nix.
 #
-# Drop the version/src overrides (keep everything else) once nixpkgs is at 0.9.91
-# or newer; every eval warns when it is.
-#
-# To bump: change `version` and `hash`
-# (`nix flake prefetch --json github:Graphify-Labs/graphify/v<VERSION>`), then
-# build: patch-skill.py fails the build if upstream reworded the blocks it patches.
-# Check the release's pyproject.toml for new dependencies first.
 {
   lib,
   graphify,
   python3,
-  fetchFromGitHub,
   runCommand,
   symlinkJoin,
   makeWrapper,
@@ -64,20 +53,13 @@
 }:
 
 let
-  version = "0.9.91";
+  version = graphify.version;
 
   pinnedPython = "def _pinned_python() -> str:\n"
     + "    if os.access(\"${skillPython}\", os.X_OK):  # nix-config pkgs/graphify\n"
     + "        return \"${skillPython}\"";
 
   unwrapped = graphify.overridePythonAttrs (prev: {
-    inherit version;
-    src = fetchFromGitHub {
-      owner = "Graphify-Labs";
-      repo = "graphify";
-      tag = "v${version}";
-      hash = "sha256-rVR7VNV95vrftrym4gBG6Tib4Dae4fIYnTO0X0dkZIk=";
-    };
     dependencies = prev.dependencies ++ (with python3.pkgs; [
       mcp
       starlette
@@ -127,9 +109,7 @@ let
     '') variants)
   );
 in
-lib.warnIf (lib.versionAtLeast graphify.version version)
-  "pkgs/graphify/default.nix: nixpkgs now has graphify ${graphify.version}; drop the version/src overrides"
-(symlinkJoin {
+symlinkJoin {
   name = "graphify-${version}";
   paths = [ bins skills ];
   passthru = {
@@ -137,4 +117,4 @@ lib.warnIf (lib.versionAtLeast graphify.version version)
     skillsDir = "${skills}/share/graphify/skills";
   };
   meta = unwrapped.meta // { mainProgram = "graphify"; };
-})
+}

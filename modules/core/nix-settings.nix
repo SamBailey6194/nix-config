@@ -57,7 +57,17 @@
   };
 
   # Affinity Apps overlay (makes pkgs.affinity-{designer,photo,publisher} available)
-  nixpkgs.overlays = [ inputs.affinity-nix.overlays.default ];
+  nixpkgs.overlays = [
+    inputs.affinity-nix.overlays.default
+    (final: prev: {
+      # The pinned Sphinx hook reads sphinxBuilders as a scalar. With structured
+      # attributes, reuse's array yields only HTML and leaves its man output
+      # missing. Preserve both builders until the hook supports arrays.
+      reuse = prev.reuse.overrideAttrs {
+        sphinxBuilders = "html man";
+      };
+    })
+  ];
 
   # nixpkgs configuration
   nixpkgs.config = {
