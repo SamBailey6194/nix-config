@@ -181,7 +181,6 @@
       device = "/dev/disk/by-uuid/4cf4afe8-4076-4249-b963-9d29bd918458";
       name = "cryptroot";
       allowDiscards = true; # TRIM for SSD
-      preLVM = true;
       fallbackToPassword = true;
       tpm2Device = "auto";
     };

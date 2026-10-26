@@ -110,7 +110,6 @@
       device = "/dev/disk/by-uuid/REPLACE-WITH-LUKS-PARTITION-UUID";
       name = "cryptroot";
       allowDiscards = true; # TRIM for NVMe
-      preLVM = true;
       fallbackToPassword = true;
       tpm2Device = "auto";
     };

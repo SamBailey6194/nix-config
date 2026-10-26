@@ -22,12 +22,6 @@ in
             description = "Name of the mapped device (e.g., cryptroot)";
           };
 
-          preLVM = mkOption {
-            type = types.bool;
-            default = true;
-            description = "Whether to unlock before LVM";
-          };
-
           allowDiscards = mkOption {
             type = types.bool;
             default = true;
@@ -68,7 +62,6 @@ in
     # LUKS device configuration
     boot.initrd.luks.devices = mapAttrs (name: deviceCfg: {
       device = deviceCfg.device;
-      preLVM = deviceCfg.preLVM;
       allowDiscards = deviceCfg.allowDiscards;
 
       # TPM2 configuration
@@ -121,8 +114,5 @@ in
 
     # TPM2 kernel modules
     boot.initrd.availableKernelModules = [ "tpm_tis" "tpm_crb" ];
-
-    # Enable TPM2 support in systemd
-    boot.initrd.systemd.enable = true;
   };
 }
