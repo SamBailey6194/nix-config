@@ -47,6 +47,13 @@ in
   systemd.tmpfiles.rules = [ "d ${home}/.ssh 0700 ${username} users -" ];
 
   age.secrets = {
+    infomaniak-sieve-api = {
+      file = ../../secrets/infomaniak-sieve-api-devtower-intel.age;
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+
     # ========================================================================
     # GitHub SSH keys (per-device, no passphrases). Public halves are on the
     # matching GitHub accounts; the private halves only ever live here.
