@@ -81,6 +81,9 @@
       # UV package manager - use copy mode for cross-filesystem installs
       UV_LINK_MODE = "copy";
 
+      # Syntek - root directory for large local data
+      SYNTEK_DATA_ROOT = "/mnt/data";
+
       # Justfile - accessible from any directory
       JUST_JUSTFILE = "$HOME/Repos/personal/nix-config/justfile";
       JUST_WORKING_DIRECTORY = "$HOME/Repos/personal/nix-config";
@@ -88,6 +91,8 @@
       # Android SDK (if you use React Native or Android development)
       ANDROID_HOME = "$HOME/Android/Sdk";
 
+      # Claude Code - context window size for the context-threshold handoff hook
+      CLAUDE_CONTEXT_WINDOW = "1000000";
 
 
       # Claude Code OAuth Token
