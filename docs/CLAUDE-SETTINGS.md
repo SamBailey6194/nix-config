@@ -8,7 +8,7 @@ them; the generated file is a read-only Nix store link.
 The baseline was compared with Ubuntu's `/home/sam-dev/.claude/settings.json`
 and `/mnt/archive/OldRepos/syntek/syntek-base/.claude/settings.json` on
 5 October 2026. It retains the Ubuntu fullscreen UI, normal editor mode,
-disabled prompt suggestions and automatic memory, xhigh effort and workflow
+disabled prompt suggestions and automatic memory, medium effort (with ultracode on) and workflow
 preferences. It defaults to Opus and Concise output, matching Syntek. A concise
 style is supplied for pinned Claude versions predating the built-in style.
 See the [official output style documentation](https://code.claude.com/docs/en/output-styles).

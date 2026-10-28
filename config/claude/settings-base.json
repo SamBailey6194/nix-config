@@ -5,7 +5,7 @@
     "ENABLE_LSP_TOOL": "1",
     "MCP_TIMEOUT": "120000"
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "medium",
   "ultracode": true,
   "promptSuggestionEnabled": false,
   "tui": "fullscreen",
