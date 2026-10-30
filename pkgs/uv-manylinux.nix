@@ -139,11 +139,10 @@
 #       /tmp/pr/patchright/driver/package/browsers.json
 #     ls "$(nix eval --raw '.#nixosConfigurations.laptop-intel.pkgs.playwright-driver.browsers')"
 #
-# Verified for the pins below (15/10/2026, bundle 1.63.0): playwright 1.63.0 and
-# patchright 1.63.0 both ask for chromium 1243, chromium_headless_shell 1243,
-# firefox 1543, webkit 2359 and ffmpeg 1011 — exactly what this bundle ships
-# (winldd and android are Windows/Android-only and absent on Linux either way) —
-# and both launch Chromium 153.0.8010.12 headless out of it on this host.
+# Verified for the pins below (30/10/2026, bundle 1.64.1): playwright 1.64.0 and
+# patchright 1.64.3 both ask for chromium 1248, chromium_headless_shell 1248,
+# firefox 1555, webkit 2370 and ffmpeg 1013 — exactly what this bundle ships
+# (winldd and android are Windows/Android-only and absent on Linux either way).
 #
 # The floor matters too: scrapling 0.4.15's `fetchers` extra, which `scrapling[ai]`
 # (the Scrapling MCP server) pulls in, requires patchright>=1.62.1 and
@@ -168,7 +167,7 @@
 
 let
   # Hand-maintained; nixpkgs' own patchright does not track the browser bundle.
-  patchrightVersion = "1.63.0";
+  patchrightVersion = "1.64.3";
 
   browserConstraints = writeText "uv-browser-constraints.txt" ''
     playwright==${python3Packages.playwright.version}
