@@ -18,6 +18,9 @@ let
   # exported LD_LIBRARY_PATH outranks DT_RUNPATH and takes out hyprlock.
   uv-manylinux = pkgs.callPackage ../../pkgs/uv-manylinux.nix { };
 
+  # copier, ahead of nixpkgs; see pkgs/copier.nix
+  copier = pkgs.callPackage ../../pkgs/copier.nix { };
+
   # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
