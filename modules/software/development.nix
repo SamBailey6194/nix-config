@@ -110,6 +110,32 @@ in
     # After install: rustup default stable && rustup component add rust-analyzer
     rustup
 
+    # Cargo subcommands. These are plain binaries (`cargo foo` runs
+    # `cargo-foo` from PATH), so they work with whichever rustup toolchain is
+    # active. Nix supplies them instead of `cargo install` into ~/.cargo/bin.
+    # Supply chain / security
+    cargo-deny          # licence, advisory, ban and source checks (deny.toml)
+    cargo-audit         # RustSec advisory scan of Cargo.lock
+    cargo-cyclonedx     # CycloneDX SBOM generation
+    cargo-sbom          # SPDX / CycloneDX SBOM generation
+    # Testing / coverage
+    cargo-nextest       # faster test runner
+    cargo-insta         # snapshot test review (`cargo insta review`)
+    cargo-mutants       # mutation testing
+    cargo-llvm-cov      # coverage (needs `rustup component add llvm-tools-preview`)
+    cargo-fuzz          # libFuzzer targets (`cargo +nightly fuzz run`)
+    # Dependency hygiene
+    cargo-edit          # cargo upgrade / set-version
+    cargo-outdated      # list outdated dependencies
+    cargo-machete       # find unused dependencies (fast, stable)
+    cargo-udeps         # find unused dependencies (precise, `cargo +nightly udeps`)
+    cargo-semver-checks # catch semver-breaking API changes before publishing
+    # Development
+    cargo-expand        # show macro-expanded source
+    bacon               # background check/clippy/test watcher
+    taplo               # TOML formatter, linter and LSP (Cargo.toml, deny.toml)
+    rust-bindgen        # bindgen CLI (C headers -> Rust FFI bindings)
+
     # PHP — used by DDEV projects and Blade templates
     php                 # PHP interpreter
     phpPackages.composer # PHP dependency manager
