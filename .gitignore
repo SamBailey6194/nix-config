@@ -25,6 +25,10 @@ id_ed25519*
 !.env.example
 *.key
 *.pem
+# Public mkcert CA certificates (just ddev-ca re-encodes them, so no key)
+!certs/mkcert/*.pem
+certs/mkcert/*key*
+certs/mkcert/rootCA*
 credentials.json
 auth.json
 .claude.json

@@ -22,9 +22,26 @@ let
     };
   };
   withGeckoDownloads = policies: lib.recursiveUpdate policies geckoDownloadPolicies;
-  firefoxPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/firefox-developer/policies.json")).policies;
-  librewolfPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/librewolf/policies.json")).policies;
-  zenPolicies = withGeckoDownloads (lib.importJSON (bs + "/policies/zen/policies.json")).policies;
+  # DDEV sites, as Brave's ProxyBypassList below. *.ddev.site resolves to
+  # 127.0.0.1 in public DNS, so the bypass reaches nothing off this machine;
+  # through Squid those requests end in its "Access Denied" page. The proxy
+  # itself and its lock are unchanged.
+  # The mkcert CA (modules/software/ddev-ca.nix) is installed from the policy
+  # on every start, so profiles that MCP servers create fresh trust it too.
+  ddevCA = config.software.ddevCA.certificate or null;
+  withGeckoDdev = policies: policies
+    // lib.optionalAttrs (policies ? Proxy.Passthrough) {
+      Proxy = policies.Proxy // { Passthrough = policies.Proxy.Passthrough + ", .ddev.site"; };
+    }
+    // lib.optionalAttrs (ddevCA != null) {
+      Certificates = (policies.Certificates or { }) // {
+        Install = (policies.Certificates.Install or [ ]) ++ [ "${ddevCA}" ];
+      };
+    };
+  geckoPolicies = file: withGeckoDdev (withGeckoDownloads (lib.importJSON (bs + file)).policies);
+  firefoxPolicies = geckoPolicies "/policies/firefox-developer/policies.json";
+  librewolfPolicies = geckoPolicies "/policies/librewolf/policies.json";
+  zenPolicies = geckoPolicies "/policies/zen/policies.json";
   bravePolicies = (lib.importJSON (bs + "/policies/brave/managed/syntek-accountability.json")) // downloadPolicies // {
     # Every normal user's home is /home/<name> (modules/users).
     DownloadDirectory = "/home/\${user_name}/Downloads";

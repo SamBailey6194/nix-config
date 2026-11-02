@@ -11,6 +11,7 @@
     ../modules/hyprland.nix  # Hyprland Wayland compositor
     ../modules/shell.nix     # Zsh + Oh My Zsh
     ../modules/browsers.nix  # LibreWolf profile + Zen default browser
+    ../modules/ddev-ca.nix   # DDEV mkcert CA in ~/.pki/nssdb (Brave, Playwright)
     ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
     ../modules/file-manager.nix    # Yazi (main) + Thunar (backup), udiskie, file picker
   ];

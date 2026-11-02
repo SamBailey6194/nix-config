@@ -596,6 +596,38 @@ check-playwright:
     echo "  [tool.uv]"
     echo "  constraint-dependencies = [\"playwright==$wheel\"]"
 
+# Trust this machine's DDEV CA: create mkcert's CA if missing, copy its public cert to certs/mkcert/<host>.pem
+ddev-ca:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # One CA per machine signs every DDEV project, so this runs once per
+    # machine (and again only if the CA is recreated), never per project.
+    host=$(hostname)
+    caroot=$(mkcert -CAROOT)
+    if [ ! -s "$caroot/rootCA.pem" ]; then
+        # Creates the CA without installing it anywhere: the NixOS system
+        # bundle is read-only, and the nix config trusts it everywhere instead.
+        TRUST_STORES=none mkcert -install
+    fi
+    pem="certs/mkcert/$host.pem"
+    mkdir -p certs/mkcert
+    # Re-encoded by openssl, so only the certificate is written: never the
+    # private key (rootCA-key.pem), even if a PEM bundle carried one.
+    openssl x509 -in "$caroot/rootCA.pem" -out "$pem.tmp"
+    if grep -q "PRIVATE KEY" "$pem.tmp"; then rm -f "$pem.tmp"; echo "refusing: private key in output" >&2; exit 1; fi
+    mv "$pem.tmp" "$pem"
+    chmod 0644 "$pem"
+    openssl x509 -in "$pem" -noout -subject -enddate -fingerprint -sha256
+    echo
+    echo "Wrote $pem (public certificate only)."
+    if ! git ls-files --error-unmatch "$pem" >/dev/null 2>&1; then
+        echo "Untracked: flake evaluation ignores it until you run: git add $pem"
+    elif ! git diff --quiet -- "$pem"; then
+        echo "Changed: the CA differs from the committed one; commit $pem."
+    fi
+    echo "Then: just rebuild, and restart DDEV so its router re-issues"
+    echo "certificates from this CA: ddev poweroff && ddev start (per project)."
+
 # ============================================================================
 # Fuzzing (Security Testing)
 # ============================================================================

@@ -51,7 +51,10 @@ in
   # services.localLlm.* options: llama.cpp with CUDA + OpenBLAS for NVIDIA
   # hosts. Off unless a host enables it, so importing it here only makes the
   # option available from the dev stage upward (devtower-intel turns it on).
-  imports = [ ./local-llm.nix ];
+  imports = [
+    ./local-llm.nix
+    ./ddev-ca.nix # DDEV's mkcert CA, trusted per machine (just ddev-ca)
+  ];
 
   # androidenv (the SDK behind android-emulator) refuses to evaluate until the
   # Android SDK licence is accepted — this line is that acceptance. Scoped to the
