@@ -21,6 +21,10 @@ let
   # copier, ahead of nixpkgs; see pkgs/copier.nix
   copier = pkgs.callPackage ../../pkgs/copier.nix { };
 
+  # cargo-nextest, cargo-llvm-cov, cargo-edit and rust-bindgen, ahead of
+  # nixpkgs; see pkgs/cargo-tools.nix
+  cargoTools = pkgs.callPackage ../../pkgs/cargo-tools.nix { };
+
   # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
@@ -119,13 +123,13 @@ in
     cargo-cyclonedx     # CycloneDX SBOM generation
     cargo-sbom          # SPDX / CycloneDX SBOM generation
     # Testing / coverage
-    cargo-nextest       # faster test runner
+    cargoTools.cargo-nextest # faster test runner
     cargo-insta         # snapshot test review (`cargo insta review`)
     cargo-mutants       # mutation testing
-    cargo-llvm-cov      # coverage (needs `rustup component add llvm-tools-preview`)
+    cargoTools.cargo-llvm-cov # coverage (needs `rustup component add llvm-tools-preview`)
     cargo-fuzz          # libFuzzer targets (`cargo +nightly fuzz run`)
     # Dependency hygiene
-    cargo-edit          # cargo upgrade / set-version
+    cargoTools.cargo-edit # cargo upgrade / set-version
     cargo-outdated      # list outdated dependencies
     cargo-machete       # find unused dependencies (fast, stable)
     cargo-udeps         # find unused dependencies (precise, `cargo +nightly udeps`)
@@ -134,7 +138,7 @@ in
     cargo-expand        # show macro-expanded source
     bacon               # background check/clippy/test watcher
     taplo               # TOML formatter, linter and LSP (Cargo.toml, deny.toml)
-    rust-bindgen        # bindgen CLI (C headers -> Rust FFI bindings)
+    cargoTools.rust-bindgen # bindgen CLI (C headers -> Rust FFI bindings)
 
     # PHP — used by DDEV projects and Blade templates
     php                 # PHP interpreter
