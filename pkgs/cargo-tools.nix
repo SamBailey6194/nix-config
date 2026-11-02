@@ -1,4 +1,4 @@
-# Cargo subcommands bumped ahead of nixpkgs. Only the source and the vendored
+# Cargo subcommands (and maturin) bumped ahead of nixpkgs. Only the source and the vendored
 # dependencies change; build inputs, flags, wrappers and meta all come from the
 # nixpkgs packages.
 #
@@ -11,6 +11,7 @@
   cargo-nextest,
   cargo-llvm-cov,
   cargo-edit,
+  maturin,
   rust-bindgen,
   rust-bindgen-unwrapped,
   fetchFromGitHub,
@@ -97,6 +98,19 @@ in
       hash = "sha256-Hp4hAaVVTBUwPMdCD27uqLUpj40zLN1RNaee1IsFVSY=";
     };
     cargoHash = "sha256-bDYIsDj5+t55ET9CE7DTyKqIv8Jp0ghPGMkDTTH6cQU=";
+  };
+
+  # Only the CLI on PATH. rustPlatform.maturinBuildHook (nixpkgs Python
+  # packaging) keeps nixpkgs' own maturin.
+  maturin = bump maturin rec {
+    version = "1.16.0";
+    src = fetchFromGitHub {
+      owner = "PyO3";
+      repo = "maturin";
+      tag = "v${version}";
+      hash = "sha256-Bqqq+oVivqrpbEXoWRwMQ6slefnPcEGSnLRXy5SIyys=";
+    };
+    cargoHash = "sha256-Ch2FOMk7KkZrb+iqJeUI0NfHltEI2sXpGkT0m6jnbp0=";
   };
 
   # The wrapper adds the libc/libc++ include flags; re-wrap the bumped binary.

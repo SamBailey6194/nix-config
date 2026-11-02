@@ -21,8 +21,8 @@ let
   # copier, ahead of nixpkgs; see pkgs/copier.nix
   copier = pkgs.callPackage ../../pkgs/copier.nix { };
 
-  # cargo-nextest, cargo-llvm-cov, cargo-edit and rust-bindgen, ahead of
-  # nixpkgs; see pkgs/cargo-tools.nix
+  # cargo-nextest, cargo-llvm-cov, cargo-edit, rust-bindgen and maturin, ahead
+  # of nixpkgs; see pkgs/cargo-tools.nix
   cargoTools = pkgs.callPackage ../../pkgs/cargo-tools.nix { };
 
   # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
@@ -139,6 +139,7 @@ in
     bacon               # background check/clippy/test watcher
     taplo               # TOML formatter, linter and LSP (Cargo.toml, deny.toml)
     cargoTools.rust-bindgen # bindgen CLI (C headers -> Rust FFI bindings)
+    cargoTools.maturin # build/publish PyO3 Rust crates as Python wheels
 
     # PHP — used by DDEV projects and Blade templates
     php                 # PHP interpreter
