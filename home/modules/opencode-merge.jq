@@ -4,7 +4,12 @@
 | (if has("$schema") then . else {"$schema": $d.schema} + . end)
 | (if has("permissions") or has("permission") then .
    else .permissions = $d.permissions end)
-| (if has("lsp") or $d.lsp == null then . else .lsp = $d.lsp end)
+# A missing `lsp` gets the defaults; an object gains only the servers it lacks
+# (its own entries, including `disabled`, win); true/false is left alone.
+| (if $d.lsp == null then .
+   elif has("lsp") | not then .lsp = $d.lsp
+   elif (.lsp | type) == "object" then .lsp = $d.lsp + .lsp
+   else . end)
 | reduce ($d.servers | to_entries[]) as $s (.;
     (if .mcp.servers[$s.key]? != null then ["mcp", "servers", $s.key]
      elif .mcp[$s.key]? != null then ["mcp", $s.key]

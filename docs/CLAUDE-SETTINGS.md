@@ -27,7 +27,8 @@ what needs Nix: hook and status line paths, and the output style it installs.
 runtime packages.
 
 Enabled plugins: `codex@openai-codex` (Ubuntu's Codex marketplace definition),
-and the `lua-lsp` and `pyright-lsp` code intelligence plugins from the official
+and the `lua-lsp`, `php-lsp` (Intelephense), `pyright-lsp`, `rust-analyzer-lsp`
+and `typescript-lsp` code intelligence plugins from the official
 `claude-plugins-official` marketplace, which is declared in
 `extraKnownMarketplaces` so a fresh machine knows it. The old Syntek, D&D and
 plugin-dev entries are gone. Change `enabledPlugins` in the baseline to adjust

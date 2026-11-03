@@ -194,6 +194,9 @@ in
     # system profile fails until a default toolchain is set, and this per-user
     # profile comes first on PATH.
     pkgs.rust-analyzer
+    # php-lsp runs a bare `intelephense --stdio`; pinned here too so the plugin
+    # works on hosts without the system development module.
+    pkgs.intelephense
   ];
 
   home.file = {

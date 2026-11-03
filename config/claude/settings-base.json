@@ -65,6 +65,7 @@
   "enabledPlugins": {
     "codex@openai-codex": true,
     "lua-lsp@claude-plugins-official": true,
+    "php-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true

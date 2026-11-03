@@ -97,11 +97,18 @@ let
     # files and patches; the external-directory policy still applies.
     permissions = [ { action = "edit"; resource = "*"; effect = "allow"; } ];
     # LSP is off unless `lsp` is set; an object keeps OpenCode's built-in
-    # servers on. Rust is pinned so rustup's unconfigured proxy is never used.
+    # servers on. Rust is pinned so rustup's unconfigured proxy is never used;
+    # PHP (built-in id "php intelephense") is pinned to the store Intelephense
+    # so OpenCode does not download its own copy. Entries already in the
+    # user's `lsp` object win; missing ones are added on each activation.
     lsp = {
       rust = {
         command = [ "${pkgs.rust-analyzer}/bin/rust-analyzer" ];
         extensions = [ ".rs" ];
+      };
+      "php intelephense" = {
+        command = [ "${pkgs.intelephense}/bin/intelephense" "--stdio" ];
+        extensions = [ ".php" ];
       };
     };
   };
