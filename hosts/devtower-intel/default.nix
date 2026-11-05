@@ -21,6 +21,7 @@ in
   imports = [
     ./hardware-configuration.nix
     ./connectivity.nix
+    ./photo-sync.nix # wg-home + weekly Syncthing photo upload (docs/PHONE-PHOTO-SYNC.md)
     ./disk-prevention.nix
     ../../modules/hardware/intel-nvidia-desktop.nix
     ../../modules/filesystem/zram.nix # deduplicated with the full stage's own import
