@@ -8,6 +8,7 @@
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
+    ../../modules/filesystem/btrfs-tmp.nix # /tmp on @tmp, emptied on boot
   ];
 
   # CPU - Intel i5-10210U (Comet Lake)

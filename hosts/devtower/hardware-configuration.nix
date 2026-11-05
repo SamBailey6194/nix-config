@@ -19,6 +19,7 @@
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
+    ../../modules/filesystem/btrfs-tmp.nix # /tmp on @tmp, emptied on boot
   ];
 
   # CPU - AMD Ryzen (Desktop)

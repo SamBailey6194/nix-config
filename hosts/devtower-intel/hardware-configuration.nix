@@ -28,6 +28,7 @@ in
     (modulesPath + "/installer/scan/not-detected.nix")
     ./data-drives.nix
     ./data-pair.nix
+    ../../modules/filesystem/btrfs-tmp.nix # /tmp on @tmp, emptied on boot
   ];
 
   # CPU - Intel Core i9-9900K (Desktop)
