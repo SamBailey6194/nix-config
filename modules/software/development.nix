@@ -34,6 +34,10 @@ let
   antigravity-cli = pkgs.callPackage ../../pkgs/antigravity-cli.nix { };
   perplexity-cli = pkgs.callPackage ../../pkgs/perplexity-cli.nix { };
 
+  # Snyk's official release binary; nixpkgs' `snyk` builds only the legacy
+  # TypeScript CLI and lacks sbom, whoami and the MCP server. See pkgs/snyk.nix.
+  snyk = pkgs.callPackage ../../pkgs/snyk.nix { };
+
   # Code graphs for coding agents. code-review-graph is not in nixpkgs, so it is
   # a pinned uvx wrapper; graphify uses nixpkgs' version and source, with
   # its MCP extra and patched skills. Both are also the shared MCP servers
@@ -201,6 +205,19 @@ in
     perplexity-cli              # Perplexity Search API CLI, binary `pplx` (unfree,
                                 #   binary-only). Auth: `pplx auth login` or
                                 #   PERPLEXITY_API_KEY.
+    ctx7                        # Context7 CLI from nixpkgs (MIT): `ctx7 library`
+                                #   and `ctx7 docs` fetch current library docs
+                                #   from the shell (0.8.0). Works anonymously;
+                                #   `ctx7 login` (OAuth) or CONTEXT7_API_KEY
+                                #   raises rate limits. Don't run `ctx7 setup`
+                                #   or `upgrade`: the MCP server and skills
+                                #   are managed by Home Manager
+                                #   (home/modules/mcp-servers.nix), and the
+                                #   store is read-only — bump via nixpkgs.
+    snyk                        # Snyk CLI (Apache-2.0; official 1.1308.4
+                                #   binary, see pkgs/). `snyk test`, `snyk
+                                #   code test`, `snyk sbom`, `snyk mcp`. Auth:
+                                #   `snyk auth` (OAuth) or SNYK_TOKEN.
     opencode                    # OpenCode agent CLI from nixpkgs (MIT).
                                 #   Local Qwen via llama-server on
                                 #   devtower-intel; hosted providers: `opencode
