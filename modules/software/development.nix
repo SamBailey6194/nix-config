@@ -98,7 +98,7 @@ in
 
     # Node.js — fnm for per-project version management
     # Usage: fnm install 20, fnm use 20, or auto-switch via .node-version
-    nodejs              # System-level Node.js (latest LTS, for global tools);
+    nodejs_26           # System-level Node.js 26 LTS (for global tools);
                         #   includes npm and npx, so no separate npm package
     fnm                 # Fast Node Manager (per-project Node.js versions)
     yarn

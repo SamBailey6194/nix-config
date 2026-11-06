@@ -756,8 +756,8 @@ in
       # pinning both paths (Zed derives npm_path wrongly from path alone) keeps
       # those servers on the same nodejs the rest of the system uses.
       node = {
-        path = "${pkgs.nodejs}/bin/node";
-        npm_path = "${pkgs.nodejs}/bin/npm";
+        path = "${pkgs.nodejs_26}/bin/node";
+        npm_path = "${pkgs.nodejs_26}/bin/npm";
       };
 
       # File types

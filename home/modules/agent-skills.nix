@@ -87,7 +87,7 @@ in
   # Also support additional clients and hosted development environments.
   home.packages = [ (pkgs.writeShellApplication {
     name = "install-agent-skills";
-    runtimeInputs = [ pkgs.nodejs pkgs.git ];
+    runtimeInputs = [ pkgs.nodejs_26 pkgs.git ];
     text = builtins.readFile ../../scripts/install-agent-skills.sh;
   }) (pkgs.writeShellScriptBin "with-typesafe" ''
     exec ${pkgs.python3}/bin/python3 ${../../scripts/with-typesafe-env.py} "$@"

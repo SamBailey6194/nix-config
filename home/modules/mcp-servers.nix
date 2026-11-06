@@ -37,8 +37,8 @@ let
   forClient = servers: lib.mapAttrs (_: server: removeAttrs server [ "clients" ])
     (lib.filterAttrs (_: server: client == null || !(server ? clients) || lib.elem client server.clients) servers);
 in forClient ({
-  mcp-mermaid.command = [ (toString launch) "mermaid" "${pkgs.nodejs}/bin/node" "${pkgs.playwright-driver.browsers}" ];
-  context7.command = [ (toString launch) "context7" "${pkgs.nodejs}/bin/npx" ];
+  mcp-mermaid.command = [ (toString launch) "mermaid" "${pkgs.nodejs_26}/bin/node" "${pkgs.playwright-driver.browsers}" ];
+  context7.command = [ (toString launch) "context7" "${pkgs.nodejs_26}/bin/npx" ];
   # The file root is the home directory, so a project anywhere under it (such
   # as syntek-media's `media.py check --setup`, which reads it from
   # ~/.claude.json) is inside it.
@@ -71,7 +71,7 @@ in forClient ({
 } // lib.optionalAttrs (all || browsers) {
   # Browsers by their system profile path, so this adds no second copy of them.
   brave-devtools = {
-    command = [ (toString launch) "brave" "${pkgs.nodejs}/bin/npx" "/run/current-system/sw/bin/brave" ];
+    command = [ (toString launch) "brave" "${pkgs.nodejs_26}/bin/npx" "/run/current-system/sw/bin/brave" ];
     clients = browserClients;
   };
   firefox-developer = {

@@ -22,8 +22,8 @@
 
 let
   homeDir = config.home.homeDirectory;
-  nodeBin = "${pkgs.nodejs}/bin/node";
-  npmBin = "${pkgs.nodejs}/bin/npm";
+  nodeBin = "${pkgs.nodejs_26}/bin/node";
+  npmBin = "${pkgs.nodejs_26}/bin/npm";
 
   # mcp-mermaid renders diagrams with Playwright-driven Chromium, which is a
   # poor fit for NixOS in two ways:
