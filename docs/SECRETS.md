@@ -297,6 +297,131 @@ holds two all-powerful keys.
   and rotate the secrets that matter: the old `.age` files stay in git
   history. Keep a second copy of the stick (or key) somewhere else.
 
+### Server login keys (devtower-intel)
+
+Server logins follow the same model as the GitHub keys, plus a passphrase:
+one key pair per server and device, the private key passphrase-protected,
+both halves held as agenix secrets in `devtowerIntelKeys` (the master key,
+the KEYS-stick recovery key and the PC's host key).
+`modules/core/server-ssh-keys.nix` declares them from
+`security.serverSshKeys` in `hosts/devtower-intel/secrets.nix` (full stage):
+
+| Secret | Decrypted to | Owner, mode |
+|--------|--------------|-------------|
+| `server-<name>-devtower-intel-key.age` | `~/.ssh/server-<name>-devtower-intel-key` | `sam-desktop:users`, `0600` |
+| `server-<name>-devtower-intel-passphrase.age` | `/run/agenix/server-<name>-passphrase` | `sam-desktop`, `0400` |
+
+It also writes a `Host <name>` alias into `/etc/ssh/ssh_config` with
+`IdentitiesOnly` and `AddKeysToAgent`. A server is left out (no secrets, no
+alias) until both files exist and are git-tracked, so the PC builds before
+they are created; the next rebuild after `git add` picks them up with no Nix
+edit. If only one of the two is there, the rebuild prints a warning.
+
+Configured: `valheim` (Valheim VPS, the separate `valheim-server`
+repo), `ssh valheim`, which goes to `root@10.66.0.1` over the wg0 admin tunnel.
+`10.66.0.1` is an alias too, so that repo's `ssh root@10.66.0.1` and
+`nixos-rebuild --target-host root@10.66.0.1` use the key.
+
+**Do not use `just add-server`.** `agenix-helper add-server` generates the keys
+with a random passphrase, never encrypts them ("Would encrypt", a TODO), then
+deletes the key and forgets the passphrase. It also defaults to the old
+`laptop-intel`/`framework`/`devtower` names and has no identity (`-i`) option.
+Use the steps below.
+
+#### Create the valheim key (devtower-intel)
+
+From the repo root. The key is made on tmpfs (`$XDG_RUNTIME_DIR`), never on
+disk; `TMPDIR` keeps agenix's own cleartext copy there too (`/tmp` is on
+disk). `just edit-secret` encrypts with `-i ~/.ssh/id_ed25519_agenix` (raw
+equivalent: `cd secrets && agenix -i ~/.ssh/id_ed25519_agenix -e <file>.age`;
+agenix copies stdin when it is not a terminal).
+
+```bash
+cd ~/Repos/personal/nix-config
+
+# 1. Key pair with a passphrase (type a strong one twice)
+d=$(mktemp -d "$XDG_RUNTIME_DIR/valheim-key.XXXXXX")
+ssh-keygen -t ed25519 -a 100 -C sam@devtower-intel -f "$d/key"
+
+# 2. Encrypt the private key (piped: no editor opens)
+TMPDIR=$XDG_RUNTIME_DIR just edit-secret server-valheim-devtower-intel-key < "$d/key"
+
+# 3. Encrypt the passphrase: nano opens, type it on one line, save, exit
+TMPDIR=$XDG_RUNTIME_DIR just edit-secret server-valheim-devtower-intel-passphrase
+
+# 4. Public half for the server, then remove the plaintext
+cat "$d/key.pub"     # -> step 7
+shred -u "$d/key" && rm -r "$d"
+
+# 5. Flakes only see tracked files (with the module, if not yet committed)
+git add secrets/server-valheim-devtower-intel-key.age \
+        secrets/server-valheim-devtower-intel-passphrase.age \
+        modules/core/server-ssh-keys.nix
+
+# 6. Rebuild, then check the key opens with the passphrase
+just rebuild
+ls -l ~/.ssh/server-valheim-devtower-intel-key   # -> /run/agenix/server-valheim-key
+ssh-keygen -y -f ~/.ssh/server-valheim-devtower-intel-key   # same key as step 4
+```
+
+7. In `valheim-server/hosts/valheim/default.nix`, replace the placeholder
+   `"ssh-ed25519 AAAA... sam@devtower-intel"` in
+   `users.users.root.openssh.authorizedKeys.keys` with the line from step 4,
+   and commit it there. Its README step 3 (a loose `~/.ssh/id_ed25519_valheim`)
+   is replaced by these steps.
+8. Optional: once that repo's host key exists (its README step 4,
+   `extra/etc/ssh/ssh_host_ed25519_key.pub`), set `hostKey` under
+   `servers.valheim` in `hosts/devtower-intel/secrets.nix` so the first login
+   is not trust-on-first-use.
+
+**Using it.** ssh asks for the passphrase once per session; `AddKeysToAgent`
+then keeps the key in the agent. The passphrase file is the escrow copy if it
+is forgotten. While `bootstrap = true` (public SSH, before the tunnel), point
+the alias at the public address: `ssh -o HostName=<VPS IPv4> valheim`, and
+pass the key to nixos-anywhere with
+`-i ~/.ssh/server-valheim-devtower-intel-key` (or load it with `ssh-add`
+first).
+
+#### Recovery
+
+- **devtower-intel lost:** the KEYS-stick recovery key opens both files on any
+  machine with a clone of this repo (no agenix installed: `nix run
+  github:ryantm/agenix --` in place of `agenix`). Decrypt to tmpfs and use the
+  key from there; `umask 077` matters, as ssh ignores a key file others can
+  read:
+
+  ```bash
+  k=/run/media/<user>/KEYS/agenix/id_ed25519_recovery
+  d=$(mktemp -d "$XDG_RUNTIME_DIR/valheim-key.XXXXXX"); cd secrets
+  (umask 077; agenix -i "$k" -d server-valheim-devtower-intel-key.age > "$d/key")
+  agenix -i "$k" -d server-valheim-devtower-intel-passphrase.age
+  ssh -i "$d/key" -o IdentitiesOnly=yes root@10.66.0.1   # needs the wg0 tunnel; then shred -u "$d/key"
+  ```
+
+  The wg0 peer for 10.66.0.1 lives on the lost device too: first give the
+  new machine its own WireGuard peer on the server (via the VNC console
+  below, or by redeploying with `bootstrap = true` and
+  `ssh -o HostName=<VPS IPv4>`). Then add a key for the new device (below) and remove the lost device's line
+  from root's `authorizedKeys`.
+- **Key and tunnel both unusable:** log in as root on Clouvider's VNC console
+  with the plaintext root password, or boot an older generation from GRUB.
+  valheim-server's `root-password.age` holds only its `mkpasswd -m yescrypt`
+  hash, which cannot be typed at the console, so keep the plaintext password
+  in the password manager when you choose it (valheim-server README step 6).
+- **Second device** (e.g. laptop-intel): give it its own pair, never a copy.
+  Uncomment the `server-valheim-laptop-intel-*` template in
+  `secrets/secrets.nix`, create the files the same way on that device (its
+  `id_ed25519_agenix` opens only `laptopIntelKeys`), import
+  `modules/core/server-ssh-keys.nix` in its secrets module with
+  `security.serverSshKeys = { user = "sam-laptop"; servers.valheim = { ... }; }`,
+  and add its public key as another line in root's `authorizedKeys`.
+- **Rotating:** create a new pair as above (steps 1 to 4 overwrite both
+  `.age` files), add its public key to root's `authorizedKeys` beside the old
+  one and deploy that with the old key, which stays in `~/.ssh` until the
+  rebuild. Then `git add` and rebuild here, check `ssh valheim`, and remove
+  the old line. The old `.age` files stay in git history, so rotate after a
+  suspected leak of the master or recovery key.
+
 ---
 
 ## Setup Guide
@@ -560,7 +685,11 @@ Examples:
 
 Deployed to:
 - Private key: `~/.ssh/server-<name>-<device>-key`
-- Passphrase: `/run/agenix/server-<name>-<device>-passphrase`
+- Passphrase: `/run/agenix/server-<name>-passphrase`
+
+On devtower-intel, `modules/core/server-ssh-keys.nix` declares them once both
+files are tracked; see
+[Server login keys (devtower-intel)](#server-login-keys-devtower-intel).
 
 ---
 
@@ -642,7 +771,7 @@ in
   };
 
   # Server SSH keys (per-device, with passphrases)
-  age.secrets."server-acme-${hostname}-key" = {
+  age.secrets.server-acme-key = {
     file = ../../secrets/server-acme-${hostname}-key.age;
     path = "/home/${username}/.ssh/server-acme-${hostname}-key";
     owner = username;
@@ -650,11 +779,9 @@ in
     mode = "0600";
   };
 
-  age.secrets."server-acme-${hostname}-passphrase" = {
+  age.secrets.server-acme-passphrase = {
     file = ../../secrets/server-acme-${hostname}-passphrase.age;
-    path = "/run/agenix/server-acme-${hostname}-passphrase";
-    owner = username;
-    group = "users";
+    owner = username;  # -> /run/agenix/server-acme-passphrase
     mode = "0400";  # Read-only
   };
 }

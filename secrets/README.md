@@ -55,6 +55,11 @@ just list-secrets
 Decrypted secrets are placed at activation by NixOS into:
 - `/run/agenix/<secret-name>` (e.g. `claude-secrets`, `aws-config`)
 - Per-device GitHub keys at `~/.ssh/github-<host>-<account>`
+- Per-device server login keys (passphrase-protected) at
+  `~/.ssh/server-<name>-<host>-key`, passphrase at
+  `/run/agenix/server-<name>-passphrase` (devtower-intel: `valheim`, declared by
+  `modules/core/server-ssh-keys.nix` once both files are tracked; see
+  [server login keys](../docs/SECRETS.md#server-login-keys-devtower-intel))
 
 The host modules that declare them are `modules/core/secrets-laptop.nix`,
 `modules/core/secrets-desktop.nix` and `hosts/devtower-intel/secrets.nix`.

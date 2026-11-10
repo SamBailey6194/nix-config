@@ -104,8 +104,8 @@ Host my-server
 
 **Add new server:**
 ```bash
-just add-server my-server
-# Follow prompts to generate per-device SSH key
+# Not `just add-server`: it never encrypts and discards the keys.
+# Follow docs/SECRETS.md#server-login-keys-devtower-intel
 ```
 
 ---

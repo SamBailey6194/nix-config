@@ -36,7 +36,26 @@ in
     ../../modules/core/oama-secret.nix # aerc OAuth clients (home/modules/aerc.nix)
     ../../modules/core/mail-aerc-secrets.nix # aerc Infomaniak device passwords
     ../../modules/core/business-docs-secrets.nix # mail scripts' and calendar passwords (root-only)
+    ../../modules/core/server-ssh-keys.nix # per-device server login keys + SSH aliases
   ];
+
+  # Server login keys (passphrase-protected), each declared only once both of
+  # its secrets/server-<name>-devtower-intel-{key,passphrase}.age files are
+  # git-tracked. Owner steps: docs/SECRETS.md#server-login-keys-devtower-intel.
+  security.serverSshKeys = {
+    user = username;
+
+    # Valheim VPS (valheim-server repo): sshd is on its wg0 admin tunnel only,
+    # once bootstrap = false. Listing the address as an alias makes that repo's
+    # `ssh root@10.66.0.1` and `--target-host root@10.66.0.1` use the key too.
+    servers.valheim = {
+      hostName = "10.66.0.1";
+      aliases = [ "10.66.0.1" ];
+      # Pin the pre-generated host key (valheim-server README step 4,
+      # extra/etc/ssh/ssh_host_ed25519_key.pub) once it exists:
+      # hostKey = "ssh-ed25519 AAAA... root@valheim";
+    };
+  };
 
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 

@@ -68,6 +68,7 @@ nix-config/
 │   │   ├── common.nix              # Base packages
 │   │   ├── nix-settings.nix        # Nix daemon settings
 │   │   ├── ssh-config.nix          # Auto-generated SSH config (per-device keys)
+│   │   ├── server-ssh-keys.nix     # Per-device server login keys + SSH aliases (once .age files exist)
 │   │   ├── secrets-laptop.nix      # Laptop secrets declarations
 │   │   └── secrets-desktop.nix     # Desktop secrets declarations
 │   │
@@ -144,7 +145,7 @@ just verify-secrets           # Verify all secrets deployed correctly
 just edit-secret <name>       # Edit an encrypted secret
 just list-secrets             # List all secrets and authorized keys
 just rekey-secrets            # Rekey the secrets this key opens (after adding hosts)
-just add-server <name>        # Generate per-device SSH keys for server
+just add-server <name>        # BROKEN: never encrypts, discards keys (docs/SECRETS.md#server-login-keys-devtower-intel)
 ```
 
 ### NixOS System Management
@@ -173,7 +174,7 @@ secrets-verify --test-github  # Test GitHub SSH connections
 agenix-helper edit <secret>   # Edit encrypted secret
 agenix-helper list            # List all secrets
 agenix-helper rekey           # Rekey all secrets
-agenix-helper add-server <name>  # Generate per-device server keys
+agenix-helper add-server <name>  # BROKEN: never encrypts, discards keys (docs/SECRETS.md#server-login-keys-devtower-intel)
 agenix-helper check-keys      # Verify host keys
 
 wireguard-helper init         # Initialize VPN configuration

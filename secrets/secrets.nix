@@ -340,6 +340,16 @@ in
   "server-acme-devtower-intel-key.age".publicKeys = devtowerIntelKeys;
   "server-acme-devtower-intel-passphrase.age".publicKeys = devtowerIntelKeys;
 
+  # Valheim VPS root login (valheim-server repo; `ssh valheim` -> 10.66.0.1).
+  # Declared by modules/core/server-ssh-keys.nix once both files are tracked.
+  # Off devtower-intel, the KEYS-stick recovery key opens them.
+  # docs/SECRETS.md#server-login-keys-devtower-intel
+  "server-valheim-devtower-intel-key.age".publicKeys = devtowerIntelKeys;
+  "server-valheim-devtower-intel-passphrase.age".publicKeys = devtowerIntelKeys;
+  # Second device: its own key pair, added to root's authorizedKeys as well.
+  # "server-valheim-laptop-intel-key.age".publicKeys = laptopIntelKeys;
+  # "server-valheim-laptop-intel-passphrase.age".publicKeys = laptopIntelKeys;
+
   # ============================================================================
   # Shared Secrets (All Devices Can Decrypt)
   # Use sparingly - prefer per-device secrets for zero-trust

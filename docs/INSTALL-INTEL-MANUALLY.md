@@ -392,6 +392,7 @@ The full stage (`.#devtower-intel`) declares these agenix secrets in
 | `github-ssh-personal`, `-syntek`, `-missionalgen`, `-premier` | `~/.ssh/github-devtower-intel-<account>` |
 | `claude-secrets` (monitor token, Context7 + ElevenLabs keys) | `/run/agenix/claude-secrets` |
 | `typesafe-api-key` (TypeSafe/Jev key, after provisioning) | `/run/agenix/typesafe-api-key` |
+| `server-valheim-key`, `-passphrase` (once created, [SECRETS.md](SECRETS.md#server-login-keys-devtower-intel)) | `~/.ssh/server-valheim-devtower-intel-key`, `/run/agenix/server-valheim-passphrase` |
 | `aws-config` | `/run/agenix/aws-config`, linked to `~/.aws/config` |
 | `aws-credentials` (static IAM keys) | `/run/agenix/aws-credentials`, linked to `~/.aws/credentials` |
 

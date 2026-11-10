@@ -40,7 +40,7 @@ list-secrets:
 rekey-secrets *ARGS:
     python3 {{quote(justfile_directory() / "scripts/rekey-secrets.py")}} {{ARGS}}
 
-# Add a new server with per-device SSH keys
+# Add a server with per-device SSH keys. BROKEN: never encrypts, discards keys (docs/SECRETS.md)
 add-server SERVER:
     agenix-helper add-server {{SERVER}}
 
