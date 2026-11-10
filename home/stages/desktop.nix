@@ -14,14 +14,10 @@
     ../modules/ddev-ca.nix   # DDEV mkcert CA in ~/.pki/nssdb (Brave, Playwright)
     ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
     ../modules/file-manager.nix    # Yazi (main) + Thunar (backup), udiskie, file picker
-    ../modules/teams-backgrounds.nix # teams-for-linux custom background server
   ];
 
   # Normalise completed download names; routing remains opt-in until rules are set.
   services.downloadSorter.enable = lib.mkDefault true;
-
-  # Sam's studio background in Teams (docs/TEAMS-BACKGROUNDS.md).
-  services.teamsBackgrounds.enable = lib.mkDefault true;
 
   # Desktop-only packages
   home.packages = with pkgs; [
