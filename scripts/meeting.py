@@ -4,6 +4,7 @@
   just meeting          ask for the details, then record (Ctrl+C to finish)
   just meeting-stop     stop the recording from another terminal
   just meeting-notes    pick a recording, confirm details, transcribe and write notes
+  just dnd              ask for campaign, session and players, then record the room
 
 Answer `n`, `n/a` or `none` (or press Enter where a default is shown) to skip
 a question. See docs/MEETING-NOTES.md.
@@ -59,18 +60,89 @@ def meeting_notes():
     return exe
 
 
+def host_config(exe):
+    return json.loads(subprocess.run([exe, "config"], capture_output=True, text=True, check=True).stdout)
+
+
+def ask_mode(cfg, default):
+    """room or call, offering call only where this host has call outputs."""
+    if not cfg["outputs"]:
+        return "room"
+    return ask_choice("Audio: call = mic + call audio, room = one mic hears everyone",
+                      ["call", "room"], default if default in ("call", "room") else cfg["defaultMode"])
+
+
+def ask_output(cfg):
+    if len(cfg["outputs"]) < 2:
+        return "auto"
+    return ask_choice("Call audio: auto = every output", ["auto", *cfg["outputs"]], "auto")
+
+
 def start():
     exe = meeting_notes()
+    cfg = host_config(exe)
     print("New meeting recording. n/a skips a question.\n")
     title = ask_text("Title", "Meeting") or "Meeting"
-    attendees = ask_text("Remote attendees, comma-separated (not you)")
-    output = ask_choice("Call audio: auto = headphones and speakers", ["auto", "chat", "hdmi"], "auto")
+    mode = ask_mode(cfg, cfg["defaultMode"])
+    if mode == "room":
+        attendees = ask_text("Everyone present, comma-separated (you included)")
+    else:
+        attendees = ask_text("Remote attendees, comma-separated (not you)")
+    cmd = [exe, "record", "--title", title, "--mode", mode]
+    if mode == "call":
+        cmd += ["--output", ask_output(cfg)]
     process = ask_yes("Write the notes as soon as the recording stops?")
-
-    cmd = [exe, "run" if process else "record", "--title", title, "--output", output]
+    if process:
+        cmd[1] = "run"
     if attendees:
         cmd += ["--attendees", attendees]
     print("\nStop with Ctrl+C here, or `just meeting-stop` from another terminal.\n")
+    os.execv(exe, cmd)
+
+
+def dnd():
+    exe = meeting_notes()
+    campaigns = json.loads(subprocess.run([exe, "campaigns", "--json"],
+                                          capture_output=True, text=True, check=True).stdout)
+    print("New D&D session recording. n/a skips a question.\n")
+    if campaigns:
+        print("Campaigns (most recent last):")
+        for i, c in enumerate(campaigns, 1):
+            print(f"  {i}. {c['name']}  ({c['sessions']} sessions)")
+        print()
+    last = campaigns[-1]["name"] if campaigns else None
+    answer = ask_text("Campaign (number or name)", last)
+    if not answer:
+        sys.exit("a campaign name is needed")
+    if answer.isdigit() and 1 <= int(answer) <= len(campaigns):
+        answer = campaigns[int(answer) - 1]["name"]
+    known = next((c for c in campaigns if c["name"].casefold() == answer.casefold()), None)
+    campaign = known["name"] if known else answer
+
+    cfg = host_config(exe)
+    title = ask_text("Session title", f"Session {(known or {}).get('sessions', 0) + 1}")
+    mode = ask_mode(cfg, (known or {}).get("mode", cfg["defaultMode"]))
+    print('Everyone at the table, you included, as "Player (Character)" and "Name (DM)".')
+    saved = ", ".join((known or {}).get("attendees", []))
+    players = ask_text("Players", saved or None)
+    cmd = [exe, "record", "--kind", "dnd", "--campaign", campaign,
+           "--mode", mode, "--title", title or "Session"]
+    if mode == "call":
+        # Online: the recorder is the mic track, everyone else the call audio
+        listed = [p.strip() for p in (players or "").split(",") if p.strip()]
+        dm = next((p for p in listed if "(dm)" in p.casefold()), None)
+        me = ask_text("Which of them are you (your mic track)?", dm or cfg["selfName"])
+        if me:
+            cmd += ["--me", me]
+        cmd += ["--output", ask_output(cfg)]
+    process = ask_yes("Write the DM notes and recap as soon as the recording stops?", False)
+    if process:
+        cmd[1] = "run"
+    if players:
+        cmd += ["--attendees", players]
+    print("\nStop with Ctrl+C here, or `just meeting-stop` from another terminal.")
+    print("Suspend and lid-close suspend are blocked while recording; keep the lid open "
+          "so the microphone is not muffled.\n")
     os.execv(exe, cmd)
 
 
@@ -88,7 +160,8 @@ def notes():
     print("Recent recordings (newest last):\n")
     for i, r in enumerate(rows, 1):
         done = "  [notes]" if r["notes"] else ""
-        print(f"  {i}. {r['started'][:16].replace('T', ' ')}  {r['title']}{done}")
+        title = f"{r['campaign']}: {r['title']}" if r.get("campaign") else r["title"]
+        print(f"  {i}. {r['started'][:16].replace('T', ' ')}  {title}{done}")
     print()
     while True:
         pick = ask("Which recording", str(len(rows)))
@@ -100,7 +173,8 @@ def notes():
 
     saved = ", ".join(rec["attendees"])
     cmd = [exe, "process", rec["dir"]]
-    answer = ask("Remote attendees (Enter keeps the saved list, n/a for none)", saved or None)
+    who = "Remote attendees" if rec.get("mode", "call") == "call" else "Everyone present"
+    answer = ask(f"{who} (Enter keeps the saved list, n/a for none)", saved or None)
     if answer and answer.lower() in SKIP:
         cmd += ["--attendees", ""]
     elif answer and answer != saved:
@@ -113,7 +187,8 @@ def notes():
 
     summariser = ask_choice("Notes written by", ["claude", "local"], "claude")
     cmd += ["--summariser", summariser]
-    if not ask_yes("Write notes and action points (no = transcript only)?"):
+    what = "the DM notes and players' recap" if rec.get("kind") == "dnd" else "notes and action points"
+    if not ask_yes(f"Write {what} (no = transcript only)?"):
         cmd.append("--no-summary")
     if rec["notes"] and ask_yes("Notes exist already: transcribe and label again from scratch?", False):
         cmd.append("--redo")
@@ -123,7 +198,7 @@ def notes():
 
 
 if __name__ == "__main__":
-    actions = {"start": start, "stop": stop, "notes": notes}
+    actions = {"start": start, "dnd": dnd, "stop": stop, "notes": notes}
     if len(sys.argv) != 2 or sys.argv[1] not in actions:
         sys.exit(f"usage: {sys.argv[0]} {{{'|'.join(actions)}}}")
     actions[sys.argv[1]]()

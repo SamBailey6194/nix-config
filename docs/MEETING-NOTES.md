@@ -9,6 +9,8 @@ plays through the configured outputs.
 Enabled on devtower-intel from the dev stage up
 (`hosts/devtower-intel/meeting-notes.nix`); options live in
 `modules/software/meeting-notes.nix`, the program in `pkgs/meeting-notes/`.
+laptop-intel records in-person D&D sessions from one room microphone instead:
+see [D&D sessions](#dd-sessions-in-person).
 
 ## Use
 
@@ -168,7 +170,94 @@ business off-site backup design
 ([SHARED-DATA-DRIVES.md](SHARED-DATA-DRIVES.md#off-site-backup-and-the-kdrive-viewing-copy)),
 which is not built yet, so until it runs nothing backs them up.
 
+## D&D sessions (in person)
+
+laptop-intel runs `meeting-notes` in **room mode**: its built-in microphone
+hears the whole table as one track, and Pyannote splits that track into
+speakers. Enabled in the full config (`hosts/laptop-intel/meeting-notes.nix`).
+The same `--kind dnd` works on devtower-intel in call mode, for online games.
+
+```sh
+just dnd              # campaign, session title, players; records until Ctrl+C
+just meeting-stop     # stop it from another terminal instead
+just meeting-notes    # pick the session: transcript, names, DM notes and players' recap
+```
+
+List **everyone at the table, you included**, as `Player (Character)` and
+`Name (DM)`, e.g. `Sam (DM), Jane (Elira), Tom (Brakka)`. `just dnd`
+remembers the last session's list and numbers sessions for you.
+
+Sessions are kept per campaign under `~/Documents/DnD/<campaign>/`:
+
+| File | Contents |
+| --- | --- |
+| `campaign.md` | optional, **DM only**: setting, party, recurring NPCs, quests, house rules, secrets. Used for the DM notes only, never the recap; text in `<!-- -->` is not sent |
+| `glossary.txt` | names Whisper should spell correctly (characters, NPCs, places), one per line or comma-separated |
+| `<date>-<session>/room.flac` | the recording (16 kHz mono FLAC) |
+| `<date>-<session>/transcript.md` | who said what, timestamped |
+| `<date>-<session>/dm-notes.md` | **for the DM only** (below) |
+| `<date>-<session>/recap.md` | the players' recap, safe to share (below) |
+
+Two summaries, from two separate LLM calls:
+
+- **`dm-notes.md`** (DM only): a read-aloud *Previously on...*, what
+  happened with timestamps, NPCs, places, loot, quests and leads, character
+  moments, **what the players think and want** (theories, plans and wishes
+  from out-of-character table talk), rulings, a **threads to pick up**
+  checklist for prep, where you left off, and **names to check**. It sees
+  `campaign.md` and the previous session's DM notes.
+- **`recap.md`** (players): only what the characters saw, heard and were
+  told: recap, what we did, people met, places, loot, quests, where we left
+  off. It never sees `campaign.md` or any DM notes, and is told to leave out
+  DM asides, hidden results and out-of-character talk. It is still an LLM
+  summary of everything said at the table, so skim it before sharing.
+
+Copy the names to check into `glossary.txt`, and later sessions spell them
+correctly. Keep secret names out of `glossary.txt`: it also helps spell the
+recap. Put them in `campaign.md`, which the recap never sees.
+
+### Before a session
+
+- Mic input volume 80-100%: `meeting-notes sources` shows it, and recording
+  warns below 50%. Set it in pavucontrol (Input Devices) or with
+  `wpctl set-volume @DEFAULT_SOURCE@ 0.9`.
+- Put the laptop in the middle of the table, lid open: the microphone is in
+  the lid. Suspend, idle sleep and lid-close suspend are blocked for as long
+  as the recording runs, and released when it stops.
+- Plug in for processing. Recording uses almost no CPU.
+
+Online games on devtower-intel (`just dnd`, mode `call`) work the same way.
+The wizard asks which listed person you are, which is your mic track.
+
+### Speakers on one microphone
+
+Labelling needs the Hugging Face token (see [Speakers and names](#speakers-and-names));
+for this laptop the secret is `huggingface-token-laptop-intel.age`:
+
+```sh
+just edit-secret huggingface-token-laptop-intel   # paste the hf_... read token only
+git add secrets/huggingface-token-laptop-intel.age
+just rebuild
+```
+
+Without it everything is labelled "Table": the transcript and log still work,
+but not who said what. With it, the summariser suggests names (players are
+often addressed by character name) and you confirm them. One microphone
+across a table can split a person across two labels: give both the same name,
+e.g. `00=Jane (Elira), 03=Jane (Elira)`, and their lines are merged. A USB
+conference or boundary microphone in the middle of the table separates voices
+noticeably better than the built-in one; set `micSource` to it.
+
+### Time
+
+Everything runs on the i5-10210U CPU: Whisper `large-v3-turbo` in INT8, then
+Pyannote. Expect processing to take a large fraction of the session's length
+(an estimate; time a first real session), so start `just meeting-notes`
+after the game and let it run. `--no-diarise` skips labelling to save time.
+Transcription is cached, so adding the token later and re-running only does
+the labelling and notes.
+
 ## Consent
 
-Tell people you are recording, and why. Keep recordings and transcripts only
+Tell people you are recording, and why: at a D&D table, everyone present. Keep recordings and transcripts only
 as long as you need them.

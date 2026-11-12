@@ -1,5 +1,5 @@
 { lib, pkgs, makeWrapper, runCommand, ffmpeg, pipewire, addDriverRunpath
-, cudaCapabilities ? [ "7.5" ]
+, cudaCapabilities ? [ ]
 , settings ? { }
 }:
 
@@ -17,6 +17,9 @@
 # CUDA architectures are per package, as in modules/software/local-llm.nix:
 # only this CTranslate2's view of the CUDA package set changes, so nvcc,
 # cudart, cuBLAS and cuDNN stay the cached default derivations.
+#
+# An empty `cudaCapabilities` (laptop-intel) builds nothing: faster-whisper
+# uses nixpkgs' CPU CTranslate2 from the binary cache, in INT8.
 
 let
   dropDot = lib.replaceStrings [ "." ] [ "" ];
@@ -44,7 +47,8 @@ let
     };
   };
 
-  asrPython = python.withPackages (ps: [ ps.faster-whisper ]);
+  withCuda = cudaCapabilities != [ ];
+  asrPython = (if withCuda then python else pkgs.python3).withPackages (ps: [ ps.faster-whisper ]);
   diarisePython = pkgs.python3.withPackages (ps: [ ps.whisperx ]);
 
   settingsFile = pkgs.writeText "meeting-notes-settings.json" (builtins.toJSON settings);
@@ -70,6 +74,6 @@ runCommand "meeting-notes"
       --set MEETING_NOTES_SHARE $out/share/meeting-notes \
       --set MEETING_NOTES_ASR_PYTHON ${asrPython}/bin/python3 \
       --set MEETING_NOTES_DIARISE_PYTHON ${diarisePython}/bin/python3 \
-      --set MEETING_NOTES_DRIVER_LIB ${addDriverRunpath.driverLink}/lib \
-      --prefix PATH : ${lib.makeBinPath [ ffmpeg pipewire ]}
+      ${lib.optionalString withCuda "--set MEETING_NOTES_DRIVER_LIB ${addDriverRunpath.driverLink}/lib"} \
+      --prefix PATH : ${lib.makeBinPath [ ffmpeg pipewire pkgs.wireplumber pkgs.systemd ]}
   ''

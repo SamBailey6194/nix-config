@@ -313,6 +313,7 @@ See `docs/SECRETS.md` for the complete guide.
 - **Installation**: `CLAUDE.md` (this file) - Quick start guide
 - **Secrets Setup**: `docs/SECRETS.md` - Step-by-step secrets configuration and the per-device (zero-trust) model
 - **Email**: `docs/EMAIL.md` - aerc + Claws Mail, OAuth2 via oama, per-device client secrets
+- **Meeting notes / D&D sessions**: `docs/MEETING-NOTES.md` - call transcripts with action points (devtower-intel); in-person D&D session logs from one room mic (laptop-intel, `just dnd`)
 - **DDEV HTTPS**: `docs/DDEV-HTTPS.md` - one mkcert CA per machine for every DDEV project (`just ddev-ca`)
 - **Phone Photo Sync**: `docs/PHONE-PHOTO-SYNC.md` - weekly Pixel 8 Pro upload over the `wg-home` WireGuard tunnel with Syncthing (devtower-intel)
 - **Rust Tools**: `rust/README.md` - Rust tooling overview

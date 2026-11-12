@@ -190,6 +190,7 @@ in
   # Hugging Face read token for meeting-notes' Pyannote speaker labelling
   # (software.meetingNotes). Plain token, no KEY= prefix. Optional per device.
   "huggingface-token-devtower-intel.age".publicKeys = devtowerIntelKeys;
+  "huggingface-token-laptop-intel.age".publicKeys = laptopIntelKeys;
 
   # ============================================================================
   # Infomaniak Mail Device Passwords (per device)

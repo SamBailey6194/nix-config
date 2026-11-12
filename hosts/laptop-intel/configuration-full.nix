@@ -39,6 +39,7 @@
     ../../modules/software/communication.nix
     ../../modules/software/media.nix
     ../../modules/software/craft-apps.nix # ArtCraft Craft apps (PhotoCraft, VectorCraft, ...)
+    ./meeting-notes.nix # D&D session recording, transcripts and notes (room mode)
 
     # Network
     # Declarative Wi-Fi profiles; PSKs come from the wifi-passwords agenix

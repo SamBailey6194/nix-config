@@ -5,8 +5,10 @@
 # transcribes them on the GPU, labels remote speakers, asks for name
 # confirmation and writes notes with action points. See docs/MEETING-NOTES.md.
 #
-# Off by default: it compiles CTranslate2 with CUDA for the listed GPU, and
-# the PipeWire node names are specific to each machine's audio hardware.
+# Off by default: the PipeWire node names are specific to each machine's audio
+# hardware, and with cudaCapabilities set it compiles CTranslate2 with CUDA.
+# With no remoteSinks (laptop-intel) it records one room microphone and
+# labels everyone at the table from it: in-person D&D sessions (--kind dnd).
 
 let
   cfg = config.software.meetingNotes;
@@ -17,24 +19,54 @@ in
     enable = lib.mkEnableOption "meeting recording, transcription and notes";
 
     cudaCapabilities = lib.mkOption {
-      type = lib.types.nonEmptyListOf lib.types.str;
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
       example = [ "7.5" ];
-      description = "GPU compute capabilities CTranslate2 is compiled for.";
+      description = ''
+        GPU compute capabilities CTranslate2 is compiled for. Empty: CPU-only
+        transcription (INT8) with the cached nixpkgs CTranslate2.
+      '';
     };
 
     micSource = lib.mkOption {
       type = lib.types.str;
-      description = "PipeWire source with only the user's voice (node.name).";
+      description = ''
+        PipeWire source (node.name): only the user's voice for calls, or the
+        microphone that hears the whole table in room mode.
+      '';
     };
 
     remoteSinks = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
+      default = { };
       example = { chat = "alsa_output.usb-…Headphones__sink"; };
       description = ''
         PipeWire sinks the call may play on, keyed by a short name for
         `--output`. Their monitors are recorded; `auto` records all of them and
         mixes them, so moving between headphones and speakers mid-call is fine.
       '';
+    };
+
+    defaultMode = lib.mkOption {
+      type = lib.types.enum [ "call" "room" ];
+      default = if cfg.remoteSinks == { } then "room" else "call";
+      defaultText = lib.literalExpression ''if remoteSinks == { } then "room" else "call"'';
+      description = ''
+        `call`: the microphone and the call output as separate tracks.
+        `room`: the microphone alone, everyone in the room on it (in person).
+      '';
+    };
+
+    dndDir = lib.mkOption {
+      type = lib.types.str;
+      default = "~/Documents/DnD";
+      description = "Campaign folders for `--kind dnd` sessions: <dndDir>/<campaign>/<session>.";
+    };
+
+    threads = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 4;
+      description = "CPU threads for CPU transcription and for speaker labelling.";
     };
 
     selfName = lib.mkOption {
@@ -119,8 +151,8 @@ in
           (pkgs.callPackage ../../pkgs/meeting-notes {
             inherit (cfg) cudaCapabilities;
             settings = {
-              inherit (cfg) micSource remoteSinks selfName outputDir asrModel language
-                diariseModel summariser;
+              inherit (cfg) micSource remoteSinks defaultMode dndDir threads selfName outputDir
+                asrModel language diariseModel summariser;
               defaultOutput = "auto";
               hfTokenFile = "/run/agenix/huggingface-token";
               local = { url = cfg.localUrl; model = cfg.localModel; };

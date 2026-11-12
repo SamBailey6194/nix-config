@@ -6,7 +6,8 @@
   WhisperX, WhisperFlow, Rhubarb, and systemd workload safeguards.
 - [Local models](LOCAL-LLM.md) — CUDA/OpenBLAS, full-context feasibility and OpenCode.
 - [Meeting notes](MEETING-NOTES.md) — two-track GoXLR/HDMI capture, GPU transcription,
-  speaker naming and Claude or local summaries with action points.
+  speaker naming and Claude or local summaries with action points; in-person D&D session
+  logs from one room microphone on laptop-intel.
 - [Browser settings and migration](BROWSER-MIGRATION.md) — shared policies and Ubuntu profile preservation.
 - [Claude settings](CLAUDE-SETTINGS.md) — Ubuntu preferences with Syntek project skills and fewer plugins.
 - [Shared MCP servers](SHARED-MCP.md) — Ubuntu Claude inventory in all four clients.

@@ -53,18 +53,23 @@ check-keys:
     agenix-helper check-keys
 
 # ============================================================================
-# Meetings (meeting-notes, devtower-intel dev stage and up)
+# Meetings and D&D sessions (meeting-notes: devtower-intel dev stage and up,
+# laptop-intel full config in room mode)
 # ============================================================================
 
 # Record a meeting: asks for title, attendees and audio, then records until Ctrl+C
 meeting:
     python3 -I {{quote(justfile_directory() / "scripts/meeting.py")}} start
 
-# Stop the current meeting recording (from another terminal)
+# Record a D&D session: asks for campaign, session and players, then records until Ctrl+C
+dnd:
+    python3 -I {{quote(justfile_directory() / "scripts/meeting.py")}} dnd
+
+# Stop the current meeting or D&D recording (from another terminal)
 meeting-stop:
     python3 -I {{quote(justfile_directory() / "scripts/meeting.py")}} stop
 
-# Transcribe a recording, confirm speaker names and write notes with action points
+# Transcribe a meeting or D&D recording, confirm speaker names and write the notes
 meeting-notes:
     python3 -I {{quote(justfile_directory() / "scripts/meeting.py")}} notes
 
