@@ -47,6 +47,29 @@ in
       '';
     };
 
+    micMixer = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule {
+        options = {
+          card = lib.mkOption {
+            type = lib.types.str;
+            example = "PCH";
+            description = "ALSA card name or index (cat /proc/asound/cards).";
+          };
+          controls = lib.mkOption {
+            type = lib.types.attrsOf (lib.types.either lib.types.int lib.types.str);
+            example = { Capture = 30; "Internal Mic Boost" = 0; };
+            description = "amixer simple controls and values, set before recording.";
+          };
+        };
+      });
+      default = null;
+      description = ''
+        ALSA capture levels applied at the start of every recording and
+        mic-check. PipeWire maps the source volume onto these hardware controls,
+        so pinning them keeps the gain the same from session to session.
+      '';
+    };
+
     defaultMode = lib.mkOption {
       type = lib.types.enum [ "call" "room" ];
       default = if cfg.remoteSinks == { } then "room" else "call";
@@ -151,7 +174,7 @@ in
           (pkgs.callPackage ../../pkgs/meeting-notes {
             inherit (cfg) cudaCapabilities;
             settings = {
-              inherit (cfg) micSource remoteSinks defaultMode dndDir threads selfName outputDir
+              inherit (cfg) micSource micMixer remoteSinks defaultMode dndDir threads selfName outputDir
                 asrModel language diariseModel summariser;
               defaultOutput = "auto";
               hfTokenFile = "/run/agenix/huggingface-token";

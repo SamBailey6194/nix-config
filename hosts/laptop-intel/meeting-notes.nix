@@ -8,11 +8,19 @@
   software.meetingNotes = {
     enable = true;
 
-    # Built-in Audio Analog Stereo capture (the internal microphone). Recorded
-    # as 16 kHz mono. Its input volume drives Capture (+30 dB) and Internal Mic
-    # Boost (+30 dB) together: 90% clips, so start near 30% and tune the level
-    # with `meeting-notes mic-check`.
+    # Built-in Audio Analog Stereo capture (the internal microphone), recorded
+    # as 16 kHz mono.
     micSource = "alsa_input.pci-0000_00_1f.3.analog-stereo";
+
+    # PipeWire's input volume drives Capture (up to +30 dB) and Internal Mic
+    # Boost (up to +30 dB) together; at 90% everything clipped. Capture 30
+    # (+5.25 dB) with no boost was tested on 13/11/2026 with two people across
+    # a table: no clipping, both voices transcribed and told apart. Re-test
+    # with `meeting-notes mic-check --no-mixer` while changing these by amixer.
+    micMixer = {
+      card = "PCH";
+      controls = { Capture = 30; "Internal Mic Boost" = 0; };
+    };
 
     # No call outputs: room mode only, which defaultMode follows. Add e.g.
     # `speakers = "alsa_output.pci-0000_00_1f.3.analog-stereo";` to record

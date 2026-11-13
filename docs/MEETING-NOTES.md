@@ -218,11 +218,15 @@ recap. Put them in `campaign.md`, which the recap never sees.
 
 ### Before a session
 
-- Check the level with `meeting-notes mic-check`. Talk from the nearest and
-  furthest seats; it reports TOO LOUD (clipping), TOO QUIET or OK. The input
-  volume drives the ALSA Capture and Internal Mic Boost controls together, on
-  a cubic scale: on laptop-intel 90% (+50 dB of gain) clipped everything, so
-  start around 30% (`wpctl set-volume @DEFAULT_SOURCE@ 0.3`) and adjust.
+- The level is pinned: `micMixer` (`hosts/laptop-intel/meeting-notes.nix`)
+  sets ALSA Capture 30 (+5.25 dB) and Internal Mic Boost 0 at the start of
+  every recording, so `wpctl` volume changes in between do not matter.
+  PipeWire's input volume drives those same controls on a cubic scale; at
+  90% (+50 dB of gain) everything clipped. `meeting-notes mic-check` records
+  15 s and reports TOO LOUD (clipping), TOO QUIET or OK; talk from the nearest
+  and furthest seats. To tune it, change the controls with
+  `amixer -c PCH sset Capture 35`, test with `mic-check --no-mixer`, then put
+  the value in `micMixer`.
 - Put the laptop in the middle of the table, lid open: the microphone is in
   the lid. Suspend, idle sleep and lid-close suspend are blocked for as long
   as the recording runs, and released when it stops.

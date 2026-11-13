@@ -75,5 +75,5 @@ runCommand "meeting-notes"
       --set MEETING_NOTES_ASR_PYTHON ${asrPython}/bin/python3 \
       --set MEETING_NOTES_DIARISE_PYTHON ${diarisePython}/bin/python3 \
       ${lib.optionalString withCuda "--set MEETING_NOTES_DRIVER_LIB ${addDriverRunpath.driverLink}/lib"} \
-      --prefix PATH : ${lib.makeBinPath [ ffmpeg pipewire pkgs.wireplumber pkgs.systemd ]}
+      --prefix PATH : ${lib.makeBinPath [ ffmpeg pipewire pkgs.wireplumber pkgs.systemd pkgs.alsa-utils ]}
   ''

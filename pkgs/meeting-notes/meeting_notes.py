@@ -198,6 +198,25 @@ def source_volume(node):
     return (float(m.group(1)), "MUTED" in r.stdout) if m else None
 
 
+def apply_mixer():
+    """Set the ALSA capture controls from software.meetingNotes.micMixer. PipeWire
+    maps its input volume onto these same controls, so a stray volume change or
+    a restored state could otherwise leave the microphone clipping."""
+    mixer = SETTINGS.get("micMixer") or {}
+    if not mixer.get("controls"):
+        return
+    amixer = shutil.which("amixer")
+    if not amixer:
+        warn("amixer not found: microphone mixer levels not applied")
+        return
+    for control, value in mixer["controls"].items():
+        r = subprocess.run([amixer, "-q", "-c", mixer["card"], "sset", control, str(value)],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            warn(f"could not set {control} on card {mixer['card']}: {r.stderr.strip()}")
+    info("microphone mixer: " + ", ".join(f"{c} {v}" for c, v in mixer["controls"].items()))
+
+
 def check_mic_level(node):
     level = source_volume(node)
     if level is None:
@@ -217,6 +236,8 @@ def cmd_mic_check(args):
     mic = SETTINGS["micSource"]
     if mic not in nodes:
         die(f"microphone source {mic} not found; check `meeting-notes sources`")
+    if not args.no_mixer:
+        apply_mixer()
     level = source_volume(nodes[mic])
     if level:
         info(f"input volume {level[0]:.0%}{' (MUTED)' if level[1] else ''}")
@@ -255,11 +276,11 @@ def cmd_mic_check(args):
     print(f"speech level {speech:.0f} dB, typical {quiet:.0f} dB, peak {peak_db:.1f} dB, "
           f"clipped samples {clip_share:.2%}")
     if clip_share > 0.001 or peak_db > -0.5:
-        print("TOO LOUD: it clips and voices distort. Lower the volume, e.g. "
-              "wpctl set-volume @DEFAULT_SOURCE@ 0.25, and check again.")
+        print("TOO LOUD: it clips and voices distort. Lower the capture gain and check again"
+              " (micMixer, or amixer while testing with --no-mixer).")
     elif speech < -40:
-        print("TOO QUIET: raise the volume a little, e.g. wpctl set-volume @DEFAULT_SOURCE@ 0.4, "
-              "and check again.")
+        print("TOO QUIET: raise the capture gain a little and check again"
+              " (micMixer, or amixer while testing with --no-mixer).")
     else:
         print("OK: speech is clear of the noise and nothing clips.")
 
@@ -352,6 +373,7 @@ def record(args):
     if args.kind == "dnd" and not (args.campaign or "").strip():
         die("a D&D session needs --campaign")
 
+    apply_mixer()
     nodes = pipewire_nodes()
     mic = SETTINGS["micSource"]
     if mic not in nodes:
@@ -1303,6 +1325,8 @@ def main():
 
     sp = sub.add_parser("mic-check", help="record a few seconds and check the microphone level")
     sp.add_argument("--seconds", type=int, default=15)
+    sp.add_argument("--no-mixer", action="store_true",
+                    help="test the current mixer levels instead of applying micMixer first")
     sp.set_defaults(func=cmd_mic_check)
 
     sub.add_parser("config", help="print this host's modes and outputs as JSON").set_defaults(func=cmd_config)
