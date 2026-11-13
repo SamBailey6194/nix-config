@@ -9,7 +9,9 @@
     enable = true;
 
     # Built-in Audio Analog Stereo capture (the internal microphone). Recorded
-    # as 16 kHz mono; its input volume should be 80-100% for a room.
+    # as 16 kHz mono. Its input volume drives Capture (+30 dB) and Internal Mic
+    # Boost (+30 dB) together: 90% clips, so start near 30% and tune the level
+    # with `meeting-notes mic-check`.
     micSource = "alsa_input.pci-0000_00_1f.3.analog-stereo";
 
     # No call outputs: room mode only, which defaultMode follows. Add e.g.

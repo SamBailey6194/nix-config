@@ -218,9 +218,11 @@ recap. Put them in `campaign.md`, which the recap never sees.
 
 ### Before a session
 
-- Mic input volume 80-100%: `meeting-notes sources` shows it, and recording
-  warns below 50%. Set it in pavucontrol (Input Devices) or with
-  `wpctl set-volume @DEFAULT_SOURCE@ 0.9`.
+- Check the level with `meeting-notes mic-check`. Talk from the nearest and
+  furthest seats; it reports TOO LOUD (clipping), TOO QUIET or OK. The input
+  volume drives the ALSA Capture and Internal Mic Boost controls together, on
+  a cubic scale: on laptop-intel 90% (+50 dB of gain) clipped everything, so
+  start around 30% (`wpctl set-volume @DEFAULT_SOURCE@ 0.3`) and adjust.
 - Put the laptop in the middle of the table, lid open: the microphone is in
   the lid. Suspend, idle sleep and lid-close suspend are blocked for as long
   as the recording runs, and released when it stops.

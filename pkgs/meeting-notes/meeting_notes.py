@@ -205,9 +205,63 @@ def check_mic_level(node):
     volume, muted = level
     if muted:
         warn("the microphone is MUTED: unmute it (wpctl set-mute @DEFAULT_SOURCE@ 0) or nothing is recorded")
-    elif volume < 0.5:
-        warn(f"the microphone input volume is {volume:.0%}; for a whole room aim for 80-100% "
-             "(pavucontrol > Input Devices, or wpctl set-volume <id> 0.9)")
+    else:
+        # The right percentage depends on the hardware gain behind it (laptop-intel
+        # clips at 90%), so report it and leave judging the level to mic-check.
+        info(f"microphone input volume {volume:.0%}; `meeting-notes mic-check` tests the level")
+
+
+def cmd_mic_check(args):
+    """Record a few seconds, then say whether the level is clipped, too quiet or fine."""
+    nodes = pipewire_nodes()
+    mic = SETTINGS["micSource"]
+    if mic not in nodes:
+        die(f"microphone source {mic} not found; check `meeting-notes sources`")
+    level = source_volume(nodes[mic])
+    if level:
+        info(f"input volume {level[0]:.0%}{' (MUTED)' if level[1] else ''}")
+    info(f"recording {args.seconds} s: talk normally from the seats furthest from the laptop "
+         "and the nearest")
+    tmp = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / f"meeting-notes-mic-check-{os.getpid()}.wav"
+    env = dict(os.environ, PULSE_PROP="node.dont-reconnect=true node.dont-move=true")
+    try:
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
+                        "-f", "pulse", "-sample_rate", "16000", "-channels", "1", "-i", mic,
+                        "-t", str(args.seconds), str(tmp)], env=env, check=True)
+        # RMS of every half second, plus the overall peak and clipped-sample count
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(tmp), "-af",
+                            "asetnsamples=8000,astats=metadata=1:reset=1,"
+                            "ametadata=print:key=lavfi.astats.Overall.RMS_level", "-f", "null", "-"],
+                           capture_output=True, text=True)
+        rms = sorted(float(v) for v in re.findall(r"RMS_level=(-?[\d.]+)", r.stderr))
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(tmp), "-af",
+                            "astats=measure_perchannel=none:measure_overall=Peak_level+Number_of_samples",
+                            "-f", "null", "-"], capture_output=True, text=True)
+        peak = re.search(r"Peak level dB:\s*(-?[\d.]+|-inf)", r.stderr)
+        r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(tmp), "-af",
+                            "astats", "-f", "null", "-"], capture_output=True, text=True)
+        clipped = re.search(r"Overall[\s\S]*?Peak count:\s*(\d+)", r.stderr)
+        samples = re.search(r"Overall[\s\S]*?Number of samples:\s*(\d+)", r.stderr)
+    except subprocess.CalledProcessError as e:
+        die(f"recording failed (exit {e.returncode})")
+    finally:
+        tmp.unlink(missing_ok=True)
+    if not rms or not peak:
+        die("could not measure the recording")
+    peak_db = float("-inf") if peak.group(1) == "-inf" else float(peak.group(1))
+    speech = rms[int(len(rms) * 0.9)]   # loud half-seconds: the talking, not the gaps
+    quiet = rms[int(len(rms) * 0.5)]    # the median: room noise plus quieter speech
+    clip_share = int(clipped.group(1)) / max(int(samples.group(1)), 1) if clipped and samples else 0
+    print(f"speech level {speech:.0f} dB, typical {quiet:.0f} dB, peak {peak_db:.1f} dB, "
+          f"clipped samples {clip_share:.2%}")
+    if clip_share > 0.001 or peak_db > -0.5:
+        print("TOO LOUD: it clips and voices distort. Lower the volume, e.g. "
+              "wpctl set-volume @DEFAULT_SOURCE@ 0.25, and check again.")
+    elif speech < -40:
+        print("TOO QUIET: raise the volume a little, e.g. wpctl set-volume @DEFAULT_SOURCE@ 0.4, "
+              "and check again.")
+    else:
+        print("OK: speech is clear of the noise and nothing clips.")
 
 
 def start_inhibitor(why):
@@ -1246,6 +1300,10 @@ def main():
     sp.add_argument("--limit", type=int, default=10)
     sp.add_argument("--json", action="store_true")
     sp.set_defaults(func=cmd_list)
+
+    sp = sub.add_parser("mic-check", help="record a few seconds and check the microphone level")
+    sp.add_argument("--seconds", type=int, default=15)
+    sp.set_defaults(func=cmd_mic_check)
 
     sub.add_parser("config", help="print this host's modes and outputs as JSON").set_defaults(func=cmd_config)
 
