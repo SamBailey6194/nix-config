@@ -64,7 +64,11 @@ in
 
     # Builders have a separate budget. Preserve the daemon if one builder dies.
     # The Intel tower's existing explicit 14G/16G limits take precedence.
-    nix.daemonCPUSchedPolicy = lib.mkDefault "batch";
+    # idle: builders only get CPU time and disk I/O nothing else wants, so a
+    # long build (e.g. an overnight `just preview-update`) never starves the
+    # desktop, yet still runs at full speed on an otherwise quiet machine.
+    nix.daemonCPUSchedPolicy = lib.mkDefault "idle";
+    nix.daemonIOSchedClass = lib.mkDefault "idle";
     systemd.services.nix-daemon.serviceConfig = {
       MemoryHigh = lib.mkDefault "25%";
       MemoryMax = lib.mkDefault "30%";

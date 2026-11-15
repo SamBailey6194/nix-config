@@ -506,13 +506,16 @@ preview-update:
       echo "flake.lock already has uncommitted changes — commit or stash first." >&2
       exit 1
     fi
-    nix flake update
+    nice -n19 nix flake update
     echo
     echo "=== flake.lock changes ==="
     git --no-pager diff --stat flake.lock
     echo
     echo "=== building new closure (running system untouched) ==="
-    nixos-rebuild build --flake .
+    # Lowest CPU priority so a long preview doesn't starve the desktop. Note:
+    # this covers evaluation and local work; derivation builds run inside
+    # nix-daemon and follow its own scheduling policy.
+    nice -n19 nixos-rebuild build --flake .
     echo
     echo "=== package changes vs the running system ==="
     nix store diff-closures /run/current-system ./result

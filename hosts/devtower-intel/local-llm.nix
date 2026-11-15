@@ -29,7 +29,10 @@
   # systemd stopping the daemon (and every other client's build) with it.
   # `sudo nixos-rebuild` builds as root outside the daemon; local-llm.nix's own
   # job cap covers llama.cpp there (see BUILD MEMORY in that file).
-  nix.daemonCPUSchedPolicy = "batch";
+  # CPU/IO scheduling stays idle (resource-control.nix): builds yield to the
+  # desktop and llama-server rather than competing with them.
+  nix.daemonCPUSchedPolicy = "idle";
+  nix.daemonIOSchedClass = "idle";
   systemd.services.nix-daemon.serviceConfig = {
     MemoryHigh = "14G";
     MemoryMax = "16G";
