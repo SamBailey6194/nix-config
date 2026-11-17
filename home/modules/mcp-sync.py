@@ -15,6 +15,17 @@ CREDENTIALS = {"CONTEXT7_API_KEY", "ELEVENLABS_API_KEY"}
 HTTP_KEYS = ("url", "serverUrl", "httpUrl", "headers", "http_headers", "env_http_headers",
              "bearer_token_env_var", "bearer_token")
 STDIO_KEYS = ("command", "args", "env", "env_vars", "cwd")
+# Claude Code ranks a repository's .mcp.json (project scope) above the user
+# entries written here, so a project declaring one of these names replaces the
+# managed server for every session opened in it. syntek-base's context7 passes
+# "${CONTEXT7_API_KEY}", which nothing sets in Claude's environment (the
+# launcher reads the key from agenix itself): the server got the literal
+# placeholder, and context7-mcp 4.7.1 then runs without a key, at the anonymous
+# rate limit (the API itself answers 401 to the placeholder). Local scope (projects.<root>.mcpServers in
+# ~/.claude.json) outranks project scope, so the managed entry is copied there
+# for every project Claude has opened whose .mcp.json declares the name.
+PROJECT_OVERRIDES = {"context7"}
+LAUNCHER = "-ai-mcp-launch"
 
 
 def write(path, data, mode=None):
@@ -85,6 +96,47 @@ def set_env(entry, declared):
             entry.pop("env_vars")
 
 
+def is_managed_copy(entry, name):
+    """True for a local entry this script wrote: the launcher, started as `name`."""
+    return (isinstance(entry, dict) and str(entry.get("command", "")).endswith(LAUNCHER)
+            and entry.get("args", [None])[:1] == [name])
+
+
+def override_projects(config, servers, names):
+    """Copy managed `names` to local scope wherever a project's .mcp.json declares them.
+
+    A copy is removed again once its project stops declaring the name, or the
+    name stops being managed. Entries the user wrote at local scope are never
+    replaced, and a project whose .mcp.json cannot be read keeps what it has.
+    """
+    projects = config.get("projects")
+    if not isinstance(projects, dict):
+        return
+    for root, settings in projects.items():
+        if not isinstance(settings, dict):
+            continue
+        try:
+            declared = json.loads((Path(root) / ".mcp.json").read_text()).get("mcpServers", {})
+        except FileNotFoundError:
+            declared = {}
+        except (OSError, ValueError, AttributeError):
+            continue
+        if not isinstance(declared, dict):
+            continue
+        local = settings.get("mcpServers")
+        if local is not None and not isinstance(local, dict):
+            continue
+        local = local or {}
+        for name in list(local):
+            if is_managed_copy(local[name], name) and (name not in names or name not in declared):
+                del local[name]
+        for name in names:
+            if name in declared and name in servers and (name not in local or is_managed_copy(local[name], name)):
+                local[name] = json.loads(json.dumps(servers[name]))
+        if local or "mcpServers" in settings:
+            settings["mcpServers"] = local
+
+
 def sync(client, path, inventory, retired=()):
     """Register `inventory`, and remove `retired`: managed names this client no longer gets."""
     if path.is_symlink():
@@ -128,6 +180,8 @@ def sync(client, path, inventory, retired=()):
                 entry["type"] = "http"
     for name in retired:
         servers.pop(name, None)
+    if client == "claude":
+        override_projects(config, servers, PROJECT_OVERRIDES & inventory.keys())
     # These files can hold credentials: never wider than owner read/write,
     # whether or not this run changes them.
     if path.exists() and stat.S_IMODE(path.stat().st_mode) & 0o177:

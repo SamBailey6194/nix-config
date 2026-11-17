@@ -266,6 +266,56 @@ class SharedMcpTests(unittest.TestCase):
             self.assertIn("Permission denied", sync.describe(PermissionError(13, "Permission denied", "/fixture")))
 
 
+class ProjectOverrideTests(unittest.TestCase):
+    LAUNCH = "/nix/store/abc-ai-mcp-launch"
+    INVENTORY = {"context7": {"command": [LAUNCH, "context7", "/nix/npx"]},
+                 "graphify": {"command": [LAUNCH, "graphify", "/nix/graphify-mcp"]}}
+
+    def run_sync(self, directory, projects, mcp_files):
+        for root, content in mcp_files.items():
+            Path(root).mkdir(parents=True, exist_ok=True)
+            (Path(root) / ".mcp.json").write_text(content)
+        path = Path(directory) / ".claude.json"
+        path.write_text(json.dumps({"projects": projects}))
+        path.chmod(0o600)
+        sync.sync("claude", path, self.INVENTORY)
+        return json.loads(path.read_text())
+
+    def test_declared_name_gets_managed_local_copy_and_others_do_not(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo, plain = f"{directory}/repo", f"{directory}/plain"
+            Path(plain).mkdir()
+            declared = {"mcpServers": {"context7": {"command": "npx", "env": {"CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"}},
+                                       "graphify": {"command": "graphify"}}}
+            result = self.run_sync(directory, {repo: {}, plain: {"allowedTools": []}}, {repo: json.dumps(declared)})
+            local = result["projects"][repo]["mcpServers"]
+            self.assertEqual(local, {"context7": result["mcpServers"]["context7"]})
+            self.assertEqual(local["context7"]["args"][0], "context7")
+            self.assertNotIn("CONTEXT7_API_KEY", json.dumps(local))
+            self.assertEqual(result["projects"][plain], {"allowedTools": []})
+
+    def test_copy_refreshed_and_removed_when_project_drops_the_name(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = f"{directory}/repo"
+            stale = {"type": "stdio", "command": "/nix/store/old-ai-mcp-launch", "args": ["context7", "/old/npx"]}
+            result = self.run_sync(directory, {repo: {"mcpServers": {"context7": stale}}},
+                                   {repo: '{"mcpServers": {"context7": {"command": "npx"}}}'})
+            self.assertEqual(result["projects"][repo]["mcpServers"]["context7"]["args"], ["context7", "/nix/npx"])
+            result = self.run_sync(directory, result["projects"], {repo: '{"mcpServers": {}}'})
+            self.assertEqual(result["projects"][repo]["mcpServers"], {})
+
+    def test_user_local_entry_and_unreadable_project_are_left_alone(self):
+        with tempfile.TemporaryDirectory() as directory:
+            mine, broken = f"{directory}/mine", f"{directory}/broken"
+            own = {"command": "my-context7", "args": []}
+            kept = {"command": "/nix/store/old-ai-mcp-launch", "args": ["context7"]}
+            result = self.run_sync(directory, {mine: {"mcpServers": {"context7": own}},
+                                               broken: {"mcpServers": {"context7": kept}}},
+                                   {mine: '{"mcpServers": {"context7": {}}}', broken: "{not json"})
+            self.assertEqual(result["projects"][mine]["mcpServers"]["context7"], own)
+            self.assertEqual(result["projects"][broken]["mcpServers"]["context7"], kept)
+
+
 class LaunchTests(unittest.TestCase):
     SECRETS = {"CLAUDE_MONITOR_TOKEN": "m", "CONTEXT7_API_KEY": "c", "ELEVENLABS_API_KEY": "e"}
 
