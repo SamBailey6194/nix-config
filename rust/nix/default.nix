@@ -8,7 +8,7 @@
 { pkgs }:
 
 let
-  inherit (pkgs) lib rustPlatform pkg-config openssl;
+  inherit (pkgs) lib rustPlatform pkg-config openssl sqlite;
 
   # Common source - the entire workspace root
   # Filter to only include Rust-relevant files
@@ -68,7 +68,10 @@ in {
     pname = "malware-scanner";
     description = "NixOS malware scanner with real-time protection";
     nativeBuildInputs = [ pkg-config ];
-    buildInputs = [ openssl ];
+    # nixpkgs' cargo setup hook exports LIBSQLITE3_SYS_USE_PKG_CONFIG=1, which
+    # overrides rusqlite's "bundled" feature: libsqlite3-sys then links the
+    # system library through pkg-config, so it has to be an input.
+    buildInputs = [ openssl sqlite ];
   };
 
   storage-manager = buildWorkspaceCrate {
