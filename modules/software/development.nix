@@ -25,6 +25,17 @@ let
   # of nixpkgs; see pkgs/cargo-tools.nix
   cargoTools = pkgs.callPackage ../../pkgs/cargo-tools.nix { };
 
+  # TEMPORARY: upstream's cargo-cyclonedx-0.5.10 tag tarball changed after
+  # nixpkgs pinned it, so nixpkgs' source hash no longer matches and the whole
+  # system build fails. The hash below is the one nixpkgs PR #589378 ("fix
+  # build") moves to; cargoHash is unchanged there. Delete this binding once
+  # that PR reaches the locked nixpkgs (the `with pkgs;` name then applies).
+  cargo-cyclonedx = pkgs.cargo-cyclonedx.overrideAttrs (prev: {
+    src = prev.src.overrideAttrs {
+      outputHash = "sha256-Ne+oufpXfI19KwRjnBAPeSM65ja+5O26+Yl8e+DUsjM=";
+    };
+  });
+
   # Virtual Pixel 8 Pro (Android 17, Google Play) for testing APKs without a
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
@@ -58,6 +69,7 @@ in
   imports = [
     ./local-llm.nix
     ./ddev-ca.nix # DDEV's mkcert CA, trusted per machine (just ddev-ca)
+    ./dev-hosts.nix # /etc/hosts for story worktree stacks (just dev-host-add)
   ];
 
   # androidenv (the SDK behind android-emulator) refuses to evaluate until the

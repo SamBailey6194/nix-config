@@ -636,6 +636,18 @@ ddev-ca:
     echo "Then: just rebuild, and restart DDEV so its router re-issues"
     echo "certificates from this CA: ddev poweroff && ddev start (per project)."
 
+# List the project slugs that get /etc/hosts names for story worktrees (modules/software/dev-hosts.nix)
+dev-hosts:
+    @python3 -I scripts/dev-hosts.py list
+
+# Add a project slug: 127.0.0.N [api.]dev-usNNN.<slug>.localhost [api.]test-usNNN.<slug>.localhost for stories 1-253
+dev-host-add SLUG:
+    @python3 -I scripts/dev-hosts.py add {{quote(SLUG)}}
+
+# Remove a project slug's /etc/hosts names
+dev-host-remove SLUG:
+    @python3 -I scripts/dev-hosts.py remove {{quote(SLUG)}}
+
 # ============================================================================
 # Fuzzing (Security Testing)
 # ============================================================================

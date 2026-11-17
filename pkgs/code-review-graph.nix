@@ -3,7 +3,7 @@
 # agent can ask for the blast radius of a change instead of reading every file.
 # Its sibling is graphify (pkgs/graphify): that one also reads docs and media.
 #
-# Not in nixpkgs, and not buildable from it as-is: 2.3.9 requires
+# Not in nixpkgs, and not buildable from it as-is: 2.4.0 requires
 # tree-sitter-language-pack < 1 and nixpkgs has 1.4.1, the Rust rewrite with a
 # different API. So this is the same pinned-uvx arrangement as the Scrapling and
 # ElevenLabs MCP servers (home/modules/mcp-launch.py): the wrapped uv
@@ -39,7 +39,7 @@
 }:
 
 let
-  version = "2.3.9";
+  version = "2.4.0";
   uv = callPackage ./uv-manylinux.nix { };
 in
 (writeShellApplication {
