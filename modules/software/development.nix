@@ -166,6 +166,12 @@ in
     leptosfmt           # view! macro formatter (per-project rust-analyzer.toml)
     sqlx-cli            # cargo sqlx prepare/migrate (.sqlx offline query cache)
     sea-orm-cli         # SeaORM entity generation and migrations
+    binaryen            # wasm-opt, which cargo-leptos --release requires; not
+                        #   tied to crate versions, unlike wasm-bindgen-cli
+                        #   (that one belongs in each project's dev shell)
+    geckodriver         # WebDriver for wasm-bindgen-test and browser tests;
+                        #   drives firefox-devedition (point a project's
+                        #   webdriver.json "binary" at it)
     cargoTools.rust-bindgen # bindgen CLI (C headers -> Rust FFI bindings)
     cargoTools.maturin # build/publish PyO3 Rust crates as Python wheels
 
@@ -380,6 +386,11 @@ in
   # `/lib` is in the default pathsToLink (so /lib/pkgconfig already populates);
   # /share/pkgconfig is not, and some packages ship their .pc there instead.
   environment.pathsToLink = [ "/share/pkgconfig" ];
+
+  # Orca screen reader, for manual accessibility testing alongside axe in
+  # Playwright. The module also enables speech-dispatcher; at-spi2-core comes
+  # with it. Nothing autostarts: run `orca` (or `orca --setup`) when testing.
+  services.orca.enable = true;
 
   # Docker configuration
   virtualisation.docker = {
