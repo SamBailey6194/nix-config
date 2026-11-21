@@ -39,8 +39,8 @@ store path bypass the automatic wrapper: use `resource-run` around those.
 | Swap ceiling | 1GiB | 1GiB |
 | CPU ceiling | Four logical CPUs | Four logical CPUs |
 
-On Intel **dev and higher** stages, media jobs instead share a 3GiB high /
-4GiB hard RAM limit and no swap, reserving room for local inference and builds.
+On Intel **dev and higher** stages, media jobs instead share a 5GiB high /
+6GiB hard RAM limit and no swap, reserving room for local inference and builds.
 See [Local models](LOCAL-LLM.md) for the aggregate compute slice budget.
 
 All jobs in the slice share these ceilings. CPU and I/O weights also favour

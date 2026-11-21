@@ -54,7 +54,7 @@
     ManagedOOMMemoryPressureLimit = "60%";
   };
   systemd.services.llama-swap.serviceConfig.Slice = "compute.slice";
-  workloads.memoryHigh = lib.mkForce "3G";
-  workloads.memoryMax = lib.mkForce "4G";
+  workloads.memoryHigh = lib.mkForce "5G";
+  workloads.memoryMax = lib.mkForce "6G";
   workloads.memorySwapMax = "0";
 }
