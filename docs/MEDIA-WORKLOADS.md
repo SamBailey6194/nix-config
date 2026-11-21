@@ -54,7 +54,9 @@ incomplete output.
 
 Adjust `workloads.memoryHigh`, `memoryMax`, `memorySwapMax` and `cpuQuota`
 in a host configuration. `400%` means four logical CPUs, not four times the
-whole machine. Nix builders have separate 25%/30% RAM defaults and no swap;
+whole machine. `MEDIA_THREADS` is derived from `cpuQuota` (`400%` gives
+`4`) and set system-wide, so render scripts can pass `-threads "$MEDIA_THREADS"`
+and stay in step with the quota. Nix builders have separate 25%/30% RAM defaults and no swap;
 the Intel desktop retains its existing 14GiB/16GiB build caps. These budgets
 do not bound browsers, Docker containers, or programs launched
 outside the helper. Allow room for those before raising the workload budget.
