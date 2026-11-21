@@ -9,6 +9,9 @@ let
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
   htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
+  pytest-language-server = pkgs.callPackage ../../pkgs/pytest-language-server.nix { };
+  django-language-server = pkgs.callPackage ../../pkgs/django-language-server.nix { };
+  quadlet-lsp = pkgs.callPackage ../../pkgs/quadlet-lsp.nix { };
 
   # uv, wrapped so the Python processes it launches can load manylinux wheels and
   # find the nixpkgs Playwright browsers. Without it, any wheel that dlopens
@@ -157,6 +160,12 @@ in
     cargo-expand        # show macro-expanded source
     bacon               # background check/clippy/test watcher
     taplo               # TOML formatter, linter and LSP (Cargo.toml, deny.toml)
+    # Web stack CLIs (Leptos, SQLx, SeaORM). Tokio/Tower/Axum/Serde/utoipa/rmcp
+    # need nothing extra: rust-analyzer expands their macros.
+    cargo-leptos        # Leptos build/serve/watch (SSR + hydrate)
+    leptosfmt           # view! macro formatter (per-project rust-analyzer.toml)
+    sqlx-cli            # cargo sqlx prepare/migrate (.sqlx offline query cache)
+    sea-orm-cli         # SeaORM entity generation and migrations
     cargoTools.rust-bindgen # bindgen CLI (C headers -> Rust FFI bindings)
     cargoTools.maturin # build/publish PyO3 Rust crates as Python wheels
 
@@ -182,6 +191,8 @@ in
     # Python / Django
     pyright                     # Python type checking
     django-template-lsp         # {% %} tags, template/static/url names (djlsp)
+    django-language-server      # djls: template diagnostics, folding, symbols
+    pytest-language-server      # pytest fixtures: definition, completion, refs
 
     # PHP / Laravel / Livewire / Blade
     intelephense                # PHP LSP; also serves Blade via Zed's blade extension
@@ -294,10 +305,15 @@ in
     yaml-language-server                       # YAML + schema validation
     nginx-language-server                      # nginx.conf completion + hover
     systemd-lsp                                # systemd unit files (Neovim only)
+    quadlet-lsp                                # Podman Quadlet units (.container, .pod…)
     dockerfile-language-server                 # Dockerfile (docker-langserver)
     docker-compose-language-service            # docker-compose*.yml
     graphql-language-service-cli               # GraphQL (graphql-lsp)
     prisma-language-server                     # Prisma schema
+    postgres-language-server                   # PostgreSQL .sql files (postgres_lsp)
+    helm-ls                                    # Helm chart templates (helm_ls)
+    crates-lsp                                 # Cargo.toml dependency versions
+    vacuum-go                                  # OpenAPI linter + LSP (Neovim only)
 
     # ── Linters and formatters (shared by all editors) ──────────────────
     ruff                        # Python linter + formatter (fast!)

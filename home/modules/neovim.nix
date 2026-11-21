@@ -6,6 +6,28 @@ let
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
   htmx-lsp = pkgs.callPackage ../../pkgs/htmx-lsp.nix { };
+  pytest-language-server = pkgs.callPackage ../../pkgs/pytest-language-server.nix { };
+  django-language-server = pkgs.callPackage ../../pkgs/django-language-server.nix { };
+  quadlet-lsp = pkgs.callPackage ../../pkgs/quadlet-lsp.nix { };
+
+  # Kubernetes manifest globs for yaml-language-server. Keep identical to
+  # k8sSchemaGlobs in home/modules/editor.nix so Zed validates the same files.
+  # SchemaStore matches no plain manifest, so they are mapped by directory.
+  # Every pattern gets **/ prepended, and yaml.schemas outranks SchemaStore,
+  # so files with a better schema (kustomization, Helm, compose) are excluded.
+  k8sSchemaGlobs = [
+    "k8s/**/*.{yaml,yml}"
+    "kubernetes/**/*.{yaml,yml}"
+    "manifests/**/*.{yaml,yml}"
+    "deploy/**/*.{yaml,yml}"
+    "!templates/**"
+    "!charts/**"
+    "!kustomization.{yaml,yml}"
+    "!Chart.yaml"
+    "!values*.{yaml,yml}"
+    "!*compose*.{yaml,yml}"
+  ];
+  k8sSchemaGlobsLua = "{ " + lib.concatMapStringsSep ", " (g: "'${g}'") k8sSchemaGlobs + " }";
 
   # ── Keybinds ───────────────────────────────────────────────────────────
   #
@@ -81,6 +103,17 @@ let
     { group = "Diagnostics"; lhs = "<leader>ld"; desc = "Line diagnostic";     docOnly = true; }
     { group = "Diagnostics"; lhs = "[d";         desc = "Previous diagnostic"; docOnly = true; }
     { group = "Diagnostics"; lhs = "]d";         desc = "Next diagnostic";     docOnly = true; }
+
+    # <leader>T (capital): <leader>t is the terminal toggle, and a lowercase
+    # prefix would make that wait out 'timeoutlen' on every press.
+    { group = "Tests"; lhs = "<leader>Tn"; rhs = "<cmd>lua require('neotest').run.run()<CR>";                   desc = "Run nearest test"; }
+    { group = "Tests"; lhs = "<leader>Tf"; rhs = "<cmd>lua require('neotest').run.run(vim.fn.expand('%'))<CR>"; desc = "Run tests in file"; }
+    { group = "Tests"; lhs = "<leader>Ta"; rhs = "<cmd>lua require('neotest').run.run(vim.uv.cwd())<CR>";       desc = "Run all tests"; }
+    { group = "Tests"; lhs = "<leader>Tl"; rhs = "<cmd>lua require('neotest').run.run_last()<CR>";              desc = "Re-run last test"; }
+    { group = "Tests"; lhs = "<leader>Tx"; rhs = "<cmd>lua require('neotest').run.stop()<CR>";                  desc = "Stop test run"; }
+    { group = "Tests"; lhs = "<leader>Ts"; rhs = "<cmd>lua require('neotest').summary.toggle()<CR>";            desc = "Toggle test summary"; }
+    { group = "Tests"; lhs = "<leader>To"; rhs = "<cmd>lua require('neotest').output.open({ enter = true })<CR>"; desc = "Test output"; }
+    { group = "Tests"; lhs = "<leader>Tw"; rhs = "<cmd>lua require('neotest').watch.toggle(vim.fn.expand('%'))<CR>"; desc = "Watch file's tests"; }
 
     { group = "Buffers"; lhs = "<Tab>";      rhs = "<cmd>BufCycle<CR>";  desc = "Next buffer (in tree: select node)"; }
     { group = "Buffers"; lhs = "<S-Tab>";    rhs = "<cmd>BufCycle!<CR>"; desc = "Previous buffer"; }
@@ -230,6 +263,19 @@ in
       # take the current buffer or selection as context and review diffs in
       # place. Codex has no such plugin and runs in a terminal buffer instead.
       claudecode-nvim
+
+      # Test runner (not an LSP): runs and shows tests from the gutter, a
+      # summary panel and per-test output. Zed has the equivalent built in
+      # (runnables/tasks), so this is the Neovim side of that parity.
+      neotest
+      nvim-nio                 # neotest's async dependency
+      neotest-rust             # cargo-nextest (installed in development.nix)
+      neotest-python           # pytest (incl. pytest-django in the project env)
+      neotest-playwright       # Playwright E2E specs
+      neotest-vitest
+      neotest-jest
+      neotest-pest             # Pest before PHPUnit: Pest projects ship both
+      neotest-phpunit
 
       # Language-specific
       rust-vim                 # Rust support
@@ -457,6 +503,13 @@ in
 
       lsp('ruff', { cmd = { '${pkgs.ruff}/bin/ruff', 'server' } })
 
+      -- pytest fixtures: go-to-definition, completion, references, rename and
+      -- unused-fixture diagnostics, across conftest.py and installed plugins
+      -- (it reads the project's .venv site-packages itself; no Python needed).
+      lsp('pytest_language_server', {
+        cmd = { '${pytest-language-server}/bin/pytest-language-server' },
+      })
+
       -- Django templates: {% %} tags, template/static/url names, context vars.
       -- Upstream also claims plain 'html'; restricted to htmldjango so a non-Django
       -- HTML file does not start a server that then reports it cannot find a Django
@@ -466,13 +519,31 @@ in
         cmd = { '${django-template-lsp}/bin/djlsp' },
         filetypes = { 'htmldjango' },
       })
+      -- djls alongside djlsp: real template diagnostics (unclosed blocks, bad
+      -- tag arguments, unknown tags/filters, missing {% load %}), folding,
+      -- symbols, document links and quickfixes. It reads the project
+      -- statically (.venv / VIRTUAL_ENV); set django_settings_module in the
+      -- project's pyproject [tool.djls] when the editor does not inherit
+      -- DJANGO_SETTINGS_MODULE. htmldjango only, like djlsp: on python it adds
+      -- nothing visible and would start in every non-Django repo. Its
+      -- completion is dropped because djlsp's is a superset (it also knows
+      -- {% url %} names, {% static %} paths and context variables), and two
+      -- sources would list every tag twice.
+      lsp('djls', {
+        cmd = { '${django-language-server}/bin/djls', 'serve' },
+        filetypes = { 'htmldjango' },
+        on_init = function(client)
+          client.server_capabilities.completionProvider = nil
+        end,
+      })
 
       -- ── TypeScript / JavaScript / React / React Native ───────────────
       lsp('ts_ls', { cmd = { '${pkgs.typescript-language-server}/bin/typescript-language-server', '--stdio' } })
       lsp('eslint', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-eslint-language-server', '--stdio' } })
 
       -- ── Rust ─────────────────────────────────────────────────────────
-      -- rust-analyzer comes from rustup, so it is left to PATH resolution.
+      -- rust-analyzer is pkgs.rust-analyzer (home/modules/claude.nix), found on
+      -- PATH ahead of rustup's proxy, so it is left to PATH resolution.
       lsp('rust_analyzer', {
         settings = {
           ['rust-analyzer'] = {
@@ -481,6 +552,17 @@ in
             },
             cargo = {
               allFeatures = true
+            },
+            -- Leptos book: skip expanding #[server] so rust-analyzer does not
+            -- report spurious errors on server functions. Keyed by crate
+            -- (leptos_macro), so it is inert in every non-Leptos project.
+            -- leptosfmt is NOT a global rustfmt override: it runs rustfmt
+            -- without --edition and silently leaves edition 2018+ code
+            -- unformatted unless the project has a rustfmt.toml. Leptos
+            -- projects commit a rust-analyzer.toml (read by Zed too):
+            --   [rustfmt] overrideCommand = ["leptosfmt", "--stdin", "--rustfmt"]
+            procMacro = {
+              ignored = { leptos_macro = { 'server' } }
             }
           }
         }
@@ -507,7 +589,10 @@ in
         filetypes = { 'html', 'htmldjango', 'blade' },
       })
       lsp('cssls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-css-language-server', '--stdio' } })
-      lsp('jsonls', { cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-json-language-server', '--stdio' } })
+      lsp('jsonls', {
+        cmd = { '${pkgs.vscode-langservers-extracted}/bin/vscode-json-language-server', '--stdio' },
+        filetypes = { 'json', 'jsonc', 'json.openapi' },
+      })
       -- SchemaStore's catalog already has fileMatch entries for every YAML shape
       -- in these projects (.github/workflows/*.yml, docker-compose.*.yml,
       -- lefthook.yml, pnpm-workspace.yaml), so enabling it needs no per-schema
@@ -515,12 +600,18 @@ in
       -- its redhat.telemetry and yaml.format.enable settings survive.
       lsp('yamlls', {
         cmd = { '${pkgs.yaml-language-server}/bin/yaml-language-server', '--stdio' },
+        -- lspconfig's defaults plus the OpenAPI compound filetype set below.
+        filetypes = { 'yaml', 'yaml.docker-compose', 'yaml.gitlab', 'yaml.helm-values', 'yaml.openapi' },
         settings = {
           yaml = {
             schemaStore = {
               enable = true,
               url = 'https://www.schemastore.org/api/json/catalog.json',
             },
+            -- SchemaStore has no fileMatch for plain Kubernetes manifests, so
+            -- they are mapped by directory (k8sSchemaGlobs at the top of this
+            -- file, the same list Zed uses).
+            schemas = { kubernetes = ${k8sSchemaGlobsLua} },
             validate = true,
             hover = true,
             completion = true,
@@ -609,6 +700,16 @@ in
       })
       lsp('nil_ls', { cmd = { '${pkgs.nil}/bin/nil' } })
       lsp('taplo', { cmd = { '${pkgs.taplo}/bin/taplo', 'lsp', 'stdio' } })
+      -- Cargo.toml dependency versions: completion, outdated/unknown-crate
+      -- diagnostics and inlay hints from the crates.io sparse index. Runs
+      -- alongside taplo. nvim-lspconfig has no config for it, so the whole
+      -- definition is here; its own `files` default limits it to Cargo.toml,
+      -- so other TOML buffers are left alone. Zed runs the same binary.
+      lsp('crates_lsp', {
+        cmd = { '${pkgs.crates-lsp}/bin/crates-lsp' },
+        filetypes = { 'toml' },
+        root_markers = { 'Cargo.toml', '.git' },
+      })
 
       -- nginx and systemd unit files. Both are completion/hover/diagnostics
       -- only — neither formats, so neither belongs in the format-on-save list
@@ -620,6 +721,14 @@ in
         cmd = { '${pkgs.nginx-language-server}/bin/nginx-language-server' },
       })
       lsp('systemd_lsp', { cmd = { '${pkgs.systemd-lsp}/bin/systemd-lsp' } })
+      -- Podman Quadlet units (ft 'quadlet', set below). nvim-lspconfig has no
+      -- config, so this mirrors upstream quadlet-lsp.nvim's. No arguments:
+      -- any argument switches the binary into CLI mode.
+      lsp('quadlet', {
+        cmd = { '${quadlet-lsp}/bin/quadlet-lsp' },
+        filetypes = { 'quadlet' },
+        root_markers = { '.quadletrc.json', '.git' },
+      })
 
       -- Docker, GraphQL and Prisma — the servers Zed's dockerfile,
       -- docker-compose, graphql and prisma extensions bring. The compose server
@@ -640,6 +749,46 @@ in
         cmd = { '${pkgs.prisma-language-server}/bin/prisma-language-server', '--stdio' },
       })
 
+      -- ── PostgreSQL ───────────────────────────────────────────────────
+      -- Syntax errors and linting for .sql files (SQLx migrations, SeaORM
+      -- raw SQL); never formatting (see on_init). lspconfig only roots it at postgres-language-server.jsonc;
+      -- '.git' is added so it also runs in projects without one. Checking
+      -- against a live schema needs that file's `db` connection section.
+      lsp('postgres_lsp', {
+        cmd = { '${pkgs.postgres-language-server}/bin/postgres-language-server', 'lsp-proxy' },
+        root_markers = { 'postgres-language-server.jsonc', '.git' },
+        -- Diagnostics only. The server also formats (lowercasing keywords),
+        -- and conform's lsp fallback would then rewrite every .sql on save,
+        -- changing applied SQLx migrations' checksums. Same in Zed.
+        on_init = function(client)
+          client.server_capabilities.documentFormattingProvider = false
+          client.server_capabilities.documentRangeFormattingProvider = false
+        end,
+      })
+
+      -- ── Kubernetes / Helm ────────────────────────────────────────────
+      -- Chart templates (ft 'helm', detected relative to Chart.yaml below).
+      -- helm_ls runs its own yaml-language-server over the rendered YAML;
+      -- the store path keeps that off PATH lookups. Plain manifests are
+      -- yamlls's job (schemas.kubernetes above).
+      lsp('helm_ls', {
+        cmd = { '${pkgs.helm-ls}/bin/helm_ls', 'serve' },
+        settings = {
+          ['helm-ls'] = {
+            yamlls = { path = '${pkgs.yaml-language-server}/bin/yaml-language-server' },
+          },
+        },
+      })
+
+      -- ── OpenAPI (utoipa / Swagger UI specs) ──────────────────────────
+      -- Only for openapi*/swagger* files (filetypes set below): on any other
+      -- YAML/JSON vacuum reports "spec type not supported" as an error. That
+      -- is also why Zed, whose vacuum extension attaches to every YAML/JSON
+      -- file, does not run it.
+      lsp('vacuum', {
+        cmd = { '${pkgs.vacuum-go}/bin/vacuum', 'language-server' },
+      })
+
       -- nginx variables are written $host, $request_uri and so on. Without '$'
       -- in 'iskeyword' the cursor sees them as the bare name, and completion and
       -- hover both miss — upstream recommends this exact tweak.
@@ -654,16 +803,52 @@ in
       -- as plain PHP, losing the blade treesitter grammar and the blade-only
       -- server attachments above. Generic log highlighting ships with Neovim
       -- but needs an explicit filetype mapping for *.log files.
+      --
+      -- Helm: a file is a chart template only under templates/ of a directory
+      -- holding Chart.yaml, and values*.yaml beside Chart.yaml are chart
+      -- values. Returning nil falls through to normal detection, so a
+      -- templates/ folder outside a chart (Django, Laravel) is unaffected.
+      local function helm_template(file)
+        local chart = vim.fs.root(file, 'Chart.yaml')
+        if chart and file:sub(#chart + 1):match('^/templates/') then return 'helm' end
+      end
+      local function helm_values(file)
+        if vim.uv.fs_stat(vim.fs.dirname(file) .. '/Chart.yaml') then return 'yaml.helm-values' end
+      end
       vim.filetype.add({
         extension = { slint = 'slint', log = 'log' },
         pattern = {
           ['.*%.blade%.php'] = 'blade',
           ['.*/docker%-compose[^/]*%.ya?ml'] = 'yaml.docker-compose',
           ['.*/compose[^/]*%.ya?ml'] = 'yaml.docker-compose',
+          ['.*/templates/.*%.ya?ml'] = { helm_template, { priority = 10 } },
+          ['.*/templates/.*%.tpl'] = { helm_template, { priority = 10 } },
+          ['.*/templates/.*%.txt'] = { helm_template, { priority = 10 } },
+          ['.*/values[^/]*%.ya?ml'] = { helm_values, { priority = 10 } },
+          ['.*/openapi[^/]*%.ya?ml'] = 'yaml.openapi',
+          ['.*/swagger[^/]*%.ya?ml'] = 'yaml.openapi',
+          ['.*/openapi[^/]*%.json'] = 'json.openapi',
+          ['.*/swagger[^/]*%.json'] = 'json.openapi',
+          -- Podman Quadlet. Neovim's own patterns call these 'systemd' under
+          -- */containers/systemd/ (and '.pod' Perl POD everywhere), which
+          -- would attach systemd_lsp instead; priority 10 wins over both.
+          ['.*%.container'] = { 'quadlet', { priority = 10 } },
+          ['.*%.volume'] = { 'quadlet', { priority = 10 } },
+          ['.*%.network'] = { 'quadlet', { priority = 10 } },
+          ['.*%.pod'] = { 'quadlet', { priority = 10 } },
+          ['.*%.image'] = { 'quadlet', { priority = 10 } },
+          ['.*%.kube'] = { 'quadlet', { priority = 10 } },
+          ['.*%.build'] = { 'quadlet', { priority = 10 } },
+          ['.*%.artifact'] = { 'quadlet', { priority = 10 } },
         },
       })
-      -- Compound filetype: parse it with the yaml grammar.
+      -- Quadlet files are INI-shaped systemd units.
+      vim.treesitter.language.register('ini', 'quadlet')
+      -- Compound filetypes: parse them with the base grammar.
       vim.treesitter.language.register('yaml', 'yaml.docker-compose')
+      vim.treesitter.language.register('yaml', 'yaml.helm-values')
+      vim.treesitter.language.register('yaml', 'yaml.openapi')
+      vim.treesitter.language.register('json', 'json.openapi')
 
       -- ============================================================================
       -- TREESITTER
@@ -2792,6 +2977,49 @@ in
         callback = function()
           vim.g.started_with_stdin = true
         end,
+      })
+
+      -- ============================================================================
+      -- TESTS: neotest
+      -- ============================================================================
+      --
+      -- One runner, one adapter per framework. Adapters only claim projects
+      -- whose root/tooling they recognise, and a file goes to the first
+      -- adapter that accepts it, so order matters where frameworks overlap:
+      -- Playwright before Vitest/Jest (all three match *.spec.ts), Pest before
+      -- PHPUnit (Pest projects depend on PHPUnit). Keys: <leader>T… (Tests).
+      --
+      -- Playwright specs are recognised by directory (e2e/, playwright/,
+      -- tests/browser/) so a unit *.spec.ts stays with Vitest/Jest.
+      local function is_playwright_spec(file)
+        return file:match('%.spec%.[cm]?[jt]sx?$') ~= nil
+          and (file:match('/e2e/') or file:match('/playwright/') or file:match('/tests/browser/')) ~= nil
+      end
+      require('neotest').setup({
+        adapters = {
+          -- cargo nextest: what the Rust CMS stack standardises on; plain
+          -- #[test] and #[tokio::test] both run under it. The adapter adds
+          -- --no-fail-fast itself (nextest rejects it twice). Running a whole
+          -- file filters on `mod tests`, the conventional test module name.
+          require('neotest-rust')({ args = { '--no-capture' } }),
+          -- pytest from the project's own venv (.venv / VIRTUAL_ENV /
+          -- poetry / pipenv are detected); Django needs pytest-django there.
+          require('neotest-python')({ runner = 'pytest' }),
+          require('neotest-playwright').adapter({
+            options = {
+              persist_project_selection = true,
+              enable_dynamic_test_discovery = true,
+              is_test_file = is_playwright_spec,
+            },
+          }),
+          require('neotest-vitest'),
+          require('neotest-jest')({}),
+          require('neotest-pest'),
+          require('neotest-phpunit'),
+        },
+        -- Failures as diagnostics too, so Trouble (<leader>xx) lists them.
+        diagnostic = { enabled = true },
+        status = { virtual_text = false, signs = true },
       })
 
       -- ============================================================================

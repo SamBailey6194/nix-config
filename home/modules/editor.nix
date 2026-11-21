@@ -4,12 +4,30 @@ let
   # Language servers not carried by nixpkgs — see pkgs/*.nix for why.
   laravel-ls = pkgs.callPackage ../../pkgs/laravel-ls.nix { };
   django-template-lsp = pkgs.callPackage ../../pkgs/django-template-lsp.nix { };
+  pytest-language-server = pkgs.callPackage ../../pkgs/pytest-language-server.nix { };
+  django-language-server = pkgs.callPackage ../../pkgs/django-language-server.nix { };
+  quadlet-lsp = pkgs.callPackage ../../pkgs/quadlet-lsp.nix { };
 
   # Zed resolves a language server by downloading its own copy unless
   # `lsp.<server>.binary` names one. Every pin below points at the same store
   # path modules/software/development.nix puts on PATH, so Zed and Neovim run
   # byte-identical servers and a fresh machine needs no network to get LSP.
   bin = path: args: { binary = { inherit path; arguments = args; }; };
+
+  # Kubernetes manifest globs for yaml-language-server. Keep identical to
+  # k8sSchemaGlobs in home/modules/neovim.nix (see the comment there).
+  k8sSchemaGlobs = [
+    "k8s/**/*.{yaml,yml}"
+    "kubernetes/**/*.{yaml,yml}"
+    "manifests/**/*.{yaml,yml}"
+    "deploy/**/*.{yaml,yml}"
+    "!templates/**"
+    "!charts/**"
+    "!kustomization.{yaml,yml}"
+    "!Chart.yaml"
+    "!values*.{yaml,yml}"
+    "!*compose*.{yaml,yml}"
+  ];
 in
 {
   # Zed editor configuration
@@ -144,7 +162,7 @@ in
               arguments = [ "format" "-" ];
             };
           };
-          language_servers = [ "pyright" "ruff" ];
+          language_servers = [ "pyright" "ruff" "pytest-language-server" ];
           code_actions_on_format = {
             "source.fixAll" = true;
             "source.organizeImports.ruff" = true;
@@ -252,14 +270,14 @@ in
           formatter = "prettier";
         };
 
-        # TOML is the one language here with no server on the Zed side. Zed
-        # core has no taplo adapter and the registry's `toml` extension ships a
-        # grammar and queries only — no [language_servers] section — so there is
-        # nothing for an `lsp.taplo` pin to attach to, and prettier has no TOML
-        # parser either. format_on_save was therefore a no-op before this.
-        # taplo's CLI formats over stdin, which is the same escape hatch Blade
-        # and Shell Script use above. Neovim runs the real taplo LSP.
+        # The `toml` extension (1.1+) registers taplo as an opt-in server, so it
+        # only starts when listed here; crates-lsp adds Cargo.toml dependency
+        # versions on top (it ignores every other TOML file). Same pair as
+        # Neovim. tombi is excluded so a later extension cannot add a second
+        # TOML server. Formatting stays on taplo's CLI over stdin, which formats
+        # identically to the server and works before it has started.
         TOML = {
+          language_servers = [ "taplo" "crates-lsp" "!tombi" "..." ];
           format_on_save = "on";
           auto_indent = true;
           auto_indent_on_paste = true;
@@ -274,7 +292,10 @@ in
           };
         };
 
+        # crates-lsp's extension also claims Rust; it only reads Cargo.toml, so
+        # keep it off .rs buffers.
         Rust = {
+          language_servers = [ "rust-analyzer" "!crates-lsp" "..." ];
           tab_size = 4;
           format_on_save = "on";
           auto_indent = true;
@@ -294,8 +315,14 @@ in
           formatter = "prettier";
         };
 
+        # Grammar from the `sql` extension; postgres-language-server (same
+        # binary as Neovim's postgres_lsp) adds syntax errors and linting.
+        # format_on_save is off: the server formats (lowercasing keywords),
+        # and rewriting an applied SQLx migration changes its checksum, so
+        # `sqlx migrate run` then refuses it. Neovim disables it the same way.
         SQL = {
-          format_on_save = "on";
+          language_servers = [ "postgres-language-server" "..." ];
+          format_on_save = "off";
           auto_indent = true;
           auto_indent_on_paste = true;
           show_completions_on_input = true;
@@ -363,11 +390,12 @@ in
           };
         };
 
-        # Django templates. The extension also registers django-language-server,
-        # which has no nixpkgs package and would be downloaded at runtime; the
-        # Python side of a Django project is already covered by pyright + ruff.
+        # Django templates: djlsp and djls together, the same pair Neovim runs
+        # (see neovim.nix for what each adds). Zed has no per-server switch for
+        # completion, so tags and filters can be listed by both here. The
+        # Python side of a Django project is covered by pyright + ruff.
         Django = {
-          language_servers = [ "django-template-lsp" "!django-language-server" "..." ];
+          language_servers = [ "django-template-lsp" "django-language-server" "..." ];
           auto_indent = true;
           auto_indent_on_paste = true;
           show_completions_on_input = true;
@@ -444,6 +472,17 @@ in
           ensure_final_newline_on_save = true;
         };
 
+        # Helm chart templates. Go templating inside YAML: prettier would mangle
+        # it, so format_on_save is off. See file_types.Helm below.
+        Helm = {
+          language_servers = [ "helm" "..." ];
+          format_on_save = "off";
+          tab_size = 2;
+          auto_indent = true;
+          show_completions_on_input = true;
+          ensure_final_newline_on_save = true;
+        };
+
         # nginx site configs. nginx-language-server is completion + hover only:
         # it advertises no formatting capability and prettier has no nginx parser,
         # so the global format_on_save = "on" is turned off here rather than left
@@ -473,6 +512,15 @@ in
               arguments = [ "-i" "2" "-ci" ];
             };
           };
+        };
+
+        # Podman Quadlet units, from the `quadlet` extension (ini grammar).
+        # Its own path suffixes cover all eight unit types, so unlike Neovim
+        # there is no clash with systemd here.
+        Quadlet = {
+          language_servers = [ "quadlet-lsp" "..." ];
+          format_on_save = "off";
+          ensure_final_newline_on_save = true;
         };
 
         # The nix extension registers both nil and nixd. Zed runs nixd only;
@@ -528,6 +576,15 @@ in
 
         # Django templates (djlsp) — the Python side is pyright + ruff above.
         django-template-lsp = bin "${django-template-lsp}/bin/djlsp" [ ];
+        django-language-server = bin "${django-language-server}/bin/djls" [ "serve" ];
+
+        # pytest fixtures. No arguments: stdio is its default.
+        pytest-language-server =
+          bin "${pytest-language-server}/bin/pytest-language-server" [ ];
+
+        # Podman Quadlet. Must stay argument-free: any argument is a CLI
+        # subcommand, not an LSP flag.
+        quadlet-lsp = bin "${quadlet-lsp}/bin/quadlet-lsp" [ ];
 
         # PHP / Laravel / Livewire / Blade
         intelephense = (bin "${pkgs.intelephense}/bin/intelephense" [ "--stdio" ]) // {
@@ -606,6 +663,8 @@ in
                   enable = true;
                   url = "https://www.schemastore.org/api/json/catalog.json";
                 };
+                # Plain Kubernetes manifests, mapped by directory (k8sSchemaGlobs).
+                schemas.kubernetes = k8sSchemaGlobs;
                 validate = true;
                 hover = true;
                 completion = true;
@@ -628,13 +687,33 @@ in
         prisma-language-server =
           bin "${pkgs.prisma-language-server}/bin/prisma-language-server" [ "--stdio" ];
 
+        # TOML / Cargo.toml. Zed core reads lsp.<id>.binary before the
+        # extension runs, and then passes only these arguments, so each pin
+        # repeats the extension's default arguments.
+        taplo = bin "${pkgs.taplo}/bin/taplo" [ "lsp" "stdio" ];
+        crates-lsp = bin "${pkgs.crates-lsp}/bin/crates-lsp" [ ];
+
+        # PostgreSQL (.sql). Checking against a live schema needs a
+        # postgres-language-server.jsonc with a `db` section in the project.
+        postgres-language-server =
+          bin "${pkgs.postgres-language-server}/bin/postgres-language-server" [ "lsp-proxy" ];
+
+        # Helm. The extension wraps these settings as {"helm-ls": ...}; the
+        # yamlls path keeps helm-ls's embedded YAML server on the store copy.
+        helm = (bin "${pkgs.helm-ls}/bin/helm_ls" [ "serve" ]) // {
+          settings = {
+            yamlls.path = "${pkgs.yaml-language-server}/bin/yaml-language-server";
+          };
+        };
+
         # Nix / Lua — without a pin the lua extension downloads its own
         # lua-language-server release into ~/.local/share/zed.
         nixd = bin "${pkgs.nixd}/bin/nixd" [ ];
         lua-language-server = bin "${pkgs.lua-language-server}/bin/lua-language-server" [ ];
 
         rust-analyzer = {
-          # rust-analyzer found via PATH (~/.cargo/bin from rustup)
+          # rust-analyzer found via PATH: pkgs.rust-analyzer from
+          # home/modules/claude.nix, ahead of rustup's proxy.
           initialization_options = {
             check = {
               command = "clippy";
@@ -644,6 +723,11 @@ in
             };
             cargo = {
               allFeatures = true;
+            };
+            # Leptos server functions; inert outside Leptos. leptosfmt is set
+            # per project in rust-analyzer.toml, not here (see neovim.nix).
+            procMacro = {
+              ignored = { leptos_macro = [ "server" ]; };
             };
           };
         };
@@ -720,14 +804,20 @@ in
         php = true;               # PHP — Intelephense / phpactor
         blade = true;             # Laravel Blade templates (and Livewire views)
         laravel-official = true;  # Laravel LSP, by Laravel
-        django = true;            # Django templates
+        django = true;            # Django templates — djlsp + djls
+        pytest-language-server = true; # pytest fixtures
+        quadlet = true;           # Podman Quadlet units — grammar + quadlet-lsp
         latex = true;             # LaTeX + BibTeX, texlab
         slint = true;             # Slint UI markup
         swift = true;             # Swift — grammar + sourcekit-lsp wiring
         kotlin = true;            # Kotlin — grammar + kotlin-language-server
         terraform = true;         # Terraform / OpenTofu HCL, terraform-ls
         nginx = true;             # nginx.conf, nginx-language-server
-        toml = true;              # TOML — grammar only, no server exists
+        toml = true;              # TOML — grammar + taplo (opt-in, enabled above)
+        crates-lsp = true;        # Cargo.toml dependency versions
+        postgres-language-server = true; # PostgreSQL — server for the `sql` grammar
+        helm = true;              # Helm chart templates — grammar + helm_ls
+        leptos = true;            # Leptos view! (RSTML) highlighting — grammar only
         log = true;               # Log files — syntax highlighting only
         alpinejs-snippets = true; # Alpine.js — snippets only, no LSP exists
         emmet = true;             # Emmet — the server Blade's list above names
@@ -768,6 +858,17 @@ in
       # filetype detection already applies.
       file_types = {
         Blade = [ "blade.php" ];
+        # Zed globs cannot check for Chart.yaml the way Neovim's detection
+        # does, so only the conventional chart locations are claimed here; a
+        # chart elsewhere needs these in its project's .zed/settings.json.
+        Helm = [
+          "**/charts/*/templates/**/*.yaml"
+          "**/charts/*/templates/**/*.yml"
+          "**/charts/*/templates/**/*.tpl"
+          "**/helm/*/templates/**/*.yaml"
+          "**/helm/*/templates/**/*.yml"
+          "**/helm/*/templates/**/*.tpl"
+        ];
         Nginx = [
           "nginx.conf"
           "nginx*.conf"
