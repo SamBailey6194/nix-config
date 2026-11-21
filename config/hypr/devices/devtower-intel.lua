@@ -13,10 +13,10 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 
 -- ── Workspace map (devtower-intel only; laptop-intel keeps 00-vars.lua's) ──
 --
---   1      dashboard: keybinds, btop, nvtop       right (portrait)
---   2      four Kitty terminals, 2x2 grid         centre
+--   1      dashboard: btop, nvtop                 right (portrait)
+--   2      four Kitty terminals, tiled            centre
 --   3      file managers (Yazi, Thunar)           centre
---   4      mail (aerc + sheet, Claws Mail)        centre
+--   4      mail (aerc + khal, sheet, Claws Mail)  centre
 --   5-10   LibreOffice Writer, Calc, Impress,     centre
 --          Draw, Math, Base
 --   11     comms (Teams, Zoom)                    centre

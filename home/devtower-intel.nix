@@ -46,8 +46,8 @@ in
       autoLoad = true;
     };
 
-  # The 40-workspace map above needs its own cheat sheet; the ws1 dashboard
-  # and SUPER + / both read this path.
+  # The 40-workspace map above needs its own cheat sheet; SUPER + / reads
+  # this path.
   home.file.".config/hypr/KEYBINDS.md".source =
     lib.mkForce ../config/hypr/KEYBINDS-devtower-intel.md;
 

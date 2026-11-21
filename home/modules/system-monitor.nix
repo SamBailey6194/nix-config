@@ -6,7 +6,7 @@
 #   SUPER + SHIFT + M  htop in kitty
 #   workspace 1        btop is the dashboard's right-hand pane, relaunched by
 #                      SUPER + Escape if closed (config/hypr/devices/laptop-intel.lua);
-#                      on devtower-intel it is the middle of three stacked panes
+#                      on devtower-intel it is the top of two stacked panes
 #                      (config/hypr/devices/devtower-intel-dashboard.lua)
 #
 # htop stays as the fallback for whenever btop cannot draw: a terminal below

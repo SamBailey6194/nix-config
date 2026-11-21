@@ -22,14 +22,14 @@ removes that file's stale Affinity-on-4 and Resolve-on-5 rules. Workspaces
 32–40 are the development launcher's pool and 31 its nix-config layout; the
 device file exports `DEV_LAYOUT_NIX_CONFIG_WS`, `DEV_LAYOUT_POOL_FIRST` and
 `DEV_LAYOUT_POOL_LAST` with `hl.env` for `dev-layout`. In dev and higher Intel
-stages, workspace 1 launches three terminals, top to bottom: keybinding sheet, btop,
-nvtop, and workspace 2 four plain shells in a 2×2 grid (for commands and SSH),
-starting in the home directory. They are independently sized floating panes
-confined to their workspace, with margins for the top bar; login leaves focus
+stages, workspace 1 launches two terminals, top to bottom: btop, nvtop, as
+independently sized floating panes confined to the workspace, with margins for
+the top bar. Workspace 2 gets four plain shells (for commands and SSH),
+starting in the home directory and tiled by dwindle like any window; login leaves focus
 on workspace 2. `Super+Escape` focuses the dashboard and `Super+Shift+Escape`
 the terminal grid; each reopens missing panes without duplicating existing
-ones. Login also opens Yazi on workspace 3, aerc with its keybind sheet on 4
-and Zen on 12, silently, so focus stays on workspace 2. The desktop stage
+ones. Login also opens Yazi on workspace 3, aerc with khal's interactive
+calendar on 4 (aerc's keybind sheet stays on `Super+E`), Zen on 12 and Brave on 15, silently, so focus stays on workspace 2. The desktop stage
 gets the display/workspace rules without any of this autostart.
 
 After booting the NixOS desktop, run:

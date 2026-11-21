@@ -147,10 +147,10 @@ portrait), plus overflow workspaces from 41 up. laptop-intel is unaffected.
 
 | Workspace | Contents                                                             | Monitor |
 |-----------|----------------------------------------------------------------------|---------|
-| `1`       | Dashboard (keybinds, btop, nvtop)                                    | right   |
-| `2`       | Four Kitty terminals in a 2x2 grid (commands, SSH)                   | centre  |
+| `1`       | Dashboard (btop, nvtop)                                              | right   |
+| `2`       | Four tiled Kitty terminals (commands, SSH)                           | centre  |
 | `3`       | File managers (Yazi, Thunar)                                         | centre  |
-| `4`       | Mail (aerc + sheet, Claws)                                           | centre  |
+| `4`       | Mail (aerc + khal; sheet and Claws on demand)                        | centre  |
 | `5-10`    | LibreOffice Writer, Calc, Impress, Draw, Math, Base                  | centre  |
 | `11`      | Comms (Teams, Zoom)                                                  | centre  |
 | `12`      | Zen                                                                  | left    |
@@ -175,12 +175,12 @@ portrait), plus overflow workspaces from 41 up. laptop-intel is unaffected.
   `SHIFT + 1` → 11, `CTRL + 1` → 21, `ALT + 1` → 31). The submap resets after
   one move; `Escape` cancels.
 - **Login terminals**: `devices/devtower-intel-dashboard.lua` builds the ws1
-  dashboard and the ws2 terminal grid at login, as floating rectangles pinned
-  to their workspace. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
+  dashboard (btop over nvtop, floating rectangles pinned to the workspace) and
+  the ws2 terminals (ordinary dwindle tiles) at login. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
   focus the group, reopen closed panes and gather strays. The ws2 terminals
   run the login shell in `$HOME` under the classes `ws2-term-1` to `ws2-term-4`.
-  The same login handler opens Yazi on ws3, aerc with its keybind sheet on ws4
-  and Zen on ws12, each with a per-launch `"<n> silent"` rule so focus stays
+  The same login handler opens Yazi on ws3, aerc with khal's interactive
+  calendar (aerc left, khal right) on ws4, Zen on ws12 and Brave on ws15, each with a per-launch `"<n> silent"` rule so focus stays
   on ws2.
 - **Unassigned windows**: the catch-all parks them on the hidden
   `special:unassigned` workspace; a `window.open` handler then moves each to the

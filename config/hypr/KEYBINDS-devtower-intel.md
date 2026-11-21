@@ -109,7 +109,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + SHIFT + S`      | Move to scratchpad            |
 | `SUPER + Scroll`         | Cycle workspaces              |
 | `SUPER + Escape`         | Dashboard (ws 1): reopens a closed pane |
-| `SUPER + SHIFT + Escape` | Terminal grid (ws 2): reopens a closed terminal |
+| `SUPER + SHIFT + Escape` | Terminals (ws 2): reopens a closed terminal |
 
 ## Workspace Map
 
@@ -117,10 +117,10 @@ L = left 4K, C = centre 1440p, R = right portrait.
 
 | Workspace | Key                  | Mon | Contents                               |
 |-----------|----------------------|-----|----------------------------------------|
-| `1`       | `SUPER + 1`          | R   | Dashboard: this sheet, btop, nvtop     |
-| `2`       | `SUPER + 2`          | C   | Four terminals, 2x2 (commands, SSH)    |
+| `1`       | `SUPER + 1`          | R   | Dashboard: btop, nvtop                 |
+| `2`       | `SUPER + 2`          | C   | Four terminals, tiled (commands, SSH)  |
 | `3`       | `SUPER + 3`          | C   | File managers (Yazi, Thunar)           |
-| `4`       | `SUPER + 4`          | C   | Mail (aerc + sheet, Claws Mail)        |
+| `4`       | `SUPER + 4`          | C   | Mail (aerc + khal, sheet, Claws Mail)  |
 | `5`       | `SUPER + 5`          | C   | LibreOffice Writer (and Start Center)  |
 | `6`       | `SUPER + 6`          | C   | LibreOffice Calc                       |
 | `7`       | `SUPER + 7`          | C   | LibreOffice Impress                    |
