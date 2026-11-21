@@ -69,24 +69,18 @@ class DashboardTests(unittest.TestCase):
         # The 40-workspace map, keybinds and window rules are covered in
         # test_devtower_intel_layout.py.
 
-    def test_two_nonoverlapping_vertical_panes_and_reopen_without_duplicates(self):
+    def test_two_tiled_panes_and_reopen_without_duplicates(self):
         self.lua.execute((DEVICES / "devtower-intel-dashboard.lua").read_text())
         self.lua.execute('''
             assert(#rules == 6)
-            monitor_w, monitor_h = 1080, 1920
             local dashboard = binds["SUPER + Escape"]
-            local bottom = 0
-            for i = 1, 2 do
+            for i, class in ipairs({"ws1-monitor", "ws1-gpu"}) do
                 local rule = rules[i]
-                assert(rule.workspace == "1 silent" and rule.float)
-                local width = assert(load("return " .. rule.size[1]))()
-                local height = assert(load("return " .. rule.size[2]))()
-                local y = assert(load("return " .. rule.move[2]))()
-                assert(width == 1060 and y >= bottom and y + height <= monitor_h - 10)
-                bottom = y + height
+                assert(rule.match.class == "^" .. class .. "$")
+                assert(rule.workspace == "1 silent")
+                -- Tiled by dwindle: no float, size or move.
+                assert(rule.float == nil and rule.size == nil and rule.move == nil)
             end
-            -- The second pane ends on the bottom margin.
-            assert(bottom == monitor_h - 10)
             dashboard(); dashboard()
             assert(#launches == 2 and active_ws == 1)
             assert(launches[1]:find("btop") and launches[2]:find("nvtop"))
@@ -175,6 +169,20 @@ class DashboardTests(unittest.TestCase):
                 assert(not cmd:find("claws") and not cmd:find("teams") and not cmd:find("zoom"), cmd)
                 assert(not cmd:find("KEYBINDS"), cmd)
             end
+        ''')
+
+    def test_btop_is_swapped_above_nvtop_once_both_tile_on_ws1(self):
+        self.lua.execute((DEVICES / "devtower-intel-dashboard.lua").read_text())
+        self.lua.execute('''
+            local function win(class, y)
+                return {class=class, workspace={id=1}, floating=false, fullscreen=0, at={x=5130, y=y}}
+            end
+            windows["ws1-gpu"] = win("ws1-gpu", 50)
+            events["window.open"](windows["ws1-gpu"]); assert(#swaps == 0)
+            windows["ws1-monitor"] = win("ws1-monitor", 984)
+            events["window.open"](windows["ws1-monitor"])
+            assert(#swaps == 1 and windows["ws1-monitor"].at.y == 50 and windows["ws1-gpu"].at.y == 984)
+            events["window.open"](windows["ws1-monitor"]); assert(#swaps == 1)
         ''')
 
     def test_aerc_is_swapped_left_of_khal_once_both_tile_on_ws4(self):

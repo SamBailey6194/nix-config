@@ -175,8 +175,8 @@ portrait), plus overflow workspaces from 41 up. laptop-intel is unaffected.
   `SHIFT + 1` → 11, `CTRL + 1` → 21, `ALT + 1` → 31). The submap resets after
   one move; `Escape` cancels.
 - **Login terminals**: `devices/devtower-intel-dashboard.lua` builds the ws1
-  dashboard (btop over nvtop, floating rectangles pinned to the workspace) and
-  the ws2 terminals (ordinary dwindle tiles) at login. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
+  dashboard (btop over nvtop) and the ws2 terminals at login, all ordinary
+  dwindle tiles. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
   focus the group, reopen closed panes and gather strays. The ws2 terminals
   run the login shell in `$HOME` under the classes `ws2-term-1` to `ws2-term-4`.
   The same login handler opens Yazi on ws3, aerc with khal's interactive

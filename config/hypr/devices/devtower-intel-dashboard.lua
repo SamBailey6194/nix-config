@@ -1,20 +1,14 @@
--- Login terminal groups, each pinned to its own workspace:
---   ws1  two terminals stacked on the portrait monitor (btop, nvtop), as
---        floating rectangles                        SUPER + Escape
+-- Login terminal groups, each pinned to its own workspace and tiled by
+-- dwindle like any other window:
+--   ws1  btop over nvtop on the portrait monitor      SUPER + Escape
 --   ws2  four plain shells on the centre monitor, for running commands and
---        SSH sessions, tiled by dwindle             SUPER + SHIFT + Escape
--- The ws1 rectangles make placement independent of launch order, cursor
--- position and dwindle splits; they do not float across workspaces. The ws2
--- shells are ordinary tiles (a group without `geometry` is not floated), so
--- dwindle arranges them and SUPER + V is not needed to tile them.
+--        SSH sessions                                SUPER + SHIFT + Escape
 -- The keybinds build a missing group, refill closed panes and gather strays.
--- The keybinding sheet is still on SUPER + /.
+-- The keybinding sheet is on SUPER + /.
 -- Login also opens Yazi (ws3), aerc + khal (ws4), Zen (ws12) and Brave
 -- (ws15); see login_apps.
 local vars = require("00-vars")
 
--- ws1 margins: 10px sides and bottom, 50px top (40px bar plus margin), 8px
--- between panes. Two panes: each (monitor_h - 50 - 10 - 8) / 2 high.
 local groups = {
     {
         workspace = 1,
@@ -24,17 +18,12 @@ local groups = {
             { class = "ws1-monitor", command = "btop" },
             { class = "ws1-gpu", command = "nvtop" },
         },
-        geometry = function(index)
-            return { "monitor_w-20", "(monitor_h-68)/2" },
-                { "10", "50+" .. tostring(index - 1) .. "*((monitor_h-68)/2+8)" }
-        end,
     },
     {
         workspace = 2,
         description = "Terminals: four shells, tiled",
         bind = vars.mod .. " + SHIFT + Escape",
-        -- No command: Kitty runs the login shell, in $HOME. No geometry:
-        -- the shells tile like any other window.
+        -- No command: Kitty runs the login shell, in $HOME.
         panes = {
             { class = "ws2-term-1" },
             { class = "ws2-term-2" },
@@ -46,18 +35,13 @@ local groups = {
 local pending = {}
 
 for _, group in ipairs(groups) do
-    for index, pane in ipairs(group.panes) do
-        local rule = {
+    for _, pane in ipairs(group.panes) do
+        hl.window_rule({
             name = "intel-dashboard-" .. pane.class,
             match = { class = "^" .. pane.class .. "$" },
             workspace = tostring(group.workspace) .. " silent",
             opacity = "0.95 0.95",
-        }
-        if group.geometry then
-            rule.float = true
-            rule.size, rule.move = group.geometry(index)
-        end
-        hl.window_rule(rule)
+        })
     end
 end
 
@@ -89,28 +73,39 @@ local function build(group)
     end
 end
 
--- aerc left of khal. Dwindle puts a new tile on the side the mouse is on, so
--- launch order does not settle it; swap once both are tiled on ws4 (the same
--- fix as 60-keybinds.lua's mail_enforce_order, whose x-then-y order this
--- copies so a third window cannot make it swap back and forth).
-local function on_ws4_tiled(w)
-    return w ~= nil and w.workspace ~= nil and w.workspace.id == 4
+-- Tile pairs kept in order: the first before the second (left of it side
+-- by side, above it when stacked). Dwindle puts a new tile on the side the
+-- mouse is on, so launch order does not settle it; swap once both are tiled
+-- on the workspace. Same fix as 60-keybinds.lua's mail_enforce_order, whose
+-- strict x-then-y order this copies so a third window cannot make it swap
+-- back and forth. Floating or fullscreen panes are left alone: a swap would
+-- trade that state between the two.
+local ordered_pairs = {
+    { first = "ws1-monitor", second = "ws1-gpu", workspace = 1 }, -- btop over nvtop
+    { first = "aerc", second = "khal", workspace = 4 },
+}
+
+local function tiled_on(w, workspace)
+    return w ~= nil and w.workspace ~= nil and w.workspace.id == workspace
         and not w.floating and w.fullscreen == 0
 end
 
-local function mail_calendar_order()
-    local client = hl.get_windows({ class = "aerc" })[1]
-    local calendar = hl.get_windows({ class = "khal" })[1]
-    if on_ws4_tiled(client) and on_ws4_tiled(calendar)
-        and (client.at.x > calendar.at.x
-             or (client.at.x == calendar.at.x and client.at.y > calendar.at.y)) then
-        hl.dispatch(hl.dsp.window.swap({ window = client, target = calendar }))
+local function enforce_order(pair)
+    local a = hl.get_windows({ class = pair.first })[1]
+    local b = hl.get_windows({ class = pair.second })[1]
+    if tiled_on(a, pair.workspace) and tiled_on(b, pair.workspace)
+        and (a.at.x > b.at.x or (a.at.x == b.at.x and a.at.y > b.at.y)) then
+        hl.dispatch(hl.dsp.window.swap({ window = a, target = b }))
     end
 end
 
 hl.on("window.open", function(window)
     pending[window.class] = nil
-    if window.class == "aerc" or window.class == "khal" then mail_calendar_order() end
+    for _, pair in ipairs(ordered_pairs) do
+        if window.class == pair.first or window.class == pair.second then
+            enforce_order(pair)
+        end
+    end
 end)
 for _, group in ipairs(groups) do
     hl.bind(group.bind, function() build(group) end, { description = group.description })
