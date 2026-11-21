@@ -54,7 +54,12 @@
     ManagedOOMMemoryPressureLimit = "60%";
   };
   systemd.services.llama-swap.serviceConfig.Slice = "compute.slice";
-  workloads.memoryHigh = lib.mkForce "5G";
-  workloads.memoryMax = lib.mkForce "6G";
+  # Media budget sized from a measured render (resource-run, 14G cap): one
+  # neovim-course master peaked at 5.2G and stalled at 5G MemoryHigh. 6G/7G
+  # gives ~15% headroom and is sized for masters up to ~15 minutes. Longer
+  # pieces or more video clips need more; re-measure before raising. Note
+  # compute.slice (22G) + this (7G) leaves ~3G of 32G for the desktop.
+  workloads.memoryHigh = lib.mkForce "6G";
+  workloads.memoryMax = lib.mkForce "7G";
   workloads.memorySwapMax = "0";
 }

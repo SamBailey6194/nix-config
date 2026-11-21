@@ -57,7 +57,7 @@ The server starts reclaiming at 18GiB and is capped at 20GiB RAM with no swap.
 It shares `compute.slice` (20GiB high, 22GiB hard) with Nix builds (14/16GiB).
 These bounds prevent the two full allocations being additive. The service does
 not restart automatically after a failure. Other media jobs use a separate
-per-user 5/6GiB budget on these Intel stages; desktop/minimal stages retain
+per-user 6/7GiB budget on these Intel stages; desktop/minimal stages retain
 10/12GiB. CPU/I/O weights favour interactive work. Standard cgroups cannot
 cap VRAM, so desktop GPU consumption can still cause allocation failures.
 
