@@ -1,6 +1,7 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
+  cfg = config.software.media;
   handbrakePgsPatch = pkgs.writeText "handbrake-ffmpeg-8.1.3-pgs.patch" ''
     --- a/contrib/ffmpeg/A15-lavc-pgssubdec-Add-graphic-plane-and-cropping.patch
     +++ b/contrib/ffmpeg/A15-lavc-pgssubdec-Add-graphic-plane-and-cropping.patch
@@ -62,59 +63,64 @@ let
   '';
 in
 {
-  # Media playback and viewing
-  # Video players, image viewers, music players
+  # Media playback and viewing: video players, image and PDF viewers on every
+  # device; editors, music and disc tools only where `extras` is on.
 
-  nixpkgs.overlays = [
-    (final: prev: {
-      # HandBrake 1.11.2's PGS patch predates FFmpeg 8.1.3's palette allocation
-      # change. Rebase its patch while retaining palette allocation for every
-      # exported rectangle. Remove when nixpkgs updates the bundled patches.
-      handbrake = prev.handbrake.override {
-        applyPatches = args: prev.applyPatches (args // {
-          patches = (args.patches or [ ]) ++ [
-            handbrakePgsPatch
-          ];
-        });
-      };
+  options.software.media.extras.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = ''
+      Install the heavier media apps (GIMP, Audacity, Spotify, MakeMKV,
+      HandBrake) and the sg module MakeMKV needs. laptop-intel turns this off:
+      it is a thin client that runs those on devtower-intel.
+    '';
+  };
+
+  config = lib.mkMerge [
+    {
+      environment.systemPackages = with pkgs; [
+        # Video players
+        vlc                # VLC media player
+        mpv                # Lightweight video player
+
+        # Image viewer
+        imv                # Wayland image viewer
+
+        # PDF viewer
+        zathura            # Lightweight PDF viewer
+
+        # Screenshot tools: grim, slurp, swappy are in desktop/hyprland
+      ];
+    }
+
+    (lib.mkIf cfg.extras.enable {
+      nixpkgs.overlays = [
+        (final: prev: {
+          # HandBrake 1.11.2's PGS patch predates FFmpeg 8.1.3's palette
+          # allocation change. Rebase its patch while retaining palette
+          # allocation for every exported rectangle. Remove when nixpkgs
+          # updates the bundled patches.
+          handbrake = prev.handbrake.override {
+            applyPatches = args: prev.applyPatches (args // {
+              patches = (args.patches or [ ]) ++ [
+                handbrakePgsPatch
+              ];
+            });
+          };
+        })
+      ];
+
+      environment.systemPackages = with pkgs; [
+        gimp               # GNU Image Manipulation Program
+        spotify            # Spotify music streaming
+        # Disc ripping and transcoding (STORAGE-AND-MEDIA-ARCHITECTURE.md)
+        makemkv            # Lossless optical disc rip to MKV (unfree)
+        handbrake          # H.264/H.265 transcoding for Jellyfin direct play
+        audacity           # Audio editing
+      ];
+
+      # MakeMKV talks to optical drives through SCSI generic devices (/dev/sg*)
+      boot.kernelModules = [ "sg" ];
     })
   ];
-
-  environment.systemPackages = with pkgs; [
-    # Video players
-    vlc                # VLC media player
-    mpv                # Lightweight video player
-
-    # Image viewers
-    imv                # Wayland image viewer
-    # feh              # X11 image viewer
-    # gwenview         # KDE image viewer
-
-    # Image editors (lightweight)
-    gimp               # GNU Image Manipulation Program
-    # inkscape         # Vector graphics editor
-
-    # PDF viewers
-    zathura            # Lightweight PDF viewer
-    # evince           # GNOME PDF viewer
-
-    # Music players
-    spotify            # Spotify music streaming
-    # rhythmbox        # GNOME music player
-    # clementine       # Qt music player
-
-    # Disc ripping and transcoding (STORAGE-AND-MEDIA-ARCHITECTURE.md)
-    makemkv            # Lossless optical disc rip to MKV (unfree)
-    handbrake          # H.264/H.265 transcoding for Jellyfin direct play
-
-    # Audio tools
-    audacity           # Audio editing
-    # ardour           # Digital audio workstation
-
-    # Screenshot tools (already in base, but noted here)
-    # grim, slurp, swappy are in desktop/hyprland
-  ];
-
-  # MakeMKV talks to optical drives through SCSI generic devices (/dev/sg*)
-  boot.kernelModules = [ "sg" ];
 }

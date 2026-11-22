@@ -1,31 +1,19 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  # Office and productivity software
-  # Document editing, spreadsheets, presentations
+  options.software.office.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = ''
+      Install LibreOffice and the PDF tools. laptop-intel turns this off: it is
+      a thin client that runs office apps on devtower-intel.
+    '';
+  };
 
-  environment.systemPackages = with pkgs; [
-    # Office suite
-    libreoffice             # LibreOffice (Writer, Calc, Impress)
-    # onlyoffice-bin          # ONLY Office (MS Office compatible)
-
-    # PDF tools
-    # pdftk                   # PDF toolkit
-    qpdf                    # PDF manipulation
-    # poppler_utils           # PDF utilities (pdfinfo, pdftotext, etc.)
-
-    # Markdown editors
-    # marktext                # Markdown editor
-    # typora                  # Commercial markdown editor
-
-    # Diagram tools
-    # drawio                  # Diagram editor
-    # dia                     # Diagram creation
-  ];
-
-  # LibreOffice configuration
-  # Enable Java support for LibreOffice Base
-  # programs.libreoffice = {
-  #   enable = true;
-  # };
+  config = lib.mkIf config.software.office.enable {
+    environment.systemPackages = with pkgs; [
+      libreoffice             # LibreOffice (Writer, Calc, Impress)
+      qpdf                    # PDF manipulation
+    ];
+  };
 }

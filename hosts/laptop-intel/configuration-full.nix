@@ -35,10 +35,10 @@
     # Software suites
     ../../modules/software/browsers.nix
     ../../modules/software/development.nix
-    ../../modules/software/office.nix
+    # Thin client: office, creative and heavy media apps run on devtower-intel
+    # (office off, no craft-apps.nix or Affinity, media.nix without extras).
     ../../modules/software/communication.nix
     ../../modules/software/media.nix
-    ../../modules/software/craft-apps.nix # ArtCraft Craft apps (PhotoCraft, VectorCraft, ...)
     ./meeting-notes.nix # D&D session recording, transcripts and notes (room mode)
 
     # Network
@@ -214,7 +214,13 @@
   time.timeZone = "Europe/London";
   i18n.defaultLocale = "en_GB.UTF-8";
 
-  # System packages + creative tools (Intel GPU - limited)
+  # Viewers only from media.nix; GIMP, Audacity, Spotify and the disc tools
+  # run on devtower-intel.
+  software.media.extras.enable = false;
+  # LibreOffice runs on devtower-intel too (base-configuration imports office.nix).
+  software.office.enable = false;
+
+  # System packages
   environment.systemPackages =
     with pkgs;
     [
@@ -227,20 +233,8 @@
       btop
       fastfetch
 
-      # Creative tools (Intel GPU compatible)
-      # blender              # 3D creation
-      gimp # Image editing
-      inkscape # Vector graphics
-      krita # Digital painting
-
       # Claude Code Nix Package
       claude-code
-    ]
-    ++ [
-      # Affinity Apps (via overlay — see nix-settings.nix)
-      affinity-designer
-      affinity-photo
-      affinity-publisher
     ];
 
   # Enable zsh
