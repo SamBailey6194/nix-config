@@ -101,6 +101,19 @@
       "ctrl+shift+underscore" = "change_font_size all -1.0";
       "ctrl+shift+kp_subtract" = "change_font_size all -1.0";
       "ctrl+shift+backspace" = "change_font_size all 0";
+
+      # Multi-line zsh commands without running them (zsh is in emacs mode):
+      #   shift+enter       sends Alt+Enter (\e\r): zsh inserts a newline
+      #   ctrl+shift+enter  types `\`, then Ctrl+V Ctrl+J: a literal newline
+      #                     after a continuation backslash
+      # Only in the normal/application keyboard modes, i.e. a plain shell.
+      # Programs that turn on the kitty keyboard protocol (Neovim, Claude
+      # Code) still get the real Shift+Enter; Neovim's terminal mode maps
+      # it to the same bytes itself (home/modules/neovim.nix). The second
+      # map replaces kitty's default kitty_mod+enter (new_window), which
+      # Hyprland's own window management makes redundant.
+      "shift+enter" = "send_text normal,application \\e\\r";
+      "ctrl+shift+enter" = "send_text normal,application \\\\\\x16\\n";
     };
   };
 

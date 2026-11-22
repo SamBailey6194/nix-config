@@ -937,6 +937,11 @@ in
           "ctrl-shift-v" = "terminal::Paste";
           "ctrl-shift-n" = "workspace::NewTerminal";
           "ctrl-shift-w" = "pane::CloseActiveItem";
+          # Multi-line zsh commands, same as kitty (home/stages/desktop.nix):
+          # shift-enter is Alt+Enter (zsh newline); ctrl-shift-enter types
+          # `\` then Ctrl+V Ctrl+J. Nix has no \u escape, hence fromJSON.
+          "shift-enter" = [ "terminal::SendText" ((builtins.fromJSON ''"\u001b"'') + "\r") ];
+          "ctrl-shift-enter" = [ "terminal::SendText" ("\\" + (builtins.fromJSON ''"\u0016"'') + "\n") ];
         };
       }
       {

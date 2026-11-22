@@ -127,6 +127,14 @@ let
     { group = "Windows"; lhs = "<C-j>"; rhs = "<C-w>j"; desc = "Window down"; }
     { group = "Windows"; lhs = "<C-k>"; rhs = "<C-w>k"; desc = "Window up"; }
     { group = "Windows"; lhs = "<C-l>"; rhs = "<C-w>l"; desc = "Window right"; }
+
+    # Terminal mode: kitty leaves these keys alone once Neovim turns on the
+    # kitty keyboard protocol, so they are mapped here to the bytes kitty
+    # sends a plain shell (home/stages/desktop.nix). <Esc> and <C-v> in a
+    # 't' rhs go to the job, not Neovim. <Bslash>, as a bare \ could escape
+    # the next key.
+    { group = "Terminal"; lhs = "<S-CR>";   rhs = "<Esc><CR>";            desc = "Shell: newline, don't run"; mode = "t"; }
+    { group = "Terminal"; lhs = "<C-S-CR>"; rhs = "<Bslash><C-v><C-j>";   desc = "Shell: \\ + newline"; mode = "t"; }
   ];
 
   # Lua single-quoted string literal. Backslash first, or it would double the
