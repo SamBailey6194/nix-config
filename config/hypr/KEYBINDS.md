@@ -1,6 +1,6 @@
 # Hyprland Keybinds Reference
 
-This is laptop-intel's sheet. devtower-intel has forty workspaces and its own
+This is laptop-intel's sheet. devtower-intel has fifty keyed workspaces and its own
 sheet, `KEYBINDS-devtower-intel.md`, which home/devtower-intel.nix deploys in
 place of this one.
 
@@ -119,7 +119,7 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 
 The workspace-10 catch-all exists on laptop-intel (`devices/laptop-intel.lua`);
 framework and devtower have none, and devtower-intel uses its own map (unassigned
-windows open on the first free workspace from 41 up). The ws1 dashboard above is
+windows open on the first free workspace from 51 up). The ws1 dashboard above is
 laptop-intel's. The file managers go to 10 on every device except devtower-intel
 (ws 3).
 

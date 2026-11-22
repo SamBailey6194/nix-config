@@ -128,19 +128,20 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
             a = self.g.binds["global"][key]
             self.assertEqual((a.path, a.args.workspace), ("dsp.focus", 10 + i), key)
 
-    def test_ctrl_and_alt_banks_focus_21_to_40_and_super_0_is_still_10(self):
-        for prefix, offset in (("", 0), ("CTRL + ", 20), ("ALT + ", 30)):
+    def test_ctrl_alt_and_ctrl_shift_banks_focus_21_to_50_and_super_0_is_still_10(self):
+        for prefix, offset in (("", 0), ("CTRL + ", 20), ("ALT + ", 30), ("CTRL + SHIFT + ", 40)):
             for i in range(1, 11):
                 a = self.g.binds["global"][f"SUPER + {prefix}{i % 10}"]
                 self.assertEqual((a.path, a.args.workspace), ("dsp.focus", offset + i))
         a = self.g.binds["global"]["SUPER + 0"]
         self.assertEqual(a.args.workspace, 10)
 
-    def test_move_window_submap_covers_1_to_40_and_escape_resets(self):
+    def test_move_window_submap_covers_1_to_50_and_escape_resets(self):
         enter = self.g.binds["global"]["SUPER + period"]
         self.assertEqual((enter.path, enter.args), ("dsp.submap", "move-window"))
         sub = self.g.binds["move-window"]
-        for prefix, offset in (("", 0), ("SHIFT + ", 10), ("CTRL + ", 20), ("ALT + ", 30)):
+        for prefix, offset in (("", 0), ("SHIFT + ", 10), ("CTRL + ", 20), ("ALT + ", 30),
+                               ("CTRL + SHIFT + ", 40)):
             for i in range(1, 11):
                 a = sub[f"{prefix}{i % 10}"]
                 self.assertEqual((a.path, a.args.workspace), ("dsp.window.move", offset + i))
@@ -180,6 +181,10 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
             "intel-craft-sound": "26", "intel-craft-word": "27",
             "intel-craft-deck": "28", "intel-craft-effect": "29",
             "intel-craft-film": "30",
+            # The rest of the suite, after the keyed 1-40 and before overflow.
+            "intel-craft-cad": "41", "intel-craft-fig": "42",
+            "intel-craft-grid": "43", "intel-craft-ani": "44",
+            "intel-craft-material": "45", "intel-craft-texture": "46",
         }.items():
             self.assertEqual(by_name.get(name), expected, name)
         self.assertNotIn("intel-craft-art", by_name, "ArtCraft has no Linux build")
@@ -204,6 +209,12 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
             "deck": ("28", ("ai.storyteller.deckcraft",)),
             "effect": ("29", ("ai.storyteller.effectcraft",)),
             "film": ("30", ("ai.storyteller.filmcraft",)),
+            "cad": ("41", ("ai.storyteller.cadcraft",)),
+            "fig": ("42", ("ai.storyteller.figcraft",)),
+            "grid": ("43", ("ai.storyteller.gridcraft",)),
+            "ani": ("44", ("ai.storyteller.anicraft",)),
+            "material": ("45", ("ai.storyteller.materialcraft", "materialcraft")),
+            "texture": ("46", ("ai.storyteller.texturecraft", "texturecraft")),
         }
         for app, (ws, ids) in expected.items():
             rule = by_name[f"intel-craft-{app}"]
@@ -246,32 +257,37 @@ class OverflowTests(unittest.TestCase):
             end
         ''')
 
-    def test_unassigned_window_takes_41_when_nothing_is_open(self):
+    def test_unassigned_window_takes_51_when_nothing_is_open(self):
+        # 41-50 are keyed (the rest of the Craft suite, then spares), so
+        # overflow starts after them even while they are empty.
         move = self.lua.eval(
             'open({ address = "0x1", pid = 10, class = "unknown", '
             'floating = false, workspace = parked })')
-        self.assertEqual((move.workspace, move.follow), (41, True))
+        self.assertEqual((move.workspace, move.follow), (51, True))
         self.assertEqual(move.window.address, "0x1")
 
     def test_first_free_workspace_skips_busy_ones(self):
-        # 41 and 42 hold windows; 43 exists but is empty; 44 is busy too.
+        # 51 and 52 hold windows; 53 exists but is empty; 54 is busy too.
+        # 41 (a Craft app) being busy or 47 (a spare) being empty changes nothing.
         self.lua.execute('''
             live = {
                 { id = 2, windows = 4 }, { id = 41, windows = 1 },
-                { id = 42, windows = 2 }, { id = 43, windows = 0 },
-                { id = 44, windows = 1 },
+                { id = 47, windows = 0 },
+                { id = 51, windows = 1 },
+                { id = 52, windows = 2 }, { id = 53, windows = 0 },
+                { id = 54, windows = 1 },
                 { id = -98, name = "special:unassigned", windows = 1 },
             }
         ''')
         move = self.lua.eval(
             'open({ address = "0x2", pid = 11, class = "unknown", '
             'floating = false, workspace = parked })')
-        self.assertEqual((move.workspace, move.follow), (43, True))
-        self.lua.execute('live[4].windows = 1')
+        self.assertEqual((move.workspace, move.follow), (53, True))
+        self.lua.execute('live[6].windows = 1')
         move = self.lua.eval(
             'open({ address = "0x3", pid = 12, class = "unknown", '
             'floating = false, workspace = parked })')
-        self.assertEqual(move.workspace, 45)
+        self.assertEqual(move.workspace, 55)
 
     def test_floating_dialog_joins_its_process_workspace(self):
         # The same process has windows on 31 and 14; 14 is active, so it wins.
@@ -302,7 +318,7 @@ class OverflowTests(unittest.TestCase):
         move = self.lua.eval(
             'open({ address = "0xf", pid = 30, class = "dialog", '
             'floating = true, workspace = parked })')
-        self.assertEqual(move.workspace, 41)
+        self.assertEqual(move.workspace, 51)
         # A second tiled Zed project does not pile onto the layout on 31.
         self.lua.execute('''
             table.insert(windows, { address = "0x10", pid = 40, workspace = { id = 31 } })
@@ -310,10 +326,10 @@ class OverflowTests(unittest.TestCase):
         move = self.lua.eval(
             'open({ address = "0x11", pid = 40, class = "dev.zed.Zed", '
             'floating = false, workspace = parked })')
-        self.assertEqual(move.workspace, 41)
+        self.assertEqual(move.workspace, 51)
 
     def test_windows_that_were_not_parked_are_left_alone(self):
-        for workspace in ('{ id = 3 }', '{ id = 41 }',
+        for workspace in ('{ id = 3 }', '{ id = 51 }',
                           '{ id = -99, name = "special:scratch", special = true }'):
             self.lua.eval(
                 f'open({{ address = "0x20", pid = 50, class = "yazi", '

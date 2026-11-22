@@ -44,7 +44,7 @@ M.mailWorkspace = 6
 -- WORKSPACE MAP (see devices/laptop-intel.lua for the full picture)
 --
 -- This is the default map, used as-is by laptop-intel. devtower-intel runs a
--- 40-workspace map across three monitors instead and re-registers its own
+-- 50-workspace map across three monitors instead and re-registers its own
 -- assignments after these (devices/devtower-intel.lua); last match wins.
 --
 --   1     dashboard (laptop only)

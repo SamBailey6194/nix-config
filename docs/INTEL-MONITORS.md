@@ -2,13 +2,13 @@
 
 EDIDs and the active Ubuntu X11 session were inspected on 2026-10-05.
 The workspace mapping and 150% 4K scale were selected by Sam. devtower-intel
-has forty fixed workspaces plus overflow workspaces from 41 up, defined in `config/hypr/devices/devtower-intel.lua`;
+has fifty keyed workspaces (1–40, the rest of the Craft suite on 41–46, spares on 47–50) and overflow workspaces from 51 up, defined in `config/hypr/devices/devtower-intel.lua`;
 laptop-intel keeps the default ten-workspace map.
 
 | Physical display | EDID model | Current Ubuntu connector | DRM connector | NixOS mode / scale | Workspaces |
 | --- | --- | --- | --- | --- | --- |
 | Left | AOC U2879G6 | DP-4 | DP-3 | 3840×2160 / 60Hz / 150% | 12 Zen (media while working); 13 LibreWolf; 16 video and image viewers; 20 Resolve; 29 EffectCraft; 30 FilmCraft |
-| Centre, primary work display | AOC AG271QG4 | DP-2 | DP-2 | 2560×1440 / 143.91Hz / 100% | 2 four terminals (2×2); 3 file managers; 4 mail; 5–10 LibreOffice; 11 Teams, Zoom; 14 Firefox Developer; 15 Brave; 17–19 Affinity; 21–28 Craft suite; 31 Nix config; 32–40 development; 41+ unassigned apps |
+| Centre, primary work display | AOC AG271QG4 | DP-2 | DP-2 | 2560×1440 / 143.91Hz / 100% | 2 four terminals (2×2); 3 file managers; 4 mail; 5–10 LibreOffice; 11 Teams, Zoom; 14 Firefox Developer; 15 Brave; 17–19 Affinity; 21–28 Craft suite; 31 Nix config; 32–40 development; 41–46 CADCraft, FigCraft, GridCraft, AniCraft, MaterialCraft, TextureCraft; 47–50 spare; 51+ unassigned apps |
 | Right, portrait | AOC 27G2WG3- | HDMI-0 | HDMI-A-1 | 1920×1080 / 144Hz / 100%, rotated | 1 dashboard |
 
 Rules match `desc:AOC <model>` prefixes rather than assuming X11 output
@@ -42,16 +42,16 @@ hyprctl workspaces
 Confirm descriptions begin with the configured prefixes, refresh rates match
 available modes, the 4K scale is 1.5, and portrait orientation is correct.
 Use `Super+1` through `Super+0` (workspaces 1–10), with `Shift` (11–20),
-`Ctrl` (21–30) or `Alt` (31–40) added, to confirm workspace placement. To move
+`Ctrl` (21–30), `Alt` (31–40) or `Ctrl+Shift` (41–50) added, to confirm workspace placement. To move
 a window, press `Super+period`, then the number with the same bank modifier
-(`1` → 1, `Shift+1` → 11, `Ctrl+1` → 21, `Alt+1` → 31); `Escape` cancels. The
+(`1` → 1, `Shift+1` → 11, `Ctrl+1` → 21, `Alt+1` → 31, `Ctrl+Shift+1` → 41); `Escape` cancels. The
 full sheet is `config/hypr/KEYBINDS-devtower-intel.md` (`Super+/`). Close/reopen
 one dashboard pane and check
 `Super+Escape`, and likewise one ws2 terminal with `Super+Shift+Escape`. Test Resolve's actual application class with `hyprctl clients`
 once installed; the rule covers `resolve`, `Resolve` and `DaVinciResolve`.
 Resolve opens on workspace 20, on the left. Zen (12) and LibreWolf (13) open
 on the left; Firefox Developer (14) and Brave (15) on the centre. A window
-without a specific assignment opens on the first free workspace from 41 up, on
+without a specific assignment opens on the first free workspace from 51 up, on
 the centre monitor, and takes focus (a floating dialog joins the window that
 opened it instead); the device's app rules, dynamic development rules and
 dashboard rules take precedence. Existing windows can be

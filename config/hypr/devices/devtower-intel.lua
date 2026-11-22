@@ -33,12 +33,16 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 --   29-30  EffectCraft, FilmCraft                 left
 --   31     nix-config dev layout                  centre
 --   32-40  dev pool                               centre
---   41+    unassigned windows, first free one     centre
+--   41-46  CADCraft, FigCraft, GridCraft,         centre
+--          AniCraft, MaterialCraft, TextureCraft
+--   47-50  spare (keyed, never used by overflow)  centre
+--   51+    unassigned windows, first free one     centre
 --
 -- Keys: SUPER + 1-9,0 -> 1-10, + SHIFT -> 11-20, + CTRL -> 21-30,
--- + ALT -> 31-40. Moving a window: SUPER + period, then the same chord
+-- + ALT -> 31-40, + CTRL + SHIFT -> 41-50. Moving a window: SUPER + period, then the same chord
 -- without SUPER (see "Workspace keybinds" below). SUPER + comma moves the
--- focused workspace between the centre and left monitors.
+-- focused workspace between the centre and left monitors. 51+ has no
+-- keybinds: reach it with the workspace switcher or by opening the app.
 
 local placement = {
     [right] = { 1 },
@@ -59,7 +63,8 @@ for id = 1, 40 do
         -- discover them as free. Binding remains effective when created.
     })
 end
--- Overflow workspaces for unassigned windows (see below): centre, never
+-- 41-50 (the rest of the Craft suite, then spares) and the overflow
+-- workspaces for unassigned windows (51 up, see below): centre, never
 -- anyone's default, created and destroyed on demand.
 for id = 41, 99 do
     hl.workspace_rule({ workspace = tostring(id), monitor = centre })
@@ -77,7 +82,7 @@ vars.mailWorkspace = 4
 
 -- Unassigned windows are parked, out of sight, on a holding special
 -- workspace; the window.open handler below moves each one on to the first
--- free workspace from 41 up. A static rule cannot name "the first free
+-- free workspace from 51 up. A static rule cannot name "the first free
 -- workspace", and parking first means the window never flashes on whichever
 -- workspace happened to be active.
 local holding = "unassigned"
@@ -88,7 +93,7 @@ hl.window_rule({
 
 -- Class strings marked "unverified" are guesses: confirm with
 -- `hyprctl clients` on first launch. A wrong class fails silently and the
--- window lands on the first free workspace from 41 up.
+-- window lands on the first free workspace from 51 up.
 local assignments = {
     -- 3: file managers
     { "files-yazi", { class = "^(yazi)$" }, 3 },
@@ -141,6 +146,16 @@ local assignments = {
     { "craft-deck", { class = "^(ai\\.storyteller\\.deckcraft)$" }, 28 },
     { "craft-effect", { class = "^(ai\\.storyteller\\.effectcraft)$" }, 29 },
     { "craft-film", { class = "^(ai\\.storyteller\\.filmcraft)$" }, 30 },
+    -- 41-46: the rest of the Craft suite, on the CTRL + SHIFT bank, before
+    -- the 47-50 spares and overflow (51 up). MaterialCraft and TextureCraft ship the bare
+    -- name as StartupWMClass and carry no reverse-DNS id: unverified, so
+    -- both forms match.
+    { "craft-cad", { class = "^(ai\\.storyteller\\.cadcraft)$" }, 41 },
+    { "craft-fig", { class = "^(ai\\.storyteller\\.figcraft)$" }, 42 },
+    { "craft-grid", { class = "^(ai\\.storyteller\\.gridcraft)$" }, 43 },
+    { "craft-ani", { class = "^(ai\\.storyteller\\.anicraft)$" }, 44 },
+    { "craft-material", { class = "^(ai\\.storyteller\\.materialcraft|materialcraft)$" }, 45 },
+    { "craft-texture", { class = "^(ai\\.storyteller\\.texturecraft|texturecraft)$" }, 46 },
     -- 31: nix-config dev layout (class + title for Zed; see 00-vars.lua)
     { "nixcfg-editor", { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" }, 31 },
     { "nixcfg-nvim", { class = "^(nixcfg-nvim)$" }, 31 },
@@ -152,9 +167,9 @@ for _, a in ipairs(assignments) do
     hl.window_rule({ name = "intel-" .. a[1], match = a[2], workspace = tostring(a[3]) })
 end
 
--- ── Overflow: the first free workspace from 41 up ─────────────────────
+-- ── Overflow: the first free workspace from 51 up ─────────────────────
 --
--- Each new unassigned window takes the lowest 41+ workspace with no windows
+-- Each new unassigned window takes the lowest 51+ workspace with no windows
 -- (or not existing at all); follow = true takes focus there, on the centre
 -- monitor (workspace rules above). Dialogs are the exception: a floating
 -- window whose process already has a window on a normal workspace joins it
@@ -162,7 +177,8 @@ end
 -- opens over the app that asked rather than on a workspace of its own. Tiled
 -- windows always get a fresh workspace, so a second Zed project does not pile
 -- onto the nix-config layout on 31.
-local overflow_first = 41
+-- 41-50 are keyed (CTRL + SHIFT bank): the rest of the Craft suite and spares.
+local overflow_first = 51
 
 local function is_holding(workspace)
     return workspace ~= nil and workspace.special
@@ -211,11 +227,11 @@ hl.env("DEV_LAYOUT_POOL_LAST", "40")
 
 -- ── Workspace keybinds ────────────────────────────────────────────────
 --
--- Four banks of ten, one per modifier. SUPER + SHIFT + number moved a
+-- Five banks of ten, one per modifier. SUPER + SHIFT + number moved a
 -- window in the shared config (60-keybinds.lua); it is unbound here and
 -- moving goes through a submap instead: SUPER + period, then the number with
 -- the bank's modifier minus SUPER (1 -> ws 1, SHIFT + 1 -> ws 11,
--- CTRL + 1 -> ws 21, ALT + 1 -> ws 31). The submap resets after one move;
+-- CTRL + 1 -> ws 21, ALT + 1 -> ws 31, CTRL + SHIFT + 1 -> ws 41). The submap resets after one move;
 -- Escape cancels.
 local mod = vars.mod
 hl.bind(mod .. " + SHIFT + C", function()
@@ -223,7 +239,10 @@ hl.bind(mod .. " + SHIFT + C", function()
     hl.exec_cmd("kitty --class khal -e khal interactive")
 end, { description = "Calendar: khal alongside mail on workspace 4" })
 
-local banks = { { "", 0 }, { "SHIFT + ", 10 }, { "CTRL + ", 20 }, { "ALT + ", 30 } }
+local banks = {
+    { "", 0 }, { "SHIFT + ", 10 }, { "CTRL + ", 20 }, { "ALT + ", 30 },
+    { "CTRL + SHIFT + ", 40 },
+}
 
 -- Every number key below also has its numpad twin (vars.number_keys).
 for i = 1, 10 do
@@ -243,7 +262,7 @@ for b = 2, #banks do
 end
 
 hl.bind(mod .. " + period", hl.dsp.submap("move-window"),
-    { description = "Move window: then 1-0 (1-10), SHIFT (11-20), CTRL (21-30), ALT (31-40)" })
+    { description = "Move window: then 1-0 (1-10), SHIFT (11-20), CTRL (21-30), ALT (31-40), CTRL+SHIFT (41-50)" })
 hl.define_submap("move-window", "reset", function()
     for _, bank in ipairs(banks) do
         for i = 1, 10 do
@@ -259,8 +278,8 @@ end)
 --
 -- SUPER + comma sends the focused workspace, windows and all, across to the
 -- other of the centre and left monitors and follows it there. Meant for the
--- 41+ overflow workspaces, which all open on the centre monitor, but it
--- works on any of them. The right (portrait) monitor is left alone.
+-- 41+ workspaces (the late Craft apps, spares and overflow), which all open
+-- on the centre monitor, but it works on any of them. The right (portrait) monitor is left alone.
 --
 -- The move lasts while the workspace exists. Once it empties and Hyprland
 -- destroys it, the number reopens on the monitor its workspace rule names.

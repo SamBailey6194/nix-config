@@ -10,7 +10,7 @@ laptop-intel uses `KEYBINDS.md`; this sheet replaces it on devtower-intel
 | `SUPER + Return`     | Terminal (kitty)        |
 | `SUPER + SHIFT + Return` | nix-config layout: Neovim alone (ws 31) |
 | `SUPER + CTRL + Return`  | Dev layout: Neovim alone (next free ws 32-40) |
-| `SUPER + ALT + Return`   | Neovim in plain Kitty (first free ws 41+) |
+| `SUPER + ALT + Return`   | Neovim in plain Kitty (first free ws 51+) |
 | `SUPER + Space`      | App launcher (wofi)     |
 | `SUPER + Z`          | Zed editor              |
 | `SUPER + SHIFT + Z`  | nix-config layout: Zed alone (ws 31) |
@@ -101,7 +101,8 @@ Equivalents in a terminal: `just lock`, `just sleep`, `just logout`.
 | `SUPER + SHIFT + 1-9, 0` | Switch to workspace 11-20     |
 | `SUPER + CTRL + 1-9, 0`  | Switch to workspace 21-30     |
 | `SUPER + ALT + 1-9, 0`   | Switch to workspace 31-40     |
-| `SUPER + .`, then `1-9, 0` (+ `SHIFT` / `CTRL` / `ALT`) | Move window to that workspace (same banks) |
+| `SUPER + CTRL + SHIFT + 1-9, 0` | Switch to workspace 41-50 |
+| `SUPER + .`, then `1-9, 0` (+ `SHIFT` / `CTRL` / `ALT` / `CTRL + SHIFT`) | Move window to that workspace (same banks) |
 | `SUPER + .`, then `Esc`  | Cancel the move               |
 | Numpad `1-9, 0`          | Same as the top-row numbers in every bind above, NumLock on or off |
 | `SUPER + ,`              | Move the focused workspace between centre and left monitors |
@@ -149,12 +150,19 @@ L = left 4K, C = centre 1440p, R = right portrait.
 | `30`      | `SUPER + CTRL + 0`   | L   | FilmCraft                              |
 | `31`      | `SUPER + ALT + 1`    | C   | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | C | Dev pool (allocated as needed)         |
-| `41+`     | none                 | C   | Unassigned windows, one per workspace  |
+| `41`      | `SUPER + CTRL + SHIFT + 1` | C | CADCraft                         |
+| `42`      | `SUPER + CTRL + SHIFT + 2` | C | FigCraft                         |
+| `43`      | `SUPER + CTRL + SHIFT + 3` | C | GridCraft                        |
+| `44`      | `SUPER + CTRL + SHIFT + 4` | C | AniCraft                         |
+| `45`      | `SUPER + CTRL + SHIFT + 5` | C | MaterialCraft                    |
+| `46`      | `SUPER + CTRL + SHIFT + 6` | C | TextureCraft                     |
+| `47-50`   | `SUPER + CTRL + SHIFT + 7-9, 0` | C | Spare (overflow skips them) |
+| `51+`     | none                 | C   | Unassigned windows, one per workspace  |
 
 Files opened from Yazi or Thunar go to that app's workspace (a video to 16,
 and so on). An app with no workspace of its own opens on the first free
-workspace from 41 up, on the centre monitor, and takes focus; floating
-dialogs open beside the window that asked. Workspaces 41+ have no keybind:
+workspace from 51 up, on the centre monitor, and takes focus; floating
+dialogs open beside the window that asked. Workspaces 51+ have no keybind:
 reach them with `SUPER + Scroll`. To put one on the left monitor (or bring it
 back), focus it and press `SUPER + ,`; it stays there until it empties. An app's "Open / Save file" dialog
 is Yazi too: it floats over the app, on the current workspace.
