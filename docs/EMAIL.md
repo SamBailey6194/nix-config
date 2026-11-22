@@ -1,21 +1,17 @@
-# Email: aerc and Claws Mail
+# Email: aerc
 
-Two mail clients, both on workspace 6 (4 on devtower-intel), from the
+One mail client, aerc, on workspace 4 on every device, from the
 productivity stage up:
 
-| Key                 | Client                                   | Configured in                |
-|---------------------|------------------------------------------|------------------------------|
-| `SUPER + E`         | aerc (terminal), with its keybind sheet  | `home/modules/aerc.nix`      |
-| `SUPER + SHIFT + E` | Claws Mail (GUI, no browser engine)      | `home/modules/email.nix`     |
+| Key         | Client                                   | Configured in           |
+|-------------|------------------------------------------|-------------------------|
+| `SUPER + E` | aerc (terminal), with its keybind sheet  | `home/modules/aerc.nix` |
 
-aerc is the default. `SUPER + E` opens it with `~/.config/aerc/KEYBINDS.md`
+`SUPER + E` opens aerc with `~/.config/aerc/KEYBINDS.md`
 next to it (`q` closes the sheet, `SUPER + E` brings it back). The sheet and
 aerc's `binds.conf` come from the same list in `aerc.nix`, so they always
 match. HTML mail is rendered as text by w3m with network access blocked, so
 no JavaScript runs and no remote content loads.
-
-Claws keeps its own accounts and OAuth sign-in, set up through its GUI
-(see the header of `email.nix`). The rest of this page is about aerc.
 
 ## Deleting
 
@@ -203,6 +199,4 @@ oama logs through syslog, so its messages are in the journal:
 | Infomaniak passwords (aerc)   | `modules/core/mail-aerc-secrets.nix`, `secrets/secrets.nix` |
 | Infomaniak passwords (scripts)| `modules/core/business-docs-secrets.nix`, `secrets/secrets.nix` |
 | `SUPER + E` layout            | `config/hypr/60-keybinds.lua`            |
-| Workspace 6 rules             | `config/hypr/00-vars.lua`                |
-| devtower-intel's ws 4 rules   | `config/hypr/devices/devtower-intel.lua` |
-| Claws Mail                    | `home/modules/email.nix`                 |
+| Workspace 4 rules             | `config/hypr/00-vars.lua`                |

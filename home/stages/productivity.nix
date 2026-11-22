@@ -6,7 +6,6 @@
 
   imports = [
     ./dev.nix
-    ../modules/aerc.nix # aerc, the default mail client (SUPER + E)
-    ../modules/email.nix # Claws Mail, the GUI backup (SUPER + SHIFT + E)
+    ../modules/aerc.nix # aerc, the mail client (SUPER + E)
   ];
 }

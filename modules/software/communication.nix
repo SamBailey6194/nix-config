@@ -12,6 +12,6 @@
     zoom-us              # Zoom video conferencing
     # telegram-desktop   # Telegram (optional)
 
-    # Email: aerc and Claws Mail, per user (home/modules/aerc.nix, email.nix)
+    # Email: aerc, per user (home/modules/aerc.nix)
   ];
 }

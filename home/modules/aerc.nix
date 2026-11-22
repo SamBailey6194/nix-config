@@ -1,11 +1,10 @@
 { lib, pkgs, ... }:
 
-# Email in the terminal (aerc), the default mail client
+# Email in the terminal (aerc), the mail client
 #
-#   SUPER + E          aerc on workspace 6 (3 on devtower-intel), with this
+#   SUPER + E          aerc on workspace 4, with this
 #                      keybind sheet beside it
-#                      (config/hypr/60-keybinds.lua). Claws Mail, the GUI
-#                      client in email.nix, moved to SUPER + SHIFT + E.
+#                      (config/hypr/60-keybinds.lua).
 #   ?  inside aerc     aerc's own :help keys, for the live bindings
 #
 # ACCOUNTS
@@ -27,7 +26,7 @@
 # running as that user too: they are never the root-only passwords the
 # syntek-business-docs mail scripts use.
 #
-# AUTHENTICATION - WHY oama IS HERE BUT NOT IN email.nix
+# AUTHENTICATION - oama
 #
 # Gmail and Microsoft 365 are OAuth2-only for IMAP/SMTP. aerc speaks XOAUTH2
 # but cannot sign in or renew a token itself; oama does both. aerc runs
@@ -45,7 +44,7 @@
 # account. One-time setup (app registrations, the secret, `oama authorize`):
 # docs/EMAIL.md.
 #
-# CONFIGURATION IS DECLARATIVE, UNLIKE CLAWS
+# CONFIGURATION IS DECLARATIVE
 #
 # aerc only ever READS aerc.conf, binds.conf and accounts.conf, so all three
 # come from the store. accounts.conf holds no secret - every credential is a
@@ -550,7 +549,7 @@ in
       # an "open in an external program" menu. Copied from aerc 0.22's
       # default aerc.conf. `html` is aerc's w3m filter, run under dante with
       # all network access refused - no JavaScript and no remote content,
-      # the same "no browser engine" line Claws is built to (email.nix).
+      # no browser engine.
       filters = {
         "text/plain" = "colorize";
         "text/calendar" = "calendar";

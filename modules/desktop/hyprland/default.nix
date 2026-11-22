@@ -79,11 +79,6 @@
     };
   };
 
-  # xfconf daemon, so Home Manager's xfconf.settings can write Thunar's
-  # preferences (home/modules/file-manager.nix turns off its volume
-  # management, now that udiskie automounts).
-  programs.xfconf.enable = true;
-
   # Required packages for Hyprland ecosystem
   environment.systemPackages = with pkgs; [
     # GSettings schemas (fixes "does not exist" warnings for cursor-theme/cursor-size)
@@ -119,9 +114,6 @@
 
     # Terminal emulator
     kitty
-
-    # File manager (backup to Yazi, which is per-user: home/modules/file-manager.nix)
-    thunar
 
     # Image viewer
     imv

@@ -13,7 +13,7 @@
     ../modules/browsers.nix  # LibreWolf profile + Zen default browser
     ../modules/ddev-ca.nix   # DDEV mkcert CA in ~/.pki/nssdb (Brave, Playwright)
     ../modules/system-monitor.nix  # btop (main, declarative config) + htop (backup)
-    ../modules/file-manager.nix    # Yazi (main) + Thunar (backup), udiskie, file picker
+    ../modules/file-manager.nix    # Yazi, udiskie, file picker
   ];
 
   # Normalise completed download names; routing remains opt-in until rules are set.
@@ -35,11 +35,8 @@
     # Fonts
     jetbrains-mono             # JetBrains Mono
 
-    # File managers: Yazi (main) is programs.yazi in ../modules/file-manager.nix.
-    # Thunar is the backup on SUPER + SHIFT + F. thunar-volman is gone: udiskie
-    # (same module) does the automounting now.
-    thunar
-    thunar-archive-plugin
+    # File manager: Yazi is programs.yazi in ../modules/file-manager.nix, and
+    # udiskie (same module) does the automounting.
 
     # Image viewer and video player (defaults for images and video, see
     # xdg.mimeApps below). VLC stays in modules/software/media.nix for

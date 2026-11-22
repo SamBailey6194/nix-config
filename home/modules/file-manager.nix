@@ -1,10 +1,8 @@
 { config, pkgs, lib, osConfig ? { }, ... }:
 
-# File management: Yazi (main), Thunar (backup).
+# File management: Yazi.
 #
-#   SUPER + F          Yazi in kitty, on workspace 10   (config/hypr/60-keybinds.lua)
-#   SUPER + SHIFT + F  Thunar, on workspace 10
-#                      (both on workspace 3 on devtower-intel)
+#   SUPER + F          Yazi in kitty, on workspace 3   (config/hypr/60-keybinds.lua)
 #   F1 inside Yazi     ~/.config/yazi/KEYBINDS.md in less, in the same window
 #                      (generated from `keybinds` below)
 #   `y` in a shell     Yazi, then cd to wherever it was left (q; Q skips the cd)
@@ -13,7 +11,7 @@
 #
 #   ouch       archive preview (ouch.yazi), compression (C) and extraction
 #   udiskie    automounts removable drives to /run/media/$USER, tray icon in
-#              waybar; replaces thunar-volman
+#              waybar
 #   ripdrag    drag files out to GUI apps from the keyboard (ALT + d)
 #   termfilechooser
 #              Yazi as the system "Open / Save file" dialog. The portal itself
@@ -352,11 +350,6 @@ in
     tray = "auto"; # icon only while a drive is present
     settings.program_options.file_manager = "kitty --class yazi yazi";
   };
-
-  # thunar-volman is no longer installed (udiskie owns automounting), so stop
-  # Thunar trying to spawn it on every device event. Needs the NixOS-side
-  # programs.xfconf.enable (modules/desktop/hyprland/default.nix).
-  xfconf.settings.thunar."misc-volume-management" = false;
 
   home.packages = [ ouch ];
 }
