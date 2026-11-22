@@ -1,7 +1,18 @@
 # Terminal Management System - Implementation Checklist
 
 **Version:** 1.0.0
-**Last Updated:** 12/02/2026
+**Last Updated:** 22/11/2026
+
+> **Status: draft plan, not implemented.** None of the phases below has been
+> built: there is no `terminal-session` crate in `rust/` and no layout keybinds
+> in `config/hypr/`. What exists today instead is `rust/dev-layout`
+> (SUPER + SHIFT + Z / SUPER + SHIFT + Return for the nix-config layout on
+> workspace 31; SUPER + CTRL + Z / SUPER + CTRL + Return for the dev pool on
+> 32-40) and, on devtower-intel only, four tiled Kitty terminals on workspace 2
+> at login (`config/hypr/devices/devtower-intel-dashboard.lua`;
+> SUPER + SHIFT + Escape reopens a closed one). The layout hotkeys this plan
+> proposed moved from SUPER + SHIFT + number to SUPER + G then 1-9, because
+> SUPER + SHIFT + number now switches to workspaces 11-20.
 
 ---
 
@@ -23,7 +34,7 @@
 - [ ] Create `modules/desktop/kitty/default.nix`
 - [ ] Create `config/kitty/kitty.conf`
 - [ ] Create `config/kitty/ayu-dark.conf`
-- [ ] Update `config/hypr/keybinds.conf` (terminator → kitty)
+- [ ] Update `config/hypr/00-vars.lua` / `config/hypr/60-keybinds.lua` (terminator → kitty)
 - [ ] Update `modules/desktop/hyprland/default.nix` (remove terminator)
 - [ ] Update `home/common.nix` (enable programs.kitty)
 
@@ -114,21 +125,23 @@ tail ~/.local/share/kitty/session-errors.log
 ### Scripts & Configuration
 - [ ] Create `~/.local/bin/kitty-session` wrapper script
 - [ ] Update `modules/desktop/kitty/default.nix` (install wrapper)
-- [ ] Update `config/hypr/keybinds.conf` (add Super+Shift+1-9 bindings)
+- [ ] Update `config/hypr/60-keybinds.lua` (add a SUPER + G "grid" submap: 1-9 pick a layout, Escape cancels; model it on the SUPER + A `launch` submap so the SUPER + number workspace banks are untouched)
 - [ ] Update `config/hypr/README.md` (document new hotkeys)
-- [ ] Create `docs/TERMINAL-SESSION-GUIDE.MD`
+- [ ] Create `docs/TERMINAL-SESSION-GUIDE.md`
 
 ### Testing
 ```bash
 just rebuild
-Super+Shift+1  # Launch development layout
-Super+Shift+2  # Launch monitoring layout
-Super+Shift+9  # Should show "Layout not found" notification
+Super+G, 1  # Launch development layout
+Super+G, 2  # Launch monitoring layout
+Super+G, 9  # Should show "Layout not found" notification
+Super+G, Escape  # Leaves the submap without launching anything
 ```
 
 ### Success Criteria
-- [ ] `Super+Shift+1` launches development layout instantly
-- [ ] `Super+Shift+2` launches monitoring layout with SSH
+- [ ] `Super+G` then `1` launches development layout instantly
+- [ ] `Super+G` then `2` launches monitoring layout with SSH
+- [ ] SUPER + SHIFT + number still switches to workspaces 11-20
 - [ ] Invalid layout shows error notification
 - [ ] Documentation created with examples
 
@@ -152,7 +165,7 @@ Super+Shift+9  # Should show "Layout not found" notification
 ### Testing
 ```bash
 just rebuild
-Super+Shift+1  # Launch development layout
+Super+G, 1  # Launch development layout
 terminal-session save my-dev-work
 pkill kitty
 terminal-session restore my-dev-work
@@ -282,12 +295,12 @@ db-tools admin --slow-queries --env production
 - [ ] Create `kitty-session-autosave.service` systemd service
 - [ ] Update `modules/desktop/kitty/default.nix` (install service)
 - [ ] Create `config/kitty/kittens/restore-prompt.py`
-- [ ] Update `config/hypr/autostart.conf` (restore prompt)
+- [ ] Update `config/hypr/80-autostart.lua` (restore prompt)
 
 ### Testing
 ```bash
 just rebuild
-Super+Shift+1  # Launch development layout
+Super+G, 1  # Launch development layout
 sleep 300  # Wait for autosave
 cat ~/.local/share/kitty/autosave.json
 sudo reboot
@@ -315,14 +328,15 @@ sudo reboot
 - [ ] Create `config/kitty/sessions/vars.env`
 - [ ] Update `config/kitty/kittens/layout-parser.py` (v2)
 - [ ] Update `config/kitty/kittens/session-launcher.py` (v3)
-- [ ] Update `config/hypr/windowrules.conf` (workspace assignment)
+- [ ] Update `config/hypr/00-vars.lua` workspace assignments / `config/hypr/70-windowrules.lua` (workspace assignment)
 
 ### Testing
 ```bash
 just rebuild
-# Create advanced layout with workspace=3, env vars, dynamic commands
-Super+Shift+4
-hyprctl clients | grep "workspace: 3"  # Should show Kitty windows
+# Create advanced layout with workspace=41 (a spare workspace in the
+# 00-vars.lua map; 3 is the file manager), env vars, dynamic commands
+Super+G, 4
+hyprctl clients | grep "workspace: 41"  # Should show Kitty windows
 # In terminal with env: { NODE_ENV = "development" }
 echo $NODE_ENV  # Should output: development
 # Focus away from dynamic_command window, then back
@@ -342,7 +356,7 @@ echo $NODE_ENV  # Should output: development
 
 ### Core Functionality
 - [ ] All 10 phases completed
-- [ ] All hotkeys working (`Super+Shift+1-9`)
+- [ ] All hotkeys working (`Super+G` then `1`-`9`)
 - [ ] All Rust CLIs installed and functional
 - [ ] All documentation complete
 
@@ -362,8 +376,8 @@ echo $NODE_ENV  # Should output: development
 - [ ] Autosave file permissions: mode 600
 
 ### Documentation
-- [ ] `PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD` complete
-- [ ] `TERMINAL-SESSION-GUIDE.MD` created (user guide)
+- [ ] `PLAN-TERMINAL-MANAGEMENT-SYSTEM.md` complete
+- [ ] `TERMINAL-SESSION-GUIDE.md` created (user guide)
 - [ ] `config/kitty/sessions/README.md` created (layout reference)
 - [ ] `config/hypr/README.md` updated (new hotkeys)
 - [ ] Each Rust CLI has README.md
@@ -375,7 +389,7 @@ echo $NODE_ENV  # Should output: development
 ### Phase 1-4 Rollback
 ```bash
 # Revert to terminator
-git checkout HEAD~1 config/hypr/keybinds.conf
+git checkout HEAD~1 config/hypr/60-keybinds.lua
 git checkout HEAD~1 modules/desktop/hyprland/default.nix
 just rebuild
 ```

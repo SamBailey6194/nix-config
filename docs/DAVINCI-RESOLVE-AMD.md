@@ -99,17 +99,18 @@ When running on Hyprland (Wayland compositor):
 
 ## Workspace Configuration
 
-In Hyprland (`config/hypr/devices/devtower.conf`):
+Resolve opens on workspace 20 on every device, from the shared map in
+`config/hypr/00-vars.lua`; `config/hypr/devices/devtower.lua` also makes it
+fullscreen:
 
-```conf
-# DaVinci Resolve: fullscreen on workspace 5, left 4K monitor
-windowrulev2 = workspace 5, class:^(resolve)$
-windowrulev2 = fullscreen, class:^(resolve)$
+```lua
+hl.window_rule({ name = "devtower-resolve-fullscreen",
+    match = { class = "^(resolve)$" }, fullscreen = true })
 ```
 
 **Recommended layout for devtower:**
-- **Left monitor (4K)**: DaVinci Resolve (workspace 5)
-- **Center monitor (1440p)**: Preview/timeline (workspace 5)
+- **Left monitor (4K)**: DaVinci Resolve (workspace 20)
+- **Center monitor (1440p)**: Preview/timeline
 - **Right monitor (1080p vertical)**: Color grading scopes, effects panel
 
 ## OpenFX Plugins
@@ -208,7 +209,7 @@ After installing NixOS on devtower:
 - [ ] Test DaVinci launch: `resolve`
 - [ ] Check GPU detection in DaVinci preferences
 - [ ] Import sample 4K footage and test playback
-- [ ] Configure workspace 5 for video editing
+- [ ] Check Resolve opens on workspace 20 (`SUPER + A`, then `r`)
 - [ ] Install OpenFX plugins (if needed)
 - [ ] Set up project/media storage locations
 - [ ] Configure color management settings

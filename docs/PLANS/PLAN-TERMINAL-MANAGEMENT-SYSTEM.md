@@ -2,9 +2,20 @@
 
 **Feature:** Sophisticated terminal session management with Kitty, Python kittens, and Rust CLI tools
 **Version:** 1.0.0
-**Last Updated:** 12/02/2026
+**Last Updated:** 22/11/2026
 **Language:** British English (en_GB)
 **Timezone:** Europe/London
+
+> **Status: draft plan, not implemented.** Nothing below exists yet: there is no
+> `terminal-session` crate in `rust/`, no Kitty session kittens and no layout
+> hotkeys. What exists today instead is `rust/dev-layout` (SUPER + SHIFT + Z /
+> SUPER + SHIFT + Return opens the nix-config layout on workspace 31; SUPER +
+> CTRL + Z / SUPER + CTRL + Return picks a project for the 32-40 dev pool) and,
+> on devtower-intel only, four tiled Kitty terminals on workspace 2 at login
+> (`config/hypr/devices/devtower-intel-dashboard.lua`; SUPER + SHIFT + Escape
+> reopens a closed one). The layout hotkeys proposed here have moved to
+> SUPER + G ("grid") then 1-9, because SUPER + SHIFT + number now switches to
+> workspaces 11-20 (`config/hypr/60-keybinds.lua`).
 
 ---
 
@@ -64,7 +75,7 @@ Build a layered terminal management system that leverages Hyprland's tiling capa
    - SSH sessions use existing per-device security model
 
 3. **Usability**
-   - Single hotkey per layout profile (Super+Shift+1, Super+Shift+2, etc.)
+   - One key chord per layout profile (SUPER + G then 1, SUPER + G then 2, etc.)
    - Visual feedback during session launch
    - Error handling with user notifications (dunst)
 
@@ -77,7 +88,7 @@ Build a layered terminal management system that leverages Hyprland's tiling capa
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 1: Hyprland (Window Manager)                          │
-│ - Hotkey bindings (Super+Shift+1-9)                         │
+│ - Hotkey bindings (SUPER + G submap, then 1-9)              │
 │ - Automatic tiling layout                                   │
 │ - Window rules for Kitty session management                 │
 └─────────────────────────────────────────────────────────────┘
@@ -125,7 +136,7 @@ nix-config/
 │
 ├── config/
 │   ├── hypr/
-│   │   └── keybinds.conf             # Add: Super+Shift+1-9 for sessions
+│   │   └── 60-keybinds.lua           # Add: SUPER + G submap, then 1-9
 │   └── kitty/
 │       ├── kitty.conf                # Kitty configuration
 │       ├── ayu-dark.conf             # Colour scheme
@@ -169,8 +180,8 @@ nix-config/
 │
 └── docs/
     ├── PLANS/
-    │   └── PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD  # This file
-    └── TERMINAL-SESSION-GUIDE.MD       # User guide (Phase 4)
+    │   └── PLAN-TERMINAL-MANAGEMENT-SYSTEM.md  # This file
+    └── TERMINAL-SESSION-GUIDE.md       # User guide (Phase 4)
 ```
 
 ---
@@ -203,9 +214,9 @@ nix-config/
   - Define all 16 ANSI colours + cursor colours
   - Set background/foreground colours
 
-- [ ] Update `config/hypr/keybinds.conf`
-  - Change terminal binding: `bind = $mod, RETURN, exec, kitty`
-  - Remove terminator references
+- [x] `config/hypr/60-keybinds.lua` already binds the terminal to Kitty:
+  `hl.bind(mod .. " + RETURN", hl.dsp.exec_cmd("kitty"))`
+  - Remove any remaining terminator references
 
 - [ ] Update `modules/desktop/hyprland/default.nix`
   - Remove terminator from systemPackages
@@ -413,27 +424,42 @@ tail ~/.local/share/kitty/session-errors.log
   - Make executable
   - Add to PATH
 
-- [ ] Update `config/hypr/keybinds.conf`
-  ```conf
-  # Terminal session management (Super+Shift+1-9)
-  bind = $mod SHIFT, 1, exec, kitty-session development
-  bind = $mod SHIFT, 2, exec, kitty-session monitoring
-  bind = $mod SHIFT, 3, exec, kitty-session deployment
-  bind = $mod SHIFT, 4, exec, kitty-session custom-1
-  # ... up to 9 for user-defined layouts
+- [ ] Update `config/hypr/60-keybinds.lua`
+  - SUPER + number (and its SHIFT / CTRL / ALT / CTRL + SHIFT banks) switches
+    workspaces 1-50, so the layouts live in a submap, modelled on the
+    SUPER + A "launch" submap: SUPER + G ("grid"), then one digit. The submap
+    resets after one launch; Escape cancels. SUPER + G is currently unbound.
+  ```lua
+  -- ── Terminal session layouts: SUPER + G, then 1-9 ──────────────────────
+  local sessionLayouts = {
+      { "1", "kitty-session development" },
+      { "2", "kitty-session monitoring" },
+      { "3", "kitty-session deployment" },
+      { "4", "kitty-session custom-1" },
+      -- ... up to 9 for user-defined layouts
+  }
+
+  hl.bind(mod .. " + G", hl.dsp.submap("grid"),
+      { description = "Launch a terminal session layout: then 1-9" })
+  hl.define_submap("grid", "reset", function()
+      for _, l in ipairs(sessionLayouts) do
+          hl.bind(l[1], hl.dsp.exec_cmd(l[2]))
+      end
+      hl.bind("escape", hl.dsp.submap("reset"))
+  end)
   ```
 
 - [ ] Update `config/hypr/README.md`
-  - Document new hotkeys: `Super+Shift+1-9` for terminal sessions
+  - Document new hotkeys: SUPER + G then 1-9 for terminal sessions (and `KEYBINDS.md`)
   - Link to session configuration docs
 
-- [ ] Create `docs/TERMINAL-SESSION-GUIDE.MD`
+- [ ] Create `docs/TERMINAL-SESSION-GUIDE.md`
   - User guide for creating custom layouts
   - TOML configuration reference
   - Troubleshooting SSH issues
   - Examples for common workflows
 
-**Deliverable:** Press `Super+Shift+1` to instantly launch 4-terminal development layout. Press `Super+Shift+2` to launch monitoring layout with SSH sessions.
+**Deliverable:** Press SUPER + G then 1 to instantly launch 4-terminal development layout. Press SUPER + G then 2 to launch monitoring layout with SSH sessions.
 
 **Testing:**
 ```bash
@@ -441,14 +467,15 @@ tail ~/.local/share/kitty/session-errors.log
 just rebuild
 
 # Test hotkeys in Hyprland
-Super+Shift+1  # Launch development layout
-Super+Shift+2  # Launch monitoring layout
+Super+G, 1  # Launch development layout
+Super+G, 2  # Launch monitoring layout
 
 # Verify window count
 hyprctl clients | grep -c "class: kitty"  # Should match window count
 
 # Test error notification
-Super+Shift+9  # Should show "Layout not found" notification
+Super+G, 9  # Should show "Layout not found" notification
+Super+G, Escape  # Should cancel without launching anything
 ```
 
 ---
@@ -501,7 +528,7 @@ Super+Shift+9  # Should show "Layout not found" notification
 just rebuild
 
 # Launch a session
-Super+Shift+1  # development layout
+Super+G, 1  # development layout
 
 # Save current state
 terminal-session save my-dev-work
@@ -797,7 +824,7 @@ db-tools admin --vacuum --env staging
   - If user clicks "No" → delete autosave file
 
 - [ ] Update Hyprland autostart
-  - Add to `config/hypr/autostart.conf`: `exec-once = python3 ~/.config/kitty/kittens/restore-prompt.py`
+  - Add `python3 ~/.config/kitty/kittens/restore-prompt.py` to the `hl.on("hyprland.start", ...)` handler in `config/hypr/80-autostart.lua`
 
 **Deliverable:** After reboot, notification asks "Restore previous session?". Clicking "Yes" restores all terminal windows with SSH connections intact.
 
@@ -807,7 +834,7 @@ db-tools admin --vacuum --env staging
 just rebuild
 
 # Launch a session
-Super+Shift+1  # development layout
+Super+G, 1  # development layout
 
 # Wait 5 minutes for autosave
 sleep 300
@@ -834,21 +861,23 @@ sudo reboot
 
 - [ ] Update TOML layout schema (v2)
 
-  Note on the workspace numbers below: workspace 2 is **reserved** for the
-  nix-config dev layout and workspace 1 is the laptop dashboard, so a generic
-  layout must target the 3-6 dev pool instead (see `config/hypr/README.md`).
+  Note on the workspace numbers below: they must match the shared map in
+  `config/hypr/00-vars.lua`. Workspace 1 is the dashboard, 2 holds
+  devtower-intel's four terminals, 3-30 are assigned to apps and 31 is the
+  nix-config dev layout, so a generic layout must target the 32-40 dev pool
+  (shared with `dev-layout`, which picks a free one at launch).
 
   ```toml
   [layout]
   name = "advanced-dev"
   description = "Advanced development workflow"
-  workspace = 3  # NEW: Auto-assign to workspace 3 (in the 3-6 dev pool)
+  workspace = 32  # NEW: Auto-assign to workspace 32 (in the 32-40 dev pool)
 
   [[windows]]
   title = "dev"
   directory = "~/Projects/current"
   command = ""
-  workspace = 3  # NEW: Override layout workspace (3-6 pool only)
+  workspace = 32  # NEW: Override layout workspace (32-40 pool only)
   env = { NODE_ENV = "development", DEBUG = "app:*" }  # NEW: Environment variables
 
   [[windows]]
@@ -881,10 +910,15 @@ sudo reboot
   - Handle dynamic commands (re-run on focus using Hyprland window events)
 
 - [ ] Create Hyprland window rule for workspace assignment
-  - Update `config/hypr/windowrules.conf`:
-    ```conf
-    # Kitty session workspace assignment (set by kittens)
-    windowrulev2 = workspace <workspace>,title:^kitty-session-
+  - Update `config/hypr/70-windowrules.lua` (or register the rule at launch,
+    as `dev-layout` does for the 32-40 pool):
+    ```lua
+    -- Kitty session workspace assignment (set by kittens)
+    hl.window_rule({
+        name = "kitty-session-workspace",
+        match = { title = "^kitty-session-" },
+        workspace = "<workspace>",
+    })
     ```
 
 **Deliverable:** Session layouts can specify workspace, environment variables, and dynamic command re-execution.
@@ -898,7 +932,7 @@ just rebuild
 cat > ~/.config/kitty/sessions/advanced-dev.toml <<EOF
 [layout]
 name = "advanced-dev"
-workspace = 3
+workspace = 32
 
 [[windows]]
 title = "dev"
@@ -911,10 +945,10 @@ dynamic_command = true
 EOF
 
 # Launch layout
-Super+Shift+4  # Mapped to advanced-dev
+Super+G, 4  # Mapped to advanced-dev
 
 # Verify workspace assignment
-hyprctl clients | grep "workspace: 3"  # Should show Kitty windows
+hyprctl clients | grep "workspace: 32"  # Should show Kitty windows
 
 # Verify environment variable
 # In "dev" window, run:
@@ -968,13 +1002,13 @@ echo $NODE_ENV  # Should output: development
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
 | **SSH key mismatch** (kitten uses wrong key for server) | Medium | High | Use `ssh-manager.py` to resolve correct key from auto-generated `~/.ssh/config`. Test in Phase 3. |
-| **Kitty remote control disabled** (user disables `allow_remote_control`) | Low | High | Document requirement in `docs/TERMINAL-SESSION-GUIDE.MD`. NixOS config enforces this setting. |
+| **Kitty remote control disabled** (user disables `allow_remote_control`) | Low | High | Document requirement in `docs/TERMINAL-SESSION-GUIDE.md`. NixOS config enforces this setting. |
 | **Session restore failure** (autosave corrupted or SSH targets unreachable) | Medium | Medium | Add error handling in `terminal-session restore`. Notify user via dunst if restore fails. Keep last 3 autosave backups. |
 | **Performance degradation** (Rust CLI SSH operations slow on high-latency networks) | Medium | Medium | Add timeout flags (`--timeout 5s`). Use connection pooling for repeated SSH operations. Cache server status for 30s. |
 | **TOML layout parsing errors** (user creates invalid layout) | High | Low | Validate layout schema in `layout-parser.py`. Show helpful error messages. Provide `just validate-layout <name>` command. |
 | **Hyprland workspace assignment conflicts** (user manually moves windows) | Low | Low | Document that workspace assignment is a one-time operation on launch. User can override manually. |
 | **Python/Rust dependency conflicts** (NixOS Python/Rust packages incompatible) | Low | Medium | Pin package versions in `flake.nix`. Test in `nix develop` shell before system rebuild. |
-| **Kitty version incompatibility** (remote control API changes) | Low | High | Pin Kitty version in `flake.nix`. Test on Kitty updates before applying. Document tested version in `TERMINAL-SESSION-GUIDE.MD`. |
+| **Kitty version incompatibility** (remote control API changes) | Low | High | Pin Kitty version in `flake.nix`. Test on Kitty updates before applying. Document tested version in `TERMINAL-SESSION-GUIDE.md`. |
 
 ---
 
@@ -1061,8 +1095,8 @@ programs.zsh.initExtra = ''
 ### Phase 1-4 Success Criteria (Basic Functionality)
 
 - [ ] `Super+Return` launches Kitty with Ayu Dark theme
-- [ ] `Super+Shift+1` launches 4-terminal development layout (tiled by Hyprland)
-- [ ] `Super+Shift+2` launches 4-terminal monitoring layout with SSH connections
+- [ ] SUPER + G then 1 launches 4-terminal development layout (tiled by Hyprland)
+- [ ] SUPER + G then 2 launches 4-terminal monitoring layout with SSH connections
 - [ ] All SSH connections use correct per-device keys (verified by `ssh -v`)
 - [ ] Failed SSH connections show desktop notification
 - [ ] Custom layouts can be created by editing TOML files
@@ -1082,7 +1116,7 @@ programs.zsh.initExtra = ''
 - [ ] Restored session includes all SSH connections and working directories
 - [ ] Advanced layouts with `workspace`, `env`, `dynamic_command` work as expected
 - [ ] Variable interpolation in layout commands (from `vars.env`) works
-- [ ] All features documented in `docs/TERMINAL-SESSION-GUIDE.MD`
+- [ ] All features documented in `docs/TERMINAL-SESSION-GUIDE.md`
 
 ---
 
@@ -1223,12 +1257,12 @@ programs.zsh.initExtra = ''
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| **Implementation Plan** | `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD` | This file - architecture and phased implementation |
-| **User Guide** | `docs/TERMINAL-SESSION-GUIDE.MD` | End-user documentation (how to create layouts, use Rust CLIs) |
+| **Implementation Plan** | `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md` | This file - architecture and phased implementation |
+| **User Guide** | `docs/TERMINAL-SESSION-GUIDE.md` | End-user documentation (how to create layouts, use Rust CLIs) |
 | **Layout Config Reference** | `config/kitty/sessions/README.md` | TOML schema documentation + examples |
 | **Rust CLI Reference** | `rust/<tool>/README.md` | CLI usage, flags, examples for each Rust tool |
-| **Hyprland Keybinds Update** | `config/hypr/README.md` | Document new `Super+Shift+1-9` hotkeys |
-| **Phase Completion Checklist** | `docs/TERMINAL-MANAGEMENT-CHECKLIST.MD` | Phase-by-phase testing checklist |
+| **Hyprland Keybinds Update** | `config/hypr/README.md` | Document new SUPER + G then 1-9 hotkeys |
+| **Phase Completion Checklist** | `docs/TERMINAL-MANAGEMENT-CHECKLIST.md` | Phase-by-phase testing checklist |
 
 ---
 
@@ -1285,7 +1319,7 @@ After completing this plan:
 
 4. **Testing:**
    - Run `/syntek-dev-suite:test-writer` to create integration tests for each phase
-   - Manual testing using checklist in `docs/TERMINAL-MANAGEMENT-CHECKLIST.MD`
+   - Manual testing using checklist in `docs/TERMINAL-MANAGEMENT-CHECKLIST.md`
 
 5. **Documentation:**
    - Run `/syntek-dev-suite:doc-writer` to generate user-facing documentation
@@ -1302,6 +1336,7 @@ After completing this plan:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 12/02/2026 | Initial implementation plan created |
+| 1.0.0 | 22/11/2026 | Marked as a draft (not implemented); layout hotkeys moved from SUPER + SHIFT + number to SUPER + G then 1-9; workspace numbers aligned with `config/hypr/00-vars.lua` |
 
 ---
 

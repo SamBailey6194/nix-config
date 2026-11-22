@@ -29,23 +29,23 @@ Each plan follows this format:
 
 | Plan | Status | Priority | Estimated Time |
 |------|--------|----------|----------------|
-| [Terminal Management System](PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD) | Draft | High | 4-6 weeks |
+| [Terminal Management System](PLAN-TERMINAL-MANAGEMENT-SYSTEM.md) | Draft | High | 4-6 weeks |
 
 ---
 
 ## Plan Naming Convention
 
-**Format:** `PLAN-<FEATURE-NAME>.MD`
+**Format:** `PLAN-<FEATURE-NAME>.md`
 
 **Examples:**
-- `PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD`
-- `PLAN-BACKUP-AUTOMATION.MD`
-- `PLAN-MULTI-DEVICE-SYNC.MD`
+- `PLAN-TERMINAL-MANAGEMENT-SYSTEM.md`
+- `PLAN-BACKUP-AUTOMATION.md`
+- `PLAN-MULTI-DEVICE-SYNC.md`
 
 **Rules:**
 - Use FULL CAPITALISATION for filenames
 - Use hyphens to separate words (not underscores or spaces)
-- Use `.MD` extension (not `.md`)
+- Use `.md` extension (not `.md`)
 
 ---
 
@@ -61,7 +61,7 @@ Each plan follows this format:
 ### For Implementers
 1. Read the plan thoroughly before starting
 2. Follow phases in order (don't skip ahead)
-3. Complete the checklist for each phase (see `docs/TERMINAL-MANAGEMENT-CHECKLIST.MD`)
+3. Complete the checklist for each phase (see `docs/TERMINAL-MANAGEMENT-CHECKLIST.md`)
 4. Update the plan if you discover new requirements or blockers
 5. Mark phases complete as you finish them
 
@@ -87,7 +87,7 @@ Each plan follows this format:
 
 ### In Progress
 - Implementation has started
-- Track progress using checklist (e.g., `TERMINAL-MANAGEMENT-CHECKLIST.MD`)
+- Track progress using checklist (e.g., `TERMINAL-MANAGEMENT-CHECKLIST.md`)
 - Update plan if requirements change
 
 ### Complete
@@ -104,9 +104,9 @@ Each plan follows this format:
 |----------|---------|
 | `CLAUDE.md` | Project overview, stack, conventions |
 | `ARCHITECTURE.md` | System architecture, modular design |
-| `docs/PLANS/<PLAN>.MD` | Feature implementation plans (this directory) |
-| `docs/<FEATURE>-CHECKLIST.MD` | Phase-by-phase testing checklist |
-| `docs/<FEATURE>-GUIDE.MD` | End-user documentation for completed features |
+| `docs/PLANS/<PLAN>.md` | Feature implementation plans (this directory) |
+| `docs/<FEATURE>-CHECKLIST.md` | Phase-by-phase testing checklist |
+| `docs/<FEATURE>-GUIDE.md` | End-user documentation for completed features |
 
 ---
 

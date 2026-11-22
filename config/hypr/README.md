@@ -1,7 +1,7 @@
 # Hyprland Configuration
 
-**Last Updated**: 28/09/2026
-**Version**: 1.2.0
+**Last Updated**: 22/11/2026
+**Version**: 1.3.0
 **Maintained By**: Development Team
 **Language**: British English (en_GB)
 **Timezone**: Europe/London
@@ -30,7 +30,7 @@ config/hypr/
 ├── 80-autostart.lua        # Startup applications (a "hyprland.start" handler)
 ├── devices/                # Device-specific overrides, deployed as 90-device.lua
 │   ├── laptop-intel.lua    # Intel laptop (i5-10210U, 32GB)
-│   ├── devtower-intel.lua  # Intel desktop: three monitors, 40 workspaces
+│   ├── devtower-intel.lua  # Intel desktop: three monitors, workspace placement
 │   ├── devtower-intel-dashboard.lua  # devtower-intel's ws1 dashboard and ws2 terminal grid
 │   ├── framework.lua       # Framework AMD (Ryzen + Radeon, 64GB)
 │   └── devtower.lua        # AMD desktop (CPU + GPU, 64GB, Go XLR)
@@ -86,28 +86,54 @@ disturbing the rest of `decoration`.
 
 ## Workspace Map
 
-Workspaces are not interchangeable — most of them have a fixed purpose, enforced
-by the window rules in `70-windowrules.lua` and, for the laptop, re-asserted in
-`devices/laptop-intel.lua`. This is the default map, used by laptop-intel;
-devtower-intel replaces it with fifty keyed workspaces (see
-[devtower-intel](#devtower-intel) below):
+Workspaces are not interchangeable — most of them have a fixed purpose. There is
+**one map, shared by every device**: `M.workspaceAssignments` in `00-vars.lua`,
+registered for all devices by `70-windowrules.lua` and keyed by
+`60-keybinds.lua`. A device file only adds its dashboard and, on
+devtower-intel, decides which monitor each workspace opens on (see
+[devtower-intel](#devtower-intel) below). An app a device does not install
+simply never matches its rule.
 
-| Workspace | Contents                      | Assigned by                                                 |
-|-----------|-------------------------------|-------------------------------------------------------------|
-| `1`       | Dashboard (keybinds + btop)   | Device file (laptop only)                                   |
-| `2`       | nix-config dev layout         | Window rules (class + title for Zed, class only for Neovim) |
-| `3-5`     | Dev pool, allocated as needed | Window rules registered at launch                           |
-| `6`       | Mail (aerc + sheet, Claws)    | `00-vars.lua` workspaceAssignments                          |
-| `7`       | Browsers                      | Window rules (class match)                                  |
-| `8`       | Affinity Suite                | Window rules (class match)                                  |
-| `9`       | Comms (Teams, Zoom)           | Window rules (class match)                                  |
-| `10`      | Everything else               | Catch-all rule (laptop only)                                |
+| Workspace | Contents                                                 | Assigned by                                             |
+|-----------|----------------------------------------------------------|---------------------------------------------------------|
+| `1`       | Dashboard                                                | Device file (laptop-intel, devtower-intel)              |
+| `2`       | Four tiled Kitty terminals (devtower-intel); else free   | Device file (devtower-intel)                            |
+| `3`       | File manager (Yazi)                                      | `00-vars.lua` workspaceAssignments                      |
+| `4`       | Mail (aerc + keybind sheet; khal on devtower-intel)      | `00-vars.lua` workspaceAssignments                      |
+| `5`       | LibreOffice Start Center, Writer + WordCraft             | `00-vars.lua` workspaceAssignments                      |
+| `6`       | Impress + DeckCraft                                      | `00-vars.lua` workspaceAssignments                      |
+| `7`       | Calc + GridCraft                                         | `00-vars.lua` workspaceAssignments                      |
+| `8`       | PDFs: PdfCraft + Zathura                                 | `00-vars.lua` workspaceAssignments                      |
+| `9`       | DesignCraft                                              | `00-vars.lua` workspaceAssignments                      |
+| `10`      | Math + Base                                              | `00-vars.lua` workspaceAssignments                      |
+| `11`      | Comms (Teams, Zoom, Slack)                               | `00-vars.lua` workspaceAssignments                      |
+| `12`      | Zen                                                      | `00-vars.lua` workspaceAssignments                      |
+| `13`      | LibreWolf                                                | `00-vars.lua` workspaceAssignments                      |
+| `14`      | Firefox Developer Edition                                | `00-vars.lua` workspaceAssignments                      |
+| `15`      | Brave                                                    | `00-vars.lua` workspaceAssignments                      |
+| `16`      | Video and image viewers (VLC, mpv, imv)                  | `00-vars.lua` workspaceAssignments                      |
+| `17`      | PhotoCraft + GIMP                                        | `00-vars.lua` workspaceAssignments                      |
+| `18`      | Draw + VectorCraft                                       | `00-vars.lua` workspaceAssignments                      |
+| `19`      | LightCraft                                               | `00-vars.lua` workspaceAssignments                      |
+| `20`      | DaVinci Resolve                                          | `00-vars.lua` workspaceAssignments                      |
+| `21-23`   | FilmCraft, EffectCraft, AniCraft                         | `00-vars.lua` workspaceAssignments                      |
+| `24`      | SoundCraft + Reaper + Audacity                           | `00-vars.lua` workspaceAssignments                      |
+| `25`      | Blender                                                  | `00-vars.lua` workspaceAssignments                      |
+| `26-29`   | MaterialCraft, TextureCraft, CADCraft, FigCraft          | `00-vars.lua` workspaceAssignments                      |
+| `30`      | Playwright browser testing (its bundled Chromium)        | `00-vars.lua` workspaceAssignments                      |
+| `31`      | nix-config dev layout                                    | `00-vars.lua` (class + title for Zed, class for Neovim) |
+| `32-40`   | Dev pool, allocated as needed                            | Window rules registered at launch                       |
+| `41-50`   | Spare (keyed; overflow never uses them)                  | —                                                       |
+| `51+`     | Unassigned windows, each on the first free workspace     | Catch-all + overflow handler (`70-windowrules.lua`)     |
+
+Affinity is still installed on devtower-intel (its `SUPER + D/P/B` keys
+remain) but has no workspace, so it opens on 51+.
 
 The "Assigned by" column is the **mechanism**, not the trigger — the two are
 worth keeping apart:
 
-- Workspace 2 is **reserved**, and `SUPER + SHIFT + Z` is only what *launches*
-  the nix-config layout. It does not place it. The windows land on workspace 2
+- Workspace 31 is **reserved**, and `SUPER + SHIFT + Z` is only what *launches*
+  the nix-config layout. It does not place it. The windows land on workspace 31
   because static rules match them there: the editor on class **and** title
   (Zed has no `--class`, so its title — the folder name `nix-config` — is the
   only distinguishing feature). Zed is the layout's only window: it launches
@@ -119,7 +145,7 @@ worth keeping apart:
   inside Neovim, and the window fills the workspace.
 - Static window rules cannot express "the next free workspace", so `SUPER +
   CTRL + Z` picks the workspace at runtime and then registers the *same kind*
-  of class+title rule workspace 2 uses, via `hyprctl eval`, immediately before
+  of class+title rule workspace 31 uses, via `hyprctl eval`, immediately before
   launching. It beats the catch-all by being registered later — the last
   matching rule wins. `SUPER + CTRL + Return` does the same for Neovim with a
   single class-only rule, on the per-workspace class `devpool-nvim-N`.
@@ -131,54 +157,59 @@ worth keeping apart:
   and the rule never attaches. The editor would silently land on the catch-all.
   That registered rule, not the keybind, is what does
   the placing.
-- The 3-5 dev pool is **laptop-only in practice today**. `60-keybinds.lua` is
-  shared by every device, but `devices/devtower.lua` pins DaVinci Resolve to
-  workspace 5 and OBS to workspace 6, and `devices/framework.lua` pins Resolve
-  to workspace 5 — all inside the pool. On those machines a generic dev layout
-  would be handed a workspace that a creative application already claims. Both
-  device files carry a comment recording this; settle it before enabling the
-  pool there.
+- **Dev layout workspaces**: `70-windowrules.lua` exports
+  `DEV_LAYOUT_NIX_CONFIG_WS=31`, `DEV_LAYOUT_POOL_FIRST=32` and
+  `DEV_LAYOUT_POOL_LAST=40` with `hl.env` (from `vars.devLayout`), so
+  `dev-layout` (which inherits Hyprland's environment through the keybinds)
+  places nix-config on 31 and allocates from 32-40 on every device. No
+  application has a workspace in that pool.
+- **Unassigned windows**: the catch-all in `70-windowrules.lua` parks every
+  window on the hidden `special:unassigned` workspace, and the assignments,
+  registered after it, send known apps to their own. A `window.open` handler
+  then moves each parked window to the lowest workspace from 51 up that holds
+  no windows, and focus follows. A floating dialog instead joins a window of
+  the same process (preferring the active workspace), so it opens over the
+  app that asked.
+- **Mail** is workspace 4 (`vars.mailWorkspace`), which the `SUPER + E` mail
+  layout in `60-keybinds.lua` reads.
+- **Keys**: `SUPER + 1-9, 0` switches to 1-10, `SUPER + SHIFT` to 11-20,
+  `SUPER + CTRL` to 21-30, `SUPER + ALT` to 31-40 and `SUPER + CTRL + SHIFT`
+  to 41-50, on every device.
+- **Moving a window**: `SUPER + SHIFT + number` does not move (it focuses
+  11-20). Press `SUPER + period` to enter the `move-window` submap, then the
+  number with the bank's modifier minus `SUPER` (`1` → 1, `SHIFT + 1` → 11,
+  `CTRL + 1` → 21, `ALT + 1` → 31, `CTRL + SHIFT + 1` → 41). The submap resets
+  after one move; `Escape` cancels.
+- **Launching by workspace**: `SUPER + A` enters the `launch` submap: one key
+  per app in the map without a direct key of its own, with `SHIFT` for its
+  Craft pair on the same workspace (the full table is a comment in
+  `60-keybinds.lua`). The submap resets after one launch; `Escape` cancels.
+
+### laptop-intel
+
+`devices/laptop-intel.lua` has one screen, so it places no workspaces on
+monitors. It keeps its ws1 dashboard (the keybind sheet beside btop);
+`SUPER + Escape` jumps back to it and reopens a closed pane. Everything else
+follows the shared map. laptop-intel is a thin client: it does not install
+LibreOffice, the Craft suite, Affinity or the media extras, so those
+workspaces simply stay empty there.
 
 ### devtower-intel
 
-`devices/devtower-intel.lua` replaces the map above with fifty keyed workspaces over
-three monitors: left (4K, scale 1.5), centre (1440p) and right (1080p,
-portrait): 1-40, then 41-50 on a fifth keybind bank (the rest of the Craft
-suite, then spares), plus overflow workspaces from 51 up. laptop-intel is unaffected.
+`devices/devtower-intel.lua` uses the shared map above and only adds monitor
+placement over three monitors: left (4K, scale 1.5), centre (1440p) and right
+(1080p, portrait).
 
-| Workspace | Contents                                                             | Monitor |
-|-----------|----------------------------------------------------------------------|---------|
-| `1`       | Dashboard (btop, nvtop)                                              | right   |
-| `2`       | Four tiled Kitty terminals (commands, SSH)                           | centre  |
-| `3`       | File managers (Yazi, Thunar)                                         | centre  |
-| `4`       | Mail (aerc + khal; sheet and Claws on demand)                        | centre  |
-| `5-10`    | LibreOffice Writer, Calc, Impress, Draw, Math, Base                  | centre  |
-| `11`      | Comms (Teams, Zoom)                                                  | centre  |
-| `12`      | Zen                                                                  | left    |
-| `13`      | LibreWolf                                                            | left    |
-| `14`      | Firefox Developer Edition                                            | centre  |
-| `15`      | Brave                                                                | centre  |
-| `16`      | Video and image viewers (VLC, mpv, imv)                              | left    |
-| `17-19`   | Affinity Designer, Photo, Publisher                                  | centre  |
-| `20`      | DaVinci Resolve                                                      | left    |
-| `21-25`   | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft           | centre  |
-| `26-28`   | SoundCraft, WordCraft, DeckCraft                                     | centre  |
-| `29-30`   | EffectCraft, FilmCraft                                               | left    |
-| `31`      | nix-config dev layout                                                | centre  |
-| `32-40`   | Dev pool, allocated as needed                                        | centre  |
-| `41-46`   | CADCraft, FigCraft, GridCraft, AniCraft, MaterialCraft, TextureCraft | centre  |
-| `47-50`   | Spare (keyed; overflow never uses them)                              | centre  |
-| `51+`     | Unassigned windows, each on the first free workspace                 | centre  |
+| Monitor | Workspaces                                                                  |
+|---------|-----------------------------------------------------------------------------|
+| right   | `1` (dashboard: btop, nvtop)                                                |
+| left    | `12` Zen, `13` LibreWolf, `16` viewers, `20` Resolve, `21` FilmCraft, `22` EffectCraft, `23` AniCraft |
+| centre  | everything else, including the `41-50` spares and the `51+` overflow        |
 
-- **Keys**: `SUPER + 1-9, 0` switches to 1-10, `SUPER + SHIFT` to 11-20,
-  `SUPER + CTRL` to 21-30, `SUPER + ALT` to 31-40 and `SUPER + CTRL + SHIFT`
-  to 41-50.
-- **Moving a window**: `SUPER + SHIFT + number` no longer moves (it is unbound
-  and reused for 11-20). Press `SUPER + period` to enter the `move-window`
-  submap, then the number with the bank's modifier minus `SUPER` (`1` → 1,
-  `SHIFT + 1` → 11, `CTRL + 1` → 21, `ALT + 1` → 31, `CTRL + SHIFT + 1` → 41).
-  The submap resets after
-  one move; `Escape` cancels.
+- **Moving a workspace**: `SUPER + comma` sends the focused workspace, windows
+  and all, between the centre and left monitors and follows it. The move lasts
+  while the workspace exists; once it empties, the number reopens on the
+  monitor its workspace rule names.
 - **Login terminals**: `devices/devtower-intel-dashboard.lua` builds the ws1
   dashboard (btop over nvtop) and the ws2 terminals at login, all ordinary
   dwindle tiles. `SUPER + Escape` (ws1) and `SUPER + SHIFT + Escape` (ws2)
@@ -187,21 +218,12 @@ suite, then spares), plus overflow workspaces from 51 up. laptop-intel is unaffe
   The same login handler opens Yazi on ws3, aerc with khal's interactive
   calendar (aerc left, khal right) on ws4, Zen on ws12 and Brave on ws15, each with a per-launch `"<n> silent"` rule so focus stays
   on ws2.
-- **Unassigned windows**: the catch-all parks them on the hidden
-  `special:unassigned` workspace; a `window.open` handler then moves each to the
-  lowest workspace from 51 up that holds no windows, and focus follows. A
-  floating dialog instead joins a window of the same process (preferring the
-  active workspace), so it opens over the app that asked.
-- **Mail** moves to workspace 4: the device file sets `vars.mailWorkspace = 4`,
-  which the `SUPER + E` mail layout in `60-keybinds.lua` reads.
-- **Dev layouts**: the device file exports `DEV_LAYOUT_NIX_CONFIG_WS=31`,
-  `DEV_LAYOUT_POOL_FIRST=32` and `DEV_LAYOUT_POOL_LAST=40` with `hl.env`, so
-  `dev-layout` (which inherits Hyprland's environment through the keybinds)
-  places nix-config on 31 and allocates from 32-40. No creative application
-  sits in that pool here.
+- **Calendar**: `SUPER + SHIFT + C` opens khal on workspace 4, beside mail
+  (khal is installed on devtower-intel only).
 - **Keybind sheet**: `KEYBINDS-devtower-intel.md`, deployed by
   `home/devtower-intel.nix` as `~/.config/hypr/KEYBINDS.md` in place of the
-  laptop sheet, so `SUPER + /` and the ws1 dashboard show the right keys.
+  laptop sheet, so `SUPER + /` shows the right keys (devtower-intel's ws1
+  dashboard is btop and nvtop only).
 
 ## Usage
 
@@ -273,9 +295,13 @@ All shared settings live in the numbered files:
 
 Each device file may override anything, and is loaded last:
 - **laptop-intel.lua**: single eDP-1 display, battery-tuned blur, workspace-1 dashboard, dual keyboard layouts
-- **devtower-intel.lua**: three monitors, the 50-workspace map, the 51+ overflow for unassigned windows, five workspace keybind banks, the `move-window` submap and `SUPER + comma` to move the focused workspace between the centre and left monitors (see [devtower-intel](#devtower-intel)); its ws1 dashboard and ws2 terminal grid are `devtower-intel-dashboard.lua`
+- **devtower-intel.lua**: three monitors, which monitor each workspace of the shared map opens on, `SUPER + SHIFT + C` for khal and `SUPER + comma` to move the focused workspace between the centre and left monitors (see [devtower-intel](#devtower-intel)); its ws1 dashboard and ws2 terminal grid are `devtower-intel-dashboard.lua`
 - **framework.lua**: high-DPI scaling, AMD GPU tuning, creative workflow
 - **devtower.lua**: multi-monitor, desktop performance, Go XLR
+
+No device file assigns workspaces of its own any more: the map in `00-vars.lua`,
+the five keybind banks, the `move-window` submap and the 51+ overflow are shared
+(see [Workspace Map](#workspace-map)).
 
 ## Key Features
 
@@ -288,10 +314,10 @@ Highlights:
 
 ### Workspaces
 - `SUPER + 1-9, 0`: switch to workspace 1-10 (the numpad works too, NumLock
-  on or off)
-- `SUPER + SHIFT + 1-9, 0`: move window to workspace 1-10 (devtower-intel:
-  switch to 11-20; moving uses `SUPER + period` — see
-  [devtower-intel](#devtower-intel))
+  on or off); add `SHIFT` for 11-20, `CTRL` for 21-30, `ALT` for 31-40 and
+  `CTRL + SHIFT` for 41-50
+- `SUPER + period`, then the same chord without `SUPER`: move the focused
+  window to that workspace (`SUPER + SHIFT + number` no longer moves)
 - `SUPER + S`: toggle scratchpad (special workspace)
 - `SUPER + scroll`: cycle workspaces
 - Each workspace has a fixed purpose — see [Workspace Map](#workspace-map)
@@ -300,24 +326,24 @@ Highlights:
 - `SUPER + Return`: terminal (kitty)
 - `SUPER + Space`: app launcher (wofi)
 - `SUPER + W`: Zen browser (`SHIFT` Brave, `ALT` LibreWolf, `CTRL` Firefox Developer Edition)
-- `SUPER + F`: file manager (Thunar)
+- `SUPER + F`: file manager (Yazi, workspace 3)
+- `SUPER + E`: mail (aerc + keybind sheet, workspace 4)
+- `SUPER + A`, then one key: launch an app onto its workspace (`SHIFT` for its
+  Craft pair; table in `60-keybinds.lua`)
 - `SUPER + Z`: Zed editor
-- `SUPER + SHIFT + Z`: nix-config dev layout on workspace 2 (31 on devtower-intel)
-- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (3-5;
-  32-40 on devtower-intel).
+- `SUPER + SHIFT + Z`: nix-config dev layout on workspace 31
+- `SUPER + CTRL + Z`: generic dev layout on the next free workspace (32-40).
   Goes through the `dev-layout-pick` wofi picker (declared in
   `home/modules/hyprland.nix`), because dev-layout needs a project path and a
   keybind inherits Hyprland's working directory rather than a project's. From a
   terminal, `dev-layout --new [--nvim] <path>` skips the picker.
-- `SUPER + SHIFT + Return`: nix-config layout, Neovim alone, on workspace 2
-  (31 on devtower-intel)
+- `SUPER + SHIFT + Return`: nix-config layout, Neovim alone, on workspace 31
 - `SUPER + CTRL + Return`: dev layout, Neovim alone, on the next free workspace
-  (3-5; 32-40 on devtower-intel), through the same picker
+  (32-40), through the same picker
 - `SUPER + ALT + Return`: Neovim in a plain Kitty window. No dev-layout rule
-  claims it, so it lands wherever an ordinary window would: on the laptop the
-  catch-all sends it, silently, to workspace 10 (on devtower-intel, the first
-  free workspace from 51 up, which takes focus), not the workspace you pressed
-  the key on. A bare `nvim` builds the same
+  claims it, so it lands wherever an ordinary window would: the first free
+  workspace from 51 up, which takes focus, not the workspace you pressed the
+  key on. A bare `nvim` builds the same
   in-editor layout (keybind reference, file tree, terminal tab, and the git
   panel inside a git work tree) wherever it starts, as far as the window's width allows; the RETURN layouts
   only add the workspace placement and the full width.

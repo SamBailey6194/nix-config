@@ -113,8 +113,8 @@ keybind reference | file tree (30) | editing window | git panel (40)
 
 `nvim file.rs`, `git commit`, `nvim +Neogit`, `nvim -c DiffviewOpen` and other
 starts that already put something on screen are left alone.
-`SUPER + SHIFT + Return` (nix-config, workspace 2) and `SUPER + CTRL + Return`
-(dev pool) launch exactly this, as one Kitty window that fills the workspace;
+`SUPER + SHIFT + Return` (nix-config, workspace 31) and `SUPER + CTRL + Return`
+(dev pool, 32-40) launch exactly this, as one Kitty window that fills the workspace;
 see `config/hypr/KEYBINDS.md`.
 
 ## Keybindings
@@ -330,9 +330,9 @@ The Neovim config is in `home/modules/neovim.nix`. To customize:
 
 | Keybind | What it opens |
 |---------|---------------|
-| `SUPER + SHIFT + Return` | The nix-config repo in Neovim, alone on workspace 2 |
-| `SUPER + CTRL + Return` | A picked project in Neovim, on the next free workspace (3-5) |
-| `SUPER + ALT + Return` | Neovim in a plain Kitty window, not placed |
+| `SUPER + SHIFT + Return` | The nix-config repo in Neovim, alone on workspace 31 |
+| `SUPER + CTRL + Return` | A picked project in Neovim, on the next free workspace (32-40) |
+| `SUPER + ALT + Return` | Neovim in a plain Kitty window, on the first free workspace from 51 up |
 
 All three are a single Kitty window running a bare `nvim`, so each gets the
 bare start layout above. Running `nvim` in any Kitty window (`SUPER + Return`)

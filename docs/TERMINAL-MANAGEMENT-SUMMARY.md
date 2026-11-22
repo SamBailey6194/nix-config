@@ -2,7 +2,20 @@
 
 **Version:** 1.0.0
 **Created:** 12/02/2026
+**Last Updated:** 22/11/2026
 **Language:** British English (en_GB)
+
+---
+
+> **Status: draft plan, not implemented.** There is no `terminal-session` crate,
+> no Python kittens and no layout keybinds. What exists today instead is
+> `rust/dev-layout` (SUPER + SHIFT + Z / SUPER + SHIFT + Return opens the
+> nix-config layout on workspace 31; SUPER + CTRL + Z / SUPER + CTRL + Return
+> uses the dev pool, workspaces 32-40) and, on devtower-intel only, four tiled
+> Kitty terminals on workspace 2 at login (`config/hypr/devices/devtower-intel-dashboard.lua`;
+> SUPER + SHIFT + Escape reopens a closed one). The layout keys proposed below
+> moved from SUPER + SHIFT + 1-9 to SUPER + G then 1-9, because SUPER + SHIFT +
+> number now switches to workspaces 11-20.
 
 ---
 
@@ -20,7 +33,7 @@ I've created a comprehensive implementation plan for your sophisticated terminal
 
 ```
 Layer 1: Hyprland (Window Manager)
-         ↓ (Hotkeys: Super+Shift+1-9)
+         ↓ (Hotkeys: Super+G, then 1-9)
 Layer 2: Python Kittens (Session Orchestration)
          ↓ (Launch Kitty sessions, SSH setup)
 Layer 3: Kitty (Terminal Emulator)
@@ -52,7 +65,7 @@ Layer 4: Rust CLIs (Performance-Critical Commands)
 
 **Example workflow:**
 ```bash
-# User presses: Super+Shift+2
+# User presses: Super+G, then 2
 # Hyprland executes: kitty-session monitoring
 # Python kitten:
 #   1. Reads monitoring.toml
@@ -88,12 +101,34 @@ terminal-session save my-work       # Save current session state
 **Phase 1:** Kitty configuration + Ayu Dark theme
 **Phase 2:** Python kittens infrastructure + layout parsing
 **Phase 3:** SSH session management (using agenix per-device keys)
-**Phase 4:** Hyprland hotkey bindings (Super+Shift+1-9)
+**Phase 4:** Hyprland hotkey bindings (Super+G submap, then 1-9)
 
 **Deliverable after Phase 4:**
 ```bash
-Super+Shift+1  # Instant 4-terminal development layout
-Super+Shift+2  # Instant 4-terminal monitoring (with SSH)
+Super+G, then 1  # Instant 4-terminal development layout
+Super+G, then 2  # Instant 4-terminal monitoring (with SSH)
+```
+
+The binding would be a Lua submap in `config/hypr/60-keybinds.lua`, modelled on
+the existing SUPER + A `launch` submap, so the digits never clobber the
+workspace banks (SUPER + 1-0, +SHIFT, +CTRL, +ALT, +CTRL+SHIFT):
+
+```lua
+local layouts = {
+    { "1", "kitty-session development" },
+    { "2", "kitty-session monitoring" },
+    { "3", "kitty-session deployment" },
+    -- "4" .. "9": custom layouts
+}
+
+hl.bind(mod .. " + G", hl.dsp.submap("grid"),
+    { description = "Terminal layout: then 1-9 (Escape cancels)" })
+hl.define_submap("grid", "reset", function()
+    for _, l in ipairs(layouts) do
+        hl.bind(l[1], hl.dsp.exec_cmd(l[2]))
+    end
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
 ```
 
 ### Phases 5-8: Rust CLI Tools (2-3 weeks)
@@ -143,9 +178,9 @@ nix-config/
 │
 └── docs/
     ├── PLANS/
-    │   └── PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD  # Full implementation plan
-    ├── TERMINAL-MANAGEMENT-CHECKLIST.MD        # Phase-by-phase checklist
-    └── TERMINAL-MANAGEMENT-SUMMARY.MD          # This file
+    │   └── PLAN-TERMINAL-MANAGEMENT-SYSTEM.md  # Full implementation plan
+    ├── TERMINAL-MANAGEMENT-CHECKLIST.md        # Phase-by-phase checklist
+    └── TERMINAL-MANAGEMENT-SUMMARY.md          # This file
 ```
 
 ---
@@ -184,7 +219,7 @@ command = "just watch-tests"
 
 **Usage:**
 ```bash
-Super+Shift+1  # Instant launch
+Super+G, then 1  # Instant launch
 # OR
 kitty-session development  # Manual launch
 ```
@@ -221,7 +256,7 @@ command = ""  # Local terminal for Rust CLIs
 
 **Usage:**
 ```bash
-Super+Shift+2  # Instant launch with SSH
+Super+G, then 2  # Instant launch with SSH
 # In local-control window:
 server-manager status --all
 log-aggregator follow --all
@@ -283,10 +318,11 @@ db-tools query --sql "SELECT COUNT(*) FROM users" --env production
 | Hotkey | Action | Description |
 |--------|--------|-------------|
 | `Super+Return` | Launch Kitty | Single terminal (standard) |
-| `Super+Shift+1` | Development layout | 4 local terminals for dev work |
-| `Super+Shift+2` | Monitoring layout | 3 SSH'd + 1 local (production monitoring) |
-| `Super+Shift+3` | Deployment layout | Staging + production + logs |
-| `Super+Shift+4-9` | Custom layouts | User-defined TOML layouts |
+| `Super+G`, then `1` | Development layout | 4 local terminals for dev work |
+| `Super+G`, then `2` | Monitoring layout | 3 SSH'd + 1 local (production monitoring) |
+| `Super+G`, then `3` | Deployment layout | Staging + production + logs |
+| `Super+G`, then `4`-`9` | Custom layouts | User-defined TOML layouts |
+| `Super+G`, then `Escape` | Cancel | Leave the layout submap |
 
 ---
 
@@ -339,10 +375,10 @@ db-tools admin --slow-queries --env production
 ### Immediate (Start Implementation)
 
 1. **Read the full plan:**
-   - `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD`
+   - `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md`
 
 2. **Start Phase 1:**
-   - Follow `docs/TERMINAL-MANAGEMENT-CHECKLIST.MD`
+   - Follow `docs/TERMINAL-MANAGEMENT-CHECKLIST.md`
    - Create Kitty configuration
    - Replace terminator with Kitty
 
@@ -376,10 +412,10 @@ From the plan's "Open Questions" section:
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| **Implementation Plan** | Full 10-phase plan with architecture, risks, success criteria | `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD` |
-| **Checklist** | Phase-by-phase testing checklist | `docs/TERMINAL-MANAGEMENT-CHECKLIST.MD` |
-| **Summary** | This file - quick reference | `docs/TERMINAL-MANAGEMENT-SUMMARY.MD` |
-| **Plans README** | How to use the planning system | `docs/PLANS/README.MD` |
+| **Implementation Plan** | Full 10-phase plan with architecture, risks, success criteria | `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md` |
+| **Checklist** | Phase-by-phase testing checklist | `docs/TERMINAL-MANAGEMENT-CHECKLIST.md` |
+| **Summary** | This file - quick reference | `docs/TERMINAL-MANAGEMENT-SUMMARY.md` |
+| **Plans README** | How to use the planning system | `docs/PLANS/README.md` |
 
 ---
 
@@ -401,7 +437,7 @@ From the plan's "Open Questions" section:
 
 If you have questions or want to discuss any architectural decisions:
 
-1. Review the full plan: `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD`
+1. Review the full plan: `docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md`
 2. Check "Open Questions" section for unresolved decisions
 3. Ask for clarification on specific phases
 
@@ -412,10 +448,10 @@ If you have questions or want to discuss any architectural decisions:
 Run this to begin Phase 1:
 ```bash
 # Read the full plan
-less docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD
+less docs/PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md
 
 # Read the checklist
-less docs/TERMINAL-MANAGEMENT-CHECKLIST.MD
+less docs/TERMINAL-MANAGEMENT-CHECKLIST.md
 
 # Start Phase 1 tasks
 # (see checklist for specific steps)

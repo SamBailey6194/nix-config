@@ -1,7 +1,8 @@
 # Hyprland Keybinds Reference (devtower-intel)
 
 laptop-intel uses `KEYBINDS.md`; this sheet replaces it on devtower-intel
-(home/devtower-intel.nix).
+(home/devtower-intel.nix). The workspace map and keys are shared by every
+device; this sheet adds which monitor each workspace is on.
 
 ## Applications
 
@@ -16,13 +17,12 @@ laptop-intel uses `KEYBINDS.md`; this sheet replaces it on devtower-intel
 | `SUPER + SHIFT + Z`  | nix-config layout: Zed alone (ws 31) |
 | `SUPER + CTRL + Z`   | Dev layout: Zed alone (next free ws 32-40) |
 | `SUPER + F`          | File manager: Yazi (ws 3; F1 inside = its keys) |
-| `SUPER + SHIFT + F`  | Backup file manager: Thunar (ws 3) |
 | `SUPER + W`          | Zen browser (ws 12)     |
 | `SUPER + SHIFT + W`  | Brave browser (ws 15)   |
 | `SUPER + ALT + W`    | LibreWolf browser (ws 13) |
 | `SUPER + CTRL + W`   | Firefox Developer Ed. (ws 14) |
 | `SUPER + E`          | Mail: aerc + its keybind sheet (ws 4) |
-| `SUPER + SHIFT + E`  | Backup mail client: Claws Mail (ws 4) |
+| `SUPER + A`, then a key | Launch an app on its workspace (below) |
 | `SUPER + T`          | Teams (ws 11)           |
 | `SUPER + C`          | Zoom (ws 11)            |
 | `SUPER + SHIFT + C`  | Calendar: khal (ws 4)   |
@@ -45,13 +45,46 @@ one Kitty window: the keybind reference,
 file tree, git panel and shell are panes and tabs inside Neovim, and its own
 bindings are listed in `~/.config/nvim/KEYBINDS.md`.
 
+## App launcher (SUPER + A)
+
+Press `SUPER + A`, then one key. The app opens on its own workspace and takes
+you there; `SHIFT` opens its Craft pair instead. One launch per press, and
+`Esc` cancels.
+
+| Key         | App (workspace)          | With `SHIFT`             |
+|-------------|--------------------------|--------------------------|
+| `s`         | LibreOffice Start Center (5) |                      |
+| `w`         | LibreOffice Writer (5)   | WordCraft (5)            |
+| `i`         | LibreOffice Impress (6)  | DeckCraft (6)            |
+| `c`         | LibreOffice Calc (7)     | GridCraft (7)            |
+| `p`         | Zathura (8)              | PdfCraft (8)             |
+| `u`         | DesignCraft (9)          |                          |
+| `m`         | LibreOffice Math (10)    | MaterialCraft (26)       |
+| `b`         | LibreOffice Base (10)    |                          |
+| `k`         | Slack (11)               |                          |
+| `v`         | VLC (16)                 | mpv (16)                 |
+| `g`         | GIMP (17)                | PhotoCraft (17)          |
+| `d`         | LibreOffice Draw (18)    | VectorCraft (18)         |
+| `l`         | LightCraft (19)          |                          |
+| `r`         | DaVinci Resolve (20)     | FilmCraft (21)           |
+| `e`         | EffectCraft (22)         |                          |
+| `a`         | AniCraft (23)            |                          |
+| `o`         | Reaper (24)              | SoundCraft (24); `CTRL + o`: Audacity (24) |
+| `3`         | Blender (25)             |                          |
+| `t`         | TextureCraft (27)        |                          |
+| `x`         | CADCraft (28)            |                          |
+| `f`         | FigCraft (29)            |                          |
+| `Esc`       | Cancel                   |                          |
+
 ## Affinity Suite
+
+Affinity has no workspace: it opens on the first free one from 51 up.
 
 | Keybind              | Action                  |
 |----------------------|-------------------------|
-| `SUPER + D`          | Affinity Designer (ws 17) |
-| `SUPER + P`          | Affinity Photo (ws 18)  |
-| `SUPER + B`          | Affinity Publisher (ws 19) |
+| `SUPER + D`          | Affinity Designer       |
+| `SUPER + P`          | Affinity Photo          |
+| `SUPER + B`          | Affinity Publisher      |
 
 ## Window Management
 
@@ -120,47 +153,41 @@ L = left 4K, C = centre 1440p, R = right portrait.
 |-----------|----------------------|-----|----------------------------------------|
 | `1`       | `SUPER + 1`          | R   | Dashboard: btop, nvtop                 |
 | `2`       | `SUPER + 2`          | C   | Four terminals, tiled (commands, SSH)  |
-| `3`       | `SUPER + 3`          | C   | File managers (Yazi, Thunar)           |
-| `4`       | `SUPER + 4`          | C   | Mail (aerc + khal, sheet, Claws Mail)  |
-| `5`       | `SUPER + 5`          | C   | LibreOffice Writer (and Start Center)  |
-| `6`       | `SUPER + 6`          | C   | LibreOffice Calc                       |
-| `7`       | `SUPER + 7`          | C   | LibreOffice Impress                    |
-| `8`       | `SUPER + 8`          | C   | LibreOffice Draw                       |
-| `9`       | `SUPER + 9`          | C   | LibreOffice Math                       |
-| `10`      | `SUPER + 0`          | C   | LibreOffice Base                       |
-| `11`      | `SUPER + SHIFT + 1`  | C   | Comms (Teams, Zoom)                    |
+| `3`       | `SUPER + 3`          | C   | File manager (Yazi)                    |
+| `4`       | `SUPER + 4`          | C   | Mail (aerc + khal, keybind sheet)      |
+| `5`       | `SUPER + 5`          | C   | LibreOffice Start Center + Writer, WordCraft |
+| `6`       | `SUPER + 6`          | C   | LibreOffice Impress, DeckCraft         |
+| `7`       | `SUPER + 7`          | C   | LibreOffice Calc, GridCraft            |
+| `8`       | `SUPER + 8`          | C   | PDFs: PdfCraft, Zathura                |
+| `9`       | `SUPER + 9`          | C   | DesignCraft                            |
+| `10`      | `SUPER + 0`          | C   | LibreOffice Math + Base                |
+| `11`      | `SUPER + SHIFT + 1`  | C   | Comms (Teams, Zoom, Slack)             |
 | `12`      | `SUPER + SHIFT + 2`  | L   | Zen (streaming)                        |
 | `13`      | `SUPER + SHIFT + 3`  | L   | LibreWolf                              |
 | `14`      | `SUPER + SHIFT + 4`  | C   | Firefox Developer Edition              |
 | `15`      | `SUPER + SHIFT + 5`  | C   | Brave                                  |
 | `16`      | `SUPER + SHIFT + 6`  | L   | Video and image viewers (VLC, mpv, imv)|
-| `17`      | `SUPER + SHIFT + 7`  | C   | Affinity Designer                      |
-| `18`      | `SUPER + SHIFT + 8`  | C   | Affinity Photo                         |
-| `19`      | `SUPER + SHIFT + 9`  | C   | Affinity Publisher                     |
+| `17`      | `SUPER + SHIFT + 7`  | C   | PhotoCraft, GIMP                       |
+| `18`      | `SUPER + SHIFT + 8`  | C   | LibreOffice Draw, VectorCraft          |
+| `19`      | `SUPER + SHIFT + 9`  | C   | LightCraft                             |
 | `20`      | `SUPER + SHIFT + 0`  | L   | DaVinci Resolve                        |
-| `21`      | `SUPER + CTRL + 1`   | C   | PhotoCraft                             |
-| `22`      | `SUPER + CTRL + 2`   | C   | VectorCraft                            |
-| `23`      | `SUPER + CTRL + 3`   | C   | LightCraft                             |
-| `24`      | `SUPER + CTRL + 4`   | C   | PdfCraft                               |
-| `25`      | `SUPER + CTRL + 5`   | C   | DesignCraft                            |
-| `26`      | `SUPER + CTRL + 6`   | C   | SoundCraft                             |
-| `27`      | `SUPER + CTRL + 7`   | C   | WordCraft                              |
-| `28`      | `SUPER + CTRL + 8`   | C   | DeckCraft                              |
-| `29`      | `SUPER + CTRL + 9`   | L   | EffectCraft                            |
-| `30`      | `SUPER + CTRL + 0`   | L   | FilmCraft                              |
+| `21`      | `SUPER + CTRL + 1`   | L   | FilmCraft                              |
+| `22`      | `SUPER + CTRL + 2`   | L   | EffectCraft                            |
+| `23`      | `SUPER + CTRL + 3`   | L   | AniCraft                               |
+| `24`      | `SUPER + CTRL + 4`   | C   | SoundCraft, Reaper, Audacity           |
+| `25`      | `SUPER + CTRL + 5`   | C   | Blender                                |
+| `26`      | `SUPER + CTRL + 6`   | C   | MaterialCraft                          |
+| `27`      | `SUPER + CTRL + 7`   | C   | TextureCraft                           |
+| `28`      | `SUPER + CTRL + 8`   | C   | CADCraft                               |
+| `29`      | `SUPER + CTRL + 9`   | C   | FigCraft                               |
+| `30`      | `SUPER + CTRL + 0`   | C   | Playwright browser testing (Chromium)  |
 | `31`      | `SUPER + ALT + 1`    | C   | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | C | Dev pool (allocated as needed)         |
-| `41`      | `SUPER + CTRL + SHIFT + 1` | C | CADCraft                         |
-| `42`      | `SUPER + CTRL + SHIFT + 2` | C | FigCraft                         |
-| `43`      | `SUPER + CTRL + SHIFT + 3` | C | GridCraft                        |
-| `44`      | `SUPER + CTRL + SHIFT + 4` | C | AniCraft                         |
-| `45`      | `SUPER + CTRL + SHIFT + 5` | C | MaterialCraft                    |
-| `46`      | `SUPER + CTRL + SHIFT + 6` | C | TextureCraft                     |
-| `47-50`   | `SUPER + CTRL + SHIFT + 7-9, 0` | C | Spare (overflow skips them) |
+| `41-50`   | `SUPER + CTRL + SHIFT + 1-9, 0` | C | Spare (overflow skips them) |
 | `51+`     | none                 | C   | Unassigned windows, one per workspace  |
 
-Files opened from Yazi or Thunar go to that app's workspace (a video to 16,
-and so on). An app with no workspace of its own opens on the first free
+Files opened from Yazi go to that app's workspace (a video to 16,
+and so on). An app with no workspace of its own (Affinity included) opens on the first free
 workspace from 51 up, on the centre monitor, and takes focus; floating
 dialogs open beside the window that asked. Workspaces 51+ have no keybind:
 reach them with `SUPER + Scroll`. To put one on the left monitor (or bring it

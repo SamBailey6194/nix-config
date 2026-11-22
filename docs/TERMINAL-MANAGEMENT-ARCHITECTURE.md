@@ -2,6 +2,22 @@
 
 **Version:** 1.0.0
 **Created:** 12/02/2026
+**Last Updated:** 22/11/2026
+
+> **Status: draft plan, not implemented.** None of the `terminal-session`,
+> `server-manager`, `log-aggregator` or `db-tools` CLIs, Python kittens or
+> layout hotkeys below exist. What exists today instead is `rust/dev-layout`
+> (SUPER + SHIFT + Z / SUPER + SHIFT + Return for the nix-config layout on
+> workspace 31; SUPER + CTRL + Z / SUPER + CTRL + Return for the dev pool on
+> 32-40) and, on devtower-intel only, four tiled Kitty terminals on workspace 2
+> at login (`config/hypr/devices/devtower-intel-dashboard.lua`;
+> SUPER + SHIFT + Escape reopens a closed one). The plan's proposed layout keys
+> have moved to **SUPER + G, then 1-9** (a submap, like the SUPER + A app
+> launcher), because SUPER + SHIFT + number now switches to workspaces 11-20.
+>
+> Proposed SUPER + G submap: 1 = development layout (4 terminals),
+> 2 = monitoring layout, 3 = deployment layout, 4-9 = custom layouts;
+> Escape cancels.
 
 ---
 
@@ -13,7 +29,7 @@
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  Keyboard Hotkey                                                            │
-│  Super+Shift+2 (Monitoring Layout)                                          │
+│  SUPER + G, then 2 (Monitoring Layout)                                      │
 │                                                                             │
 └──────────────────────────────┬─────────────────────────────────────────────┘
                                │
@@ -22,8 +38,15 @@
 │                    LAYER 1: HYPRLAND (WINDOW MANAGER)                       │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  Keybind Configuration (config/hypr/keybinds.conf):                         │
-│  bind = $mod SHIFT, 2, exec, kitty-session monitoring                       │
+│  Keybind Configuration (config/hypr/60-keybinds.lua, "grid" submap):        │
+│  hl.bind(mod .. " + G", hl.dsp.submap("grid"))                              │
+│  hl.define_submap("grid", "reset", function()                               │
+│      hl.bind("1", hl.dsp.exec_cmd("kitty-session development"))            │
+│      hl.bind("2", hl.dsp.exec_cmd("kitty-session monitoring"))             │
+│      hl.bind("3", hl.dsp.exec_cmd("kitty-session deployment"))             │
+│      -- 4-9: custom layouts                                                 │
+│      hl.bind("escape", hl.dsp.submap("reset"))                              │
+│  end)                                                                       │
 │                                                                             │
 │  Window Management:                                                          │
 │  - Automatic tiling (4 windows → 2x2 grid)                                  │
@@ -164,7 +187,7 @@
 
 ```
 1. USER PRESSES HOTKEY
-   Super+Shift+2
+   SUPER + G, then 2
          │
          ▼
 2. HYPRLAND EXECUTES COMMAND
@@ -402,7 +425,7 @@ NixOS System Configuration
     ├── modules/desktop/hyprland/default.nix
     │       ├── Hyprland package (from inputs.hyprland)
     │       ├── Waybar, Wofi, Dunst
-    │       └── Hotkey bindings (config/hypr/keybinds.conf)
+    │       └── Hotkey bindings (config/hypr/60-keybinds.lua, SUPER + G submap)
     │
     ├── modules/desktop/kitty/default.nix
     │       ├── Kitty package

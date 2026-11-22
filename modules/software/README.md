@@ -15,11 +15,11 @@ This directory contains purpose-specific software modules that can be mixed and 
 |--------|---------|--------------|-------------|
 | `browsers.nix` | Web browsers | LibreWolf, Firefox, Chrome | base-configuration |
 | `communication.nix` | Chat & collaboration | Teams, Zoom, Slack | base-configuration |
-| `media.nix` | Media playback | VLC, Spotify, MPV, image viewers | base-configuration |
+| `media.nix` | Media playback | VLC, MPV, imv, Zathura; extras (`software.media.extras.enable`, default on): GIMP, Spotify, MakeMKV, HandBrake, Audacity | base-configuration (extras off on laptop-intel) |
 | `development.nix` | Dev tools & IDEs | VS Code, Docker, language servers | base-configuration |
-| `office.nix` | Office productivity | LibreOffice, PDF tools | base-configuration |
+| `office.nix` | Office productivity (`software.office.enable`, default on) | LibreOffice, qpdf | base-configuration (off on laptop-intel) |
 | `creative.nix` | Creative suite | DaVinci Resolve, Blender, Reaper | Framework & DevTower only |
-| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft, AniCraft, MaterialCraft, TextureCraft | every `configuration-creative.nix` / `configuration-full.nix` (so devtower-intel creative + full too) |
+| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft, AniCraft, MaterialCraft, TextureCraft | every `configuration-creative.nix` / `configuration-full.nix` except laptop-intel's full config (so devtower-intel creative + full too) |
 | `local-llm.nix` | Local LLM inference (`services.localLlm.*`, off by default) | llama.cpp with CUDA + OpenBLAS, per-host CUDA architectures | `development.nix`; enabled on devtower-intel (dev stage and up) |
 
 ## Currently Installed on All Devices
@@ -28,9 +28,14 @@ These modules are imported in `modules/core/base-configuration.nix` and availabl
 
 - **Browsers**: LibreWolf (privacy), Firefox (dev testing), Chrome (Claude extension)
 - **Communication**: Microsoft Teams, Zoom, Slack
-- **Media**: VLC, Spotify, Audacity, image/PDF viewers
+- **Media**: VLC, MPV, image/PDF viewers; plus GIMP, Spotify, Audacity,
+  MakeMKV and HandBrake unless `software.media.extras.enable = false`
 - **Development**: VS Code, Docker, Git, language servers, Python, Node.js
-- **Office**: LibreOffice suite
+- **Office**: LibreOffice suite, unless `software.office.enable = false`
+
+laptop-intel's full config turns both options off (see Laptop-Intel below).
+File management is Yazi (`Super+F`) and mail is aerc (`Super+E`) everywhere;
+Thunar and Claws Mail are no longer installed.
 
 ## Creative Suite (GPU Required)
 
@@ -47,7 +52,7 @@ The `creative.nix` module is **only imported on devices with dedicated AMD GPUs*
 - **Video Editing**: DaVinci Resolve Studio (requires AMD GPU)
 - **3D Graphics**: Blender
 - **Audio Production**: Reaper DAW
-- **Affinity Apps**: Designer, Photo, Publisher (via `programs.affinity` - ALL devices)
+- **Affinity Apps**: Designer, Photo, Publisher (installed per host via the affinity-nix overlay; not on laptop-intel's full config)
 
 ## ArtCraft Craft Apps
 
@@ -58,11 +63,12 @@ upstream Linux x86_64 AppImages on GitHub (`storytold/<app>`) with
 hicolor icons, MIME types and AppStream metainfo.
 
 It is imported wherever the Affinity apps are, i.e. every creative and full
-stage of laptop-intel, framework and devtower. devtower-intel is built from the
+stage of framework and devtower, and laptop-intel's creative stage (its full
+config, a thin client, drops both). devtower-intel is built from the
 devtower stage files, so `devtower-intel-creative` and `devtower-intel` get
 them too. It is a separate module rather than part of `creative.nix` because
-laptop-intel's creative stages do not import `creative.nix` (no dedicated GPU
-for DaVinci Resolve) but should still get these. ArtCraft itself has no Linux
+laptop-intel's creative stage does not import `creative.nix` (no dedicated GPU
+for DaVinci Resolve) but still gets these. ArtCraft itself has no Linux
 build and is not packaged; nor is craft-launcher, or Craft Anything (a
 software-exploration and coding-agent tool rather than a creative app). The
 sixteen apps:
@@ -104,11 +110,12 @@ only reports and exits 1 when something is out of date. Set `GITHUB_TOKEN` to
 avoid the anonymous API rate limit. The apps are not flake inputs, so
 `just update` does not touch them. Tests: `scripts/tests/test_update_craft_apps.py`.
 
-**Window classes** (for Hyprland window rules). On Wayland each app sets
-`app_id` to the reverse-DNS id that is also its `.desktop` file name and icon
-name; read from the binaries and desktop files, not from a running window:
+**Window classes** (for Hyprland window rules). Most apps set their class to
+the reverse-DNS id that is also their `.desktop` file name and icon name, on
+Wayland and Xwayland alike. Classes were confirmed from running windows with
+`hyprctl clients` (22/11/2026); Hyprland matches them case-sensitively:
 
-| App | Binary | Desktop file / Icon | StartupWMClass | Wayland app_id |
+| App | Binary | Desktop file / Icon | StartupWMClass | Window class |
 |-----|--------|---------------------|----------------|----------------|
 | PhotoCraft | `photocraft` | `ai.storyteller.photocraft` | `ai.storyteller.photocraft` | `ai.storyteller.photocraft` (Xwayland: see below) |
 | VectorCraft | `vectorcraft` | `ai.storyteller.vectorcraft` | `ai.storyteller.vectorcraft` | `ai.storyteller.vectorcraft` |
@@ -124,8 +131,8 @@ name; read from the binaries and desktop files, not from a running window:
 | FigCraft | `figcraft` | `ai.storyteller.figcraft` | `ai.storyteller.figcraft` | `ai.storyteller.figcraft` |
 | GridCraft | `gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` |
 | AniCraft | `anicraft` | `ai.storyteller.anicraft` | `ai.storyteller.anicraft` | `ai.storyteller.anicraft` |
-| MaterialCraft | `materialcraft` | `ai.storyteller.materialcraft` | `materialcraft` | probably `materialcraft` (see below) |
-| TextureCraft | `texturecraft` | `ai.storyteller.texturecraft` | `texturecraft` | probably `texturecraft` (see below) |
+| MaterialCraft | `materialcraft` | `ai.storyteller.materialcraft` | `materialcraft` | `MaterialCraft` (see below) |
+| TextureCraft | `texturecraft` | `ai.storyteller.texturecraft` | `texturecraft` | `TextureCraft` (see below) |
 
 PhotoCraft opens through Xwayland when it finds a pen tablet, or when
 Preferences > Performance > Linux display server says so
@@ -136,11 +143,13 @@ rule with the class regex `^(ai\.storyteller\.photocraft|photocraft)$` covers
 both.
 
 MaterialCraft and TextureCraft binaries carry no `ai.storyteller.<app>`
-string, unlike the others, so their app_id is probably the bare name, as their
-`StartupWMClass` says; for example
-`^(ai\.storyteller\.materialcraft|materialcraft)$` covers both until confirmed
-with `hyprctl clients`. FigCraft was the same until 0.18, which now ships the
-reverse-DNS id.
+string, unlike the others. Their class is the capitalised product name
+(`MaterialCraft`, `TextureCraft`), which matches neither their desktop file id
+nor their lower-case `StartupWMClass`, so docks may not pair the window with
+its icon. The shared workspace rules (`config/hypr/00-vars.lua`) match all three forms, for example
+`^(ai\.storyteller\.texturecraft|texturecraft|TextureCraft)$`, so a future
+release that switches to the reverse-DNS id (as FigCraft did in 0.18) still
+lands on the right workspace.
 
 ## How to Add/Remove Software
 
@@ -187,7 +196,12 @@ Remove the import from `modules/core/base-configuration.nix`:
 ## Device-Specific Software Examples
 
 ### Laptop-Intel
-- All base software
+Thin client: office, creative and heavy media work runs on devtower-intel.
+- Keeps: browsers (the four locked accountability browsers), communication,
+  development, media viewers (VLC, MPV, imv, Zathura), meeting-notes
+- Drops (full config): LibreOffice (`software.office.enable = false`), media
+  extras (`software.media.extras.enable = false`: GIMP, Spotify, MakeMKV,
+  HandBrake, Audacity), `craft-apps.nix`, Affinity, Inkscape and Krita
 - NO creative suite (Intel integrated GPU insufficient)
 
 ### Framework (when hardware arrives)
@@ -222,7 +236,7 @@ These are handled by NixOS's `allowUnfree` setting in `modules/core/common.nix`.
 - **Browsers module** includes Firefox configuration with privacy settings
 - **Development module** enables Docker and libvirtd virtualization
 - **Creative module** checks for AMD GPU requirement in comments
-- **Media module** includes both playback and basic editing (Audacity)
+- **Media module** includes playback for every device and, with `extras`, basic editing (GIMP, Audacity)
 - **Communication module** covers professional chat and calls (Teams, Zoom, Slack)
 
 ---

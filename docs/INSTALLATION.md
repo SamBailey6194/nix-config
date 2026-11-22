@@ -762,7 +762,7 @@ sudo nixos-rebuild switch --flake .#devtower-desktop
 
 **Test Hyprland**:
 - `Super + Return` - Open terminal (kitty)
-- `Super + D` - Open app launcher (wofi)
+- `Super + Space` - Open app launcher (wofi)
 - `Super + Q` - Close window
 
 ### Stage 3: Development Tools
@@ -814,7 +814,7 @@ cd /etc/nixos/nix-config
 sudo nixos-rebuild switch --flake .#devtower-productivity
 ```
 
-**What's Added**: LibreOffice, Teams, Zoom, Slack, VLC, Spotify, aerc (default mail, `Super + E`) and Claws Mail (backup, `Super + Shift + E`); see [EMAIL.md](EMAIL.md)
+**What's Added**: LibreOffice, Teams, Zoom, Slack, VLC, Spotify, aerc (mail, `Super + E`, workspace 4); see [EMAIL.md](EMAIL.md)
 
 ### Stage 5: Creative Software
 
@@ -1116,17 +1116,18 @@ reboot
 | Key | Action |
 |-----|--------|
 | `Super + Return` | Terminal (kitty) |
-| `Super + D` | App launcher (wofi) |
+| `Super + Space` | App launcher (wofi) |
+| `Super + A` | Launcher submap (one key per app; Escape cancels) |
 | `Super + Q` | Close window |
 | `Super + H/J/K/L` | Focus window (vim-style) |
 | `Super + Shift + H/J/K/L` | Move window |
-| `Super + F` | Toggle floating |
-| `Super + M` | Fullscreen |
-| `Super + 1-5` | Switch workspace |
-| `Super + Shift + 1-5` | Move window to workspace |
+| `Super + F` | File manager (Yazi, workspace 3) |
+| `Super + V` | Toggle floating |
+| `Super + F11` | Fullscreen |
+| `Super + 1-0` | Switch workspace 1-10 (`+ Shift` 11-20, `+ Ctrl` 21-30, `+ Alt` 31-40, `+ Ctrl + Shift` 41-50) |
+| `Super + .`, then the number chord without `Super` | Move window to workspace (e.g. `Super + .`, `Shift + 3` -> 13) |
 | `Super + Shift + Q` | Exit Hyprland |
-| `Super + E` | Mail: aerc + its keybind sheet (workspace 6) |
-| `Super + Shift + E` | Backup mail client: Claws Mail |
+| `Super + E` | Mail: aerc + its keybind sheet (workspace 4) |
 | `Print` | Screenshot (select area) |
 
 ### Stage Installation Summary

@@ -84,8 +84,9 @@ has been run on these commits yet.**
 ## Next steps, in order
 
 1. **Rebuild**: done (store switch-over, 13/10 17:15). Not re-checked: that
-   the login apps land on ws3/4/11 with focus on ws2. If Teams steals focus,
-   its window belongs to a child process and the silent rule missed it.
+   the login apps land on their workspaces (Yazi 3, aerc + khal 4, Zen 12,
+   Brave 15) with focus on ws2. If one steals focus, its window belongs to a
+   child process and the silent per-launch rule missed it.
 2. **OS drive TPM2 + escrow secret**: done (TPM2 PCR 7 in keyslot 1,
    `-os.age` verified and committed, header backup
    `luks/cryptroot-header-2026-10-13-tpm2.age` on KEYS). Reboots at 11:34 and

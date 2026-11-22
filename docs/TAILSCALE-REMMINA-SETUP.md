@@ -149,7 +149,7 @@ Windows has RDP built-in, no need for x11vnc:
 # From terminal
 remmina
 
-# Or press Super+D and search "Remmina"
+# Or press Super+Space and search "Remmina"
 ```
 
 ### 2. Create New Connection

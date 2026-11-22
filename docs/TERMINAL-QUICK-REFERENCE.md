@@ -2,18 +2,34 @@
 
 **Version:** 1.0.0
 **Created:** 12/02/2026
+**Last Updated:** 22/11/2026
+
+> **Status: draft plan, not implemented.** None of the commands, kittens or
+> layout hotkeys below exist yet. What exists today instead is `rust/dev-layout`
+> (`Super+Shift+Z` / `Super+Shift+Return` opens the nix-config layout on
+> workspace 31; `Super+Ctrl+Z` / `Super+Ctrl+Return` picks a project into the
+> dev pool, workspaces 32-40) and, on devtower-intel only, four tiled Kitty
+> terminals on workspace 2 at login (`Super+Shift+Escape` reopens a closed one).
+> The proposed layout keys moved to `Super+G`, then `1`-`9`, because
+> `Super+Shift+<number>` now switches to workspaces 11-20.
 
 ---
 
-## Hotkeys
+## Hotkeys (proposed)
 
 | Hotkey | Action |
 |--------|--------|
-| `Super+Return` | Single Kitty terminal |
-| `Super+Shift+1` | Development layout (4 terminals) |
-| `Super+Shift+2` | Monitoring layout (3 SSH + 1 local) |
-| `Super+Shift+3` | Deployment layout |
-| `Super+Shift+4-9` | Custom layouts |
+| `Super+Return` | Single Kitty terminal (exists today) |
+| `Super+G`, then `1` | Development layout (4 terminals) |
+| `Super+G`, then `2` | Monitoring layout (3 SSH + 1 local) |
+| `Super+G`, then `3` | Deployment layout |
+| `Super+G`, then `4`-`9` | Custom layouts |
+| `Super+G`, then `Escape` | Cancel |
+
+`Super+G` ("grid") would enter a one-shot submap, the same style as the
+`Super+A` app launcher in `config/hypr/60-keybinds.lua`, so the digit keys never
+clash with the workspace banks (`Super` + `1`-`0` with no modifier, `Shift`,
+`Ctrl`, `Alt` or `Ctrl+Shift` -> workspaces 1-50).
 
 ---
 
@@ -87,7 +103,27 @@ directory = "~/ops"
 command = ""
 ```
 
-**Launch:** `Super+Shift+4` (after mapping in keybinds.conf)
+**Launch:** `Super+G`, then `4` (after mapping it in the `grid` submap in
+`config/hypr/60-keybinds.lua`):
+
+```lua
+-- Proposed: SUPER + G, then a digit. One-shot submap, like "launch".
+local layouts = {
+    { "1", "kitty-session development" },
+    { "2", "kitty-session monitoring" },
+    { "3", "kitty-session deployment" },
+    { "4", "kitty-session my-layout" },
+}
+
+hl.bind(mod .. " + G", hl.dsp.submap("grid"),
+    { description = "Terminal layout: then 1-9" })
+hl.define_submap("grid", "reset", function()
+    for _, l in ipairs(layouts) do
+        hl.bind(l[1], hl.dsp.exec_cmd(l[2]))
+    end
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
+```
 
 ---
 
@@ -114,11 +150,11 @@ Host my-server
 
 | Document | Purpose |
 |----------|---------|
-| [Full Implementation Plan](PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD) | Detailed 10-phase plan |
-| [Architecture Diagram](TERMINAL-MANAGEMENT-ARCHITECTURE.MD) | Visual architecture + data flows |
-| [Implementation Checklist](TERMINAL-MANAGEMENT-CHECKLIST.MD) | Phase-by-phase tasks |
-| [Summary](TERMINAL-MANAGEMENT-SUMMARY.MD) | High-level overview |
-| [Quick Reference](TERMINAL-QUICK-REFERENCE.MD) | This file |
+| [Full Implementation Plan](PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md) | Detailed 10-phase plan |
+| [Architecture Diagram](TERMINAL-MANAGEMENT-ARCHITECTURE.md) | Visual architecture + data flows |
+| [Implementation Checklist](TERMINAL-MANAGEMENT-CHECKLIST.md) | Phase-by-phase tasks |
+| [Summary](TERMINAL-MANAGEMENT-SUMMARY.md) | High-level overview |
+| [Quick Reference](TERMINAL-QUICK-REFERENCE.md) | This file |
 
 ---
 
@@ -217,9 +253,9 @@ nix develop
 
 ## Next Steps
 
-1. **Start implementation:** Read [Full Plan](PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.MD)
-2. **Follow checklist:** Use [Checklist](TERMINAL-MANAGEMENT-CHECKLIST.MD)
-3. **Understand architecture:** Review [Architecture Diagram](TERMINAL-MANAGEMENT-ARCHITECTURE.MD)
+1. **Start implementation:** Read [Full Plan](PLANS/PLAN-TERMINAL-MANAGEMENT-SYSTEM.md)
+2. **Follow checklist:** Use [Checklist](TERMINAL-MANAGEMENT-CHECKLIST.md)
+3. **Understand architecture:** Review [Architecture Diagram](TERMINAL-MANAGEMENT-ARCHITECTURE.md)
 
 ---
 
