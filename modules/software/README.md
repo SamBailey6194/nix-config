@@ -19,7 +19,7 @@ This directory contains purpose-specific software modules that can be mixed and 
 | `development.nix` | Dev tools & IDEs | VS Code, Docker, language servers | base-configuration |
 | `office.nix` | Office productivity | LibreOffice, PDF tools | base-configuration |
 | `creative.nix` | Creative suite | DaVinci Resolve, Blender, Reaper | Framework & DevTower only |
-| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft | every `configuration-creative.nix` / `configuration-full.nix` (so devtower-intel creative + full too) |
+| `craft-apps.nix` | ArtCraft Craft apps | PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft, FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft, AniCraft, MaterialCraft, TextureCraft | every `configuration-creative.nix` / `configuration-full.nix` (so devtower-intel creative + full too) |
 | `local-llm.nix` | Local LLM inference (`services.localLlm.*`, off by default) | llama.cpp with CUDA + OpenBLAS, per-host CUDA architectures | `development.nix`; enabled on devtower-intel (dev stage and up) |
 
 ## Currently Installed on All Devices
@@ -63,9 +63,12 @@ devtower stage files, so `devtower-intel-creative` and `devtower-intel` get
 them too. It is a separate module rather than part of `creative.nix` because
 laptop-intel's creative stages do not import `creative.nix` (no dedicated GPU
 for DaVinci Resolve) but should still get these. ArtCraft itself has no Linux
-build and is not packaged; nor is craft-launcher. The thirteen apps:
+build and is not packaged; nor is craft-launcher, or Craft Anything (a
+software-exploration and coding-agent tool rather than a creative app). The
+sixteen apps:
 PhotoCraft, VectorCraft, LightCraft, PdfCraft, DesignCraft, EffectCraft,
-FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft and GridCraft.
+FilmCraft, SoundCraft, WordCraft, DeckCraft, CADCraft, FigCraft, GridCraft,
+AniCraft, MaterialCraft and TextureCraft.
 
 **Command-line tools**: every AppImage also bundles a headless CLI, put on
 PATH under its upstream name next to the GUI launcher. Each runs in the same
@@ -76,19 +79,22 @@ talk to a GUI you started yourself with `--control`.
 
 | App | CLI | Headless use (from `--help`) |
 |-----|-----|------------------------------|
-| PhotoCraft | `photocraft-cli` | `convert` (.pcraft, .psd, .png, .jpg, .tif, .webp, .exr), MCP server |
-| VectorCraft | `vectorcraft-cli` | `convert`, `info`, `run` with `--export`, MCP server (`mcp --headless`) |
-| LightCraft | `lightcraft-cli` | `render`, `run`, `merge` (HDR/panorama), `commands`, `controls` |
-| PdfCraft | `pdfcraft-cli` | `info`, `render`, `text`, `edit`, `combine` |
-| DesignCraft | `designcraft-cli` | `run`/`script` with `--export`, `commands`, `describe` |
-| EffectCraft | `effectcraft-cli` | `info`, `exec`, `run`, `render-frame`, `render`, `script` |
-| FilmCraft | `filmcraft-cli` | `exec`, `run`, `import`, `export`, `render` (one frame), `probe` |
-| SoundCraft | `soundcraft-cli` | `info`, `convert`, `run`/`script` with `--bounce` |
-| WordCraft | `wordcraft-cli` | `convert` (docx, doc, pdf, odt, rtf, html, md, tex, txt, png) |
-| DeckCraft | `deckcraft-cli` | `info`, `render`, `convert`, `run` (`--help` prints usage, exit 1) |
-| CADCraft | `cadcraft-cli` | `info`, `convert` (dxf, dwg, svg, png, pdf), `run` with `--save`/`--export` (`--help` prints usage, exit 1) |
-| FigCraft | `figcraft-cli` | `info`, `convert`, `export` (png, jpg, svg, webp, pdf, fig), `render`, `run` |
-| GridCraft | `gridcraft-cli` | `info`, `convert` (xlsx, csv, tsv, json, html), `eval`, `check`, `cat`, `run` |
+| PhotoCraft | `photocraft-cli` | `convert` (.pcraft, .psd, .png, .jpg, .tif, .webp, .exr), `info`, `run`, `batch`, `droplet`, `commands`, `serve`, MCP server |
+| VectorCraft | `vectorcraft-cli` | `convert`, `info`, `run` with `--export`, `commands`, `perf`, `bench`, MCP server (`mcp --headless`); `--safe-mode` skips plug-ins |
+| LightCraft | `lightcraft-cli` | `render`, `run`, `merge` (HDR/panorama), `commands`, `controls`, `snapshot`, `calibrate`, MCP server |
+| PdfCraft | `pdfcraft-cli` | `info`, `render`, `text`, `edit`, `combine`, `extract`, `split`, `check`, `audit` (faux redactions), `batch` (convert, OCR, optimise), `tools`, `run`, MCP server |
+| DesignCraft | `designcraft-cli` | `run`/`script` with `--export`, `commands`, `describe`, `validate-pdf` (PDF/X), `thumbnail`, `perf`, `bench`, MCP server |
+| EffectCraft | `effectcraft-cli` | `info`, `commands`, `exec`, `run`, `props`/`get`/`set`, `render-frame`, `render` (h264, hevc, av1, prores, webm, image sequences), `script`, `replay`, `bench`, MCP server |
+| FilmCraft | `filmcraft-cli` | `exec`, `run`, `commands`, `describe`, `inspect`, `import`, `export` (presets or h264, hevc, prores, dnxhr, ...), `render` (one frame) |
+| SoundCraft | `soundcraft-cli` | `info`, `convert` (resample, bit depth, normalise), `run`/`script`, `commands`, `describe`, `plugins`, MCP server |
+| WordCraft | `wordcraft-cli` | `convert` (docx, doc, pdf, odt, rtf, html, md, txt, Word XML), `info`, `text`, `inspect`, `render`, `run`, MCP server |
+| DeckCraft | `deckcraft-cli` | `info`, `render`, `render-transition`, `convert`, `run`, `commands`, `describe`, `bench`, MCP server |
+| CADCraft | `cadcraft-cli` | `info`, `convert` (dxf, dwg, dwt, svg, png, pdf), `run`, `commands`, `sample`, `roundtrip`, `perf`, MCP server |
+| FigCraft | `figcraft-cli` | `info`, `convert`, `export`, `render`, `run`, `commands`, `plugin`, `connect` (code connect), `perf`, MCP server; reads .figcraft, .penpot, .json, .fig |
+| GridCraft | `gridcraft-cli` | `info`, `convert` (xlsx, csv, tsv, json, html, pdf), `eval`, `cat`, `check`, `run`, `commands`, `functions`, `send`, `sandbox-check`, MCP server |
+| AniCraft | `anicraft-cli` | `info`, `render` (one frame), `render-seq`, `gif`, `run`/`exec` with `--save`, `new`, `serve`, MCP server (`mcp`) |
+| MaterialCraft | `materialcraft-cli` | `info`, `nodes`, `run`/`batch`, `new`, `cook`, `export` (png, jpg, tga, tif, bmp, webp, exr, hdr), `render` |
+| TextureCraft | `texturecraft-cli` | `info`, `run`/`batch`, `new`, `bake` (mesh maps), `export`, `render` (`--cpu` without a GPU) |
 
 **Updating**: versions, URLs and SRI hashes are pinned in
 `pkgs/craft-apps/sources.json`. `just update-craft` re-pins every app to its
@@ -104,7 +110,7 @@ name; read from the binaries and desktop files, not from a running window:
 
 | App | Binary | Desktop file / Icon | StartupWMClass | Wayland app_id |
 |-----|--------|---------------------|----------------|----------------|
-| PhotoCraft | `photocraft` | `ai.storyteller.photocraft` | `photocraft` | `ai.storyteller.photocraft` |
+| PhotoCraft | `photocraft` | `ai.storyteller.photocraft` | `ai.storyteller.photocraft` | `ai.storyteller.photocraft` (Xwayland: see below) |
 | VectorCraft | `vectorcraft` | `ai.storyteller.vectorcraft` | `ai.storyteller.vectorcraft` | `ai.storyteller.vectorcraft` |
 | LightCraft | `lightcraft` | `ai.storyteller.lightcraft` | `ai.storyteller.lightcraft` | `ai.storyteller.lightcraft` |
 | PdfCraft | `pdfcraft` | `ai.storyteller.pdfcraft` | `ai.storyteller.pdfcraft` | `ai.storyteller.pdfcraft` |
@@ -115,19 +121,26 @@ name; read from the binaries and desktop files, not from a running window:
 | WordCraft | `wordcraft` | `ai.storyteller.wordcraft` | `ai.storyteller.wordcraft` | `ai.storyteller.wordcraft` |
 | DeckCraft | `deckcraft` | `ai.storyteller.deckcraft` | `ai.storyteller.deckcraft` | `ai.storyteller.deckcraft` |
 | CADCraft | `cadcraft` | `ai.storyteller.cadcraft` | `ai.storyteller.cadcraft` | `ai.storyteller.cadcraft` |
-| FigCraft | `figcraft` | `ai.storyteller.figcraft` | `figcraft` | probably `figcraft` (see below) |
+| FigCraft | `figcraft` | `ai.storyteller.figcraft` | `ai.storyteller.figcraft` | `ai.storyteller.figcraft` |
 | GridCraft | `gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` | `ai.storyteller.gridcraft` |
+| AniCraft | `anicraft` | `ai.storyteller.anicraft` | `ai.storyteller.anicraft` | `ai.storyteller.anicraft` |
+| MaterialCraft | `materialcraft` | `ai.storyteller.materialcraft` | `materialcraft` | probably `materialcraft` (see below) |
+| TextureCraft | `texturecraft` | `ai.storyteller.texturecraft` | `texturecraft` | probably `texturecraft` (see below) |
 
 PhotoCraft opens through Xwayland when it finds a pen tablet, or when
 Preferences > Performance > Linux display server says so
 (`PHOTOCRAFT_NATIVE_WAYLAND=1` keeps it on Wayland); its X11 class is then
-probably `photocraft`, as its `StartupWMClass` says. A window rule with the
-class regex `^(ai\.storyteller\.photocraft|photocraft)$` covers both.
+unconfirmed: its `StartupWMClass` is now `ai.storyteller.photocraft` (it was
+`photocraft` before 0.23), but the binary still carries the bare name. A window
+rule with the class regex `^(ai\.storyteller\.photocraft|photocraft)$` covers
+both.
 
-FigCraft's binary carries no `ai.storyteller.figcraft` string, unlike the
-others, so its app_id is probably `figcraft`, as its `StartupWMClass` says;
-`^(ai\.storyteller\.figcraft|figcraft)$` covers both until confirmed with
-`hyprctl clients`.
+MaterialCraft and TextureCraft binaries carry no `ai.storyteller.<app>`
+string, unlike the others, so their app_id is probably the bare name, as their
+`StartupWMClass` says; for example
+`^(ai\.storyteller\.materialcraft|materialcraft)$` covers both until confirmed
+with `hyprctl clients`. FigCraft was the same until 0.18, which now ships the
+reverse-DNS id.
 
 ## How to Add/Remove Software
 

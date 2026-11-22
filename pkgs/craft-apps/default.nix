@@ -1,14 +1,16 @@
 # ArtCraft "Craft" apps (https://getartcraft.com/apps), packaged from the
 # upstream Linux x86_64 AppImages published on GitHub (storytold/<app>).
 #
-# Returns an attrset of thirteen packages (use pkgs.callPackages, plural, so the
+# Returns an attrset of sixteen packages (use pkgs.callPackages, plural, so the
 # result holds only derivations, each overridable):
 #   photocraft vectorcraft lightcraft pdfcraft designcraft effectcraft filmcraft
-#   soundcraft wordcraft deckcraft cadcraft figcraft gridcraft
+#   soundcraft wordcraft deckcraft cadcraft figcraft gridcraft anicraft
+#   materialcraft texturecraft
 #
 # Versions, URLs and hashes live in ./sources.json; refresh them with
 # `just update-craft` (scripts/update-craft-apps.py). Not packaged: ArtCraft
-# itself (no Linux build) and craft-launcher.
+# itself (no Linux build), craft-launcher and Craft Anything (a
+# software-exploration tool, not a creative app).
 #
 # Each package wraps the AppImage with appimageTools.wrapType2 (an FHS env), so
 # the binaries' dlopen()ed libraries (wgpu/winit: Vulkan, EGL, Wayland,
@@ -47,6 +49,9 @@ let
     cadcraft = "Computer-aided design and drafting";
     figcraft = "Interface design and prototyping";
     gridcraft = "Spreadsheet editor";
+    anicraft = "2D vector animation studio";
+    materialcraft = "Node-based procedural PBR material editor";
+    texturecraft = "3D texture painting for PBR materials";
   };
 
   mkCraftApp =
