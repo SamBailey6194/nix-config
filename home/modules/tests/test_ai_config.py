@@ -681,7 +681,7 @@ class ClaudeSettingsTests(unittest.TestCase):
         self.assertEqual((self.BASE["effortLevel"], self.BASE["ultracode"], self.BASE["enableWorkflows"],
                           self.BASE["skipWorkflowUsageWarning"], self.BASE["skipAutoPermissionPrompt"],
                           self.BASE["model"], self.BASE["env"]),
-                         ("xhigh", True, True, True, True, "opus", {"ENABLE_LSP_TOOL": "1", "MCP_TIMEOUT": "120000"}))
+                         ("medium", True, True, True, True, "opus", {"ENABLE_LSP_TOOL": "1", "MCP_TIMEOUT": "120000"}))
 
     def test_best_effort_activation_steps_warn_instead_of_hiding_failures(self):
         for name in ["claude.nix", "mcp-activation.nix", "antigravity.nix"]:

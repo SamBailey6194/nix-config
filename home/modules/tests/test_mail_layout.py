@@ -3,16 +3,20 @@ from pathlib import Path
 import unittest
 from lupa import LuaRuntime
 
-KEYBINDS = Path(__file__).resolve().parents[3] / "config/hypr/60-keybinds.lua"
+HYPR = Path(__file__).resolve().parents[3] / "config/hypr"
+KEYBINDS = HYPR / "60-keybinds.lua"
 
 
 class MailLayoutTests(unittest.TestCase):
     def setUp(self):
         self.lua = LuaRuntime()
+        # The REAL 00-vars.lua, so helpers the keybinds use (number_keys,
+        # mailWorkspace) cannot drift from a hand-written stub.
+        self.lua.globals().vars_path = str(HYPR / "00-vars.lua")
         self.lua.execute('''
             events, launches, windows, timers, binds, swaps, focused = {}, {}, {}, {}, {}, {}, {}
             active_ws = 3
-            package.preload["00-vars"] = function() return { mod = "SUPER" } end
+            package.preload["00-vars"] = function() return dofile(vars_path) end
 
             -- Any hl.dsp.<a>.<b>(args) the file builds at load time returns
             -- a tagged table, so the non-mail binds load without real actions.
