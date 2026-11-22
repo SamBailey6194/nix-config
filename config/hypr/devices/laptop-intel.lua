@@ -33,8 +33,9 @@ hl.config({
     },
 })
 
--- Laptop-specific workspace count (5 workspaces is usually enough for laptop)
--- Base keybinds already include 1-10, no override needed
+-- Workspaces: the shared 50-workspace map (00-vars.lua), keys and overflow
+-- (60-keybinds.lua, 70-windowrules.lua) apply here unchanged. One screen, so
+-- no monitor placement; apps this laptop does not install just never match.
 
 -- Laptop-specific window rules
 -- Make certain apps float on laptop (smaller screen)
@@ -57,31 +58,12 @@ hl.window_rule({
 -- Workspace 1 is a fixed dashboard: the keybind cheatsheet (left) and btop
 -- (right, the same system monitor SUPER + M opens), and NOTHING else. The two
 -- dashboard terminals are launched with custom classes so they can be pinned
--- here; every other window is pushed to workspace 10 by the catch-all below —
--- so apps default to ws10 instead of opening on whatever workspace happens to
--- be focused. SUPER + Escape jumps back to it and reopens whichever pane was
+-- here. SUPER + Escape jumps back to it and reopens whichever pane was
 -- closed (see "Workspace-1 dashboard launcher" further down).
 --
--- THE WORKSPACE MAP
---
---   1     dashboard — ws1-keybinds + ws1-monitor, pinned in step 2 below
---   2     nix-config dev layout (RESERVED: never allocated to anything else)
---   3-5   generic dev pool, handed out one workspace at a time when a generic
---         dev layout is launched. Not covered by a rule in THIS file: a
---         static rule cannot express "the next free workspace", so the
---         launcher picks one at runtime and registers a rule for it
---         through `hyprctl eval` just before launching: class+title for Zed,
---         class-only for Neovim (its Kitty window has a class of its own).
---         That rule beats this catch-all by being registered later — last
---         match wins.
---   6     mail (aerc + keybind sheet, Claws Mail)
---   7     browsers
---   8     Affinity Suite
---   9     comms
---   10    catch-all — every ordinary window, via the rule below
---
--- Workspaces 2 and 6-9 come from vars.workspaceAssignments; only ws1 and ws10
--- are laptop-specific and live here.
+-- Every other window follows the shared map: a known app to its workspace,
+-- anything else parked by the shared catch-all and moved on to the first free
+-- workspace from 51 up (70-windowrules.lua).
 --
 -- HOW THE ORDERING WORKS
 --
@@ -89,40 +71,16 @@ hl.window_rule({
 -- the same window and set the same property, THE LAST ONE WINS. (Verified on
 -- 0.56: with a broad rule sending a class to ws8 registered first and a
 -- narrower rule sending it to ws7 registered second, the window landed on
--- ws7.) So the sequence below is deliberate:
+-- ws7.) This file is required after 70-windowrules.lua, so the two pins below
+-- beat its catch-all. "silent" keeps login from jumping to them.
 --
---   1. the broad `.*` catch-all              -> everything to ws10
---   2. the two ws1 dashboard classes         -> back to ws1
---   3. re-register the shared assignments    -> back to ws2 / ws7 / ws8 / ws9
---
--- Step 3 is required because 70-windowrules.lua registered those assignments
--- BEFORE this file runs, so the catch-all in step 1 would otherwise override
--- them. The list is re-applied from vars.workspaceAssignments rather than
--- retyped, so adding an app there fixes both places at once — no per-device
--- edit needed.
---
--- This replaces a PCRE negative lookahead that never worked: window rules are
--- matched with RE2 (Desktop::Rule::CRegexMatchEngine -> re2::RE2::FullMatchN),
--- which has no lookaround, and whose constructor has no error path — so the
--- pattern compiled to "never matches" silently, with nothing in the log.
---
--- NOTE: the catch-all changes real behaviour. It had been inert since at least
--- Hyprland 0.53, so windows were in practice opening on the focused workspace;
--- they now land on ws10 instead (previously ws2, before ws2 was reserved for
--- the nix-config layout). To go back to the old (accidental) behaviour,
--- comment out the catch-all rule alone.
+-- Window rules are matched with RE2 (Desktop::Rule::CRegexMatchEngine ->
+-- re2::RE2::FullMatchN), which has no lookaround, and whose constructor has
+-- no error path: a lookaround pattern compiles to "never matches" silently,
+-- with nothing in the log. Keep patterns to alternation and classes.
 
 local vars = require("00-vars")
 
--- 1. Everything defaults to workspace 10.
-hl.window_rule({
-    name      = "ws-default-catch-all",
-    match     = { class = ".*" },
-
-    workspace = "10 silent",
-})
-
--- 2. The dashboard pair is pinned to workspace 1.
 hl.window_rule({
     name      = "ws1-dashboard-keybinds",
     match     = { class = "^(ws1-keybinds)$" },
@@ -136,9 +94,6 @@ hl.window_rule({
 
     workspace = "1 silent",
 })
-
--- 3. Re-assert the shared per-app assignments so they beat the catch-all.
-vars.apply_workspace_assignments("ws-reassert")
 
 
 -- ── Workspace-1 dashboard launcher ────────────────────────────────────

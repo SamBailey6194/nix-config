@@ -7,41 +7,19 @@
 -- This file is required LAST, after 00-vars .. 80-autostart, so every call here
 -- overrides the shared defaults.
 
--- ══ DEFERRED — KNOWN CLASHES WITH THE SHARED CONFIG ══════════════════════
+-- ══ WORKSPACES: THE SHARED MAP ═══════════════════════════════════════════
 --
--- This hardware is not in use yet and this file has NOT been revisited since
--- the shared workspace contract changed. It is left untouched on purpose: the
--- rules below are an untested translation of the old hyprlang config, so
--- nothing here should be trusted until the machine actually exists.
+-- This hardware is not in use yet. Its workspaces follow the shared map in
+-- 00-vars.lua (registered by 70-windowrules.lua, keyed by 60-keybinds.lua),
+-- like every device: Resolve 20, comms 11, dev layouts 31-40 and so on.
+-- The old per-device workspace rules (Resolve 5, Affinity 4, OBS 6, Slack
+-- and Element 9) were removed
+-- because they overrode it; Affinity has no workspace any more and opens on
+-- the first free one from 51 up.
+-- OBS and Element have no workspace of their own either.
 --
--- Two clashes are already known. Whoever picks this device up should settle
--- them BEFORE the first rebuild — nothing below has been changed to fix them.
---
---  1. AFFINITY IS ON THE WRONG WORKSPACE.
---     The shared table in 00-vars.lua (M.workspaceAssignments) sends all three
---     Affinity apps to workspace 8, and 70-windowrules.lua registers that for
---     every device. The three `devtower-affinity-*-workspace` rules below
---     still say workspace 4, from before the contract settled. Because this
---     file is required LAST and the last matching rule wins, workspace 4 is
---     what would actually happen here — silently disagreeing with every other
---     device, KEYBINDS.md and config/hypr/README.md.
---     Fix: drop these three rules and inherit workspace 8, or change the
---     shared contract deliberately.
---
---  2. RESOLVE AND OBS SIT INSIDE THE GENERIC DEV POOL.
---     Workspaces 3-5 are the generic dev pool: `SUPER + CTRL + Z` hands out
---     the lowest free one at launch (see rust/dev-layout). 60-keybinds.lua is
---     shared by EVERY device, so that keybind exists here too. Below,
---     `devtower-resolve-workspace` pins DaVinci Resolve to workspace 5, which
---     is still inside the pool, so a dev layout can land on top of Resolve
---     (whichever opened first keeps the workspace).
---
---     The pool narrowed from 3-6 to 3-5 when workspace 6 became mail, which
---     also moved OBS's workspace 6 out of the pool but INTO a collision with
---     mail instead (aerc + its sheet on SUPER + E, Claws on SUPER + SHIFT + E). Both still need fixing for this device: move
---     Resolve off 5 and OBS off 6, or set DEV_LAYOUT_POOL_LAST here. This
---     also needs the three-monitor workspace design still outstanding for
---     devtower.
+-- Still to do once the machine exists: monitor placement for the three
+-- displays, as devices/devtower-intel.lua does with hl.workspace_rule.
 --
 -- ═════════════════════════════════════════════════════════════════════════
 
@@ -143,14 +121,9 @@ hl.animation({ leaf = "workspaces",  enabled = true, speed = 4, bezier = "defaul
 -- Monitor 2 (Center 1440p PRIMARY): Main workspace - Code, browsing
 -- Monitor 3 (Right 1080p VERTICAL): Communication, monitoring, documentation
 
--- DaVinci Resolve: fullscreen on workspace 5, left monitor (4K)
+-- DaVinci Resolve: fullscreen (workspace 20, from the shared map), left monitor (4K)
 -- IMPORTANT: DaVinci Resolve runs under XWayland (not native Wayland due to qtwayland version mismatch)
 -- Hyprland automatically handles this via QT_QPA_PLATFORM=xcb in the launch command
-hl.window_rule({
-    name      = "devtower-resolve-workspace",
-    match     = { class = "^(resolve)$" },
-    workspace = "5",
-})
 hl.window_rule({
     name       = "devtower-resolve-fullscreen",
     match      = { class = "^(resolve)$" },
@@ -160,43 +133,6 @@ hl.window_rule({
 
 -- DaVinci Resolve must be launched with AMD GPU flags (see shell alias in home config):
 -- ROC_ENABLE_PRE_VEGA=1 RUSTICL_ENABLE=amdgpu,amdgpu-pro,radv,radeon,radeonsi DRI_PRIME=1 QT_QPA_PLATFORM=xcb davinci-resolve-studio
-
--- Affinity apps: workspace 4, left monitor (4K for detail work)
-hl.window_rule({
-    name      = "devtower-affinity-photo-workspace",
-    match     = { class = "^(affinity-photo)$" },
-    workspace = "4",
-})
-hl.window_rule({
-    name      = "devtower-affinity-designer-workspace",
-    match     = { class = "^(affinity-designer)$" },
-    workspace = "4",
-})
-hl.window_rule({
-    name      = "devtower-affinity-publisher-workspace",
-    match     = { class = "^(affinity-publisher)$" },
-    workspace = "4",
-})
--- hl.window_rule({ name = "devtower-affinity-photo-monitor", match = { class = "^(affinity-photo)$" }, monitor = "DP-1" })
-
--- OBS Studio: workspace 6, center monitor
-hl.window_rule({
-    name      = "devtower-obs-workspace",
-    match     = { class = "^(obs)$" },
-    workspace = "6",
-})
-
--- Communication apps: workspace 9, right vertical monitor (perfect for chat)
-hl.window_rule({
-    name      = "devtower-slack-workspace",
-    match     = { class = "^(slack)$" },
-    workspace = "9",
-})
-hl.window_rule({
-    name      = "devtower-element-workspace",
-    match     = { class = "^(element)$" },
-    workspace = "9",
-})
 
 -- Terminal/System monitoring: right vertical monitor is great for btop, logs, etc.
 -- hl.window_rule({

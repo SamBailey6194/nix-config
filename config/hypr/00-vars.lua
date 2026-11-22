@@ -14,227 +14,188 @@ local M = {}
 M.mod = "SUPER"
 
 -- Workspace the SUPER + E mail layout (60-keybinds.lua) focuses and gathers
--- aerc and its sheet onto. Read when the keybind fires, not at load time, so a
--- device file required after 60-keybinds can move it: devtower-intel sets 4.
+-- aerc and its sheet onto. Read when the keybind fires, not at load time.
 -- Every Lua config file shares one state, so require() returns this same table.
-M.mailWorkspace = 6
+M.mailWorkspace = 4
+
+-- ── The shared workspace map ──────────────────────────────────────────
+--
+-- One map for every device. Which MONITOR a workspace sits on is the only
+-- per-device part: devtower-intel spreads them over left, centre and right
+-- (devices/devtower-intel.lua); a laptop has one screen and needs nothing.
+-- An app a device does not install simply never matches its rule.
+--
+--   1      dashboard (device file: laptop-intel, devtower-intel)
+--   2      devtower-intel: four terminals; elsewhere an ordinary workspace
+--   3      file manager (Yazi)
+--   4      mail (aerc + keybind sheet; khal on devtower-intel)
+--   5      Start Center, Writer + WordCraft
+--   6      Impress + DeckCraft
+--   7      Calc + GridCraft
+--   8      PDFs: PdfCraft + Zathura
+--   9      DesignCraft
+--   10     Math + Base
+--   11     comms (Teams, Zoom, Slack)
+--   12     Zen (streaming)
+--   13     LibreWolf
+--   14     Firefox Developer Edition
+--   15     Brave
+--   16     video and image viewers (VLC, mpv, imv)
+--   17     PhotoCraft + GIMP
+--   18     Draw + VectorCraft
+--   19     LightCraft
+--   20     DaVinci Resolve
+--   21     FilmCraft
+--   22     EffectCraft
+--   23     AniCraft
+--   24     SoundCraft + Reaper + Audacity
+--   25     Blender
+--   26     MaterialCraft
+--   27     TextureCraft
+--   28     CADCraft
+--   29     FigCraft
+--   30     Playwright browser testing
+--   31     nix-config dev layout (Zed or Neovim)   DEV_LAYOUT_NIX_CONFIG_WS
+--   32-40  dev pool, one project per workspace     DEV_LAYOUT_POOL_FIRST/LAST
+--   41-50  spare (keyed, never used by overflow)
+--   51+    unassigned windows, the first free one  (70-windowrules.lua)
+--
+-- Affinity (Wine) stays installed but has no workspace: it opens on 51+.
+--
+-- Keys (60-keybinds.lua): SUPER + 1-9,0 -> 1-10, + SHIFT -> 11-20,
+-- + CTRL -> 21-30, + ALT -> 31-40, + CTRL + SHIFT -> 41-50. Moving a window:
+-- SUPER + period, then the same chord without SUPER.
+M.overflowFirst = 51
+M.devLayout = { nixConfig = 31, poolFirst = 32, poolLast = 40 }
 
 -- ── Workspace assignments ─────────────────────────────────────────────
 --
 -- Single source of truth for "this app always opens on that workspace".
--- 70-windowrules.lua registers these for every device. A device that also
--- wants a default-workspace catch-all (see devices/laptop-intel.lua) has to
--- re-register them AFTERWARDS, because window rules are applied in
--- registration order and the last matching rule wins — so a later catch-all
--- would otherwise clobber them.
---
--- Keeping the list here means it is written once. Under hyprlang it had to be
--- duplicated by hand into the device catch-all's regex, which is exactly the
--- maintenance trap that made the old rule wrong.
---
--- SHAPE OF AN ENTRY
+-- 70-windowrules.lua registers them for every device, straight after the
+-- catch-all that parks every other window for the overflow handler. Window
+-- rules apply in registration order and the last match wins, so these beat
+-- the catch-all, and a device file (required last) can still pin its own
+-- dashboard windows over both.
 --
 -- Each entry carries a full `match` table, passed straight through to
--- hl.window_rule, plus its own rule `name`. Earlier versions stored a bare
--- class string and built "^(" .. class .. ")$" here, which could only ever
--- express a class match — not enough for the nix-config editor below, which
--- needs class AND title. Writing the regexes out in full also keeps the
--- anchoring visible at the point of use.
+-- hl.window_rule, so a rule can match class AND title (the nix-config Zed
+-- window below). Dots in reverse-DNS classes are escaped ("\\." in Lua, \.
+-- for RE2) so a look-alike class does not match. Hyprland matches classes
+-- case-sensitively.
 --
--- WORKSPACE MAP (see devices/laptop-intel.lua for the full picture)
---
--- This is the default map, used as-is by laptop-intel. devtower-intel runs a
--- 50-workspace map across three monitors instead and re-registers its own
--- assignments after these (devices/devtower-intel.lua); last match wins.
---
---   1     dashboard (laptop only)
---   2     nix-config dev layout           (reserved, assigned here)
---   3-5   generic dev pool                (rule registered at launch, not here)
---   6     mail: aerc + its keybind sheet, Claws Mail (assigned here)
---   7     browsers
---   8     Affinity Suite
---   9     comms
---   10    file managers (assigned here); catch-all for everything else
---         on laptop-intel and devtower-intel
+-- Class strings marked "unverified" are guesses: confirm with
+-- `hyprctl clients` on first launch. A wrong class fails silently and the
+-- window lands on the first free workspace from 51 up.
+local function assign(name, match, workspace)
+    return { name = name, match = match, workspace = tostring(workspace) }
+end
+
 M.workspaceAssignments = {
-    -- Browsers (workspace 7)
-    --
-    -- These are the only four browsers this config installs; regular Firefox,
-    -- Google Chrome and Chromium were removed. Zen is the default handler
-    -- (see home/modules/browsers.nix).
-    --
-    -- The class strings are each device's StartupWMClass, not the command
-    -- name. Zen, LibreWolf and Firefox Developer Edition pass `--name <x>` in
-    -- their .desktop Exec so class == command, but Brave's binary is `brave`
-    -- while its window class is `brave-browser` — verified live with
-    -- `hyprctl clients`. Get one of these wrong and the rule silently never
-    -- matches, exactly like the old lookahead catch-all did.
-    {
-        name      = "browser-zen",
-        match     = { class = "^(zen-beta)$" },
-        workspace = "7",
-    },
-    {
-        name      = "browser-brave",
-        match     = { class = "^(brave-browser)$" },
-        workspace = "7",
-    },
-    {
-        name      = "browser-librewolf",
-        match     = { class = "^(librewolf)$" },
-        workspace = "7",
-    },
-    {
-        name      = "browser-firefox-devedition",
-        match     = { class = "^(firefox-devedition)$" },
-        workspace = "7",
-    },
+    -- 3: file manager. SUPER + F opens Yazi in kitty with the `yazi` class;
+    -- udiskie's "browse" action launches the same class.
+    assign("files-yazi", { class = "^(yazi)$" }, 3),
 
-    -- Mail (workspace 6)
-    --
-    -- Mail gets a fixed home for the same reason the browsers and comms do:
-    -- it is a long-running window you want to find in a known place. The
-    -- generic dev pool was narrowed from 3-6 to 3-5 to free this workspace
-    -- (rust/dev-layout, DEFAULT_POOL_LAST) - otherwise a dev layout could be
-    -- built straight on top of the mail client.
-    --
-    -- The class is unverified: claws-mail's .desktop file sets no
-    -- StartupWMClass, so GTK derives WM_CLASS from the binary name. Confirm
-    -- with `hyprctl clients | grep -i claws` on first launch and correct this
-    -- if it differs - a wrong class here fails silently, exactly like the
-    -- brave/brave-browser case documented above.
-    --
-    -- aerc and its sheet are kitty windows launched with these classes by the
-    -- SUPER + E layout (60-keybinds.lua), so unlike Claws they are certain.
-    {
-        name      = "mail-aerc",
-        match     = { class = "^(aerc)$" },
-        workspace = "6",
-    },
-    {
-        name      = "mail-aerc-keybinds",
-        match     = { class = "^(aerc-keybinds)$" },
-        workspace = "6",
-    },
-    {
-        name      = "mail-claws",
-        match     = { class = "^(claws-mail)$" },
-        workspace = "6",
-    },
+    -- 4: mail. aerc and its sheet are kitty windows launched with these
+    -- classes by the SUPER + E layout (60-keybinds.lua), so they are certain.
+    assign("mail-aerc", { class = "^(aerc)$" }, 4),
+    assign("mail-aerc-keybinds", { class = "^(aerc-keybinds)$" }, 4),
+    assign("mail-calendar", { class = "^(khal)$" }, 4),
 
-    -- Communication (workspace 9)
-    {
-        name      = "comms-teams-for-linux",
-        match     = { class = "^(teams-for-linux)$" },
-        workspace = "9",
-    },
-    {
-        name      = "comms-zoom",
-        match     = { class = "^(zoom)$" },
-        workspace = "9",
-    },
+    -- 5-10: documents, each LibreOffice module beside its Craft equivalent.
+    -- LibreOffice classes are per module (unverified). A document opened
+    -- from the Start Center reuses its window, so it stays on 5 whatever the
+    -- module; documents opened directly land on their own workspace.
+    assign("office-startcenter", { class = "^(libreoffice-startcenter)$" }, 5),
+    assign("office-writer", { class = "^(libreoffice-writer)$" }, 5),
+    assign("office-impress", { class = "^(libreoffice-impress)$" }, 6),
+    assign("office-calc", { class = "^(libreoffice-calc)$" }, 7),
+    -- Zathura's class confirmed with hyprctl clients (22/11/2026).
+    assign("viewer-zathura", { class = "^(org\\.pwmt\\.zathura)$" }, 8),
+    assign("office-math", { class = "^(libreoffice-math)$" }, 10),
+    assign("office-base", { class = "^(libreoffice-base)$" }, 10),
 
-    -- Affinity Suite (workspace 8)
-    {
-        name      = "affinity-designer",
-        match     = { class = "^(affinity-designer)$" },
-        workspace = "8",
-    },
-    {
-        name      = "affinity-photo",
-        match     = { class = "^(affinity-photo)$" },
-        workspace = "8",
-    },
-    {
-        name      = "affinity-publisher",
-        match     = { class = "^(affinity-publisher)$" },
-        workspace = "8",
-    },
+    -- 11: comms. Slack: its StartupWMClass "Slack" (unverified).
+    assign("comms-teams-for-linux", { class = "^(teams-for-linux)$" }, 11),
+    assign("comms-zoom", { class = "^(zoom)$" }, 11),
+    assign("comms-slack", { class = "^(Slack|slack)$" }, 11),
 
-    -- File managers (workspace 10)
+    -- 12-15: browsers. These are the only four browsers this config installs
+    -- (regular Firefox, Google Chrome and Chromium were removed; Zen is the
+    -- default handler, home/modules/browsers.nix). The classes are each
+    -- browser's StartupWMClass, not its command: Brave's binary is `brave`
+    -- but its class is `brave-browser` (verified with hyprctl clients).
+    assign("browser-zen", { class = "^(zen-beta)$" }, 12),
+    assign("browser-librewolf", { class = "^(librewolf)$" }, 13),
+    assign("browser-firefox-devedition", { class = "^(firefox-devedition)$" }, 14),
+    assign("browser-brave", { class = "^(brave-browser)$" }, 15),
+
+    -- 16: video and image viewers (modules/software/media.nix)
+    assign("viewer-vlc", { class = "^(vlc)$" }, 16),
+    assign("viewer-mpv", { class = "^(mpv)$" }, 16),
+    assign("viewer-imv", { class = "^(imv)$" }, 16),
+
+    -- 17-30: creative apps, each non-Craft app beside its Craft equivalent.
+    -- Non-Craft classes are their StartupWMClass plus the Wayland app_id
+    -- form (unverified).
+    assign("creative-gimp", { class = "^(gimp|Gimp.*)$" }, 17),
+    assign("office-draw", { class = "^(libreoffice-draw)$" }, 18),
+    assign("resolve", { class = "^(resolve|Resolve|DaVinciResolve)$" }, 20),
+    assign("creative-reaper", { class = "^(REAPER|reaper)$" }, 24),
+    assign("creative-audacity",
+        { class = "^(org\\.audacityteam\\.Audacity|Audacity( 4)?|audacity)$" }, 24),
+    assign("creative-blender", { class = "^(Blender|blender)$" }, 25),
+
+    -- The Craft suite (modules/software/craft-apps.nix). The class is the
+    -- desktop file id (ai.storyteller.<app>), on Wayland and Xwayland alike;
+    -- confirmed with hyprctl clients (22/11/2026). PhotoCraft also keeps the
+    -- bare "photocraft", its pre-0.23 StartupWMClass, for its Xwayland
+    -- fallback (pen tablet or preference). MaterialCraft and TextureCraft
+    -- carry no reverse-DNS id: their class is the capitalised product name,
+    -- not the lower-case StartupWMClass they ship, so those rules list every
+    -- form.
+    assign("craft-word", { class = "^(ai\\.storyteller\\.wordcraft)$" }, 5),
+    assign("craft-deck", { class = "^(ai\\.storyteller\\.deckcraft)$" }, 6),
+    assign("craft-grid", { class = "^(ai\\.storyteller\\.gridcraft)$" }, 7),
+    assign("craft-pdf", { class = "^(ai\\.storyteller\\.pdfcraft)$" }, 8),
+    assign("craft-design", { class = "^(ai\\.storyteller\\.designcraft)$" }, 9),
+    assign("craft-photo", { class = "^(ai\\.storyteller\\.photocraft|photocraft)$" }, 17),
+    assign("craft-vector", { class = "^(ai\\.storyteller\\.vectorcraft)$" }, 18),
+    assign("craft-light", { class = "^(ai\\.storyteller\\.lightcraft)$" }, 19),
+    assign("craft-film", { class = "^(ai\\.storyteller\\.filmcraft)$" }, 21),
+    assign("craft-effect", { class = "^(ai\\.storyteller\\.effectcraft)$" }, 22),
+    assign("craft-ani", { class = "^(ai\\.storyteller\\.anicraft)$" }, 23),
+    assign("craft-sound", { class = "^(ai\\.storyteller\\.soundcraft)$" }, 24),
+    assign("craft-material",
+        { class = "^(ai\\.storyteller\\.materialcraft|materialcraft|MaterialCraft)$" }, 26),
+    assign("craft-texture",
+        { class = "^(ai\\.storyteller\\.texturecraft|texturecraft|TextureCraft)$" }, 27),
+    assign("craft-cad", { class = "^(ai\\.storyteller\\.cadcraft)$" }, 28),
+    assign("craft-fig", { class = "^(ai\\.storyteller\\.figcraft)$" }, 29),
+
+    -- 30: Playwright browser testing. The Playwright MCP server opens its own
+    -- bundled Chromium (PLAYWRIGHT_MCP_BROWSER=chromium); no other Chromium
+    -- is installed, so the class is Playwright's alone (unverified).
+    assign("testing-playwright", { class = "^(chromium|Chromium|chromium-browser)$" }, 30),
+
+    -- 31: the nix-config dev layout, Zed or Neovim (rust/dev-layout).
     --
-    -- SUPER + F opens Yazi in kitty with the `yazi` class; SUPER + SHIFT + F
-    -- opens Thunar. On laptop-intel the catch-all already sends them to 10,
-    -- but it is "10 silent" — the window would open out of sight. These rules
-    -- are not silent, so you follow it there. devtower-intel overrides them
-    -- with workspace 3 (devices/devtower-intel.lua).
-    -- udiskie's "browse" action launches the same `yazi` class.
-    --
-    -- Files opened FROM a file manager need nothing here: each app's window
-    -- is placed by its own rule (browsers to 7, mail to 6, ...) or, with
-    -- none, by the device catch-all — i.e. 10, next to the file manager.
-    {
-        name      = "files-yazi",
-        match     = { class = "^(yazi)$" },
-        workspace = "10",
-    },
-    {
-        name      = "files-thunar",
-        match     = { class = "^(thunar)$" },
-        workspace = "10",
-    },
+    -- Zed has no --class flag, so every Zed window reports `dev.zed.Zed`; a
+    -- class-only rule would drag every project's editor here. Zed's title is
+    -- the project folder name, so class + title singles out this checkout.
+    -- The Neovim variant is one Kitty window with a class of its own, so it
+    -- needs no title. The 32-40 pool needs no rule here: dev-layout picks a
+    -- free workspace at launch and registers a rule for it then.
+    assign("nixcfg-editor", { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" }, 31),
+    assign("nixcfg-nvim", { class = "^(nixcfg-nvim)$" }, 31),
 
     -- Popups that belong to whatever you are doing: the Yazi file picker
     -- (xdg-desktop-portal-termfilechooser's kitty) and ripdrag's drag window.
-    -- "unset" cancels any earlier workspace rule, so they open on the CURRENT
-    -- workspace, over the app that asked for them, instead of being thrown
-    -- to 10 by the catch-all. Hyprland 0.56 handles the literal "unset" in
-    -- Window.cpp (requestedWorkspace = ""). Floating and size are in
-    -- 70-windowrules.lua.
-    {
-        name      = "popup-file-picker",
-        match     = { class = "^(termfilechooser)$" },
-        workspace = "unset",
-    },
-    {
-        name      = "popup-ripdrag",
-        match     = { class = "^(it\\.catboy\\.ripdrag)$" },
-        workspace = "unset",
-    },
-
-    -- nix-config dev layout (workspace 2, reserved)
-    --
-    -- The editor is matched on class AND title together, which is why entries
-    -- carry a whole `match` table rather than a bare class.
-    --
-    --   * Zed has no --class flag, so EVERY Zed window reports the same class
-    --     `dev.zed.Zed`. A class-only rule would drag every project's editor
-    --     onto ws2, including the generic dev-pool ones.
-    --   * Zed's title is the project folder name, so the nix-config window
-    --     reports the title `nix-config` exactly — verified live with
-    --     `hyprctl clients`. Class + title is therefore the only way to single
-    --     out this one editor.
-    --   * The dots in dev.zed.Zed are RE2 metacharacters (any character), so
-    --     they are escaped as \. — written "\\." in a normal Lua string, which
-    --     RE2 finally sees as ^(dev\.zed\.Zed)$. Unescaped it would also match
-    --     things like `devxzedxZed`; more importantly, escaping is what makes
-    --     the intent obvious to the next reader.
-    --
-    -- Zed is the layout's only window: it fills the workspace on its own,
-    -- with no Kitty terminals beside it.
-    {
-        name      = "nixcfg-editor",
-        match     = { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" },
-        workspace = "2",
-    },
-
-    -- The Neovim variant of the same layout (SUPER + SHIFT + RETURN), which
-    -- shares workspace 2 with the Zed one: dev-layout refuses to build a
-    -- second layout there and focuses the existing one instead.
-    --
-    -- This one rule places the WHOLE Neovim layout: it is a single Kitty
-    -- window filling the workspace, with the keybind reference, file tree,
-    -- git panel and shell as panes and tabs inside Neovim. Both variants are
-    -- now a single window.
-    --
-    -- Note how much smaller this rule is than nixcfg-editor above. Neovim runs
-    -- inside Kitty and Kitty supports --class, so there is no title clause and
-    -- no dependency on the checkout still being called "nix-config".
-    {
-        name      = "nixcfg-nvim",
-        match     = { class = "^(nixcfg-nvim)$" },
-        workspace = "2",
-    },
+    -- "unset" cancels the earlier catch-all, so they open on the CURRENT
+    -- workspace, over the app that asked. Hyprland 0.56 handles the literal
+    -- "unset" in Window.cpp (requestedWorkspace = ""). Floating and size are
+    -- in 70-windowrules.lua.
+    assign("popup-file-picker", { class = "^(termfilechooser)$" }, "unset"),
+    assign("popup-ripdrag", { class = "^(it\\.catboy\\.ripdrag)$" }, "unset"),
 }
 
 -- ── Number keys ───────────────────────────────────────────────────────
@@ -251,10 +212,7 @@ function M.number_keys(n)
     return { tostring(n), "code:" .. M.numpadCodes[n] }
 end
 
--- Register every assignment above as a window rule.
---
--- `prefix` disambiguates the rule names, since a device that re-registers the
--- set would otherwise collide with the names 70-windowrules.lua already used.
+-- Register every assignment above as a window rule, named prefix-name.
 function M.apply_workspace_assignments(prefix)
     for _, a in ipairs(M.workspaceAssignments) do
         hl.window_rule({

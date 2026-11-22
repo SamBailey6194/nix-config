@@ -46,10 +46,10 @@ hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
 -- above; both go through the same `dev-layout` binary, which takes --nvim.
 --
 -- Two variants, deliberately on separate keybinds:
---   SHIFT — the reserved nix-config layout, always built on workspace 2, so
+--   SHIFT — the reserved nix-config layout, always built on workspace 31, so
 --           this repository is only ever open in one known place.
 --   CTRL  — a generic dev layout, placed on the next free workspace from the
---           3-5 dev pool, so several unrelated projects can be open at once.
+--           32-40 dev pool, so several unrelated projects can be open at once.
 --
 -- CTRL goes through the `dev-layout-pick` wofi picker rather than calling
 -- dev-layout directly. dev-layout needs a project PATH — the folder name is
@@ -59,13 +59,12 @@ hl.bind(mod .. " + Z", hl.dsp.exec_cmd("zeditor -n"))
 hl.bind(mod .. " + SHIFT + Z", hl.dsp.exec_cmd("dev-layout"))
 hl.bind(mod .. " + CTRL + Z",  hl.dsp.exec_cmd("dev-layout-pick"))
 
--- File managers: Yazi is the main one, Thunar the backup (SHIFT). Both land on
--- workspace 10 and take you there (vars.workspaceAssignments in 00-vars.lua).
+-- File manager: Yazi. It lands on workspace 3 and takes you there
+-- (vars.workspaceAssignments in 00-vars.lua).
 -- Yazi runs in kitty with its own `yazi` class so the rule can tell it apart
 -- from an ordinary terminal; inside it, F1 opens its keybind sheet. Configured
 -- in home/modules/file-manager.nix.
 hl.bind(mod .. " + F",         hl.dsp.exec_cmd("kitty --class yazi yazi"))
-hl.bind(mod .. " + SHIFT + F", hl.dsp.exec_cmd("thunar"))
 
 -- Web browsers
 hl.bind(mod .. " + W",         hl.dsp.exec_cmd("zen-beta"))
@@ -73,13 +72,11 @@ hl.bind(mod .. " + SHIFT + W", hl.dsp.exec_cmd("brave"))
 hl.bind(mod .. " + ALT + W",   hl.dsp.exec_cmd("librewolf"))
 hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 
--- Mail, on workspace vars.mailWorkspace: 6 by default (00-vars.lua pins all
--- three windows there), 4 on devtower-intel (devices/devtower-intel.lua).
+-- Mail, on workspace vars.mailWorkspace (4; 00-vars.lua pins both windows
+-- there).
 --
---   E        aerc, the default (home/modules/aerc.nix), with its keybind
---            sheet beside it: aerc first (left, or top on a portrait
---            monitor), the sheet second
---   SHIFT+E  Claws Mail, the GUI backup (home/modules/email.nix)
+--   E        aerc (home/modules/aerc.nix), with its keybind sheet beside it:
+--            aerc first (left, or top on a portrait monitor), the sheet second
 --
 -- E works like the laptop's ws1 dashboard (devices/laptop-intel.lua, which
 -- explains the API and the reasoning in full): it focuses the mail workspace and
@@ -94,7 +91,7 @@ hl.bind(mod .. " + CTRL + W",  hl.dsp.exec_cmd("firefox-devedition"))
 -- Looked up on every call rather than captured here: the device file that
 -- overrides vars.mailWorkspace is required after this one.
 local function mail_ws()
-    return vars.mailWorkspace or 6
+    return vars.mailWorkspace or 4
 end
 
 local MAIL = {
@@ -120,7 +117,7 @@ end
 
 -- aerc before the sheet: left of it side by side, above it when stacked.
 -- The order is strict (x first, then y) so one swap always settles it: with
--- a third window on the mail workspace (Claws) the two can sit diagonally, and "x OR y
+-- a third window on the mail workspace the two can sit diagonally, and "x OR y
 -- greater" would then swap them back and forth on every press.
 local function mail_enforce_order()
     local client, sheet = mail_find("aerc"), mail_find("aerc-keybinds")
@@ -169,7 +166,6 @@ end)
 
 hl.bind(mod .. " + E", mail_layout,
     { description = "Mail: aerc + keybind sheet, reopen any missing pane" })
-hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd("claws-mail"))
 
 -- Communication
 hl.bind(mod .. " + T", hl.dsp.exec_cmd("teams-for-linux"))
@@ -196,6 +192,58 @@ hl.bind(mod .. " + slash", hl.dsp.exec_cmd("kitty -e less ~/.config/hypr/KEYBIND
 hl.bind(mod .. " + D", hl.dsp.exec_cmd("affinity-designer"))
 hl.bind(mod .. " + P", hl.dsp.exec_cmd("affinity-photo"))
 hl.bind(mod .. " + B", hl.dsp.exec_cmd("affinity-publisher"))
+
+-- ── App launcher: SUPER + A, then one key ─────────────────────────────
+--
+-- Every app in the shared workspace map (00-vars.lua) without a direct key
+-- above. The plain key opens the main app, SHIFT its Craft pair on the same
+-- workspace. Each app's window rule is not silent, so the app opens on its
+-- own workspace and takes you there. The submap resets after one launch;
+-- Escape cancels. An app a device does not install just fails to start.
+--
+--   s  Start Center (5)                    m  Math (10)  SHIFT: MaterialCraft (26)
+--   w  Writer (5)    SHIFT: WordCraft      b  Base (10)
+--   i  Impress (6)   SHIFT: DeckCraft      k  Slack (11)
+--   c  Calc (7)      SHIFT: GridCraft      v  VLC (16)   SHIFT: mpv
+--   p  Zathura (8)   SHIFT: PdfCraft       g  GIMP (17)  SHIFT: PhotoCraft
+--   u  DesignCraft (9)                     d  Draw (18)  SHIFT: VectorCraft
+--   l  LightCraft (19)                     r  Resolve (20)  SHIFT: FilmCraft (21)
+--   e  EffectCraft (22)                    a  AniCraft (23)
+--   o  Reaper (24)  SHIFT: SoundCraft  CTRL: Audacity
+--   3  Blender (25)  t  TextureCraft (27)  x  CADCraft (28)  f  FigCraft (29)
+local launchers = {
+    { "s", "libreoffice" },
+    { "w", "libreoffice --writer" },        { "SHIFT + w", "wordcraft" },
+    { "i", "libreoffice --impress" },       { "SHIFT + i", "deckcraft" },
+    { "c", "libreoffice --calc" },          { "SHIFT + c", "gridcraft" },
+    { "p", "zathura" },                     { "SHIFT + p", "pdfcraft" },
+    { "u", "designcraft" },
+    { "m", "libreoffice --math" },          { "SHIFT + m", "materialcraft" },
+    { "b", "libreoffice --base" },
+    { "k", "slack" },
+    { "v", "vlc" },                         { "SHIFT + v", "mpv --player-operation-mode=pseudo-gui" },
+    { "g", "gimp" },                        { "SHIFT + g", "photocraft" },
+    { "d", "libreoffice --draw" },          { "SHIFT + d", "vectorcraft" },
+    { "l", "lightcraft" },
+    { "r", "davinci-resolve-studio" },      { "SHIFT + r", "filmcraft" },
+    { "e", "effectcraft" },
+    { "a", "anicraft" },
+    { "o", "reaper" },                      { "SHIFT + o", "soundcraft" },
+    { "CTRL + o", "audacity" },
+    { "3", "blender" },
+    { "t", "texturecraft" },
+    { "x", "cadcraft" },
+    { "f", "figcraft" },
+}
+
+hl.bind(mod .. " + A", hl.dsp.submap("launch"),
+    { description = "Launch an app on its workspace: then a key (see 60-keybinds.lua)" })
+hl.define_submap("launch", "reset", function()
+    for _, l in ipairs(launchers) do
+        hl.bind(l[1], hl.dsp.exec_cmd(l[2]))
+    end
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
 
 -- ── Window Management ─────────────────────────────────────────────────
 
@@ -262,19 +310,41 @@ hl.bind(mod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
 
 -- ── Workspace Navigation ─────────────────────────────────────────────
 
--- Switch workspaces with mod + [0-9], and move the active window to a
--- workspace with mod + SHIFT + [0-9]. Key 0 maps to workspace 10, exactly
--- as the hyprlang config did. devtower-intel replaces the SHIFT half with
--- workspaces 11-20 and moves windows through a submap instead
--- (devices/devtower-intel.lua). hl.unbind matches on these key strings
--- (spaces and case ignored), so keep the two files' spellings in step.
--- vars.number_keys adds the numpad twin of each key (00-vars.lua).
-for i = 1, 10 do
-    for _, key in ipairs(vars.number_keys(i % 10)) do -- 10 maps to key 0
-        hl.bind(mod .. " + " .. key,         hl.dsp.focus({ workspace = i }))
-        hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+-- Five banks of ten, one per modifier, for the shared 50-workspace map
+-- (00-vars.lua). Key 0 is the tenth of each bank, so SUPER + 0 is
+-- workspace 10. vars.number_keys adds the numpad twin of each key.
+--
+-- Moving a window goes through a submap, since SHIFT + number now focuses
+-- 11-20: SUPER + period, then the number with the bank's modifier minus SUPER
+-- (1 -> ws 1, SHIFT + 1 -> ws 11, CTRL + 1 -> ws 21, ALT + 1 -> ws 31,
+-- CTRL + SHIFT + 1 -> ws 41). The submap resets after one move; Escape
+-- cancels.
+local banks = {
+    { "", 0 }, { "SHIFT + ", 10 }, { "CTRL + ", 20 }, { "ALT + ", 30 },
+    { "CTRL + SHIFT + ", 40 },
+}
+
+for _, bank in ipairs(banks) do
+    local prefix, offset = bank[1], bank[2]
+    for i = 1, 10 do
+        for _, key in ipairs(vars.number_keys(i % 10)) do -- 10 maps to key 0
+            hl.bind(mod .. " + " .. prefix .. key, hl.dsp.focus({ workspace = offset + i }))
+        end
     end
 end
+
+hl.bind(mod .. " + period", hl.dsp.submap("move-window"),
+    { description = "Move window: then 1-0 (1-10), SHIFT (11-20), CTRL (21-30), ALT (31-40), CTRL+SHIFT (41-50)" })
+hl.define_submap("move-window", "reset", function()
+    for _, bank in ipairs(banks) do
+        for i = 1, 10 do
+            for _, key in ipairs(vars.number_keys(i % 10)) do
+                hl.bind(bank[1] .. key, hl.dsp.window.move({ workspace = bank[2] + i }))
+            end
+        end
+    end
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
 
 -- Special workspace (scratchpad)
 hl.bind(mod .. " + S",         hl.dsp.workspace.toggle_special("magic"))

@@ -110,7 +110,7 @@ end)
 for _, group in ipairs(groups) do
     hl.bind(group.bind, function() build(group) end, { description = group.description })
 end
--- Apps opened at login on their usual workspaces (devtower-intel.lua's map).
+-- Apps opened at login on their usual workspaces (the shared map, 00-vars.lua).
 -- The per-launch rule adds "silent" so none of them steals focus; their own
 -- keybinds still follow the window there. Mail at login is aerc with khal's
 -- interactive calendar (ikhal) beside it; aerc's keybind sheet is left to

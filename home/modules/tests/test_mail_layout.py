@@ -29,7 +29,9 @@ class MailLayoutTests(unittest.TestCase):
 
             hl = {
                 bind = function(key, fn, _) binds[key] = fn end,
-                on = function(event, fn) events[event] = fn end,
+                -- The move-window submap's binds are not under test here.
+                define_submap = function() end,
+                on =function(event, fn) events[event] = fn end,
                 exec_cmd = function(cmd) table.insert(launches, cmd) end,
                 timer = function(fn, _) table.insert(timers, fn) end,
                 get_active_workspace = function() return { id = active_ws } end,
@@ -52,21 +54,21 @@ class MailLayoutTests(unittest.TestCase):
             }
 
             function open(class, x, y)
-                windows[class] = { class = class, workspace = { id = 6 },
+                windows[class] = { class = class, workspace = { id = 4 },
                                    at = { x = x, y = y }, floating = false, fullscreen = 0 }
                 events["window.open"](windows[class])
             end
         ''')
         self.lua.execute(KEYBINDS.read_text())
 
-    def test_launches_both_panes_once_and_focuses_workspace_6(self):
+    def test_launches_both_panes_once_and_focuses_workspace_4(self):
         self.lua.execute('''
             local mail = binds["SUPER + E"]
             mail(); mail()
             assert(#launches == 2, "a double press must not launch twice")
             assert(launches[1] == "kitty --class aerc -e aerc")
             assert(launches[2]:find("--class aerc%-keybinds") and launches[2]:find("aerc/KEYBINDS.md"))
-            assert(active_ws == 6 and #focused == 1, "focus 6 once, then stay")
+            assert(active_ws == 4 and #focused == 1, "focus 4 once, then stay")
         ''')
 
     def test_reopens_only_the_missing_pane_and_moves_strays_back(self):
@@ -78,7 +80,7 @@ class MailLayoutTests(unittest.TestCase):
             windows["aerc"].workspace.id = 9         -- aerc moved away
             mail()
             assert(#launches == 3 and launches[3]:find("aerc%-keybinds"))
-            assert(windows["aerc"].workspace.id == 6)
+            assert(windows["aerc"].workspace.id == 4)
         ''')
 
     def test_aerc_ends_up_first_side_by_side_and_stacked(self):
@@ -104,7 +106,7 @@ class MailLayoutTests(unittest.TestCase):
         self.lua.execute('''
             local mail = binds["SUPER + E"]
             mail()
-            -- Claws shares the mail workspace, so aerc sits bottom-left and the sheet top-right.
+            -- A third window on the mail workspace can leave aerc bottom-left and the sheet top-right.
             open("aerc", 0, 540); open("aerc-keybinds", 960, 0)
             mail(); mail(); mail()
             assert(#swaps == 0, "aerc is already left of the sheet")
@@ -124,10 +126,11 @@ class MailLayoutTests(unittest.TestCase):
             assert(#swaps == 0)
         ''')
 
-    def test_claws_is_on_shift_e(self):
+    def test_claws_and_thunar_are_gone(self):
+        # Claws Mail and Thunar were uninstalled: aerc and Yazi only.
         self.lua.execute('''
-            local a = binds["SUPER + SHIFT + E"]
-            assert(a.path == "dsp.exec_cmd" and a.args == "claws-mail")
+            assert(binds["SUPER + SHIFT + E"] == nil)
+            assert(binds["SUPER + SHIFT + F"] == nil)
         ''')
 
 
