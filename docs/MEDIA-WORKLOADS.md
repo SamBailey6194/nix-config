@@ -39,12 +39,16 @@ store path bypass the automatic wrapper: use `resource-run` around those.
 | Swap ceiling | 1GiB | 1GiB |
 | CPU ceiling | Four logical CPUs | Four logical CPUs |
 
-On Intel **dev and higher** stages, media jobs instead share a 6GiB high /
-7GiB hard RAM limit and no swap, reserving room for local inference and builds.
-This was sized from a measured neovim-course master render (5.2GiB peak, about
-3.2 cores average at `MEDIA_THREADS=4`), giving ~15% headroom: enough for a
-master of up to ~15 minutes. Longer pieces or more video clips need more;
-re-measure under a temporary higher cap before raising it.
+On Intel **dev and higher** stages, media jobs instead share a 7GiB high /
+8GiB hard RAM limit and no swap, reserving room for local inference and builds.
+This was sized from measured neovim-course master renders of lesson 00
+(14m 26s, about 3.2 cores average at `MEDIA_THREADS=4`): 5.2GiB peak on the
+first render, 6.1GiB on a re-render with busier edits. 7GiB keeps that peak
+below the reclaim point with ~13% to spare. Clip, overlay and card count
+drive memory more than duration, so a busier lesson of the same length can
+need more; re-measure under a temporary higher cap before raising it.
+With `compute.slice` at 22GiB this leaves about 2GiB of the 32GiB for the
+desktop, so avoid rendering while local inference or large builds run.
 See [Local models](LOCAL-LLM.md) for the aggregate compute slice budget.
 
 All jobs in the slice share these ceilings. CPU and I/O weights also favour
