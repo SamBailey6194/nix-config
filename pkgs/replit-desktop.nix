@@ -16,7 +16,7 @@
 #
 # Replit only publishes a "latest" link, with no versioned URL. When a new
 # release lands the hash below stops matching on machines that have not
-# already fetched it; update with:
+# already fetched it. `just replit-check` reports a new release; update with:
 #   nix store prefetch-file https://desktop.replit.com/download/deb
 # then bump version and hash together.
 stdenvNoCC.mkDerivation rec {

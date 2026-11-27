@@ -604,6 +604,38 @@ check-playwright:
     echo "  [tool.uv]"
     echo "  constraint-dependencies = [\"playwright==$wheel\"]"
 
+# Replit only publishes a "latest" .deb link (pkgs/replit-desktop.nix), and the
+# app refuses to run once Replit raises its minimum version. This reads the
+# version from the link's redirect (headers only, no 120 MB download) and
+# compares it with the pin; it changes nothing.
+
+# Report whether Replit's Linux .deb has moved past the packaged version
+replit-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pkg=pkgs/replit-desktop.nix
+    url=https://desktop.replit.com/download/deb
+    pinned=$(sed -n 's/^  version = "\(.*\)";$/\1/p' "$pkg")
+    [ -n "$pinned" ] || { echo "no version found in $pkg" >&2; exit 1; }
+    # The link redirects to a signed GitHub asset named replit_<version>_amd64.deb.
+    latest=$(curl -fsSIL --max-time 30 "$url" \
+        | grep -io 'filename=replit_[0-9][0-9.]*_amd64\.deb' | tail -1 \
+        | sed 's/^filename=replit_//I; s/_amd64\.deb$//')
+    [ -n "$latest" ] || { echo "could not read the version from $url" >&2; exit 1; }
+    echo "packaged : $pinned"
+    echo "published: $latest"
+    if [ "$latest" = "$pinned" ]; then
+        echo "Up to date."
+    elif [ "$(printf '%s\n%s\n' "$pinned" "$latest" | sort -V | tail -1)" = "$latest" ]; then
+        echo
+        echo "Replit $latest is out. To update:"
+        echo "  nix store prefetch-file $url"
+        echo "then set version = \"$latest\" and the printed hash in $pkg, check the"
+        echo ".deb's bundled Electron (usr/lib/replit/version), and run: just rebuild"
+    else
+        echo "The published version is older than the pin; nothing to do."
+    fi
+
 # Trust this machine's DDEV CA: create mkcert's CA if missing, copy its public cert to certs/mkcert/<host>.pem
 ddev-ca:
     #!/usr/bin/env bash
