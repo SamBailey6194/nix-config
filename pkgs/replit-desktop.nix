@@ -6,27 +6,32 @@
 #
 # Only resources/app.asar is kept: it has no native .node modules, so it runs
 # on nixpkgs' current Electron instead of patching Replit's prebuilt Chromium.
-# The .deb bundles Electron 41 (usr/lib/replit/version), which nixpkgs marks
-# insecure (end of life); 1.1.18 was checked to start and load replit.com on
-# Electron 45. If a release breaks on the newer Electron, pin electron_<N> to
-# the bundled major instead.
+# 1.1.32 bundles Electron 46.0.0-alpha.1 (usr/lib/replit/version), ahead of
+# nixpkgs; it was checked to start and load replit.com on nixpkgs' Electron.
+# If a release breaks on it, pin electron_<N> to the bundled major instead.
 #
 # It reports "not packaged" (it runs under the electron binary), so Replit's
-# auto-updater stays off; that is the official Linux behaviour anyway.
+# auto-updater stays off; Replit's minimum-version gate still applies, so a
+# release can stop the app until this is bumped.
 #
-# Replit only publishes a "latest" link, with no versioned URL. When a new
-# release lands the hash below stops matching on machines that have not
-# already fetched it. `just replit-check` reports a new release; update with:
-#   nix store prefetch-file https://desktop.replit.com/download/deb
-# then bump version and hash together.
+# Source: the stable channel's electron-updater manifest, where <stable> is
+# https://desktop-updates.replit.com/desktop-app/updates/stable:
+#   <stable>/linux/x64/latest-linux.yml
+# which names a versioned artefact (path) and its sha512. The replit.com/desktop
+# button (<stable>/downloads/linux/x64/replit_amd64.deb) is the same file
+# under a moving name; desktop.replit.com/download/deb is stale (1.1.18).
+# `just replit-check` reads the manifest and prints the new version, buildId
+# and hash to put here.
 stdenvNoCC.mkDerivation rec {
   pname = "replit-desktop";
-  version = "1.1.18";
+  version = "1.1.32";
+  # The artefact directory under artifacts/<version>/ in latest-linux.yml.
+  buildId = "1795581582997198";
 
   src = fetchurl {
-    url = "https://desktop.replit.com/download/deb";
-    name = "replit_${version}_amd64.deb";
-    hash = "sha256-M5sJSDChLL3F0tNCCMOAkOAqsw9jqNJR3LmSnVgxXAY=";
+    url = "https://desktop-updates.replit.com/desktop-app/updates/stable/linux/x64/artifacts/${version}/${buildId}/replit_${version}_amd64.deb";
+    # sha512 from latest-linux.yml, converted to SRI.
+    hash = "sha512-s9/XfUCI7tTp9r7P9oQzfT8wHxb3a9cTJF/GHiepqBaOiEMQ/sWuzO609CRoGJuyWrGlWLt9IxwvZfNMTNlJbA==";
   };
 
   nativeBuildInputs = [ binutils zstd makeWrapper ];

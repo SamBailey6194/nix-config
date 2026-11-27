@@ -604,34 +604,39 @@ check-playwright:
     echo "  [tool.uv]"
     echo "  constraint-dependencies = [\"playwright==$wheel\"]"
 
-# Replit only publishes a "latest" .deb link (pkgs/replit-desktop.nix), and the
-# app refuses to run once Replit raises its minimum version. This reads the
-# version from the link's redirect (headers only, no 120 MB download) and
-# compares it with the pin; it changes nothing.
+# Replit publishes Linux releases through an electron-updater manifest
+# (latest-linux.yml), and the app refuses to run once Replit raises its minimum
+# version. This reads the manifest (a few hundred bytes, no .deb download) and
+# compares it with pkgs/replit-desktop.nix; it changes nothing.
 
-# Report whether Replit's Linux .deb has moved past the packaged version
+# Report whether Replit's Linux release has moved past the packaged version
 replit-check:
     #!/usr/bin/env bash
     set -euo pipefail
     pkg=pkgs/replit-desktop.nix
-    url=https://desktop.replit.com/download/deb
+    manifest=https://desktop-updates.replit.com/desktop-app/updates/stable/linux/x64/latest-linux.yml
     pinned=$(sed -n 's/^  version = "\(.*\)";$/\1/p' "$pkg")
     [ -n "$pinned" ] || { echo "no version found in $pkg" >&2; exit 1; }
-    # The link redirects to a signed GitHub asset named replit_<version>_amd64.deb.
-    latest=$(curl -fsSIL --max-time 30 "$url" \
-        | grep -io 'filename=replit_[0-9][0-9.]*_amd64\.deb' | tail -1 \
-        | sed 's/^filename=replit_//I; s/_amd64\.deb$//')
-    [ -n "$latest" ] || { echo "could not read the version from $url" >&2; exit 1; }
+    yml=$(curl -fsSL --max-time 30 "$manifest")
+    latest=$(printf '%s\n' "$yml" | sed -n 's/^version: *//p' | head -1)
+    path=$(printf '%s\n' "$yml" | sed -n 's/^path: *//p' | head -1)
+    sha512=$(printf '%s\n' "$yml" | sed -n 's/^sha512: *//p' | head -1)
+    [ -n "$latest" ] && [ -n "$path" ] && [ -n "$sha512" ] \
+        || { echo "could not read version, path and sha512 from $manifest" >&2; exit 1; }
     echo "packaged : $pinned"
     echo "published: $latest"
     if [ "$latest" = "$pinned" ]; then
         echo "Up to date."
     elif [ "$(printf '%s\n%s\n' "$pinned" "$latest" | sort -V | tail -1)" = "$latest" ]; then
+        # path is artifacts/<version>/<buildId>/replit_<version>_amd64.deb
+        build_id=$(printf '%s\n' "$path" | cut -d/ -f3)
         echo
-        echo "Replit $latest is out. To update:"
-        echo "  nix store prefetch-file $url"
-        echo "then set version = \"$latest\" and the printed hash in $pkg, check the"
-        echo ".deb's bundled Electron (usr/lib/replit/version), and run: just rebuild"
+        echo "Replit $latest is out. In $pkg set:"
+        echo "  version = \"$latest\";"
+        echo "  buildId = \"$build_id\";"
+        echo "  hash = \"sha512-$sha512\";"
+        echo "then check the .deb's bundled Electron (usr/lib/replit/version) and run:"
+        echo "  just rebuild"
     else
         echo "The published version is older than the pin; nothing to do."
     fi
