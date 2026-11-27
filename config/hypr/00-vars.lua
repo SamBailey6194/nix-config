@@ -57,7 +57,8 @@ M.mailWorkspace = 4
 --   30     Playwright browser testing
 --   31     nix-config dev layout (Zed or Neovim)   DEV_LAYOUT_NIX_CONFIG_WS
 --   32-40  dev pool, one project per workspace     DEV_LAYOUT_POOL_FIRST/LAST
---   41-50  spare (keyed, never used by overflow)
+--   41     Replit desktop app (devtower, devtower-intel)
+--   42-50  spare (keyed, never used by overflow)
 --   51+    unassigned windows, the first free one  (70-windowrules.lua)
 --
 -- Affinity (Wine) stays installed but has no workspace: it opens on 51+.
@@ -187,6 +188,12 @@ M.workspaceAssignments = {
     -- free workspace at launch and registers a rule for it then.
     assign("nixcfg-editor", { class = "^(dev\\.zed\\.Zed)$", title = "^(nix-config)$" }, 31),
     assign("nixcfg-nvim", { class = "^(nixcfg-nvim)$" }, 31),
+
+    -- 41: Replit (pkgs/replit-desktop.nix, the towers only; the laptops use
+    -- replit.com in a browser, which stays on its browser's workspace). Its
+    -- class is "replit" on native Wayland (hyprctl clients, 27/11/2026).
+    -- The first of the 41-50 spares; overflow skips all of 41-50 anyway.
+    assign("dev-replit", { class = "^(replit|Replit)$" }, 41),
 
     -- Popups that belong to whatever you are doing: the Yazi file picker
     -- (xdg-desktop-portal-termfilechooser's kitty) and ripdrag's drag window.

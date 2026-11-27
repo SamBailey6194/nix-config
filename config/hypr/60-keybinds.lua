@@ -208,6 +208,7 @@ hl.bind(mod .. " + B", hl.dsp.exec_cmd("affinity-publisher"))
 --   p  Zathura (8)   SHIFT: PdfCraft       g  GIMP (17)  SHIFT: PhotoCraft
 --   u  DesignCraft (9)                     d  Draw (18)  SHIFT: VectorCraft
 --   l  LightCraft (19)                     r  Resolve (20)  SHIFT: FilmCraft (21)
+--                                          CTRL: Replit (41)
 --   e  EffectCraft (22)                    a  AniCraft (23)
 --   o  Reaper (24)  SHIFT: SoundCraft  CTRL: Audacity
 --   3  Blender (25)  t  TextureCraft (27)  x  CADCraft (28)  f  FigCraft (29)
@@ -226,6 +227,7 @@ local launchers = {
     { "d", "libreoffice --draw" },          { "SHIFT + d", "vectorcraft" },
     { "l", "lightcraft" },
     { "r", "davinci-resolve-studio" },      { "SHIFT + r", "filmcraft" },
+    { "CTRL + r", "replit" },
     { "e", "effectcraft" },
     { "a", "anicraft" },
     { "o", "reaper" },                      { "SHIFT + o", "soundcraft" },

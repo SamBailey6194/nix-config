@@ -333,10 +333,10 @@ sudo reboot
 ### Testing
 ```bash
 just rebuild
-# Create advanced layout with workspace=41 (a spare workspace in the
+# Create advanced layout with workspace=42 (a spare workspace in the
 # 00-vars.lua map; 3 is the file manager), env vars, dynamic commands
 Super+G, 4
-hyprctl clients | grep "workspace: 41"  # Should show Kitty windows
+hyprctl clients | grep "workspace: 42"  # Should show Kitty windows
 # In terminal with env: { NODE_ENV = "development" }
 echo $NODE_ENV  # Should output: development
 # Focus away from dynamic_command window, then back

@@ -66,7 +66,7 @@ you there; `SHIFT` opens its Craft pair instead. One launch per press, and
 | `g`         | GIMP (17)                | PhotoCraft (17)          |
 | `d`         | LibreOffice Draw (18)    | VectorCraft (18)         |
 | `l`         | LightCraft (19)          |                          |
-| `r`         | DaVinci Resolve (20)     | FilmCraft (21)           |
+| `r`         | DaVinci Resolve (20)     | FilmCraft (21); `CTRL + r`: Replit (41) |
 | `e`         | EffectCraft (22)         |                          |
 | `a`         | AniCraft (23)            |                          |
 | `o`         | Reaper (24)              | SoundCraft (24); `CTRL + o`: Audacity (24) |
@@ -183,7 +183,8 @@ L = left 4K, C = centre 1440p, R = right portrait.
 | `30`      | `SUPER + CTRL + 0`   | C   | Playwright browser testing (Chromium)  |
 | `31`      | `SUPER + ALT + 1`    | C   | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | C | Dev pool (allocated as needed)         |
-| `41-50`   | `SUPER + CTRL + SHIFT + 1-9, 0` | C | Spare (overflow skips them) |
+| `41`      | `SUPER + CTRL + SHIFT + 1` | C | Replit                     |
+| `42-50`   | `SUPER + CTRL + SHIFT + 2-9, 0` | C | Spare (overflow skips them) |
 | `51+`     | none                 | C   | Unassigned windows, one per workspace  |
 
 Files opened from Yazi go to that app's workspace (a video to 16,

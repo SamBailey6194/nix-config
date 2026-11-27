@@ -123,7 +123,8 @@ simply never matches its rule.
 | `30`      | Playwright browser testing (its bundled Chromium)        | `00-vars.lua` workspaceAssignments                      |
 | `31`      | nix-config dev layout                                    | `00-vars.lua` (class + title for Zed, class for Neovim) |
 | `32-40`   | Dev pool, allocated as needed                            | Window rules registered at launch                       |
-| `41-50`   | Spare (keyed; overflow never uses them)                  | —                                                       |
+| `41`      | Replit desktop app (devtower, devtower-intel)            | `00-vars.lua` workspaceAssignments                      |
+| `42-50`   | Spare (keyed; overflow never uses them)                  | —                                                       |
 | `51+`     | Unassigned windows, each on the first free workspace     | Catch-all + overflow handler (`70-windowrules.lua`)     |
 
 Affinity is still installed on devtower-intel (its `SUPER + D/P/B` keys

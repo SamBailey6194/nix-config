@@ -69,7 +69,7 @@ laptop-intel that is most of them).
 | `g`         | GIMP (17)                | PhotoCraft (17)          |
 | `d`         | LibreOffice Draw (18)    | VectorCraft (18)         |
 | `l`         | LightCraft (19)          |                          |
-| `r`         | DaVinci Resolve (20)     | FilmCraft (21)           |
+| `r`         | DaVinci Resolve (20)     | FilmCraft (21); `CTRL + r`: Replit (41) |
 | `e`         | EffectCraft (22)         |                          |
 | `a`         | AniCraft (23)            |                          |
 | `o`         | Reaper (24)              | SoundCraft (24); `CTRL + o`: Audacity (24) |
@@ -186,7 +186,8 @@ appears.
 | `30`      | `SUPER + CTRL + 0`   | Playwright browser testing (Chromium)  |
 | `31`      | `SUPER + ALT + 1`    | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | Dev pool (allocated as needed)       |
-| `41-50`   | `SUPER + CTRL + SHIFT + 1-9, 0` | Spare (overflow skips them) |
+| `41`      | `SUPER + CTRL + SHIFT + 1` | Replit (devtower, devtower-intel) |
+| `42-50`   | `SUPER + CTRL + SHIFT + 2-9, 0` | Spare (overflow skips them) |
 | `51+`     | none                 | Unassigned windows, one per workspace  |
 
 Files opened from Yazi go to that app's workspace (a browser link to 12, a

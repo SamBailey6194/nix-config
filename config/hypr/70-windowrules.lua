@@ -148,8 +148,8 @@ vars.apply_workspace_assignments("workspace")
 -- Zed's project picker opens over the app that asked rather than on a
 -- workspace of its own. Tiled windows always get a fresh workspace, so a
 -- second Zed project does not pile onto the nix-config layout on 31.
--- 41-50 are keyed spares (60-keybinds.lua), so overflow skips them even
--- while they are empty.
+-- 41-50 are keyed (60-keybinds.lua; 41 is Replit, 42-50 spares), so
+-- overflow skips them even while they are empty.
 
 local function is_holding(workspace)
     return workspace ~= nil and workspace.special
