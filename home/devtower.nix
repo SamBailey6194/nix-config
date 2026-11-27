@@ -16,9 +16,17 @@
     # OBS Studio for streaming (if needed with Go XLR)
     obs-studio
 
+    # Replit desktop app: the towers only (devtower, devtower-intel); the
+    # laptops use replit.com in the browser. See pkgs/replit-desktop.nix.
+    (pkgs.callPackage ../pkgs/replit-desktop.nix { })
+
     # Video/audio utilities
     # (DaVinci Resolve Studio and Go XLR Utility are in system packages)
   ];
+
+  # Login hands back to the app through replit:// links, so the app must own
+  # that scheme rather than the browser.
+  xdg.mimeApps.defaultApplications."x-scheme-handler/replit" = "replit.desktop";
 
   # Shell aliases for AMD GPU applications
   programs.zsh.shellAliases = {
