@@ -43,6 +43,22 @@ let
   # phone. See pkgs/android-emulator.nix.
   android-emulator = pkgs.callPackage ../../pkgs/android-emulator.nix { };
 
+  # scrcpy with its screenshots and recordings kept somewhere fixed; see
+  # pkgs/phone-mirror.nix. Where the data drive is mounted (devtower-intel),
+  # they follow its layout (docs/SHARED-DATA-DRIVES.md) through ~/Data, the
+  # bind mount, so they are mirrored nightly, open from Windows and sit inside
+  # the ElevenLabs/syntek-media base path: screenshots beside the phone's own
+  # photos (photos/pixel-8-pro/, outside its Syncthing folders) and recordings
+  # with raw source footage (film/media/). Hosts without the drive use the
+  # XDG Pictures/Videos folders.
+  phone-mirror = pkgs.callPackage ../../pkgs/phone-mirror.nix (
+    if config.fileSystems ? "/mnt/data" then {
+      screenshotDir = "$HOME/Data/personal/photos/pixel-8-pro/scrcpy";
+      recordingDir = "$HOME/Data/personal/film/media/scrcpy";
+      requireMount = "$HOME/Data";
+    } else { }
+  );
+
   # AI agent CLIs. Keep nixpkgs' Antigravity CLI with its self-updater off;
   # perplexity-cli is not in nixpkgs. Home Manager configures their MCP servers.
   antigravity-cli = pkgs.callPackage ../../pkgs/antigravity-cli.nix { };
@@ -292,6 +308,10 @@ in
     # `programs.adb` (its removal notice says to add android-tools instead). The
     # first connection still needs "Allow USB debugging" accepted on the phone.
     android-tools               # adb + fastboot (sideload APKs, logcat, flashing)
+    scrcpy                      # mirror + control a phone over adb (USB or
+                                #   `adb tcpip`); also drives the emulator
+    phone-mirror                # scrcpy on workspace 42 with --record and
+                                #   --screenshot saved to fixed folders
     android-emulator            # virtual Pixel 8 Pro: `android-emulator app.apk`
                                 #   (see the let block above; needs KVM)
 

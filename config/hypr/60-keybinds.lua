@@ -209,6 +209,8 @@ hl.bind(mod .. " + B", hl.dsp.exec_cmd("affinity-publisher"))
 --   u  DesignCraft (9)                     d  Draw (18)  SHIFT: VectorCraft
 --   l  LightCraft (19)                     r  Resolve (20)  SHIFT: FilmCraft (21)
 --                                          CTRL: Replit (41)
+--   CTRL + a  phone mirror, scrcpy (42)  CTRL + SHIFT: recording
+--             ALT: phone screenshot (no window; pkgs/phone-mirror.nix)
 --   e  EffectCraft (22)                    a  AniCraft (23)
 --   o  Reaper (24)  SHIFT: SoundCraft  CTRL: Audacity
 --   3  Blender (25)  t  TextureCraft (27)  x  CADCraft (28)  f  FigCraft (29)
@@ -230,6 +232,8 @@ local launchers = {
     { "CTRL + r", "replit" },
     { "e", "effectcraft" },
     { "a", "anicraft" },
+    { "CTRL + a", "phone-mirror" },         { "CTRL + SHIFT + a", "phone-mirror --record" },
+    { "ALT + a", "phone-mirror --screenshot" },
     { "o", "reaper" },                      { "SHIFT + o", "soundcraft" },
     { "CTRL + o", "audacity" },
     { "3", "blender" },

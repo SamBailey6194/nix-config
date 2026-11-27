@@ -58,7 +58,8 @@ M.mailWorkspace = 4
 --   31     nix-config dev layout (Zed or Neovim)   DEV_LAYOUT_NIX_CONFIG_WS
 --   32-40  dev pool, one project per workspace     DEV_LAYOUT_POOL_FIRST/LAST
 --   41     Replit desktop app (devtower, devtower-intel)
---   42-50  spare (keyed, never used by overflow)
+--   42     scrcpy phone mirror (phone-mirror, pkgs/phone-mirror.nix)
+--   43-50  spare (keyed, never used by overflow)
 --   51+    unassigned windows, the first free one  (70-windowrules.lua)
 --
 -- Affinity (Wine) stays installed but has no workspace: it opens on 51+.
@@ -194,6 +195,11 @@ M.workspaceAssignments = {
     -- class is "replit" on native Wayland (hyprctl clients, 27/11/2026).
     -- The first of the 41-50 spares; overflow skips all of 41-50 anyway.
     assign("dev-replit", { class = "^(replit|Replit)$" }, 41),
+
+    -- 42: scrcpy, the Android phone (or emulator) mirror. nixpkgs wraps the
+    -- binary, so its Wayland app_id is ".scrcpy-wrapped" (hyprctl clients,
+    -- 27/11/2026); plain "scrcpy" covers an unwrapped build.
+    assign("dev-scrcpy", { class = "^(\\.scrcpy-wrapped|scrcpy)$" }, 42),
 
     -- Popups that belong to whatever you are doing: the Yazi file picker
     -- (xdg-desktop-portal-termfilechooser's kitty) and ripdrag's drag window.

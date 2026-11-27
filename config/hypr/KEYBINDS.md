@@ -71,7 +71,7 @@ laptop-intel that is most of them).
 | `l`         | LightCraft (19)          |                          |
 | `r`         | DaVinci Resolve (20)     | FilmCraft (21); `CTRL + r`: Replit (41) |
 | `e`         | EffectCraft (22)         |                          |
-| `a`         | AniCraft (23)            |                          |
+| `a`         | AniCraft (23)            | `CTRL + a`: phone mirror (42); `CTRL + SHIFT + a`: recording; `ALT + a`: phone screenshot |
 | `o`         | Reaper (24)              | SoundCraft (24); `CTRL + o`: Audacity (24) |
 | `3`         | Blender (25)             |                          |
 | `t`         | TextureCraft (27)        |                          |
@@ -187,7 +187,8 @@ appears.
 | `31`      | `SUPER + ALT + 1`    | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | Dev pool (allocated as needed)       |
 | `41`      | `SUPER + CTRL + SHIFT + 1` | Replit (devtower, devtower-intel) |
-| `42-50`   | `SUPER + CTRL + SHIFT + 2-9, 0` | Spare (overflow skips them) |
+| `42`      | `SUPER + CTRL + SHIFT + 2` | scrcpy phone mirror          |
+| `43-50`   | `SUPER + CTRL + SHIFT + 3-9, 0` | Spare (overflow skips them) |
 | `51+`     | none                 | Unassigned windows, one per workspace  |
 
 Files opened from Yazi go to that app's workspace (a browser link to 12, a

@@ -22,8 +22,8 @@ hl.monitor({ output = right, mode = "1920x1080@144", position = "5120x0", scale 
 --   right (portrait)  1 (dashboard: btop, nvtop)
 --   left              12 Zen, 13 LibreWolf, 16 viewers, 20 Resolve,
 --                     21 FilmCraft, 22 EffectCraft, 23 AniCraft
---   centre            everything else, including 41 Replit, the 42-50
---                     spares and the 51+ overflow
+--   centre            everything else, including 41 Replit, 42 scrcpy,
+--                     the 43-50 spares and the 51+ overflow
 --
 -- SUPER + comma moves the focused workspace between the centre and left
 -- monitors.

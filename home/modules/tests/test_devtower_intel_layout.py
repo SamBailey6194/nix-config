@@ -167,7 +167,7 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
             "libreoffice-draw": "18", "REAPER": "24",
             "org.audacityteam.Audacity": "24", "Audacity 4": "24",
             "Blender": "25", "Chromium": "30", "chromium": "30",
-            "replit": "41",
+            "replit": "41", ".scrcpy-wrapped": "42", "scrcpy": "42",
             "termfilechooser": "unset",
             # No rules of their own any more: parked, then overflow (51+).
             "affinity-designer": "special:unassigned silent",
@@ -220,9 +220,10 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
                   if ws.isdigit() and (5 <= int(ws) <= 10 or 17 <= int(ws) <= 30)}
         self.assertEqual(paired, {n for n, ws in expected.items()
                                   if not 11 <= int(ws) <= 16})
-        # 41 is Replit alone; nothing on 42-50: they are spares.
+        # 41 is Replit alone, 42 scrcpy alone; nothing on 43-50: they are spares.
         self.assertEqual([n for n, ws in by_name.items() if ws == "41"], ["workspace-dev-replit"])
-        self.assertFalse([n for n, ws in by_name.items() if ws.isdigit() and 42 <= int(ws) <= 50])
+        self.assertEqual([n for n, ws in by_name.items() if ws == "42"], ["workspace-dev-scrcpy"])
+        self.assertFalse([n for n, ws in by_name.items() if ws.isdigit() and 43 <= int(ws) <= 50])
         self.assertNotIn("workspace-craft-art", by_name, "ArtCraft has no Linux build")
         # Affinity stays installed but has no workspace; Thunar and Claws Mail
         # are gone; the removed nix-config terminal rule stays removed.
@@ -297,9 +298,12 @@ class DevtowerIntelLayoutTests(unittest.TestCase):
             "creative-audacity": "audacity", "creative-blender": "blender",
             "craft-material": "materialcraft", "craft-texture": "texturecraft",
             "craft-cad": "cadcraft", "craft-fig": "figcraft",
-            "dev-replit": "replit",
+            "dev-replit": "replit", "dev-scrcpy": "phone-mirror",
         }
-        self.assertEqual(sorted(commands.values()), sorted(opens.values()))
+        # Extra keys for an app already in opens: a recording session opens
+        # the same scrcpy window; a screenshot opens none.
+        variants = ["phone-mirror --record", "phone-mirror --screenshot"]
+        self.assertEqual(sorted(commands.values()), sorted([*opens.values(), *variants]))
         # Apps with a direct key of their own, or no key by design.
         direct = {
             "files-yazi": "SUPER + F", "mail-aerc": "SUPER + E",

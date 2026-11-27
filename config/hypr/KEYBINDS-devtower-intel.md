@@ -68,7 +68,7 @@ you there; `SHIFT` opens its Craft pair instead. One launch per press, and
 | `l`         | LightCraft (19)          |                          |
 | `r`         | DaVinci Resolve (20)     | FilmCraft (21); `CTRL + r`: Replit (41) |
 | `e`         | EffectCraft (22)         |                          |
-| `a`         | AniCraft (23)            |                          |
+| `a`         | AniCraft (23)            | `CTRL + a`: phone mirror (42); `CTRL + SHIFT + a`: recording; `ALT + a`: phone screenshot |
 | `o`         | Reaper (24)              | SoundCraft (24); `CTRL + o`: Audacity (24) |
 | `3`         | Blender (25)             |                          |
 | `t`         | TextureCraft (27)        |                          |
@@ -184,7 +184,8 @@ L = left 4K, C = centre 1440p, R = right portrait.
 | `31`      | `SUPER + ALT + 1`    | C   | nix-config dev layout (reserved)       |
 | `32-40`   | `SUPER + ALT + 2-9, 0` | C | Dev pool (allocated as needed)         |
 | `41`      | `SUPER + CTRL + SHIFT + 1` | C | Replit                     |
-| `42-50`   | `SUPER + CTRL + SHIFT + 2-9, 0` | C | Spare (overflow skips them) |
+| `42`      | `SUPER + CTRL + SHIFT + 2` | C | scrcpy phone mirror        |
+| `43-50`   | `SUPER + CTRL + SHIFT + 3-9, 0` | C | Spare (overflow skips them) |
 | `51+`     | none                 | C   | Unassigned windows, one per workspace  |
 
 Files opened from Yazi go to that app's workspace (a video to 16,

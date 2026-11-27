@@ -2,7 +2,7 @@
 
 EDIDs and the active Ubuntu X11 session were inspected on 2026-10-05.
 The workspace mapping and 150% 4K scale were selected by Sam. Every device
-shares one map of fifty keyed workspaces (1–41 assigned, spares on 42–50) and
+shares one map of fifty keyed workspaces (1–42 assigned, spares on 43–50) and
 overflow workspaces from 51 up, defined in `config/hypr/00-vars.lua` and
 registered by `config/hypr/70-windowrules.lua`. Only the monitor placement
 below is devtower-intel's own (`config/hypr/devices/devtower-intel.lua`);
@@ -11,7 +11,7 @@ laptop-intel has one screen and uses the map as it is.
 | Physical display | EDID model | Current Ubuntu connector | DRM connector | NixOS mode / scale | Workspaces |
 | --- | --- | --- | --- | --- | --- |
 | Left | AOC U2879G6 | DP-4 | DP-3 | 3840×2160 / 60Hz / 150% | 12 Zen (media while working); 13 LibreWolf; 16 video and image viewers; 20 Resolve; 21 FilmCraft; 22 EffectCraft; 23 AniCraft |
-| Centre, primary work display | AOC AG271QG4 | DP-2 | DP-2 | 2560×1440 / 143.91Hz / 100% | 2 four terminals (2×2); 3 Yazi; 4 mail and calendar; 5 Start Center, Writer, WordCraft; 6 Impress, DeckCraft; 7 Calc, GridCraft; 8 PdfCraft, Zathura; 9 DesignCraft; 10 Math, Base; 11 Teams, Zoom, Slack; 14 Firefox Developer; 15 Brave; 17 PhotoCraft, GIMP; 18 Draw, VectorCraft; 19 LightCraft; 24 SoundCraft, Reaper, Audacity; 25 Blender; 26 MaterialCraft; 27 TextureCraft; 28 CADCraft; 29 FigCraft; 30 Playwright Chromium; 31 Nix config; 32–40 development; 41 Replit; 42–50 spare; 51+ unassigned apps (including Affinity) |
+| Centre, primary work display | AOC AG271QG4 | DP-2 | DP-2 | 2560×1440 / 143.91Hz / 100% | 2 four terminals (2×2); 3 Yazi; 4 mail and calendar; 5 Start Center, Writer, WordCraft; 6 Impress, DeckCraft; 7 Calc, GridCraft; 8 PdfCraft, Zathura; 9 DesignCraft; 10 Math, Base; 11 Teams, Zoom, Slack; 14 Firefox Developer; 15 Brave; 17 PhotoCraft, GIMP; 18 Draw, VectorCraft; 19 LightCraft; 24 SoundCraft, Reaper, Audacity; 25 Blender; 26 MaterialCraft; 27 TextureCraft; 28 CADCraft; 29 FigCraft; 30 Playwright Chromium; 31 Nix config; 32–40 development; 41 Replit; 42 scrcpy phone mirror; 43–50 spare; 51+ unassigned apps (including Affinity) |
 | Right, portrait | AOC 27G2WG3- | HDMI-0 | HDMI-A-1 | 1920×1080 / 144Hz / 100%, rotated | 1 dashboard |
 
 Rules match `desc:AOC <model>` prefixes rather than assuming X11 output
